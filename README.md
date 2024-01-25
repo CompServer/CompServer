@@ -1,21 +1,21 @@
-Prior work
-https://github.com/kevinharvey/django-tourney
-https://github.com/psgoral/Django-Tournament-Creator
+Prior work:
+
+- https://github.com/kevinharvey/django-tourney
+- https://github.com/psgoral/Django-Tournament-Creator
 
 Useful libraries
-https://www.aropupu.fi/bracket/
-    Probably not worth hacking to handle 3 or more teams for a single match
-    HTML / CSS it generates can be used as a model
-https://www.aropupu.fi/group/
+- https://www.aropupu.fi/bracket/
+    - Probably not worth hacking to handle 3 or more teams for a single match
+    - HTML / CSS it generates can be used as a model
+- https://www.aropupu.fi/group/
 
-https://htmx.org/
-    For live updates
+- [HTMX](https://htmx.org/) for live updates
 
-
-Questions
-Do we need to handle / show penalties?
+Questions:
+- Do we need to handle / show penalties?
 
 Scenarios (in order of rank ABCD...)
+
 max4adv1
     ACE
         AB
