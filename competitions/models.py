@@ -138,7 +138,21 @@ class Event(models.Model):
 
 
 # dwheadon: can we force this to be abstract (non-instantiable)?
+# jmulligan: yes, we can override __new__ and raise a TypeError if the cls == __class__
 class AbstractTournament(models.Model):
+    """
+    Abstract class containing common fields among all tournaments.
+    Cannot be instanciated directly: only can be subclassed.
+    """
+
+    def __new__(cls, *args, **kwargs):
+        """
+        Overriden to prevent the direct instanciation of this Abstract class to avoid issues later
+        """
+        if cls is __class__: # if the class being created is the Abstract Tournament class (__class__)
+            raise TypeError(f"only children of '{cls.__name__}' may be instantiated")
+        return object.__new__(cls, *args, **kwargs)
+
     status = StatusField()
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="tournament_set") # besides helpfing to identify this tournament this will change how teams advance (high or low score)
     competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name="tournament_set")
@@ -156,9 +170,10 @@ class AbstractTournament(models.Model):
 
     def __str__(self) -> str:
         return self.event.name + _(" tournament @ ") + str(self.competition) # SumoBot tournament at RoboMed 2023
-        
+
     class Meta:
         ordering = ['competition', 'event']
+        abstract = True
 
 
 class Ranking(models.Model):
@@ -176,7 +191,8 @@ class Ranking(models.Model):
 
 
 class SingleEliminationTournament(AbstractTournament):
-    ''' Elimination style with brackets (last man standing) 
+    '''
+        Elimination style with brackets (last man standing) 
         Requires seedings determined by prior RoundRobin or expert input
         Seeding (ranking) is important because you want the last match to be close, not a total blowout
         Winner take all situation (1st place is really the only position that's established)
@@ -260,3 +276,7 @@ class Match(models.Model):
     class Meta:
         ordering = ['tournament']
         verbose_name_plural = _('Matches')
+
+import inspect
+import sys
+__all__ = inspect.getmembers(sys.modules[__name__], inspect.isclass)
