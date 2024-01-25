@@ -1,5 +1,4 @@
 Prior work:
-
 - https://github.com/kevinharvey/django-tourney
 - https://github.com/psgoral/Django-Tournament-Creator
 
