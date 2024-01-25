@@ -1,18 +1,25 @@
 # Django
-db.sqlite3
+*.sqlite3
 media/
 static/
 
 # Python
 *.pyc
-__pycache__/
+**/__pycache__* 
+# ^ ignores __pycache__ in ANY directory
 
 # Mac garbage
-.DS_Store
+**/.DS_Store
+# ^ ignores DS store in ANY directory rather than just base
 
 # Environments 
-.env 
-.venv 
+.env
+.venv
 
-# Visual Studio Code # 
-.vscode/ 
+# Visual Studio Code files
+.vscode/
+*.code-workspace
+
+# future secret files 
+*.yaml
+*.yml
