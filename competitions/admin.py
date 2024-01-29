@@ -2,7 +2,10 @@ from django.contrib import admin
 from .models import __all__
 
 for cls in __all__:
-    admin.site.register(cls)
+    try:
+        admin.site.register(cls)
+    except:
+        print(f"Error registering Class {cls.__qualname__}")
 
 # admin.site.register(Organization)
 # admin.site.register(Team)

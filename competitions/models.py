@@ -77,8 +77,8 @@ class Team(models.Model):
     # related: competition_set, tournament_set, round1_matches, won_matches
 
     def __str__(self) -> str:
-        return self.name + _(" from ") + str(self.organization)
-    
+        return f"{self.name} {_(' from ')} {self.organization}"
+
     class Meta:
         ordering = ['organization', 'name']
         unique_together = ['organization', 'name']
@@ -101,7 +101,7 @@ class Competition(models.Model):
 
     def __str__(self) -> str:
         # dwheadon: check if the name is unique for this year, otherwise add the month/day as well
-        return self.name + " " + str(self.start_date.year) # RoboMed 2023
+        return f"{self.name} {self.start_date.year}" # RoboMed 2023
 
     class Meta:
         ordering = ['-start_date', 'name']
@@ -151,7 +151,7 @@ class AbstractTournament(models.Model):
         Overriden to prevent the direct instanciation of this Abstract class to avoid issues later
         """
         if cls is __class__: # if the class being created is the Abstract Tournament class (__class__)
-            raise TypeError(f"only children of '{__class__.__name__}' may be instantiated")
+            raise TypeError(f"only children of '{cls.__name__}' may be instantiated")
         return object.__new__(cls, *args, **kwargs)
 
     status = StatusField()
@@ -171,7 +171,7 @@ class AbstractTournament(models.Model):
     # related: match_set, ranking_set
 
     def __str__(self) -> str:
-        return self.event.name + _(" tournament @ ") + str(self.competition) # SumoBot tournament at RoboMed 2023
+        return f"{self.event.name} {_(' tournament @ ')} {self.competition}" # SumoBot tournament at RoboMed 2023
         
     class Meta:
         ordering = ['competition', 'event']
@@ -184,7 +184,7 @@ class Ranking(models.Model):
     rank = models.PositiveSmallIntegerField()
 
     def __str__(self) -> str:
-        return str(self.rank) + ") " + str(self.team.name) + " in " + str(self.tournament)
+        return f"{self.rank}) {self.team.name} in {self.tournament}"
 
     class Meta:
         ordering = ['tournament', 'rank']
