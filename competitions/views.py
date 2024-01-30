@@ -1,7 +1,8 @@
 from django.contrib import messages
-import math
-import random
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
+import math
+from .models import *
 
 def BracketView(request):
     t = ""
@@ -47,3 +48,10 @@ def BracketView(request):
 
     context = {"content":t,}
     return render(request, "competitions/bracket.html", context)
+
+
+def competitions(request):
+    competition_list = Competition.objects.all()
+    context = {"competition_list": competition_list, "Status": Status}
+    return render(request, "competitions/competition_hub.html", context)
+

@@ -1,0 +1,21 @@
+{% extends "skeleton.html" %}
+{% comment %} {% load crispy_forms_tags %} {% endcomment %}
+{% block content %}
+    <h1>Competitions</h1>
+    {% if competition_list %}
+        {% for competition in competition_list %}
+            {% if competition.status != Status.ARCHIVED %}
+                <div class="row d-flex">
+                    <div class = "col-9">
+                        <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
+                    </div>
+                    <hr>
+                </div>
+            {% endif %}
+        {% endfor %}
+    {% else %}
+        <div class = "col-md-12 d-flex justify-content-center">
+            <p>No competitions Yet</p>
+        </div>
+    {% endif %}
+{% endblock %}
