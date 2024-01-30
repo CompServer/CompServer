@@ -9,10 +9,11 @@
     <header>
         <h1>The Official Team Page</h1>
         <h2>{{team.__str__}}</h2>
+        <h3>Information About </h3>
         <!-- this adds the team name and organization name -->
-        <p>The "{{team.name}}" is coached by <a href="{% url 'competitions:coach' team.coach.id %}">{{team.coach}}</a></p>
+        <p>The "{{team.name}}" is coached by {{team.coach}}</p>
         <!-- needs to pull the coach's name and possibly link their profile -->
-        <p>Team logo would go here.</p>
+        <!-- <p>Team logo would go here.</p> -->
     </header>
     <div class="competition-set">
         <h3>Competition Set</h3>
@@ -27,5 +28,6 @@
         <h3>Match Records: Wins, Losses, and Draws</h3>
     </div>
     <!-- I will add other relevant information for the teams based on the other models -->
+    <!-- show organization information adn match schedule -->
 </body>
 </html>
