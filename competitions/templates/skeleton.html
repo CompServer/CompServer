@@ -21,7 +21,8 @@
 
     {% comment %} We need this so HTMX will work (when its implemented) with the debug toolbar {% endcomment %}
     {% comment %} https://django-debug-toolbar.readthedocs.io/en/latest/installation.html#htmx {% endcomment %}
-    {% comment %} {% if debug %}
+    {% comment %} 
+    {% if debug %}
         if (typeof window.htmx !== "undefined") {
             htmx.on("htmx:afterSettle", function(detail) {
                 if (
@@ -32,7 +33,8 @@
                 }
             });
         }
-    {% endif %} {% endcomment %}
+    {% endif %} 
+    {% endcomment %}
 
     {% comment %} make sure to install django hijack before using this {% endcomment %}
     {% comment %} https://pypi.org/project/django-hijack/ {% endcomment %}
