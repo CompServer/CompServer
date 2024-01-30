@@ -55,3 +55,7 @@ def competitions(request):
     context = {"competition_list": competition_list, "Status": Status}
     return render(request, "competitions/competition_hub.html", context)
 
+def not_implemented(request, *args, **kwargs):
+    messages.error(request, "This feature is not yet implemented.")
+    return render(request, 'skeleton.html')
+
