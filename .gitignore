@@ -23,3 +23,4 @@ static/
 # future secret files 
 *.yaml
 *.yml
+competitions/z_models.py
