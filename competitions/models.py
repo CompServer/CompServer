@@ -260,3 +260,7 @@ class Match(models.Model):
     class Meta:
         ordering = ['tournament']
         verbose_name_plural = _('Matches')
+
+import inspect
+import sys
+__all__ = inspect.getmembers(sys.modules[__name__], inspect.isclass)

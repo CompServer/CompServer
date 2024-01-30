@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import *
+from .models import Organization, Team, Competition, Event, Ranking, SingleEliminationTournament, Match
 
 admin.site.register(Organization)
 admin.site.register(Team)
