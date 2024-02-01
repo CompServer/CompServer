@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Competition Page</title>
+</head>
+<body>
+    <header>
+        <h1>{{competition.name}}</h1>
+        <p>blah blah</p>
+    </header>
+    <div class="row">
+        <h3>Competing Teams</h3>
+        <ul>
+            {% for team in competition.teams_set %}
+            <li>
+                {{team.__str__}}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</body>
+</html>
