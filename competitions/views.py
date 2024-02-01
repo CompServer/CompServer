@@ -4,6 +4,7 @@ from django.shortcuts import render
 import math
 from .models import *
 
+
 def BracketView(request):
     t = ""
 
@@ -49,23 +50,26 @@ def BracketView(request):
     context = {"content":t,}
     return render(request, "competitions/bracket.html", context)
 
+
 def tournament(request, tournament_id):
     return render(request, "competitions/tournament.html")
 
+
 def tournaments(request):
-    return render(request, "competitions/tournaments_hub.html")
+    return render(request, "competitions/tournaments.html")
+
 
 def competitions(request):
     competition_list = Competition.objects.all()
     context = {"competition_list": competition_list, "Status": Status}
-    return render(request, "competitions/competition_hub.html", context)
+    return render(request, "competitions/competitions.html", context)
 
 
-def team_page(team_id):
+def team(request, team_id):
     context = {
-        'team': Team.objects.all().filter(Team.id == team_id), #get a team from the team id passed into the view
+        'team': Team.objects.get(id=team_id), #get a team from the team id passed into the view
     }
-    return render("competitions/team-page.html")
+    return render(request, "competitions/team.html", context)
 
 
 def not_implemented(request, *args, **kwargs):
@@ -75,7 +79,6 @@ def not_implemented(request, *args, **kwargs):
 
 def competition(request, competition_id):
     context = {
-        #are the access key and the competition id the same?
-        competition: Competition.objects.all().filter(competition.access_key == competition_id)
+        'competition': Competition.objects.get(id=competition_id)
     }
     return render(request, "competitions/competition.html", context)

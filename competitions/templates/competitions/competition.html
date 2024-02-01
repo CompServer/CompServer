@@ -7,15 +7,15 @@
 </head>
 <body>
     <header>
-        <h1>{{competition.name}}</h1>
+        <h1>{{competition}}</h1>
         <p>blah blah</p>
     </header>
     <div class="row">
         <h3>Competing Teams</h3>
         <ul>
-            {% for team in competition.teams_set %}
+            {% for team in competition.teams.all %}
             <li>
-                {{team.__str__}}
+                {{team}}
             </li>
             {% endfor %}
         </ul>

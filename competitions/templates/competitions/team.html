@@ -7,10 +7,9 @@
 </head>
 <body>
     <header>
-        <h1>The Official Team Page</h1>
-        <h2>{{team.__str__}}</h2>
+        <h1>Team: {{ team }}</h1>
         <!-- this adds the team name and organization name -->
-        <p>The "{{team.name}}" is coached by {{team.coach.name}}</p>
+        <p>Coached by {{team.coach}}</p>
         <!-- needs to pull the coach's name and possibly link their profile -->
         <!-- <p>Team logo would go here.</p> -->
     </header>
@@ -18,59 +17,45 @@
         <h3>Information About {{team.organization.name}}</h3>
         <h4>Address:<i>....</i></h4>
         <!-- There isn't a field for address for organizations yet -->
-        <p>logo</p>
-        <h4>Other Teams Under This Organization:</h4>
-        <ul>
-            {% for team in Team.objects.all().filter(organization_id = team.organization.id)%}
-            <li>
-                <a href="{% url 'competitions:team-page' team.id%}">{{team.name}}</a>
-            </li>
-            {% endfor %}
-        </ul>
+        <p>logo...</p>
     </div>
+    <div class="match-schedule">
+        <h3>Upcoming Match Schedule</h3>
+        all incomplete matches ordered by time...
+    </div> 
     <div class="competition-set">
-        <h3>Competitions They've Competed In</h3>
+        <h3>Competitions participated in</h3>
         <ul>
-            {% for competition in team.competition_set%}
+            {% for competition in team.competition_set.all %}
                 {% if competition.status != "ARCHIVED" %}
                     <li>
-                        <a href="{% url 'competitions:competition' competition.access_key %}">{{competition.name}} from {{competition.start_date}} until {{competition.end_date}}</a>
+                        <a href="{% url 'competitions:competition' competition.id %}">{{competition}}</a>
                     </li>
                 {% endif %}
             {% endfor %}
         </ul>
     </div>
     <div class="tournament-set">
-        <h3>Tournaments They've Competed In</h3>
+        <h3>Tournaments Won</h3>
         <ul>
-            {% for tournament in team.abstracttournament_set %}
+            {% for tournament in team.tournament_set.all %}
                 {% if tournament.status != "ARCHIVED" %}
                     <li>
-                        <a href="{% url 'competitions:tournament-page' tournament.id %}">{{tournament.name}}</a>
+                        <a href="{% url 'competitions:tournament' tournament.id %}">{{tournament}}</a>
                     </li>
                 {% endif %}
             {% endfor %}
         </ul>
     </div>
     <div class="match-records">
-        <h3>Match Records: Wins, Losses, and Draws</h3>
+        <h3>Match History</h3>
         <div class="row">
             <h4>Wins</h4>
             <ul>
-                {% for competition in team.competition_set %}  
-                <li>
-                    
-                </li>
-                {% endfor %}
-                {% for tournament in team.abstracttournament_set %}  
-                <li>
-                    
-                </li>
+                {% for match in team.won_matches.all %}  
+                <li><a href="">link here...</a></li>
                 {% endfor %}
             </ul>
-        </div>
-        <div class="row">
-
         </div>
         <div class="row">
             <h4>Losses</h4>
@@ -79,12 +64,6 @@
         <div class="row">
             <h4>Draws</h4>
         </div>
-    </div>
-    <div class="match-schedule">
-        <h3>Match Schedule</h3>
-    </div>
-    <div class="round-one-matches">
-        <h3>Round 1 Matches</h3>
     </div>
 </body>
 </html>
