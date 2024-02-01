@@ -49,6 +49,11 @@ def BracketView(request):
     context = {"content":t,}
     return render(request, "competitions/bracket.html", context)
 
+def tournament(request, tournament_id):
+    return render(request, "competitions/tournament.html")
+
+def tournaments(request):
+    return render(request, "competitions/tournaments_hub.html")
 
 def competitions(request):
     competition_list = Competition.objects.all()
@@ -60,3 +65,10 @@ def team_page(team_id):
         team: Team.objects.all().filter(Team.id == team_id), #get a team from the team id passed into the view
     }
     return render("competitions/team-page.html")
+
+def competition(request, competition_id):
+    context = {
+        #are the access key and the competition id the same?
+        compeitition: Competition.objects.all().filter(competition.access_key == competition_id)
+    }
+    return render(request, "competitions/competition-page.html", context)

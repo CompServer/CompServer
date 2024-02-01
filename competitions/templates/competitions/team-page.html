@@ -29,37 +29,62 @@
         </ul>
     </div>
     <div class="competition-set">
-        <h3>Competition Set</h3>
+        <h3>Competitions They've Competed In</h3>
         <ul>
-            {% for competition in Competition.objects.all()%}
-                {% if competition.teams.includes(team.id = team_id) && competition != "ARCHIVED" %}
+            {% for competition in team.competition_set%}
+                {% if competition.status != "ARCHIVED" %}
                     <li>
-                        <!-- filter for those that are happening currently and those that will happen, etc -->
-                        <a href="{% url 'competitions:competition' competition.access_key %}">{{competition.name}} from {{competition.start_date}} until {{competition.end_date}}</a>
+                        <a href="{% url 'competitions:competition-page' competition.access_key %}">{{competition.name}} from {{competition.start_date}} until {{competition.end_date}}</a>
                     </li>
                 {% endif %}
             {% endfor %}
         </ul>
     </div>
     <div class="tournament-set">
-        <h3>Tournament Set</h3>
+        <h3>Tournaments They've Competed In</h3>
         <ul>
-            <!-- {% for tournament in Tournament.objects.all()%}
-                {% if competition.teams.includes(team.id = team_id) && competition != "ARCHIVED" %}
+            {% for tournament in team.abstracttournament_set %}
+                {% if tournament.status != "ARCHIVED" %}
                     <li>
-                        <a href="{% url 'competitions:competition' competition.access_key %}">{{competition.name}} from {{competition.start_date}} until {{competition.end_date}}</a>
+                        <a href="{% url 'competitions:tournament-page' tournament.id %}">{{tournament.name}}</a>
                     </li>
                 {% endif %}
-            {% endfor %} -->
+            {% endfor %}
         </ul>
+    </div>
+    <div class="match-records">
+        <h3>Match Records: Wins, Losses, and Draws</h3>
+        <div class="row">
+            <h4>Wins</h4>
+            <ul>
+                {% for competition in team.competition_set %}  
+                <li>
+                    
+                </li>
+                {% endfor %}
+                {% for tournament in team.abstracttournament_set %}  
+                <li>
+                    
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="row">
+
+        </div>
+        <div class="row">
+            <h4>Losses</h4>
+            
+        </div>
+        <div class="row">
+            <h4>Draws</h4>
+        </div>
+    </div>
+    <div class="match-schedule">
+        <h3>Match Schedule</h3>
     </div>
     <div class="round-one-matches">
         <h3>Round 1 Matches</h3>
     </div>
-    <div class="match-records">
-        <h3>Match Records: Wins, Losses, and Draws</h3>
-    </div>
-    <!-- I will add other relevant information for the teams based on the other models -->
-    <!-- show organization information adn match schedule -->
 </body>
 </html>
