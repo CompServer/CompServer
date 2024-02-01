@@ -60,3 +60,11 @@ def team_page(team_id):
         team: Team.objects.all().filter(Team.id == team_id), #get a team from the team id passed into the view
     }
     return render("competitions/team-page.html")
+
+
+def comp (request):
+    context = {
+
+    }
+    return render(request, "comp.html", context)
+    
