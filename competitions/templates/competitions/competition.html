@@ -1,0 +1,16 @@
+{% extends "skeleton.html" %}
+{% load i18n %}
+{% comment %} {% load crispy_forms_tags %} {% endcomment %}
+{% block content %}
+    <h1>{% trans "Competition" %}</h1>
+    <hr>
+    {% if competition %}
+        {% trans "Put something here" %}
+    {% else %}
+        <div class="row d-flex">
+            <div class = "col-12">
+                <p>{% trans "This Competition is Archived or Doesn't Exist" %}</p>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

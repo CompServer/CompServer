@@ -1,8 +1,10 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
+from django.http import HttpResponseRedirect
+from django.shortcuts import render, get_object_or_404
 import math
 from .models import *
+from django.urls import reverse
 
 def BracketView(request):
     t = ""
@@ -54,6 +56,13 @@ def competitions(request):
     competition_list = Competition.objects.all()
     context = {"competition_list": competition_list, "Status": Status}
     return render(request, "competitions/competition_hub.html", context)
+
+def competition(request, competition_id):
+    competition = get_object_or_404(Competition, pk=competition_id)
+    if competition.status == Status.ARCHIVED:
+        return HttpResponseRedirect(reverse("competitions:competitions"))
+    context = {"competition": competition}
+    return render(request, "competitions/competition.html", context)
 
 def not_implemented(request, *args, **kwargs):
     messages.error(request, "This feature is not yet implemented.")

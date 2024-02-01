@@ -5,5 +5,5 @@ app_name = "competitions"
 urlpatterns = [
     path("", views.BracketView, name="bracket"),
     path("competitions", views.competitions, name="competitions"),
-    path("competitions/<int:pk>", views.not_implemented, name="competition")
+    path("competitions/<int:competition_id>", views.competition, name="competition")
 ]
