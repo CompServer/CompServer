@@ -63,8 +63,9 @@ def team_page(team_id):
 
 
 def comp (request):
-    context = {
-
-    }
+    
+    context = {"event": ,
+               
+                "name": }
     return render(request, "comp.html", context)
     
