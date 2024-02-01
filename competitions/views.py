@@ -57,14 +57,13 @@ def competitions(request):
     context = {"competition_list": competition_list, "Status": Status}
     return render(request, "competitions/competition_hub.html", context)
 
-def competition(request, competition_id):
-    competition = get_object_or_404(Competition, pk=competition_id)
-    if competition.status == Status.ARCHIVED:
-        return HttpResponseRedirect(reverse("competitions:competitions"))
-    context = {"competition": competition}
-    return render(request, "competitions/competition.html", context)
+
+def team_page(team_id):
+    context = {
+        'team': Team.objects.all().filter(Team.id == team_id), #get a team from the team id passed into the view
+    }
+    return render("competitions/team-page.html")
 
 def not_implemented(request, *args, **kwargs):
     messages.error(request, "This feature is not yet implemented.")
     return render(request, 'skeleton.html')
-
