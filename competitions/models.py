@@ -190,10 +190,12 @@ class SingleEliminationTournament(AbstractTournament):
 #         Everybody plays at least 2 matches
 #         Winner of loser's bracket gets to play for 2nd place?
 #     '''
-#     # interpolated: winner (of the top-level "winner's" bracket)
+#     # interpolated: 1st place (winner of the top-level "winner's" bracket)
+#     # interpolated: 2nd place (winner of the top-level "loser's" bracket)
 
 
 # class MultilevelTournament(AbstractTournament):
+#     # prerequisite: have to have a ranking to begin with
 #     ''' Keep moving down each time you loose
 #         Don't realy know how you determine who you play next when you loose
 #         Assuming the rankings were perfect, this is how it would play out?
@@ -227,7 +229,7 @@ class SingleEliminationTournament(AbstractTournament):
 #             6/7 (0W1L)
 #         3/6
 #     '''
-#     # interpolated: winner (least number of losses?)
+#     # interpolated: full rankings (sequence of wins / losses)
 
 
 # class RoundRobinTournament(AbstractTournament):
@@ -239,7 +241,7 @@ class SingleEliminationTournament(AbstractTournament):
 #     # points_per_tie: 1 for World Cup group round
 #     # points_per_loss: probably always 0
 #     # accumulation: sum of all points (e.g. goals), sum of match points (e.g. 2 for win, 1 for tie, 0 for loss)
-#     # interpolated: rankings (order of points)
+#     # interpolated: rull rankings (order of points)
 
 
 class Match(models.Model):
