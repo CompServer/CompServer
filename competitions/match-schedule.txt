@@ -1,0 +1,89 @@
+class Competition(models.Model):
+    name = models.CharField(max_length=255, blank=True)
+    status = StatusField()
+    start_date = models.DateField()
+    end_date = models.DateField()
+    #? how much flexibility needed as far as shifting events to different days
+    # address_line1 = models.CharField(max_length=255)
+    # address_line2 = models.CharField(max_length=255)
+    # address_line3 = models.CharField(max_length=255)
+    teams = models.ManyToManyField(Team) # registered
+    plenary_judges = models.ManyToManyField(User, blank=True)  # people entrusted to judge this competition as a whole: won't restrict them to a specific event
+    access_key = models.CharField(max_length=ACCESS_KEY_LENGTH, default=get_random_access_key, blank=True, null=True)
+    # For scheduling purposes, we need to be able to specify for this competition how many different (Event-specific) arenas are available and their capacity
+    # related: tournament_set
+
+    def __str__(self) -> str:
+        # dwheadon: check if the name is unique for this year, otherwise add the month/day as well
+        if Competition.objects.filter(name=self.name).count() > 1:
+            if Competition.objects.filter(name=self.name, start_date__year=self.start_date.year).count() > 1:
+                if Competition.objects.filter(name=self.name, start_date__year=self.start_date.year, start_date__month=self.start_date.month).count() > 1:
+                    # if you have two on the same day, good luck
+                    return self.name + " " + str(self.start_date.month)+ " " + str(self.start_date.day) + ", " + str(self.start_date.year) # RoboMed June, 2023
+                else:
+                    return self.name + " " + str(self.start_date.month) + ", " + str(self.start_date.year) # RoboMed June, 2023
+            else:
+                return self.name + " " + str(self.start_date.year) # RoboMed 2023
+        else:
+            return self.name
+
+    class Meta:
+        ordering = ['-start_date', 'name']
+        unique_together = ['start_date', 'name'] # probably won't have 2 in the same year but you could have a quarterly / monthly / even weekly competition
+
+
+
+
+class AbstractTournament(models.Model):
+    status = StatusField()
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="tournament_set") # besides helpfing to identify this tournament this will change how teams advance (high or low score)
+    competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name="tournament_set")
+    points = models.DecimalField(max_digits=20, decimal_places=10) # for winner # dwheadon: is 10 digits / decimals enough / too much?
+    # interpolate_points = models.BooleanField(default=False) # otherwise winner takes all: RoboMed doesn't need this but it could be generally useful
+    teams = models.ManyToManyField(Team, related_name="tournament_set")
+    judges = models.ManyToManyField(User, blank=True, related_name="tournament_set")  # people entrusted to judge this tournament alone (as opposed to plenary judges)
+    # These Event-related things might depend on the competition: speed race with 1 v 1 at this competition but speed race with 4 v 4 at another (both are the same event)
+    # max_teams_per_match = models.SmallIntegerField(default=2)
+    # max_teams_to_advance = models.SmallIntegerField(default=1)
+    # teams_to_advance_rounds_up = models.BooleanField() # in a 4max/2adv situation if a match only has enough for say 3 competitors, do we advance two (round up) or 1 (round down)
+    # tied_teams_all_advance = models.BooleanField()
+    # dwheadon: what about tie_breakers? should we have a field for that?
+    # related: match_set, ranking_set
+
+    def __str__(self) -> str:
+        return self.event.name + _(" tournament @ ") + str(self.competition) # SumoBot tournament at RoboMed 2023
+        
+    class Meta:
+        ordering = ['competition', 'event']
+
+class Match(models.Model):
+    ''' Could be a one-off preliminary match or part of a larger tournament '''
+    tournament = models.ForeignKey(AbstractTournament, models.CASCADE, blank=True, null=True)
+    # Note: admin doesn't enforce the starting teams to be registered for this tournament
+    starting_teams = models.ManyToManyField(Team, related_name="round1_matches", blank=True) # Only used for round1 matches, all others use the previous matches. Usually just 2 but could be more (speed race)
+    # Note: admin doesn't restrict to previous matches from this tournament
+    prev_matches = models.ManyToManyField('self', blank=True) # Except for round1 of a tournament (or one-off preliminary matches), advancers from the previous matches will be the competitors for this match
+    # Note: admin doesn't restrict advancers to be competitors for this match
+    advancers = models.ManyToManyField(Team, related_name="won_matches", blank=True) # usually 1 but could be more (e.g. time trials)
+    time = models.DateTimeField() # that it's scheduled for
+
+    def __str__(self) -> str:
+        if self.starting_teams.exists():
+            competitors = [team.name for team in self.starting_teams.all()]
+        else:
+            teams = Team.objects.filter(won_matches__in=self.prev_matches.all())
+            competitors = [team.name for team in teams]
+        return _(" vs ").join(competitors) + _(" in ") + str(self.tournament) # Battlebots vs Byters in SumoBot tournament @ RoboMed 2023
+
+    class Meta:
+        ordering = ['tournament']
+        verbose_name_plural = _('Matches')
+
+
+Making a match schedule:
+    for 
+    and this is for each tournament in a competition so i also have to consider the entire competiion
+    check through tournaments and find all tournaments that are present (the end date is for today and in the future)
+    check through status of tournaments because it should be open (ongoing matches), closed (in any case show the match schedule)
+        but not archived which shouldn't be shown and if it is still being setup then also don't show
+    if all of the above is true: get the tournament name 
