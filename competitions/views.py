@@ -54,15 +54,22 @@ def BracketView(request):
 
 def competitions(request):
     competition_list = Competition.objects.all()
-    context = {"competition_list": competition_list, "Status": Status}
+    context = {"competition_list": competition_list, "Status": Status, "redirect_to": request.path}
     return render(request, "competitions/competition_hub.html", context)
 
+def competition(request, competition_id):
+    competition = get_object_or_404(Competition, pk=competition_id)
+    if competition.status == Status.ARCHIVED:
+        return HttpResponseRedirect(reverse("competitions:competitions"))
+    context = {"competition": competition, "redirect_to": request.path}
+    return render(request, "competitions/competition.html", context)
 
-def team_page(team_id):
+def team_page(request, team_id):
+    team = get_object_or_404(Team, pk=team_id)
     context = {
-        'team': Team.objects.all().filter(Team.id == team_id), #get a team from the team id passed into the view
+        'team': team, #get a team from the team id passed into the view
     }
-    return render("competitions/team-page.html")
+    return render(request, "competitions/team-page.html", context)
 
 def not_implemented(request, *args, **kwargs):
     messages.error(request, "This feature is not yet implemented.")
