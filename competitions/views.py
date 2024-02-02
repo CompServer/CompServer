@@ -6,6 +6,7 @@ import math
 from .models import *
 from django.urls import reverse
 
+
 def BracketView(request):
     t = ""
 
@@ -52,6 +53,14 @@ def BracketView(request):
     return render(request, "competitions/bracket.html", context)
 
 
+def tournament(request, tournament_id):
+    return render(request, "competitions/tournament.html")
+
+
+def tournaments(request):
+    return render(request, "competitions/tournaments.html")
+
+
 def competitions(request):
     competition_list = Competition.objects.all()
     context = {"competition_list": competition_list, "Status": Status, "redirect_to": request.path}
@@ -64,13 +73,19 @@ def competition(request, competition_id):
     context = {"competition": competition, "redirect_to": request.path}
     return render(request, "competitions/competition.html", context)
 
-def team_page(request, team_id):
+def team(request, team_id):
     team = get_object_or_404(Team, pk=team_id)
-    context = {
-        'team': team, #get a team from the team id passed into the view
-    }
-    return render(request, "competitions/team-page.html", context)
+    context = {'team': team}
+    return render(request, "competitions/team.html", context)
+
 
 def not_implemented(request, *args, **kwargs):
     messages.error(request, "This feature is not yet implemented.")
     return render(request, 'skeleton.html')
+
+
+def competition(request, competition_id):
+    context = {
+        'competition': Competition.objects.get(id=competition_id)
+    }
+    return render(request, "competitions/competition.html", context)

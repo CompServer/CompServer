@@ -1,16 +1,43 @@
-{% extends "skeleton.html" %}
+{% extends 'skeleton.html' %}
 {% load i18n %}
-{% comment %} {% load crispy_forms_tags %} {% endcomment %}
 {% block content %}
-    <h1>{% trans "Competition" %}</h1>
-    <hr>
-    {% if competition %}
-        Put smth here
-    {% else %}
+    <header>
+        <h1>{{competition}}</h1>
+    </header>
+    <h3>Competing Teams</h3>
+    {% for team in competition.teams.all %}
         <div class="row d-flex">
             <div class = "col-12">
-                <p>{% trans "This Competition is Archived or Doesn't Exist" %}</p>
+                <a href="{% url 'competitions:team' team.id %}">{{ team }}</a>
             </div>
         </div>
+    {% endfor %}
+    <h3>Tournaments</h3>
+    {% if competition.tournament_set.all %}
+        {% for tournament in competition.tournament_set.all %}
+            {% if tournament.status == Status.ARCHIVED %}
+                <div class="row d-flex">
+                    <div class = "col-12">
+                        <p>{{ tournament }} ({% trans "ARCHIVED" %})</p>
+                    </div>
+                </div>
+            {% elif tournament.status == Status.SETUP %}
+                <div class="row d-flex">
+                    <div class = "col-12">
+                        <p>{{ tournament }} ({% trans "SETUP" %})</p>
+                    </div>
+                </div>
+            {% elif tournament.status == Status.COMPLETE %}
+                do something here
+            {% else %}
+                <div class="row d-flex">
+                    <div class = "col-12">
+                        <p><a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a>({{ tournament.status }})</p>
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}     
+    {% else %}
+        <p>No Tournaments Yet</p>
     {% endif %}
 {% endblock %}

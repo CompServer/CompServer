@@ -98,10 +98,20 @@ class Competition(models.Model):
     access_key = models.CharField(max_length=ACCESS_KEY_LENGTH, default=get_random_access_key, blank=True, null=True)
     # For scheduling purposes, we need to be able to specify for this competition how many different (Event-specific) arenas are available and their capacity
     # related: tournament_set
-
+    
     def __str__(self) -> str:
         # dwheadon: check if the name is unique for this year, otherwise add the month/day as well
-        return self.name + " " + str(self.start_date.year) # RoboMed 2023
+        if Competition.objects.filter(name=self.name).count() > 1:
+            if Competition.objects.filter(name=self.name, start_date__year=self.start_date.year).count() > 1:
+                if Competition.objects.filter(name=self.name, start_date__year=self.start_date.year, start_date__month=self.start_date.month).count() > 1:
+                    # if you have two on the same day, good luck
+                    return self.name + " " + str(self.start_date.month)+ " " + str(self.start_date.day) + ", " + str(self.start_date.year) # RoboMed June, 2023
+                else:
+                    return self.name + " " + str(self.start_date.month) + ", " + str(self.start_date.year) # RoboMed June, 2023
+            else:
+                return self.name + " " + str(self.start_date.year) # RoboMed 2023
+        else:
+            return self.name
 
     class Meta:
         ordering = ['-start_date', 'name']
