@@ -9,7 +9,7 @@
             {% if competition.status != Status.ARCHIVED %}
                 <div class="row d-flex">
                     <div class = "col-12">
-                        <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
+                        <p><a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a> ({{ competition.status }})</p>
                     </div>
                 </div>
             {% else %}

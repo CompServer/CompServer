@@ -55,7 +55,7 @@ def BracketView(request):
 def competitions(request):
     competition_list = Competition.objects.all()
     context = {"competition_list": competition_list, "Status": Status, "redirect_to": request.path}
-    return render(request, "competitions/competition_hub.html", context)
+    return render(request, "competitions/competitions.html", context)
 
 def competition(request, competition_id):
     competition = get_object_or_404(Competition, pk=competition_id)
