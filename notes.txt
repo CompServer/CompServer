@@ -78,3 +78,24 @@ Product Owner (jschwartz) Presentation Notes
 - Each judge is dedicated to a specific arena / event 
 - Speed race could be 1 v 1
 - 20 sportsmanship points that get taken away (penalties)
+
+
+jmulligan:
+Did some research on HTMX using this turorial: https://www.mattlayman.com/blog/2021/how-to-htmx-django/
+This allows us to delete tasks on the test project without needing to go to a seperate page, not exactly what we want.
+
+I found a better example on this GH repo: https://github.com/adamchainz/django-htmx/tree/main/example
+
+I cloned this and ran it and it does the following:
+
+There is a paginator page which has a list of people that you can click next to go to the next 10 people.
+When you click that button, rather than the entire page being reloaded, only part of the page reloads, the 10 people in the list. 
+This again isn't really what we want, as far as dynamically updating results, but there is an alternate solution.
+
+We could use this on a match results page or whatever else.
+
+I see 2 ways of doing this:
+    We could have a button below the bracket or results that says "refresh" and when you click it, it will refresh the bracket (not the whole page)
+    Or, we can have some JS do what the refresh button would do at a specified interval (every 5 seconds or whatever)
+
+Either way it is relitively easy to implement (although you may need to do some JS for the 2nd option)
