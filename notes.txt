@@ -78,3 +78,5 @@ Product Owner (jschwartz) Presentation Notes
 - Each judge is dedicated to a specific arena / event 
 - Speed race could be 1 v 1
 - 20 sportsmanship points that get taken away (penalties)
+
+<!-- shared document with everyone on how roundrobin works -->
