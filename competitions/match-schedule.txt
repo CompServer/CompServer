@@ -21,6 +21,4 @@ Making a match schedule:
             we should list every team particpating and our team
             im not sure if we progress or not but just do the above
     the end of the events should list these stats with points
-    then for the entire competition:
-        you could consider the results of all of the above for winners??
-    list stats for all of the above (tournament, event, competition, and match)
+a competition has a tournament. ^^^

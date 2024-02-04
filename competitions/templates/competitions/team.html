@@ -21,22 +21,53 @@
         <p>ORGANIZATION LOGO HERE</p>
     </div>
     <div class="match-schedule">
-        <h3>Current Match Schedule</h3> this should be plural if there are multiple match schedules
-        all incomplete matches ordered by time...
-        {% for %}
+        <!-- have to pluralize schedules if there are multiple -->
+        <h3>Current Match Schedule</h3>
+        <!-- have to figure out time ordering for matches -->
+        {% for competition in team.competition_set.all %}
+            {% if competition.check_date && competition.status != "ARCHIVED" && competition.status != "COMPLETE" && competition.status != "SETUP" %}
+                {% for tournament in competition.tournament_set.all %}
+                    <div class="row">
+                        <h4>{{ competition.name }}, {{ tournament.name }}, {{ competition.start_date }} - Now </h4>
+                        <!-- applying extraneous situations for events (i.e. there is one event, or the event hasn't been named???) -->
+                        <h4>Your Events</h4>
+                        {% for event in tournament.event_set.all %}
+                            <div class="column">
+                                {{ event.name }}
+                            </div>
+                            <div class="column">
+                                <p>Bracket of {{event.match.team_set.count}}</p>
+                                {% for number in event.match.team_set.count*2 - 2 %}
+                                    {% if event.match.starting_teams.includes(team)%}
+                                        <!-- should check the minimum for the best ranked teams -->
+                                        {% if event.match.starting_teams.exclude(team).ranking_set.includes(1) || if event.match.starting_teams.exclude(team).ranking_set.includes(2) %}    
+                                            <p>Bracket {{number}}: {{team.name}} vs {{event.match.advancers.get(1).name}}</p>
+                                        {% if team.ranking_set.includes(1) || if team.ranking_set.includes(2) %}
+                                            <p>Bracket {{number}}: {{event.match.starting_teams.exclude(team).get(1).name}} vs {{team.name}}</p>
+                                        {% else %}
+                                            <p>Bracket {{number}}: {{event.match.randomize}}</p>
+                                        {% endif %}
+                                            <!-- should filter through all matches and make sure it is counting up the matches continuosuly -->
+                                    {% else %}
+                                        <!-- if our team isn't starting -->
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            {% endif %}
+            {% else competition.check_date && competition.status == "CLOSED" %}
+                <!-- if the events are closed for judging but we want to see what we competed in before results are posted (or the status becomes complete) -->
+            {% endif %}
+        {% endfor %}
     </div> 
     <div class="competition-set">
-        <h3>Completed Competitions</h3>
+        <h3>Previous Competitions</h3>
         <ul>
             {% for competition in team.competition_set.all %}
                 {% if competition.status == "COMPLETE" %}
-                    separate the content into a scrollable list
-                    <h4><a href="{% url 'competitions:competition' competition.id %}">{{competition}}</a></h2>
-                    <h5>Team Achievements</h5>
-                        all events won and details of the tournament and poitns won
-                    <li>
-                        
-                    </li>
+                    <li><a href="{% url 'competitions:competition' competition.id %}">{{ competition.name }}, Competed In: {{ competition.event_set.all.name }}</a></li>
                 {% endif %}
             {% endfor %}
         </ul>
@@ -45,9 +76,9 @@
         <h3>Tournaments Won</h3>
         <ul>
             {% for tournament in team.tournament_set.all %}
-                {% if tournament.status != "ARCHIVED" %}
+                {% if tournament.status == "COMPLETE" && tournament.team.ranking.rank == 1 %}
                     <li>
-                        <a href="{% url 'competitions:tournament' tournament.id %}">{{tournament}}</a>
+                        <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.name }}</a>
                     </li>
                 {% endif %}
             {% endfor %}
@@ -56,19 +87,30 @@
     <div class="match-records">
         <h3>Match History</h3>
         <div class="row">
-            <h4>Wins</h4>
+            <!-- this isn't a field in matches, but i think each match should have a winner team or the winning teams, and the points awarded so we can tell if it's a draw -->
+            <h4>Wins Against Other Teams</h4>
             <ul>
                 {% for match in team.won_matches.all %}  
-                <li><a href="">link here...</a></li>
+                <!-- i think a match should have an event if that makes sense and maybe list those players from the team -->
+                    <li>Tournament: <a {% url 'competitions:tournament' match.tournament.id %}>{{ match.tournament.name }}</a>, Event: {{ match.event.name }}, Players: {{ match.event.player_set.first_name }}, Score: {{ match.awarded_points }}, Rank Against Other Teams: {{ Team.objects.all.filter(match_id = match.id).ranking.rank}}/{{ match.total_teams.count }}</li>
                 {% endfor %}
             </ul>
         </div>
         <div class="row">
-            <h4>Losses</h4>
-            
+            <h4>Losses Against Other Teams</h4>
+            <ul>
+                {% for match in team.lost_matches.all %}  
+                    <li>Tournament: <a {% url 'competitions:tournament' match.tournament.id %}>{{ match.tournament.name }}</a>, Event: {{ match.event.name }}, Players: {{ match.event.player_set.first_name }}, Score: {{ match.awarded_points }},Rank Against Other Teams: {{ Team.objects.all.filter(match_id = match.id).ranking.rank}}/{{ match.total_teams.count }}</li>
+                {% endfor %}
+            </ul>
         </div>
         <div class="row">
-            <h4>Draws</h4>
+            <h4>Draws With Other Teams</h4>
+            <ul>
+                {% for match in team.lost_matches.all %}  
+                    <li>Tournament: <a {% url 'competitions:tournament' match.tournament.id %}>{{ match.tournament.name }}</a>, Event: {{ match.event.name }}, Players: {{ match.event.player_set.first_name }}, Score: {{ match.awarded_points }},Rank Against Other Teams: {{ Team.objects.all.filter(match_id = match.id).ranking.rank}}/{{ match.total_teams.count }}</li>
+                {% endfor %}
+            </ul>
         </div>
     </div>
 </body>

@@ -4,6 +4,7 @@ from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User
 from django.dispatch import receiver
+from datetime import datetime
 import random
 import string
 
@@ -98,6 +99,10 @@ class Competition(models.Model):
     access_key = models.CharField(max_length=ACCESS_KEY_LENGTH, default=get_random_access_key, blank=True, null=True)
     # For scheduling purposes, we need to be able to specify for this competition how many different (Event-specific) arenas are available and their capacity
     # related: tournament_set
+
+    #def check_date()
+    #checks if the competition has ended (true)
+    #checks if the competition hasn't ended (false)
 
     def __str__(self) -> str:
         # dwheadon: check if the name is unique for this year, otherwise add the month/day as well
