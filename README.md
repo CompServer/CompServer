@@ -6,5 +6,5 @@ RoboComp was developed as a final project in the Web Application Frameworks (202
 - Olivia Adams
 - Harry Feng
 - Nana Abena Gyang-Akoto
-- John Casey Mulligan
+- [John Mulligan](https://github.com/Outlandish0191)
 - Matthew Riggle

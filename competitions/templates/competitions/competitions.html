@@ -1,0 +1,30 @@
+{% extends "skeleton.html" %}
+{% load i18n %}
+{% comment %} {% load crispy_forms_tags %} {% endcomment %}
+{% block content %}
+    <h1>{% trans "Competitions" %}</h1>
+    <hr>
+    {% if competition_list %}
+        {% for competition in competition_list %}
+            {% if competition.status != Status.ARCHIVED %}
+                <div class="row d-flex">
+                    <div class = "col-12">
+                        <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
+                    </div>
+                </div>
+            {% else %}
+                <div class="row d-flex">
+                    <div class = "col-12">
+                        <p>{% trans "This Competition is Archived" %}</p>
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+    {% else %}
+    <div class="row d-flex">
+        <div class = "col-12">
+            <p>{% trans "No Competitions Yet" %}</p>
+        </div>
+    </div>
+    {% endif %}
+{% endblock %}

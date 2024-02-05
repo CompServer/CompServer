@@ -1,0 +1,13 @@
+{% extends "skeleton.html" %}
+{% load static %}
+
+{% block title %} Judge Match form{% endblock %}
+
+{% block content %}
+    <h1>Judge a Match</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Judge</button>
+    </form>
+{% endblock %}
