@@ -10,6 +10,111 @@ https://www.aropupu.fi/group/
 https://htmx.org/
     For live updates
 
+Questions
+Do we need to handle / show penalties?
+
+Scenarios (in order of rank ABCD...)
+max4adv1
+    ACE
+        AB
+    BDF
+    Instead of
+    ACEF
+        AB
+    BD (this group has an unfair advantage)
+max4adv2
+    ACEG
+        ACB
+    BDF
+    Or maybe rather
+    ACEG
+        ACBD
+    BDF
+    Both are valid: the organizer could want either (how to let them choose?)
+Version 1
+Only handle 1v1 single-elimination tournament
+Create Schools and Teams through the Django admin interface
+Setup a tournament:
+    Enter number of teams (force it to be a power of two: no bye's)
+    Add teams: the order you add them determines the seeding
+    Generate matches
+Run a tournament:
+    Visually show the bracket (with jQuery Bracket-like visualization)
+    Judge (only) clicking on a match -> score entering page (could be admin for the Match initially)
+    Judge (only) enters who advanced for the Match
+    Viewers refresh bracket (manually) to show who advanced
+    
+Version 2
+
+
+Use HTMX to poll to refresh the bracket like https://www.youtube.com/watch?v=QsGZ9361hlU
+
+
+Common language
+- Organization (vs School)
+- Competition (RoboMed 2024) vs Tournament (Sumo SET)
+- Event (Sumo)
+- Match (one encounter 1v1 or 4v4)
+
+Questions
+- What do you hope to get from the project
+    - why the current solution is bad / hard
+        - making sure every team has the same # matches in prelim rounds, not in same place at the same time and not competing against the same team twice (across multiple events)
+        - don't miss any matches (recording win / loss)
+    - what are some cool things you think it could provide
+        - unique ID for match to make the scorekeeper's job easier
+- Are statuses currently sufficient?
+- Penalties?
+- Sensitivities of data (probably no student names but what about coaches)
+- Ever any need to give variable points (not just win / loss)
+- Specific time for matches?
+
+
+Product Owner (jschwartz) Presentation Notes
+- Preliminary rounds determine the seeding of the tournament
+- Each event is worth the same # points (different points per match event)
+- As much wait time between matches as possible (evenly spread out): avoid back to back matches
+- 4 points for winning the SET 
+- Each judge is dedicated to a specific arena / event 
+- Speed race could be 1 v 1
+- 20 sportsmanship points that get taken away (penalties)
+
+
+jmulligan:
+Did some research on HTMX using this turorial: https://www.mattlayman.com/blog/2021/how-to-htmx-django/
+This allows us to delete tasks on the test project without needing to go to a seperate page, not exactly what we want.
+
+I found a better example on this GH repo: https://github.com/adamchainz/django-htmx/tree/main/example
+
+I cloned this and ran it and it does the following:
+
+There is a paginator page which has a list of people that you can click next to go to the next 10 people.
+When you click that button, rather than the entire page being reloaded, only part of the page reloads, the 10 people in the list. 
+This again isn't really what we want, as far as dynamically updating results, but there is an alternate solution.
+
+We could use this on a match results page or whatever else.
+
+I see 2 ways of doing this:
+    We could have a button below the bracket or results that says "refresh" and when you click it, it will refresh the bracket (not the whole page)
+    Or, we can have some JS do what the refresh button would do at a specified interval (every 5 seconds or whatever)
+
+Either way it is relitively easy to implement (although you may need to do some JS for the 2nd option)
+
+For monday:
+
+I source dived though the repository linked earlier and learned more about how it works. 
+It basicalPrior work
+https://github.com/kevinharvey/django-tourney
+https://github.com/psgoral/Django-Tournament-Creator
+
+Useful libraries
+https://www.aropupu.fi/bracket/
+    Probably not worth hacking to handle 3 or more teams for a single match
+    HTML / CSS it generates can be used as a model
+https://www.aropupu.fi/group/
+https://htmx.org/
+    For live updates
+
 Scenarios (in order of rank ABCD...)
 max4adv1
     ACE
