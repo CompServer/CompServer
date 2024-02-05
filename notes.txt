@@ -99,3 +99,8 @@ I see 2 ways of doing this:
     Or, we can have some JS do what the refresh button would do at a specified interval (every 5 seconds or whatever)
 
 Either way it is relitively easy to implement (although you may need to do some JS for the 2nd option)
+
+For monday:
+
+I source dived though the repository linked earlier and learned more about how it works. 
+It basically refreshes the page, but only the part that is changing, and it is so instantanious it just looks like it was "dynamically updated". We can set this up with a rest api and a certain endpoint that just returns HTML.
