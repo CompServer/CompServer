@@ -71,13 +71,13 @@ class Organization(models.Model): # probably mostly schools but could also be co
 
 class Team(models.Model):
     name = models.CharField(max_length=255)
-    organization = models.ForeignKey(Organization, models.CASCADE)
-    coach = models.ForeignKey(User, on_delete=models.CASCADE)  # with special permissions to change info WRT the team
+    organization = models.ForeignKey(Organization, blank=True, null=True, on_delete=models.CASCADE)
+    coach = models.ForeignKey(User, blank=True, null=True, on_delete=models.CASCADE)  # with special permissions to change info WRT the team
     # logo = models.ImageField()
     # related: competition_set, tournament_set, round1_matches, won_matches
 
     def __str__(self) -> str:
-        return self.name + _(" from ") + str(self.organization)
+        return self.name + (_(" from ") + str(self.organization) if self.organization else "")
     
     class Meta:
         ordering = ['organization', 'name']
@@ -266,11 +266,12 @@ class Match(models.Model):
     time = models.DateTimeField() # that it's scheduled for
 
     def __str__(self) -> str:
+        competitors = []
+        prior_match_advancing_teams = Team.objects.filter(won_matches__in=self.prev_matches.all())
         if self.starting_teams.exists():
-            competitors = [team.name for team in self.starting_teams.all()]
-        else:
-            teams = Team.objects.filter(won_matches__in=self.prev_matches.all())
-            competitors = [team.name for team in teams]
+            competitors += [team.name for team in self.starting_teams.all()]
+        if prior_match_advancing_teams:
+            competitors += [team.name for team in prior_match_advancing_teams]
         return _(" vs ").join(competitors) + _(" in ") + str(self.tournament) # Battlebots vs Byters in SumoBot tournament @ RoboMed 2023
 
     class Meta:
