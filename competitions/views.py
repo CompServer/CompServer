@@ -6,8 +6,6 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.views.generic.edit import UpdateView
 from django.contrib.auth.mixins import AccessMixin, UserPassesTestMixin
-from .models import AbstractTournament, Competition, Match
-
 from .models import *
 
 def generate_seed_array(round_num):
@@ -25,18 +23,22 @@ def generate_seed_array(round_num):
     return [T(round_num+1, k) for k in range(1, 2**(round_num) + 1)]
 
 
-def BracketView(request, bracket_id):
+def BracketView(request, tournament_id):
+    bracket = AbstractTournament.objects.get(pk=tournament_id)
+    rankings = list(Ranking.objects.filter(tournament=tournament_id).order_by('rank'))
+    bracket_dict = {}
+
     t = ""
 
-    numTeams = 32
+    numTeams = len(rankings)/2
     numRounds = math.ceil(math.log(numTeams, 2))
 
     seed_array = generate_seed_array(numRounds)
 
-    roundWidth = 175
-    connectorWidth = 50
+    bracket_dict["roundWidth"] = 175
+    bracket_dict["connectorWidth"] = 50
     bracketWidth = (roundWidth+connectorWidth)*numRounds
-    bracketHeight = numTeams/0.02
+    bracketHeight = numTeams*50
     roundHeight = bracketHeight
 
     t += f'<div class="bracket" style="height: {bracketHeight}px; width: {bracketWidth}px;">'    
@@ -59,7 +61,7 @@ def BracketView(request, bracket_id):
             t += f'<div class="center" style="height: {centerHeight}px; padding-top: {topPadding}px">'
 
             for k in range(0,numTeams):
-                t += f'<div class="team" style="width: {matchWidth}px;">{f"Seed {seed_array[2*j + k]}" if i == 0 else "TBD"}</div>'
+                t += f'<div class="team" style="width: {matchWidth}px;">{rankings[seed_array[2*j + k]].team if i == 0 else "TBD"}</div>'
             
             t += f'</div></div>'
         t += '</div>'
