@@ -5,7 +5,7 @@ from django.shortcuts import render, get_object_or_404
 import math
 from .models import *
 from django.urls import reverse
-
+from django.contrib.auth.models import User
 
 def BracketView(request):
     t = ""
@@ -64,11 +64,13 @@ def tournaments(request):
 def competitions(request):
     competition_list = Competition.objects.all()
     context = {"competition_list": competition_list, "Status": Status, "redirect_to": request.path}
+    if request.user.is_staff:
+        context = {"competition_list": competition_list, "Status": Status, "redirect_to": request.path, "user": request.user}
     return render(request, "competitions/competitions.html", context)
 
 def competition(request, competition_id):
     competition = get_object_or_404(Competition, pk=competition_id)
-    if competition.status == Status.ARCHIVED:
+    if competition.status == Status.ARCHIVED or competition.status == Status.SETUP:
         return HttpResponseRedirect(reverse("competitions:competitions"))
     context = {"competition": competition, "redirect_to": request.path}
     return render(request, "competitions/competition.html", context)

@@ -1,11 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Team Page</title>
-</head>
-<body>
+{% extends 'skeleton.html' %}
+{% load i18n %}
+{% block content %}
     <header>
         <h1>Team: {{ team }}</h1>
         <!-- this adds the team name and organization name -->
@@ -39,10 +34,26 @@
         <h3>Tournaments Won</h3>
         <ul>
             {% for tournament in team.tournament_set.all %}
-                {% if tournament.status != "ARCHIVED" %}
-                    <li>
-                        <a href="{% url 'competitions:tournament' tournament.id %}">{{tournament}}</a>
-                    </li>
+                {% if tournament.status == Status.ARCHIVED %}
+                    <div class="row d-flex">
+                        <div class = "col-12">
+                            <p>{{ tournament }} ({% trans "ARCHIVED" %})</p>
+                        </div>
+                    </div>
+                {% elif tournament.status == Status.SETUP %}
+                    <div class="row d-flex">
+                        <div class = "col-12">
+                            <p>{{ tournament }} ({% trans "SETUP" %})</p>
+                        </div>
+                    </div>
+                {% elif tournament.status == Status.COMPLETE %}
+                    do something here
+                {% else %}
+                    <div class="row d-flex">
+                        <div class = "col-12">
+                            <p><a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a>({{ tournament.status }})</p>
+                        </div>
+                    </div>
                 {% endif %}
             {% endfor %}
         </ul>
@@ -53,7 +64,7 @@
             <h4>Wins</h4>
             <ul>
                 {% for match in team.won_matches.all %}  
-                <li><a href="">link here...</a></li>
+                    <li><a href="">{{ match }}</a></li>
                 {% endfor %}
             </ul>
         </div>
@@ -65,5 +76,4 @@
             <h4>Draws</h4>
         </div>
     </div>
-</body>
-</html>
+{% endblock %}
