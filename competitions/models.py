@@ -269,9 +269,9 @@ class Match(models.Model):
         competitors = []
         prior_match_advancing_teams = Team.objects.filter(won_matches__in=self.prev_matches.all())
         if self.starting_teams.exists():
-            competitors += [team.name for team in self.starting_teams.all()]
+            competitors += [(("[" + team.name + "]") if team in self.advancers.all() else team.name) for team in self.starting_teams.all()]
         if prior_match_advancing_teams:
-            competitors += [team.name for team in prior_match_advancing_teams]
+            competitors += [(("[" + team.name + "]") if team in self.advancers.all() else team.name) for team in prior_match_advancing_teams]
         return _(" vs ").join(competitors) + _(" in ") + str(self.tournament) # Battlebots vs Byters in SumoBot tournament @ RoboMed 2023
 
     class Meta:
