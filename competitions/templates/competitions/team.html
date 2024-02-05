@@ -17,44 +17,30 @@
             <p>ORGANIZATION LOGO HERE</p>
         </div>
         <div class="match-schedule">
-            <!-- have to pluralize schedules if there are multiple -->
-            <h3>Current Match Schedule</h3>
-            <!-- have to figure out time ordering for matches -->
+            <h3>Match Schedules</h3>
             {% for competition in team.competition_set.all %}
                 {% if competition.check_date && competition.status != "ARCHIVED" && competition.status != "COMPLETE" && competition.status != "SETUP" %}
                     {% for tournament in competition.tournament_set.all %}
                         <div class="row">
-                            <h4>{{ competition.name }}, {{ tournament.name }}, {{ competition.start_date }} - Now </h4>
-                            <!-- applying extraneous situations for events (i.e. there is one event, or the event hasn't been named???) -->
-                            <h4>Your Events</h4>
+                            <h4>{{ competition.name }}, {{ tournament.name }}, {{ competition.start_date }} - {{ competition.end_date }} </h4>
+                            <h5>Your Events</h5>
                             {% for event in tournament.event_set.all %}
                                 <div class="column">
-                                    {{ event.name }}
+                                    <p>{{ event.name }}</p>
                                 </div>
                                 <div class="column">
-                                    <p>Bracket of {{event.match.team_set.count}}</p>
-                                    {% for number in event.match.team_set.count*2 - 2 %}
-                                        {% if event.match.starting_teams.includes(team)%}
-                                            <!-- should check the minimum for the best ranked teams -->
-                                            {% if event.match.starting_teams.exclude(team).ranking_set.includes(1) || if event.match.starting_teams.exclude(team).ranking_set.includes(2) %}    
-                                                <p>Bracket {{number}}: {{team.name}} vs {{event.match.advancers.get(1).name}}</p>
-                                            {% if team.ranking_set.includes(1) || if team.ranking_set.includes(2) %}
-                                                <p>Bracket {{number}}: {{event.match.starting_teams.exclude(team).get(1).name}} vs {{team.name}}</p>
-                                            {% else %}
-                                                <p>Bracket {{number}}: {{event.match.randomize}}</p>
-                                            {% endif %}
-                                                <!-- should filter through all matches and make sure it is counting up the matches continuosuly -->
-                                        {% else %}
-                                            <!-- if our team isn't starting -->
+                                    {% for match in event.match_set.all %}
+                                        <p>Match {{ match.id }}: Between {{ match }} , Begins At {{ match.time }}</p>
+                                        {% if match.advancers.all %}
+                                            <p>Advancers: {{ match.advancers.all }}</p>
                                         {% endif %}
                                     {% endfor %}
                                 </div>
                             {% endfor %}
                         </div>
                     {% endfor %}
-                {% endif %}
-                {% else competition.check_date && competition.status == "CLOSED" %}
-                    <!-- if the events are closed for judging but we want to see what we competed in before results are posted (or the status becomes complete) -->
+                {% else %}
+                    <p>No matches scheduled for this team yet!</p>
                 {% endif %}
             {% endfor %}
         </div> 
