@@ -10,4 +10,5 @@ urlpatterns = [
     path("tournament/", views.tournaments, name="tournaments"),
     path("tournament/<int:tournament_id>/", views.tournament, name="tournament"),
     # path("coach/<int:coach_id>/", views.coach, name="coach-page"),
+    path('match/<int:pk>/judge/', views.JudgeMatchUpdateView.as_view(), name='judge_match'),
 ]
