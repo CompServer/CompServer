@@ -10,9 +10,6 @@ https://www.aropupu.fi/group/
 https://htmx.org/
     For live updates
 
-Questions
-Do we need to handle / show penalties?
-
 Scenarios (in order of rank ABCD...)
 max4adv1
     ACE
@@ -52,25 +49,18 @@ Use HTMX to poll to refresh the bracket like https://www.youtube.com/watch?v=QsG
 
 Common language
 - Organization (vs School)
-- Competition (RoboMed 2024) vs Tournament (Sumo SET)
-- Event (Sumo)
+- Competition (RoboMed 2024) vs Tournament (Sumo SET) vs Event (Sumo)
 - Match (one encounter 1v1 or 4v4)
 
 Questions
-- What do you hope to get from the project
-    - why the current solution is bad / hard
-        - making sure every team has the same # matches in prelim rounds, not in same place at the same time and not competing against the same team twice (across multiple events)
-        - don't miss any matches (recording win / loss)
-    - what are some cool things you think it could provide
-        - unique ID for match to make the scorekeeper's job easier
-- Are statuses currently sufficient?
-- Penalties?
-- Sensitivities of data (probably no student names but what about coaches)
-- Ever any need to give variable points (not just win / loss)
-- Specific time for matches?
-
+- 
 
 Product Owner (jschwartz) Presentation Notes
+- Why the current solution is bad / hard
+    - making sure every team has the same # matches in prelim rounds, not in same place at the same time and not competing against the same team twice (across multiple events)
+    - don't miss any matches (recording win / loss)
+- What are some cool things you think it could provide
+    - unique ID / QR code for match to make the scorekeeper's job easier
 - Preliminary rounds determine the seeding of the tournament
 - Each event is worth the same # points (different points per match event)
 - As much wait time between matches as possible (evenly spread out): avoid back to back matches
@@ -78,6 +68,7 @@ Product Owner (jschwartz) Presentation Notes
 - Each judge is dedicated to a specific arena / event 
 - Speed race could be 1 v 1
 - 20 sportsmanship points that get taken away (penalties)
+- We can estimate times for a match but it depends on how streamlined the setup is (may be different for different venues, hosts)
 
 
 jmulligan:
