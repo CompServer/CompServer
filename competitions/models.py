@@ -46,6 +46,17 @@ class Status(models.TextChoices):
     def max_length(cls):
         lengths = [len(member.value) for member in cls]
         return max(lengths)
+    
+    @property
+    def is_viewable(self) -> bool:
+        """Whether the object should show up on the website."""
+        return self in [__class__.OPEN, __class__.COMPLETE, __class__.CLOSED]
+
+    @property
+    def is_judgable(self) -> bool:
+        """Whether judging for this comptetation should be allowed."""
+        return self == __class__.OPEN
+    
 
 
 class StatusField(models.CharField):
@@ -112,15 +123,7 @@ class Competition(models.Model):
                 return self.name + " " + str(self.start_date.year) # RoboMed 2023
         else:
             return self.name
-
-    @property
-    def is_viewable(self) -> bool:
-        return self.status in [Status.OPEN, Status.COMPLETE, Status.CLOSED]
     
-    @property
-    def judgable(self) -> bool:
-        """Whether judging for this comptetation should be allowed."""
-        return self.status == Status.OPEN
     class Meta:
         ordering = ['-start_date', 'name']
         unique_together = ['start_date', 'name'] # probably won't have 2 in the same year but you could have a quarterly / monthly / even weekly competition
