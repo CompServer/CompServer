@@ -98,6 +98,9 @@ class JudgeMatchUpdateView(UserPassesTestMixin, AccessMixin, UpdateView):
         competetion = tournament.competition
         assert isinstance(competetion, Competition)
 
+        if not competetion.judgable or competetion.is_viewable:
+            return False
+
         # if the user is a judge for the tournament, or a plenary judge for the competition, or a superuser
         if user in tournament.judges.all() \
         or user in competetion.plenary_judges.all():# \

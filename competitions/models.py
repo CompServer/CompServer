@@ -113,6 +113,14 @@ class Competition(models.Model):
         else:
             return self.name
 
+    @property
+    def is_viewable(self) -> bool:
+        return self.status in [Status.OPEN, Status.COMPLETE, Status.CLOSED]
+    
+    @property
+    def judgable(self) -> bool:
+        """Whether judging for this comptetation should be allowed."""
+        return self.status == Status.OPEN
     class Meta:
         ordering = ['-start_date', 'name']
         unique_together = ['start_date', 'name'] # probably won't have 2 in the same year but you could have a quarterly / monthly / even weekly competition
