@@ -18,7 +18,7 @@ def BracketView(request):
 
     t += f'<div class="bracket" style="height: {bracketHeight}px; width: {bracketWidth}px;">'    
 
-    for i in range(0,numRounds):
+    for i in range(0,numRounds): 
 
         t += f'<div class="round" style="height: {roundHeight}px; width: {roundWidth}px;">'
 
