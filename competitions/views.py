@@ -58,33 +58,30 @@ def BracketView(request):
 
 
 def tournament(request, tournament_id):
-    return render(request, "competitions/tournament.html")
+    context = {"user": request.user}
+    return render(request, "competitions/tournament.html", context)
 
 
 def tournaments(request):
-    return render(request, "competitions/tournaments.html")
+    context = {"user": request.user}
+    return render(request, "competitions/tournaments.html", context)
 
 def competitions(request):
     competition_list = Competition.objects.all()
-    context = {"competition_list": competition_list, "Status": Status, "redirect_to": request.path, "is_staff": False}
-    if request.user.is_staff:
-        context = {"competition_list": competition_list, "Status": Status, "redirect_to": request.path, "is_staff": True}
+    context = {"competition_list": competition_list, "Status": Status, "redirect_to": request.path, "user": request.user}
     return render(request, "competitions/competitions.html", context)
 
 def competition(request, competition_id):
     competition = get_object_or_404(Competition, pk=competition_id)
     if competition.status == Status.ARCHIVED:
         return HttpResponseRedirect(reverse("competitions:competitions"))
-    context = {"competition": competition, "redirect_to": request.path, "is_staff": False}
-    if request.user.is_staff:
-        context = {"competition": competition, "redirect_to": request.path, "is_staff": True}
+    context = {"competition": competition, "redirect_to": request.path, "Status": Status, "user": request.user}
     return render(request, "competitions/competition.html", context)
 
 def team(request, team_id):
     team = get_object_or_404(Team, pk=team_id)
-    context = {'team': team, "is_staff": False}
+    context = {'team': team, "user": request.user}
     return render(request, "competitions/team.html", context)
-
 
 def not_implemented(request, *args, **kwargs):
     messages.error(request, "This feature is not yet implemented.")

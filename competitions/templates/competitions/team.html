@@ -35,11 +35,6 @@
         <ul>
             {% for tournament in team.tournament_set.all %}
                 {% if tournament.status == Status.ARCHIVED %}
-                    <div class="row d-flex">
-                        <div class = "col-12">
-                            <p>{{ tournament }} ({% trans "ARCHIVED" %})</p>
-                        </div>
-                    </div>
                 {% elif tournament.status == Status.SETUP %}
                     <div class="row d-flex">
                         <div class = "col-12">

@@ -11,33 +11,34 @@
                 <a href="{% url 'competitions:team' team.id %}">{{ team }}</a>
             </div>
         </div>
+    {% empty %}
+        <div class="row d-flex">
+            <div class = "col-12">
+                <p>{% trans "There are no Competing Teams." %}</p>
+            </div>
+        </div>
     {% endfor %}
     <h3>Tournaments</h3>
-    {% if competition.tournament_set.all %}
-        {% for tournament in competition.tournament_set.all %}
-            {% if tournament.status == Status.ARCHIVED %}
-                <div class="row d-flex">
-                    <div class = "col-12">
-                        <p>{{ tournament }} ({% trans "ARCHIVED" %})</p>
-                    </div>
+    {% for tournament in competition.tournament_set.all %}
+        {% if tournament.status == Status.ARCHIVED %}
+        {% elif tournament.status == Status.SETUP %}
+            <div class="row d-flex">
+                <div class = "col-12">
+                    <p>{{ tournament }} ({% trans "SETUP" %})</p>
                 </div>
-            {% elif tournament.status == Status.SETUP %}
-                <div class="row d-flex">
-                    <div class = "col-12">
-                        <p>{{ tournament }} ({% trans "SETUP" %})</p>
-                    </div>
+            </div>
+        {% else %}
+            <div class="row d-flex">
+                <div class = "col-12">
+                    <p><a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a>({{ tournament.status }})</p>
                 </div>
-            {% elif tournament.status == Status.COMPLETE %}
-                do something here
-            {% else %}
-                <div class="row d-flex">
-                    <div class = "col-12">
-                        <p><a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a>({{ tournament.status }})</p>
-                    </div>
-                </div>
-            {% endif %}
-        {% endfor %}     
-    {% else %}
-        <p>No Tournaments Yet</p>
-    {% endif %}
+            </div>
+        {% endif %}          
+    {% empty %}
+        <div class="row d-flex">
+            <div class = "col-12">
+                <p>No Tournaments Yet</p>
+            </div>
+        </div>
+    {% endfor %}
 {% endblock %}

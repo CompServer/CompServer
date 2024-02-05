@@ -7,11 +7,6 @@
     {% if competition_list %}
         {% for competition in competition_list %}
             {% if competition.status == Status.ARCHIVED %}
-                <div class="row d-flex">
-                    <div class = "col-12">
-                        <p>{{ competition }} ({% trans "ARCHIVED" %})</p>
-                    </div>
-                </div>
             {% elif competition.status == Status.SETUP %}
                 <div class="row d-flex">
                     <div class = "col-12">
