@@ -68,14 +68,14 @@ def tournaments(request):
 
 def competitions(request):
     competition_list = Competition.objects.all()
-    context = {"competition_list": competition_list, "Status": Status, "redirect_to": request.path, "user": request.user}
+    context = {"competition_list": competition_list, "redirect_to": request.path, "user": request.user}
     return render(request, "competitions/competitions.html", context)
 
 def competition(request, competition_id):
     competition = get_object_or_404(Competition, pk=competition_id)
     if competition.status == Status.ARCHIVED:
         return HttpResponseRedirect(reverse("competitions:competitions"))
-    context = {"competition": competition, "redirect_to": request.path, "Status": Status, "user": request.user}
+    context = {"competition": competition, "redirect_to": request.path, "user": request.user, "Status": Status}
     return render(request, "competitions/competition.html", context)
 
 def team(request, team_id):

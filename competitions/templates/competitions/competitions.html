@@ -6,17 +6,17 @@
     <hr>
     {% if competition_list %}
         {% for competition in competition_list %}
-            {% if competition.status == Status.ARCHIVED %}
-            {% elif competition.status == Status.SETUP %}
+            {% if competition.status.is_archived %}
+            {% elif competition.status.is_viewable %}
                 <div class="row d-flex">
                     <div class = "col-12">
-                        <p>{{ competition }} ({% trans "SETUP" %})</p>
+                        <p><a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a> ({{ competition.status }})</p>
                     </div>
                 </div>
             {% else %}
                 <div class="row d-flex">
                     <div class = "col-12">
-                        <p><a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a> ({{ competition.status }})</p>
+                        <p>{{ competition }} ({{ competition.status }})</p>
                     </div>
                 </div>
             {% endif %}

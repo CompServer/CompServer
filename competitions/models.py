@@ -49,13 +49,22 @@ class Status(models.TextChoices):
     
     @property
     def is_viewable(self) -> bool:
+        print('ran')
         """Whether the object should show up on the website."""
-        return self in [__class__.OPEN, __class__.COMPLETE, __class__.CLOSED]
+        return self in [self.OPEN, self.COMPLETE, self.CLOSED]
+
+    @property
+    def is_archived(self) -> bool:
+        return self is self.ARCHIVED
+    
+    @property
+    def is_in_setup(self) -> bool:
+        return self is self.SETUP
 
     @property
     def is_judgable(self) -> bool:
         """Whether judging for this comptetation should be allowed."""
-        return self == __class__.OPEN
+        return self is self.OPEN
     
 
 
