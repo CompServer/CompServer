@@ -47,6 +47,10 @@ class Status(models.TextChoices):
         lengths = [len(member.value) for member in cls]
         return max(lengths)
     
+    # jm: We have all these methods so we can check the status in the template without needing to pass in this class as context
+    # eg. doing status.is_viewable rather than status == Status.OPEN in the template or whereever
+    # also makes it more readable 
+    
     @property
     def is_viewable(self) -> bool:
         """Whether the object should show up on the website."""
@@ -57,7 +61,13 @@ class Status(models.TextChoices):
         """Whether judging for this comptetation should be allowed."""
         return self == __class__.OPEN
     
-
+    @property
+    def is_archived(self) -> bool:
+        return self == __class__.ARCHIVED
+    
+    @property
+    def is_in_setup(self) -> bool:
+        return self == __class__.SETUP
 
 class StatusField(models.CharField):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
