@@ -8,66 +8,92 @@ from django.views.generic.edit import UpdateView
 from django.contrib.auth.mixins import AccessMixin, UserPassesTestMixin
 from .models import *
 
-def generate_seed_array(round_num):
-    #Triangular array read by rows in bracket pairs
-    #https://oeis.org/A208569  
-    def T(n, k):
-        if n == 1 and k == 1:
-            return 1
-        
-        elif k % 2 == 1:
-            return T(n - 1, (k + 1) // 2)
-            
-        return 2**(n - 1) + 1 - T(n - 1, k // 2)
-
-    return [T(round_num+1, k) for k in range(1, 2**(round_num) + 1)]
 
 
 def BracketView(request, tournament_id):
-    bracket = AbstractTournament.objects.get(pk=tournament_id)
+    def generate_seed_array(round_num):
+    #Triangular array read by rows in bracket pairs
+    #https://oeis.org/A208569  
+        def T(n, k):
+            if n == 1 and k == 1:
+                return 1
+            
+            elif k % 2 == 1:
+                return T(n - 1, (k + 1) // 2)
+                
+            return 2**(n - 1) + 1 - T(n - 1, k // 2)
+
+        return [T(round_num+1, k) for k in range(1, 2**(round_num) + 1)]
+
     rankings = list(Ranking.objects.filter(tournament=tournament_id).order_by('rank'))
-    bracket_dict = {}
-
-    t = ""
-
-    numTeams = len(rankings)/2
+    numTeams = len(rankings)
     numRounds = math.ceil(math.log(numTeams, 2))
-
     seed_array = generate_seed_array(numRounds)
 
-    bracket_dict["roundWidth"] = 175
-    bracket_dict["connectorWidth"] = 50
-    bracketWidth = (roundWidth+connectorWidth)*numRounds
+    def generate_bracket_array(numRounds):
+        bracket_array = [None]*numRounds
+
+        # Round 1
+        # poitions = generate_seed_array(numRounds)
+        new = [None]* numTeams
+
+        for i in range(0,numTeams):
+            new[i] = f"{rankings[i-1].team}"
+
+        bracket_array[0] = new
+
+        return bracket_array
+
+    o = generate_bracket_array(numRounds)
+
+    round_data = []
+
+    matchWidth = 175
+    connectorWidth = 50
+
+    bracketWidth = (matchWidth+connectorWidth)*numRounds
     bracketHeight = numTeams*50
+
     roundHeight = bracketHeight
+    roundWidth = matchWidth+connectorWidth
+    for i in range(numRounds):
+        num_matches = 2 ** (numRounds - i - 1)
+        match_height = roundHeight / num_matches
+        match_width = matchWidth
 
-    t += f'<div class="bracket" style="height: {bracketHeight}px; width: {bracketWidth}px;">'    
+        match_data = []
+        for j in range(num_matches):
+            num_teams = 2
+            team_height = 25
+            center_height = team_height * num_teams
+            top_padding = (match_height - center_height) / 2
 
-    for i in range(0,numRounds):
-        t += f'<div class="round" style="height: {roundHeight}px; width: {roundWidth}px;">'
+            team_data = [
+                {"team_name": "hello" if i == 0 else "TBD"}
+                for k in range(num_teams)
+            ]
 
-        numMatches = 2**(numRounds-i-1)
-        matchHeight = roundHeight/numMatches
-        matchWidth = roundWidth
+            match_data.append({
+                "team_data": team_data,
+                "match_height": match_height,
+                "match_width": match_width,
+                "center_height": center_height,
+                "top_padding": top_padding,
+            })
 
-        for j in range(0, numMatches):
+        round_data.append({
+            "match_data": match_data,
+        })
 
-            numTeams = 2
-            teamHeight = 25
-            centerHeight = teamHeight*numTeams
-            topPadding = (matchHeight-centerHeight)/2
-
-            t += f'<div class="match" style="height: {matchHeight}px; width: {matchWidth}px;">'
-            t += f'<div class="center" style="height: {centerHeight}px; padding-top: {topPadding}px">'
-
-            for k in range(0,numTeams):
-                t += f'<div class="team" style="width: {matchWidth}px;">{rankings[seed_array[2*j + k]].team if i == 0 else "TBD"}</div>'
-            
-            t += f'</div></div>'
-        t += '</div>'
-    t += '</div>'
-
-    context = {"content":t}
+    bracket_dict = {
+        "bracketWidth": bracketWidth,
+        "bracketHeight": bracketHeight,
+        "roundWidth": roundWidth+connectorWidth,
+        "roundHeight": bracketHeight,
+        "round_data": round_data
+    }
+    
+    context = {"bracket_dict": bracket_dict, "o":o}
     return render(request, "competitions/bracket.html", context)
 
 

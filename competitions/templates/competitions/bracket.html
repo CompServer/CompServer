@@ -2,34 +2,30 @@
 
 {% block content %}
 
-<div class="bracket" style="height: {bracketHeight}px; width: {bracketWidth}px;">'
+{{o}}
 
-    for i in range(0,numRounds):
-    t += f'<div class="round" style="height: {roundHeight}px; width: {roundWidth}px;">'
+<!-- 
+    There are no errors here, your IDE is lying 
+    - Matt 
+-->
 
-        numMatches = 2**(numRounds-i-1)
-        matchHeight = roundHeight/numMatches
-        matchWidth = roundWidth
-
-        for j in range(0, numMatches):
-
-        numTeams = 2
-        teamHeight = 25
-        centerHeight = teamHeight*numTeams
-        topPadding = (matchHeight-centerHeight)/2
-
-        t += f'<div class="match" style="height: {matchHeight}px; width: {matchWidth}px;">'
-            t += f'<div class="center" style="height: {centerHeight}px; padding-top: {topPadding}px">'
-
-                for k in range(0,numTeams):
-                t += f'<div class="team" style="width: {matchWidth}px"></div>
-
+<div class="bracket" style="height: {{ bracket_dict.bracketHeight }}px; width: {{ bracket_dict.bracketWidth }}px;">
+    {% for round_data in bracket_dict.round_data %}
+    <div class="round" style="height: {{ bracket_dict.roundHeight }}px; width: {{ bracket_dict.roundWidth }}px;">
+        {% for match_data in round_data.match_data %}
+        <div class="match" style="height: {{ match_data.match_height }}px; width: {{ match_data.match_width }}px;">
+            <div class="center"
+                style="height: {{ match_data.center_height }}px; padding-top: {{ match_data.top_padding }}px">
+                {% for team_data in match_data.team_data %}
+                <div class="team" style="width: {{ match_data.match_width }}px;">
+                    {{ team_data.team_name }}
+                </div>
+                {% endfor %}
             </div>
         </div>
+        {% endfor %}
     </div>
+    {% endfor %}
 </div>
-
-
-{{ content|safe }}
 
 {% endblock %}
