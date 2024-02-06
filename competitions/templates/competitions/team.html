@@ -19,34 +19,36 @@
             <p>ORGANIZATION LOGO HERE</p>
         </div>
         <div class="match-schedule">
-            <h3>Match Schedules</h3>
-            {% for competition in team.competition_set.all %}
-                {% if competition.check_date %}
-                    {% if competition.status == "OPEN" %}
-                        {% for tournament in competition.tournament_set.all %}
-                            <div class="row">
-                                <h4>{{ competition.name }}, {{ tournament.name }}, {{ competition.start_date }} - {{ competition.end_date }} </h4>
-                                <h5>Your Events</h5>
-                                {% for event in tournament.event_set.all %}
-                                    <div class="column">
-                                        <p>{{ event.name }}</p>
-                                    </div>
-                                    <div class="column">
-                                        {% for match in event.match_set.all %}
-                                            <p>Match {{ match.id }}: Between {{ match }} , Begins At {{ match.time }}</p>
-                                            {% if match.advancers.all %}
-                                                <p>Advancers: {{ match.advancers.all }}</p>
-                                            {% endif %}
-                                        {% endfor %}
-                                    </div>
-                                {% endfor %}
-                            </div>
-                        {% endfor %}
+            <h3>Upcoming Matches</h3>
+            {% if team.competition_set.all %}
+                {% for competition in team.competition_set.all %}
+                    {% if competition.check_date %}
+                        {% if competition.status == "OPEN" %}
+                            {% for tournament in competition.tournament_set.all %}
+                                <div class="row">
+                                    order matches in order of time
+                                    <h4>{{ competition.name }}, {{ tournament.name }}, {{ competition.start_date }} - {{ competition.end_date }} </h4>
+                                    <h5>Your Events</h5>
+                                    {% for event in tournament.event_set.all %}
+                                        <div class="column">
+                                            <p>{{ event.name }}</p>
+                                        </div>
+                                        <div class="column">
+                                            {% for match in event.match_set.all %}
+                                                {% if match.check_time %}
+                                                    <p>Match {{ match.id }}: Between {{ match }} , Begins At {{ match.time }}</p>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
                     {% endif %}
-                {% else %}
-                    <p>No matches scheduled for this team yet!</p>
-                {% endif %}
-            {% endfor %}
+                {% endfor %}
+            {% else %}
+                <p>No upcoming matches!</p>
+            {% endif %}
         </div> 
         <div class="competition-set">
             <h3>Previous Competitions</h3>
@@ -58,7 +60,7 @@
                         {% endif %}
                     {% endfor %}
                 {% else %}
-                    <p>This team hasn't attended any competitions.</p>
+                    <p>No previous competitions.</p>
                 {% endif %}
             </ul>
         </div>
@@ -83,17 +85,14 @@
         <div class="match-records">
             <h3>Match History</h3>
             <div class="row">
-                <!-- this isn't a field in matches, but i think each match should have a winner team or the winning teams, and the points awarded so we can tell if it's a draw -->
                 <h4>Wins Against Other Teams</h4>
                 <ul>
                     {% if team.won_matches.all %}
                         {% for match in team.won_matches.all %}  
-                        <!-- i think a match should have an event if that makes sense and maybe list those players from the team -->
-                        <!-- we could add the rankings for the team stats -->
                             <li>Tournament: <a href="{% url 'competitions:tournament' match.tournament.id %}">{{ match.tournament.name }}</a>, Event: {{ match.event.name }}, Players: {{ match.event.player_set.first_name }}, Score: {{ match.awarded_points }}</li>
                         {% endfor %}
                     {% else %}
-                        <p>This team doesn't have any matches at the moment.</p>
+                        <p>No wins!</p>
                     {% endif %}
                 </ul>
             </div>
