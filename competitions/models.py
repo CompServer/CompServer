@@ -46,6 +46,17 @@ class Status(models.TextChoices):
     def max_length(cls):
         lengths = [len(member.value) for member in cls]
         return max(lengths)
+    
+    @property
+    def is_viewable(self) -> bool:
+        """Whether the object should show up on the website."""
+        return self in [__class__.OPEN, __class__.COMPLETE, __class__.CLOSED]
+
+    @property
+    def is_judgable(self) -> bool:
+        """Whether judging for this comptetation should be allowed."""
+        return self == __class__.OPEN
+    
 
 
 class StatusField(models.CharField):
@@ -71,13 +82,13 @@ class Organization(models.Model): # probably mostly schools but could also be co
 
 class Team(models.Model):
     name = models.CharField(max_length=255)
-    organization = models.ForeignKey(Organization, models.CASCADE)
-    coach = models.ForeignKey(User, on_delete=models.CASCADE)  # with special permissions to change info WRT the team
+    organization = models.ForeignKey(Organization, blank=True, null=True, on_delete=models.CASCADE)
+    coach = models.ForeignKey(User, blank=True, null=True, on_delete=models.CASCADE)  # with special permissions to change info WRT the team
     # logo = models.ImageField()
     # related: competition_set, tournament_set, round1_matches, won_matches
 
     def __str__(self) -> str:
-        return self.name + _(" from ") + str(self.organization)
+        return self.name + (_(" from ") + str(self.organization) if self.organization else "")
     
     class Meta:
         ordering = ['organization', 'name']
@@ -101,8 +112,18 @@ class Competition(models.Model):
 
     def __str__(self) -> str:
         # dwheadon: check if the name is unique for this year, otherwise add the month/day as well
-        return self.name + " " + str(self.start_date.year) # RoboMed 2023
-
+        if Competition.objects.filter(name=self.name).count() > 1:
+            if Competition.objects.filter(name=self.name, start_date__year=self.start_date.year).count() > 1:
+                if Competition.objects.filter(name=self.name, start_date__year=self.start_date.year, start_date__month=self.start_date.month).count() > 1:
+                    # if you have two on the same day, good luck
+                    return self.name + " " + str(self.start_date.month)+ " " + str(self.start_date.day) + ", " + str(self.start_date.year) # RoboMed June, 2023
+                else:
+                    return self.name + " " + str(self.start_date.month) + ", " + str(self.start_date.year) # RoboMed June, 2023
+            else:
+                return self.name + " " + str(self.start_date.year) # RoboMed 2023
+        else:
+            return self.name
+    
     class Meta:
         ordering = ['-start_date', 'name']
         unique_together = ['start_date', 'name'] # probably won't have 2 in the same year but you could have a quarterly / monthly / even weekly competition
@@ -190,10 +211,12 @@ class SingleEliminationTournament(AbstractTournament):
 #         Everybody plays at least 2 matches
 #         Winner of loser's bracket gets to play for 2nd place?
 #     '''
-#     # interpolated: winner (of the top-level "winner's" bracket)
+#     # interpolated: 1st place (winner of the top-level "winner's" bracket)
+#     # interpolated: 2nd place (winner of the top-level "loser's" bracket)
 
 
 # class MultilevelTournament(AbstractTournament):
+#     # prerequisite: have to have a ranking to begin with
 #     ''' Keep moving down each time you loose
 #         Don't realy know how you determine who you play next when you loose
 #         Assuming the rankings were perfect, this is how it would play out?
@@ -227,7 +250,7 @@ class SingleEliminationTournament(AbstractTournament):
 #             6/7 (0W1L)
 #         3/6
 #     '''
-#     # interpolated: winner (least number of losses?)
+#     # interpolated: full rankings (sequence of wins / losses)
 
 
 # class RoundRobinTournament(AbstractTournament):
@@ -239,7 +262,7 @@ class SingleEliminationTournament(AbstractTournament):
 #     # points_per_tie: 1 for World Cup group round
 #     # points_per_loss: probably always 0
 #     # accumulation: sum of all points (e.g. goals), sum of match points (e.g. 2 for win, 1 for tie, 0 for loss)
-#     # interpolated: rankings (order of points)
+#     # interpolated: rull rankings (order of points)
 
 
 class Match(models.Model):
@@ -248,17 +271,18 @@ class Match(models.Model):
     # Note: admin doesn't enforce the starting teams to be registered for this tournament
     starting_teams = models.ManyToManyField(Team, related_name="round1_matches", blank=True) # Only used for round1 matches, all others use the previous matches. Usually just 2 but could be more (speed race)
     # Note: admin doesn't restrict to previous matches from this tournament
-    prev_matches = models.ManyToManyField('self', blank=True) # Except for round1 of a tournament (or one-off preliminary matches), advancers from the previous matches will be the competitors for this match
+    prev_matches = models.ManyToManyField('self', symmetrical=False, blank=True, related_name="next_matches") # Except for round1 of a tournament (or one-off preliminary matches), advancers from the previous matches will be the competitors for this match
     # Note: admin doesn't restrict advancers to be competitors for this match
     advancers = models.ManyToManyField(Team, related_name="won_matches", blank=True) # usually 1 but could be more (e.g. time trials)
     time = models.DateTimeField() # that it's scheduled for
 
     def __str__(self) -> str:
+        competitors = []
+        prior_match_advancing_teams = Team.objects.filter(won_matches__in=self.prev_matches.all())
         if self.starting_teams.exists():
-            competitors = [team.name for team in self.starting_teams.all()]
-        else:
-            teams = Team.objects.filter(won_matches__in=self.prev_matches.all())
-            competitors = [team.name for team in teams]
+            competitors += [(("[" + team.name + "]") if team in self.advancers.all() else team.name) for team in self.starting_teams.all()]
+        if prior_match_advancing_teams:
+            competitors += [(("[" + team.name + "]") if team in self.advancers.all() else team.name) for team in prior_match_advancing_teams]
         return _(" vs ").join(competitors) + _(" in ") + str(self.tournament) # Battlebots vs Byters in SumoBot tournament @ RoboMed 2023
 
     class Meta:
