@@ -11,6 +11,9 @@ from .models import *
 
 
 def BracketView(request, tournament_id):
+    test = Match.objects.filter(tournament=tournament_id).exclude(advancers=None)
+
+    # This calculates the seeding order
     def generate_seed_array(round_num):
     #Triangular array read by rows in bracket pairs
     #https://oeis.org/A208569  
@@ -25,35 +28,48 @@ def BracketView(request, tournament_id):
 
         return [T(round_num+1, k) for k in range(1, 2**(round_num) + 1)]
 
+
+
     rankings = list(Ranking.objects.filter(tournament=tournament_id).order_by('rank'))
     numTeams = len(rankings)
     numRounds = math.ceil(math.log(numTeams, 2))
-    seed_array = generate_seed_array(numRounds)
 
+
+
+    # this creates the pairings of matches to be drawn
     def generate_bracket_array(numRounds):
         bracket_array = [None]*numRounds
 
         # Round 1
-        # poitions = generate_seed_array(numRounds)
+        poitions = generate_seed_array(numRounds)
         new = [None]* numTeams
 
         for i in range(0,numTeams):
-            new[i] = f"{rankings[i-1].team}"
+            new[i] = rankings[poitions[i]-1]
 
         bracket_array[0] = new
 
+        bracket_array[1] = [None]*8
+
+        bracket_array[2] = [None]*4
+
+        bracket_array[3] = [None]*2
+
+        matches = Match.objects.filter(tournament=tournament_id)
+
         return bracket_array
 
-    o = generate_bracket_array(numRounds)
 
+
+    bracket_array = generate_bracket_array(numRounds)
+
+
+    # the rest of this just draws the bracket data and works fine
     round_data = []
-
-    matchWidth = 175
+    matchWidth = 200
     connectorWidth = 50
-
     bracketWidth = (matchWidth+connectorWidth)*numRounds
     bracketHeight = numTeams*50
-
     roundHeight = bracketHeight
     roundWidth = matchWidth+connectorWidth
     for i in range(numRounds):
@@ -62,14 +78,14 @@ def BracketView(request, tournament_id):
         match_width = matchWidth
 
         match_data = []
-        for j in range(num_matches):
+        for j in range(0,num_matches*2,2):
             num_teams = 2
             team_height = 25
             center_height = team_height * num_teams
             top_padding = (match_height - center_height) / 2
 
             team_data = [
-                {"team_name": "hello" if i == 0 else "TBD"}
+                {"team_name": str(bracket_array[i][j+k].rank) + ": " + str(bracket_array[i][j+k].team) if bracket_array[i][j+k] else "TBD"}
                 for k in range(num_teams)
             ]
 
@@ -93,7 +109,7 @@ def BracketView(request, tournament_id):
         "round_data": round_data
     }
     
-    context = {"bracket_dict": bracket_dict, "o":o}
+    context = {"bracket_dict": bracket_dict, "test":test}
     return render(request, "competitions/bracket.html", context)
 
 
