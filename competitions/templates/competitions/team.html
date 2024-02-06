@@ -22,9 +22,21 @@
         <h3>Competitions participated in</h3>
         <ul>
             {% for competition in team.competition_set.all %}
-                {% if competition.status != "ARCHIVED" %}
+                {% if competition.is_viewable %}
                     <li>
-                        <a href="{% url 'competitions:competition' competition.id %}">{{competition}}</a>
+                        <div class="row d-flex">
+                            <div class = "col-12">
+                                <p><a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a> ({{ competition.status }})</p>
+                            </div>
+                        </div>                    
+                    </li>
+                {% elif competition.is_in_setup %}
+                    <li>
+                        <div class="row d-flex">
+                            <div class = "col-12">
+                                <p>{{ competition }} ({{ competition.status }})</p>
+                            </div>
+                        </div>
                     </li>
                 {% endif %}
             {% endfor %}
@@ -34,21 +46,22 @@
         <h3>Tournaments Won</h3>
         <ul>
             {% for tournament in team.tournament_set.all %}
-                {% if tournament.status == Status.ARCHIVED %}
-                {% elif tournament.status == Status.SETUP %}
-                    <div class="row d-flex">
-                        <div class = "col-12">
-                            <p>{{ tournament }} ({% trans "SETUP" %})</p>
+                {% if tournament.is_in_setup %}
+                    <li>
+                        <div class="row d-flex">
+                            <div class = "col-12">
+                                <p>{{ tournament }} ({% trans "SETUP" %})</p>
+                            </div>
                         </div>
-                    </div>
-                {% elif tournament.status == Status.COMPLETE %}
-                    do something here
-                {% else %}
-                    <div class="row d-flex">
-                        <div class = "col-12">
-                            <p><a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a>({{ tournament.status }})</p>
+                    </li>
+                {% elif tournament.is_viewable %}
+                    <li>
+                        <div class="row d-flex">
+                            <div class = "col-12">
+                                <p><a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a>({{ tournament.status }})</p>
+                            </div>
                         </div>
-                    </div>
+                    </li>
                 {% endif %}
             {% endfor %}
         </ul>

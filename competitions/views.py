@@ -73,7 +73,7 @@ def competitions(request):
 
 def competition(request, competition_id):
     competition = get_object_or_404(Competition, pk=competition_id)
-    if competition.status == Status.ARCHIVED:
+    if competition.is_archived:
         return HttpResponseRedirect(reverse("competitions:competitions"))
     context = {"competition": competition, "redirect_to": request.path, "user": request.user, "Status": Status}
     return render(request, "competitions/competition.html", context)
@@ -94,23 +94,22 @@ class JudgeMatchUpdateView(UserPassesTestMixin, AccessMixin, UpdateView):
         assert isinstance(instance, Match)
         tournament = instance.tournament
         assert isinstance(tournament, AbstractTournament)
-        competetion = tournament.competition
-        assert isinstance(competetion, Competition)
-        status = competetion.status
+        competition = tournament.competition
+        assert isinstance(competition, Competition)
+        status = competition.status
         assert isinstance(status, Status)
 
-        if not status.is_judgable:
+        if not competition.is_judgable and tournament.is_judgable:
             return False
 
         # if the user is a judge for the tournament, or a plenary judge for the competition, or a superuser
         if user in tournament.judges.all() \
-        or user in competetion.plenary_judges.all():# \
+        or user in competition.plenary_judges.all():# \
         #or user.is_superuser:
             return True
        # elif user.is_authenticated:
        #     returran PermissionDenied("You are not authorized to judge this match.")
-        else:
-            return False
+        return False
 
     def handle_no_permission(self):
         return HttpResponseRedirect('/')

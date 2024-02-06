@@ -46,27 +46,6 @@ class Status(models.TextChoices):
     def max_length(cls):
         lengths = [len(member.value) for member in cls]
         return max(lengths)
-    
-    @property
-    def is_viewable(self) -> bool:
-        print('ran')
-        """Whether the object should show up on the website."""
-        return self in [self.OPEN, self.COMPLETE, self.CLOSED]
-
-    @property
-    def is_archived(self) -> bool:
-        return self is self.ARCHIVED
-    
-    @property
-    def is_in_setup(self) -> bool:
-        return self is self.SETUP
-
-    @property
-    def is_judgable(self) -> bool:
-        """Whether judging for this comptetation should be allowed."""
-        return self is self.OPEN
-    
-
 
 class StatusField(models.CharField):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -118,7 +97,7 @@ class Competition(models.Model):
     access_key = models.CharField(max_length=ACCESS_KEY_LENGTH, default=get_random_access_key, blank=True, null=True)
     # For scheduling purposes, we need to be able to specify for this competition how many different (Event-specific) arenas are available and their capacity
     # related: tournament_set
-    
+
     def __str__(self) -> str:
         # dwheadon: check if the name is unique for this year, otherwise add the month/day as well
         if Competition.objects.filter(name=self.name).count() > 1:
@@ -132,6 +111,24 @@ class Competition(models.Model):
                 return self.name + " " + str(self.start_date.year) # RoboMed 2023
         else:
             return self.name
+
+    @property
+    def is_viewable(self) -> bool:
+        """Whether the object should show up on the website."""
+        return self.status in [Status.OPEN, Status.COMPLETE, Status.CLOSED]
+
+    @property
+    def is_judgable(self) -> bool:
+        """Whether judging for this comptetation should be allowed."""
+        return self.status == Status.OPEN
+    
+    @property
+    def is_archived(self) -> bool:
+        return self.status == Status.ARCHIVED
+    
+    @property
+    def is_in_setup(self) -> bool:
+        return self.status == Status.SETUP
     
     class Meta:
         ordering = ['-start_date', 'name']
@@ -187,10 +184,28 @@ class AbstractTournament(models.Model):
 
     def __str__(self) -> str:
         return self.event.name + _(" tournament @ ") + str(self.competition) # SumoBot tournament at RoboMed 2023
+    
+    @property
+    def is_viewable(self) -> bool:
+        """Whether the object should show up on the website."""
+        return self.status in [Status.OPEN, Status.COMPLETE, Status.CLOSED]
+
+    @property
+    def is_judgable(self) -> bool:
+        """Whether judging for this comptetation should be allowed."""
+        return self.status == Status.OPEN
+    
+    @property
+    def is_archived(self) -> bool:
+        return self.status == Status.ARCHIVED
+    
+    @property
+    def is_in_setup(self) -> bool:
+        return self.status == Status.SETUP
+
         
     class Meta:
         ordering = ['competition', 'event']
-
 
 class Ranking(models.Model):
     tournament = models.ForeignKey(AbstractTournament, on_delete=models.CASCADE)

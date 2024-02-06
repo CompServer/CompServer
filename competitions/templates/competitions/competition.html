@@ -2,7 +2,7 @@
 {% load i18n %}
 {% block content %}
     <header>
-        <h1>{{competition}}</h1>
+        <h1>{{ competition }}</h1>
     </header>
     <h3>Competing Teams</h3>
     {% for team in competition.teams.all %}
@@ -20,14 +20,13 @@
     {% endfor %}
     <h3>Tournaments</h3>
     {% for tournament in competition.tournament_set.all %}
-        {% if tournament.status.is_archived %}
-        {% elif tournament.status.is_viewable %}
+        {% if tournament.is_viewable %}
             <div class="row d-flex">
                 <div class = "col-12">
-                    <p><a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a>({{ tournament.status }})</p>
+                    <p><a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a> ({{ tournament.status }})</p>
                 </div>
             </div>
-        {% else %}
+        {% elif tournament.is_in_setup %}
             <div class="row d-flex">
                 <div class = "col-12">
                     <p>{{ tournament }} ({% trans "SETUP" %})</p>
