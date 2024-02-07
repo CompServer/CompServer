@@ -9,6 +9,10 @@ from django.contrib.auth.mixins import AccessMixin, UserPassesTestMixin
 from .models import AbstractTournament, Competition, Match
 
 
+def home(request):
+    return render(request, "competitions/home.html")
+
+
 def BracketView(request):
     t = ""
 
