@@ -102,7 +102,6 @@ class JudgeMatchUpdateView(UserPassesTestMixin, AccessMixin, UpdateView):
         competition = tournament.competition
         assert isinstance(competition, Competition)
         status = competition.status
-        assert isinstance(status, Status)
 
         if not competition.is_judgable and tournament.is_judgable:
             return False
