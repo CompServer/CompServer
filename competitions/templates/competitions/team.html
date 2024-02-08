@@ -24,18 +24,13 @@
         <h3>Upcoming Matches</h3>
         {% if team.competition_set.all %}
             {% for competition in team.competition_set.all %}
-                {% if competition.check_date %}
+                {% if competition.currently_running %}
                     {% if competition.status == "OPEN" %}
                         {% for tournament in competition.tournament_set.all %}
                             <div class="row">
-                                <h4>{{ competition.name }}, {{ tournament.name }}, {{ competition.start_date }} - {{ competition.end_date }} </h4>
-                                <h5>Your Events</h5>
-                                {% for event in tournament.event_set.all %}
+                                <h4>{{ tournament }}, {{ competition.start_date }} - {{ competition.end_date }} </h4>
                                     <div class="column">
-                                        <p>{{ event.name }}</p>
-                                    </div>
-                                    <div class="column">
-                                        {% for match in event.match_set.all.ordering %}
+                                        {% for match in tournament.match_set.all %}
                                             {% if match.check_time %}
                                                 {% if match.advancers %}
                                                     {{ break }}
@@ -47,7 +42,6 @@
                                     </div>
                                 {% endfor %}
                             </div>
-                        {% endfor %}
                     {% endif %}
                 {% endif %}
             {% endfor %}
