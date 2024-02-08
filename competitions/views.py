@@ -9,50 +9,88 @@ from django.contrib.auth.mixins import AccessMixin, UserPassesTestMixin
 from .models import *
 
 def BracketView(request, tournament_id):
-    numTeams = len(AbstractTournament.objects.get(pk=tournament_id).teams.all())
-    numRounds = math.ceil(math.log(numTeams, 2))
-    bracket_array = [{} for _ in range(numRounds)]
+    '''
+    This view is responsible for drawing the tournament bracket, it does this by:
+    1) Recursively get all matches and put them in a 3d array
+        a) Start at championship
+        b) Get particpants and add them to the array
+        c) Go to each prev match
+        d) repeat
+    2) Loop through array and convert it to dictionaries, packaging styling along side
+    3) Pass new dictionary to the templete for rendering
 
-    def read_tree(match, round, index):
+    note: steps 1 and 2 could probably be combined
+    '''
+    # where all the matches get stored, only used in this function, not passed to template
+    bracket_array = []
+
+    # recursive
+    def read_tree_from_node(curr_match, curr_round, base_index):
+        # add space for new matches if it doesnt exist
+        if len(bracket_array) <= curr_round:
+            bracket_array.append({})
+
+        # get the names of the teams competing, stolen to the toString
         competitors = []
-        prior_match_advancing_teams = Team.objects.filter(won_matches__in=match.prev_matches.all())
-        if match.starting_teams.exists():
-            competitors += [(("[" + team.name + "]") if team in match.advancers.all() else team.name) for team in match.starting_teams.all()]
+        prior_match_advancing_teams = Team.objects.filter(won_matches__in=curr_match.prev_matches.all())
+        if curr_match.starting_teams.exists():
+            competitors += [(("[" + team.name + "]") if team in curr_match.advancers.all() else team.name) for team in curr_match.starting_teams.all()]
         if prior_match_advancing_teams:
-            competitors += [(("[" + team.name + "]") if team in match.advancers.all() else team.name) for team in prior_match_advancing_teams]
+            competitors += [(("[" + team.name + "]") if team in curr_match.advancers.all() else team.name) for team in prior_match_advancing_teams]
 
-        bracket_array[round][index] = competitors 
+        # place the team names in the right box
+        # i.e. bracket_array[2][3] = top 8, 4th match from the top
+        bracket_array[curr_round][base_index] = competitors 
 
-        prevs = match.prev_matches.all()
-        if not prevs:
-            return
-        for i, prev in enumerate(prevs):
-            read_tree(prev, round-1, 2*index+i)
+        
+        prevs = curr_match.prev_matches.all()
+        # checks if there are any previous matches
+        if prevs:
+            # if TRUE: recurse
+            # if FALSE: base case
+            for i, prev in enumerate(prevs):
+                read_tree_from_node(prev, curr_round+1, 2*base_index+i)
+                                                      # ^^^^^^^^^^^^^^
+                                                      # i dont know why this works, it might not 
+
+                
 
     #mutates bracket_array
-    read_tree(Match.objects.filter(tournament=tournament_id).filter(next_matches__isnull=True)[0], numRounds-1, 0)
+    read_tree_from_node(Match.objects.filter(tournament=tournament_id).filter(next_matches__isnull=True)[0], 0, 0)
 
+    #the number of rounds in the tournament: top 8, semi-finals, championship, etc
+    numRounds = len(bracket_array)
+
+    #find the most number of teams in a single round, used for setting the height
+    mostTeamsInRound = 0
+    for round in bracket_array:
+        teams_count = sum(len(teams) for teams in round.values())
+        if teams_count > mostTeamsInRound:
+            mostTeamsInRound = teams_count
+
+    # _data means it contains the actual stuff to be displayed
+    # everything else is just css styling or not passed
+    # most variables are exactly what they sound like
+    # you can also look at bracket.html to see how its used
     round_data = []
     matchWidth = 200
     connectorWidth = 50
     bracketWidth = (matchWidth+connectorWidth)*numRounds
-    bracketHeight = numTeams*100
+    bracketHeight = mostTeamsInRound*50
     roundHeight = bracketHeight
     roundWidth = matchWidth+connectorWidth
     for i in range(numRounds):
-        num_matches = 2 ** (numRounds - i - 1)
+        num_matches = len(bracket_array[numRounds-i-1])
         match_height = roundHeight / num_matches
         match_width = matchWidth
-
         match_data = []
         for j in range(num_matches):
-
-            num_teams = 1
             team_data = []
-            if j in bracket_array[i] and bracket_array[i][j] is not None:
-                num_teams = len(bracket_array[i][j])
+            #this is where we convert from bracket_array (made above) to bracket_dict (used in template)
+            if j in bracket_array[numRounds-i-1] and  bracket_array[numRounds-i-1][j] is not None:
+                num_teams = len(bracket_array[numRounds-i-1][j])
                 team_data = [
-                    {"team_name": bracket_array[i][j][k]}
+                    {"team_name": bracket_array[numRounds-i-1][j][k]}
                     for k in range(num_teams)
                 ]
             
