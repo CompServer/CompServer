@@ -184,6 +184,7 @@ class AbstractTournament(models.Model):
 
 
 class Ranking(models.Model):
+    """ These will determine the auto-layout of the brackets """
     tournament = models.ForeignKey(AbstractTournament, on_delete=models.CASCADE)
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     rank = models.PositiveSmallIntegerField()
@@ -193,8 +194,8 @@ class Ranking(models.Model):
 
     class Meta:
         ordering = ['tournament', 'rank']
-        unique_together = [['tournament', 'rank'], ['tournament', 'team']]
-
+        unique_together = [['tournament', 'team']] 
+        # unique_together += ['tournament', 'rank'] # NCAA has 4 teams with a #1 seed
 
 
 class SingleEliminationTournament(AbstractTournament):
@@ -275,15 +276,26 @@ class Match(models.Model):
     # Note: admin doesn't restrict advancers to be competitors for this match
     advancers = models.ManyToManyField(Team, related_name="won_matches", blank=True) # usually 1 but could be more (e.g. time trials)
     time = models.DateTimeField() # that it's scheduled for
+    str_recursive_level = 0
 
     def __str__(self) -> str:
+        self.__class__.str_recursive_level += 1
         competitors = []
-        prior_match_advancing_teams = Team.objects.filter(won_matches__in=self.prev_matches.all())
         if self.starting_teams.exists():
             competitors += [(("[" + team.name + "]") if team in self.advancers.all() else team.name) for team in self.starting_teams.all()]
-        if prior_match_advancing_teams:
-            competitors += [(("[" + team.name + "]") if team in self.advancers.all() else team.name) for team in prior_match_advancing_teams]
-        return _(" vs ").join(competitors) + _(" in ") + str(self.tournament) # Battlebots vs Byters in SumoBot tournament @ RoboMed 2023
+        if self.prev_matches.exists():
+            for prev_match in self.prev_matches.all():
+                prior_match_advancing_teams = prev_match.advancers.all()
+                if prev_match.advancers.exists():
+                    competitors += [(("[" + team.name + "]") if team in self.advancers.all() else team.name) for team in prev_match.advancers.all()]
+                else:
+                    competitors += ["Winner of (" + str(prev_match) + ")"]
+        self.__class__.str_recursive_level -= 1
+        res = _(" vs ").join(competitors) # Battlebots vs Byters
+        if self.__class__.str_recursive_level == 0:
+            return res + _(" in ") + str(self.tournament) # Battlebots vs Byters in SumoBot tournament @ RoboMed 2023
+        else: 
+            return res # if part of another match we don't want to repeat the tournament
 
     class Meta:
         ordering = ['tournament']
