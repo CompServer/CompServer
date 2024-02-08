@@ -1,6 +1,7 @@
 from pathlib import Path
 from django.utils import timezone
 import os
+from django.contrib.messages import constants as messages
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -144,3 +145,10 @@ STATICFILES_DIRS = [
 MEDIA_URL = '/media/'
 
 MEDIA_ROOT = BASE_DIR / 'uploads'
+
+# for message framework
+# the django red alert class is called "danger", django calls it "error"
+# this changes it so it uses danger (for the bootstrap class)
+MESSAGE_TAGS = {
+    messages.ERROR: 'danger',
+}

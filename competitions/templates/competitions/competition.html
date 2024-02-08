@@ -1,11 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Competition Page</title>
-</head>
-<body>
+{% extends "skeleton.html" %}
+
+    {% block title %}Competition Page{% endblock %}
+
+{% block content %}
     <header>
         <h1>{{competition}}</h1>
         <p>blah blah</p>
@@ -20,5 +17,4 @@
             {% endfor %}
         </ul>
     </div>
-</body>
-</html>
+{% endblock %}
