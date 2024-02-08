@@ -5,19 +5,19 @@
     <h1>{% trans "Competitions" %}</h1>
     <hr>
     {% for competition in competition_list %}
-        {% if competition.is_viewable %}
-            <div class="row d-flex">
-                <div class = "col-12">
-                    <p><a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a> ({{ competition.status }})</p>
-                </div>
+        <div class="row d-flex">
+            <div class = "col-12">
+                {% if competition.is_judgable %}
+                    <p><a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a> ({% trans "OPEN" %})</p>
+                {% elif competition.is_complete %}
+                    <p><a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a> ({% trans "COMPLETE" %})</p>
+                {% elif competition.is_closed %}
+                    <p><a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a> ({% trans "CLOSED" %})</p>
+                {% elif competition.is_in_setup %}
+                    <p>{{ competition }} ({% trans "SETUP" %})</p>
+                {% endif %}
             </div>
-        {% elif competition.is_in_setup %}
-            <div class="row d-flex">
-                <div class = "col-12">
-                    <p>{{ competition }} ({{ competition.status }})</p>
-                </div>
-            </div>
-        {% endif %}
+        </div>
     {% empty %}
         <div class="row d-flex">
             <div class = "col-12">

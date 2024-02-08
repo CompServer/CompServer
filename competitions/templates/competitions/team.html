@@ -22,23 +22,21 @@
         <h3>Competitions participated in</h3>
         <ul>
             {% for competition in team.competition_set.all %}
-                {% if competition.is_viewable %}
-                    <li>
-                        <div class="row d-flex">
-                            <div class = "col-12">
-                                <p><a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a> ({{ competition.status }})</p>
-                            </div>
-                        </div>                    
-                    </li>
-                {% elif competition.is_in_setup %}
-                    <li>
-                        <div class="row d-flex">
-                            <div class = "col-12">
-                                <p>{{ competition }} ({{ competition.status }})</p>
-                            </div>
+                <li>
+                    <div class="row d-flex">
+                        <div class = "col-12">
+                            {% if competition.is_judgable %}
+                                <p><a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a> ({% trans "OPEN" %})</p>
+                            {% elif competition.is_complete %}
+                                <p><a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a> ({% trans "COMPLETE" %})</p>
+                            {% elif competition.is_closed %}
+                                <p><a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a> ({% trans "CLOSED" %})</p>
+                            {% elif competition.is_in_setup %}
+                                <p>{{ competition }} ({% trans "SETUP" %})</p>
+                            {% endif %}
                         </div>
-                    </li>
-                {% endif %}
+                    </div>
+                </li>
             {% endfor %}
         </ul>
     </div>
@@ -46,23 +44,21 @@
         <h3>Tournaments Won</h3>
         <ul>
             {% for tournament in team.tournament_set.all %}
-                {% if tournament.is_in_setup %}
-                    <li>
-                        <div class="row d-flex">
-                            <div class = "col-12">
+                <li>
+                    <div class="row d-flex">
+                        <div class = "col-12">
+                            {% if tournament.is_judgable %} 
+                                <p><a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a> ({% trans "OPEN" %})</p>
+                            {% elif tournament.is_complete %} 
+                                <p><a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a> ({% trans "COMPLETE" %})</p>
+                            {% elif tournament.is_closed %} 
+                                <p><a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a> ({% trans "CLOSED" %})</p>
+                            {% elif tournament.is_in_setup %}
                                 <p>{{ tournament }} ({% trans "SETUP" %})</p>
-                            </div>
+                            {% endif %}  
                         </div>
-                    </li>
-                {% elif tournament.is_viewable %}
-                    <li>
-                        <div class="row d-flex">
-                            <div class = "col-12">
-                                <p><a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a>({{ tournament.status }})</p>
-                            </div>
-                        </div>
-                    </li>
-                {% endif %}
+                    </div>
+                </li>
             {% endfor %}
         </ul>
     </div>

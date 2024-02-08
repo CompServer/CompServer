@@ -14,25 +14,25 @@
     {% empty %}
         <div class="row d-flex">
             <div class = "col-12">
-                <p>{% trans "There are no Competing Teams." %}</p>
+                <p>{% trans "No Competing Teams." %}</p>
             </div>
         </div>
     {% endfor %}
     <h3>{% trans "Tournaments" %}</h3>
     {% for tournament in competition.tournament_set.all %}
-        {% if tournament.is_viewable %}
-            <div class="row d-flex">
-                <div class = "col-12">
-                    <p><a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a> ({{ tournament.status }})</p>
-                </div>
-            </div>
-        {% elif tournament.is_in_setup %}
-            <div class="row d-flex">
-                <div class = "col-12">
+        <div class="row d-flex">
+            <div class = "col-12">
+                {% if tournament.is_judgable %} 
+                    <p><a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a> ({% trans "OPEN" %})</p>
+                {% elif tournament.is_complete %} 
+                    <p><a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a> ({% trans "COMPLETE" %})</p>
+                {% elif tournament.is_closed %} 
+                    <p><a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a> ({% trans "CLOSED" %})</p>
+                {% elif tournament.is_in_setup %}
                     <p>{{ tournament }} ({% trans "SETUP" %})</p>
-                </div>
+                {% endif %}    
             </div>
-        {% endif %}          
+        </div>      
     {% empty %}
         <div class="row d-flex">
             <div class = "col-12">

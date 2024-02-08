@@ -123,6 +123,14 @@ class Competition(models.Model):
         return self.status == Status.OPEN
     
     @property
+    def is_complete(self) -> bool:
+        return self.status == Status.COMPLETE
+
+    @property
+    def is_closed(self) -> bool:
+        return self.status == Status.CLOSED
+    
+    @property
     def is_archived(self) -> bool:
         return self.status == Status.ARCHIVED
     
@@ -194,6 +202,14 @@ class AbstractTournament(models.Model):
     def is_judgable(self) -> bool:
         """Whether judging for this comptetation should be allowed."""
         return self.status == Status.OPEN
+    
+    @property
+    def is_complete(self) -> bool:
+        return self.status == Status.COMPLETE
+
+    @property
+    def is_closed(self) -> bool:
+        return self.status == Status.CLOSED
     
     @property
     def is_archived(self) -> bool:
