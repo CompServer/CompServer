@@ -83,8 +83,9 @@ def competition(request, competition_id):
     return render(request, "competitions/competition.html", context)
 
 def team(request, team_id):
-    team = get_object_or_404(Team, pk=team_id)
-    context = {'team': team, "user": request.user}
+    context = {
+        'team': Team.objects.get(pk=team_id),
+    }
     return render(request, "competitions/team.html", context)
 
 def not_implemented(request, *args, **kwargs):
