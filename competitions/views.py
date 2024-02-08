@@ -8,68 +8,35 @@ from django.views.generic.edit import UpdateView
 from django.contrib.auth.mixins import AccessMixin, UserPassesTestMixin
 from .models import *
 
-
-
 def BracketView(request, tournament_id):
-    test = Match.objects.filter(tournament=tournament_id).exclude(advancers=None)
-
-    # This calculates the seeding order
-    def generate_seed_array(round_num):
-    #Triangular array read by rows in bracket pairs
-    #https://oeis.org/A208569  
-        def T(n, k):
-            if n == 1 and k == 1:
-                return 1
-            
-            elif k % 2 == 1:
-                return T(n - 1, (k + 1) // 2)
-                
-            return 2**(n - 1) + 1 - T(n - 1, k // 2)
-
-        return [T(round_num+1, k) for k in range(1, 2**(round_num) + 1)]
-
-
-
-    rankings = list(Ranking.objects.filter(tournament=tournament_id).order_by('rank'))
-    numTeams = len(rankings)
+    numTeams = len(AbstractTournament.objects.get(pk=tournament_id).teams.all())
     numRounds = math.ceil(math.log(numTeams, 2))
+    bracket_array = [{} for _ in range(numRounds)]
 
+    def read_tree(match, round, index):
+        competitors = []
+        prior_match_advancing_teams = Team.objects.filter(won_matches__in=match.prev_matches.all())
+        if match.starting_teams.exists():
+            competitors += [(("[" + team.name + "]") if team in match.advancers.all() else team.name) for team in match.starting_teams.all()]
+        if prior_match_advancing_teams:
+            competitors += [(("[" + team.name + "]") if team in match.advancers.all() else team.name) for team in prior_match_advancing_teams]
 
+        bracket_array[round][index] = competitors 
 
-    # this creates the pairings of matches to be drawn
-    def generate_bracket_array(numRounds):
-        bracket_array = [None]*numRounds
+        prevs = match.prev_matches.all()
+        if not prevs:
+            return
+        for i, prev in enumerate(prevs):
+            read_tree(prev, round-1, 2*index+i)
 
-        # Round 1
-        poitions = generate_seed_array(numRounds)
-        new = [None]* numTeams
+    #mutates bracket_array
+    read_tree(Match.objects.filter(tournament=tournament_id).filter(next_matches__isnull=True)[0], numRounds-1, 0)
 
-        for i in range(0,numTeams):
-            new[i] = rankings[poitions[i]-1]
-
-        bracket_array[0] = new
-
-        bracket_array[1] = [None]*8
-
-        bracket_array[2] = [None]*4
-
-        bracket_array[3] = [None]*2
-
-        matches = Match.objects.filter(tournament=tournament_id)
-
-        return bracket_array
-
-
-
-    bracket_array = generate_bracket_array(numRounds)
-
-
-    # the rest of this just draws the bracket data and works fine
     round_data = []
     matchWidth = 200
     connectorWidth = 50
     bracketWidth = (matchWidth+connectorWidth)*numRounds
-    bracketHeight = numTeams*50
+    bracketHeight = numTeams*100
     roundHeight = bracketHeight
     roundWidth = matchWidth+connectorWidth
     for i in range(numRounds):
@@ -78,16 +45,20 @@ def BracketView(request, tournament_id):
         match_width = matchWidth
 
         match_data = []
-        for j in range(0,num_matches*2,2):
-            num_teams = 2
+        for j in range(num_matches):
+
+            num_teams = 1
+            team_data = []
+            if j in bracket_array[i] and bracket_array[i][j] is not None:
+                num_teams = len(bracket_array[i][j])
+                team_data = [
+                    {"team_name": bracket_array[i][j][k]}
+                    for k in range(num_teams)
+                ]
+            
             team_height = 25
             center_height = team_height * num_teams
             top_padding = (match_height - center_height) / 2
-
-            team_data = [
-                {"team_name": str(bracket_array[i][j+k].rank) + ": " + str(bracket_array[i][j+k].team) if bracket_array[i][j+k] else "TBD"}
-                for k in range(num_teams)
-            ]
 
             match_data.append({
                 "team_data": team_data,
@@ -109,7 +80,7 @@ def BracketView(request, tournament_id):
         "round_data": round_data
     }
     
-    context = {"bracket_dict": bracket_dict, "test":test}
+    context = {"bracket_dict": bracket_dict,}
     return render(request, "competitions/bracket.html", context)
 
 
