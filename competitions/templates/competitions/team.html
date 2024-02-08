@@ -48,13 +48,13 @@
                     <div class="row d-flex">
                         <div class = "col-12">
                             {% if tournament.is_judgable %} 
-                                <p><a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a> ({% trans "OPEN" %})</p>
+                                <p><a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.event.name }}</a> ({% trans "OPEN" %})</p>
                             {% elif tournament.is_complete %} 
-                                <p><a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a> ({% trans "COMPLETE" %})</p>
+                                <p><a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.event.name }}</a> ({% trans "COMPLETE" %})</p>
                             {% elif tournament.is_closed %} 
-                                <p><a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a> ({% trans "CLOSED" %})</p>
+                                <p><a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.event.name }}</a> ({% trans "CLOSED" %})</p>
                             {% elif tournament.is_in_setup %}
-                                <p>{{ tournament }} ({% trans "SETUP" %})</p>
+                                <p>{{ tournament.event.name }} ({% trans "SETUP" %})</p>
                             {% endif %}  
                         </div>
                     </div>
