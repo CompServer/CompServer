@@ -120,5 +120,5 @@ class JudgeMatchUpdateView(UserPassesTestMixin, AccessMixin, UpdateView):
 
     model = Match
     fields = ['advancers']
-    template_name = 'match_judge.html'
+    template_name = 'competitions/match_judge.html'
     success_url = "/"

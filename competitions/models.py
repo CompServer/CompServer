@@ -51,23 +51,7 @@ class Status(models.TextChoices):
     # eg. doing status.is_viewable rather than status == Status.OPEN in the template or whereever
     # also makes it more readable 
     
-    @property
-    def is_viewable(self) -> bool:
-        """Whether the object should show up on the website."""
-        return self in [__class__.OPEN, __class__.COMPLETE, __class__.CLOSED]
-
-    @property
-    def is_judgable(self) -> bool:
-        """Whether judging for this comptetation should be allowed."""
-        return self == __class__.OPEN
     
-    @property
-    def is_archived(self) -> bool:
-        return self == __class__.ARCHIVED
-    
-    @property
-    def is_in_setup(self) -> bool:
-        return self == __class__.SETUP
 
 class StatusField(models.CharField):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -75,7 +59,6 @@ class StatusField(models.CharField):
         kwargs['choices'] = Status.choices
         kwargs['default'] = Status.SETUP
         super().__init__(*args, **kwargs)
-
 
 class Organization(models.Model): # probably mostly schools but could also be community organizations
     name = models.CharField(max_length=257) # not unique because there could be schools with the same name just in different cities
@@ -133,6 +116,24 @@ class Competition(models.Model):
                 return self.name + " " + str(self.start_date.year) # RoboMed 2023
         else:
             return self.name
+
+    @property
+    def is_viewable(self) -> bool:
+        """Whether the object should show up on the website."""
+        return self.model [__class__.OPEN, __class__.COMPLETE, __class__.CLOSED]
+
+    @property
+    def is_judgable(self) -> bool:
+        """Whether judging for this comptetation should be allowed."""
+        return self == __class__.OPEN
+    
+    @property
+    def is_archived(self) -> bool:
+        return self == __class__.ARCHIVED
+    
+    @property
+    def is_in_setup(self) -> bool:
+        return self == __class__.SETUP
     
     class Meta:
         ordering = ['-start_date', 'name']
@@ -188,6 +189,25 @@ class AbstractTournament(models.Model):
 
     def __str__(self) -> str:
         return self.event.name + _(" tournament @ ") + str(self.competition) # SumoBot tournament at RoboMed 2023
+    
+    @property
+    def is_viewable(self) -> bool:
+        """Whether the object should show up on the website."""
+        return self.status in [Status.OPEN, Status.COMPLETE, Status.CLOSED]
+
+    @property
+    def is_judgable(self) -> bool:
+        """Whether judging for this comptetation should be allowed."""
+        return self.status == Status.OPEN
+    
+    @property
+    def is_archived(self) -> bool:
+        return self.status == Status.ARCHIVED
+    
+    @property
+    def is_in_setup(self) -> bool:
+        return self.status == Status.SETUP
+
         
     class Meta:
         ordering = ['competition', 'event']
