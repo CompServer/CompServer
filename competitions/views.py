@@ -41,10 +41,10 @@ def BracketView(request, tournament_id):
         # place the team names in the right box
         # i.e. bracket_array[2][3] = top 8, 4th match from the top
         bracket_array[curr_round][base_index] = competitors 
-
         
         prevs = curr_match.prev_matches.all()
         # checks if there are any previous matches
+
         if prevs:
             # if TRUE: recurse
             # if FALSE: base case
