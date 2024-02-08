@@ -46,18 +46,6 @@ class Status(models.TextChoices):
     def max_length(cls):
         lengths = [len(member.value) for member in cls]
         return max(lengths)
-    
-    @property
-    def is_viewable(self) -> bool:
-        """Whether the object should show up on the website."""
-        return self in [__class__.OPEN, __class__.COMPLETE, __class__.CLOSED]
-
-    @property
-    def is_judgable(self) -> bool:
-        """Whether judging for this comptetation should be allowed."""
-        return self == __class__.OPEN
-    
-
 
 class StatusField(models.CharField):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -123,6 +111,32 @@ class Competition(models.Model):
                 return self.name + " " + str(self.start_date.year) # RoboMed 2023
         else:
             return self.name
+
+    @property
+    def is_viewable(self) -> bool:
+        """Whether the object should show up on the website."""
+        return self.status in [Status.OPEN, Status.COMPLETE, Status.CLOSED]
+
+    @property
+    def is_judgable(self) -> bool:
+        """Whether judging for this comptetation should be allowed."""
+        return self.status == Status.OPEN
+    
+    @property
+    def is_complete(self) -> bool:
+        return self.status == Status.COMPLETE
+
+    @property
+    def is_closed(self) -> bool:
+        return self.status == Status.CLOSED
+    
+    @property
+    def is_archived(self) -> bool:
+        return self.status == Status.ARCHIVED
+    
+    @property
+    def is_in_setup(self) -> bool:
+        return self.status == Status.SETUP
     
     class Meta:
         ordering = ['-start_date', 'name']
@@ -178,10 +192,36 @@ class AbstractTournament(models.Model):
 
     def __str__(self) -> str:
         return self.event.name + _(" tournament @ ") + str(self.competition) # SumoBot tournament at RoboMed 2023
+    
+    @property
+    def is_viewable(self) -> bool:
+        """Whether the object should show up on the website."""
+        return self.status in [Status.OPEN, Status.COMPLETE, Status.CLOSED]
+
+    @property
+    def is_judgable(self) -> bool:
+        """Whether judging for this comptetation should be allowed."""
+        return self.status == Status.OPEN
+    
+    @property
+    def is_complete(self) -> bool:
+        return self.status == Status.COMPLETE
+
+    @property
+    def is_closed(self) -> bool:
+        return self.status == Status.CLOSED
+    
+    @property
+    def is_archived(self) -> bool:
+        return self.status == Status.ARCHIVED
+    
+    @property
+    def is_in_setup(self) -> bool:
+        return self.status == Status.SETUP
+
         
     class Meta:
         ordering = ['competition', 'event']
-
 
 class Ranking(models.Model):
     """ These will determine the auto-layout of the brackets """

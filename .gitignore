@@ -21,3 +21,6 @@ static/
 # future secret files 
 *.yaml
 *.yml
+
+#localization
+locale/

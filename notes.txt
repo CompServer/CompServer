@@ -174,3 +174,12 @@ Product Owner (jschwartz) Presentation Notes
 - Speed race could be 1 v 1
 - 20 sportsmanship points that get taken away (penalties)
 - We can estimate times for a match but it depends on how streamlined the setup is (may be different for different venues, hosts)
+
+Translation Notes
+- No matter the implementation, we have to translate messages manually (very difficult ngl)
+- We have to download gettext tools system library (https://stackoverflow.com/questions/53852961/installing-gettext-in-windows-cant-find-msguniq-make-sure-you-have-gnu-gettex)
+- use{% trans %} tag for built-in html text, and gettext python library function for not built-in html text
+- use {% load i18n %} at beginning of html doc to allow Translation
+
+To anyone reading this, if you want to include a link to the navbar shown only on your specific
+html page, you can use the block links to do so.

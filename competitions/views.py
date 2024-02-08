@@ -1,12 +1,14 @@
 from django.contrib import messages
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 import math
 from .models import *
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.views.generic.edit import UpdateView
 from django.contrib.auth.mixins import AccessMixin, UserPassesTestMixin
-from .models import AbstractTournament, Competition, Match
+from django.contrib.auth.decorators import login_required
+from django.urls import reverse
+from django.contrib.auth.models import User
 
 
 def home(request):
@@ -60,37 +62,34 @@ def BracketView(request):
 
 
 def tournament(request, tournament_id):
-    return render(request, "competitions/tournament.html")
+    context = {"user": request.user}
+    return render(request, "competitions/tournament.html", context)
 
 
 def tournaments(request):
-    return render(request, "competitions/tournaments.html")
-
+    context = {"user": request.user}
+    return render(request, "competitions/tournaments.html", context)
 
 def competitions(request):
     competition_list = Competition.objects.all()
-    context = {"competition_list": competition_list, "Status": Status}
+    context = {"competition_list": competition_list, "redirect_to": request.path, "user": request.user}
     return render(request, "competitions/competitions.html", context)
 
+def competition(request, competition_id):
+    competition = get_object_or_404(Competition, pk=competition_id)
+    if competition.is_archived:
+        return HttpResponseRedirect(reverse("competitions:competitions"))
+    context = {"competition": competition, "redirect_to": request.path, "user": request.user, "Status": Status}
+    return render(request, "competitions/competition.html", context)
 
 def team(request, team_id):
-    context = {
-        'team': Team.objects.get(id=team_id), #get a team from the team id passed into the view
-    }
+    team = get_object_or_404(Team, pk=team_id)
+    context = {'team': team, "user": request.user}
     return render(request, "competitions/team.html", context)
-
 
 def not_implemented(request, *args, **kwargs):
     messages.error(request, "This feature is not yet implemented.")
     return render(request, 'skeleton.html')
-
-
-def competition(request, competition_id):
-    context = {
-        'competition': Competition.objects.get(id=competition_id)
-    }
-    return render(request, "competitions/competition.html", context)
-
 
 class JudgeMatchUpdateView(UserPassesTestMixin, AccessMixin, UpdateView):
     def test_func(self):
@@ -99,23 +98,22 @@ class JudgeMatchUpdateView(UserPassesTestMixin, AccessMixin, UpdateView):
         assert isinstance(instance, Match)
         tournament = instance.tournament
         assert isinstance(tournament, AbstractTournament)
-        competetion = tournament.competition
-        assert isinstance(competetion, Competition)
-        status = competetion.status
+        competition = tournament.competition
+        assert isinstance(competition, Competition)
+        status = competition.status
         assert isinstance(status, Status)
 
-        if not status.is_judgable:
+        if not competition.is_judgable and tournament.is_judgable:
             return False
 
         # if the user is a judge for the tournament, or a plenary judge for the competition, or a superuser
         if user in tournament.judges.all() \
-        or user in competetion.plenary_judges.all():# \
+        or user in competition.plenary_judges.all():# \
         #or user.is_superuser:
             return True
        # elif user.is_authenticated:
        #     returran PermissionDenied("You are not authorized to judge this match.")
-        else:
-            return False
+        return False
 
     def handle_no_permission(self):
         return HttpResponseRedirect('/')
