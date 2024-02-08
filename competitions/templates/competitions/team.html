@@ -21,8 +21,8 @@
             <p>ORGANIZATION LOGO HERE</p>
         </div>
         <div class="match-schedule">
-            <h3>Upcoming Matches</h3>
             {% if team.competition_set.all %}
+            <h3>Upcoming Matches</h3>
                 {% for competition in team.competition_set.all %}
                     {% if competition.check_date %}
                         {% if competition.status == "OPEN" %}
