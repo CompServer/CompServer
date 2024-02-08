@@ -24,3 +24,5 @@ static/
 
 #localization
 locale/
+*.po 
+*.mo
