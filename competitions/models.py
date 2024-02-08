@@ -48,7 +48,6 @@ class Status(models.TextChoices):
         lengths = [len(member.value) for member in cls]
         return max(lengths)
 
-
 class StatusField(models.CharField):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         kwargs['max_length'] = Status.max_length()
@@ -72,13 +71,13 @@ class Organization(models.Model): # probably mostly schools but could also be co
 
 class Team(models.Model):
     name = models.CharField(max_length=255)
-    organization = models.ForeignKey(Organization, models.CASCADE)
-    coach = models.ForeignKey(User, on_delete=models.CASCADE)  # with special permissions to change info WRT the team
+    organization = models.ForeignKey(Organization, blank=True, null=True, on_delete=models.CASCADE)
+    coach = models.ForeignKey(User, blank=True, null=True, on_delete=models.CASCADE)  # with special permissions to change info WRT the team
     # logo = models.ImageField()
     # related: competition_set, tournament_set, round1_matches, won_matches
 
     def __str__(self) -> str:
-        return self.name + _(" from ") + str(self.organization)
+        return self.name + (_(" from ") + str(self.organization) if self.organization else "")
     
     class Meta:
         ordering = ['organization', 'name']
@@ -124,6 +123,32 @@ class Competition(models.Model):
         else:
             return self.name
 
+    @property
+    def is_viewable(self) -> bool:
+        """Whether the object should show up on the website."""
+        return self.status in [Status.OPEN, Status.COMPLETE, Status.CLOSED]
+
+    @property
+    def is_judgable(self) -> bool:
+        """Whether judging for this comptetation should be allowed."""
+        return self.status == Status.OPEN
+    
+    @property
+    def is_complete(self) -> bool:
+        return self.status == Status.COMPLETE
+
+    @property
+    def is_closed(self) -> bool:
+        return self.status == Status.CLOSED
+    
+    @property
+    def is_archived(self) -> bool:
+        return self.status == Status.ARCHIVED
+    
+    @property
+    def is_in_setup(self) -> bool:
+        return self.status == Status.SETUP
+    
     class Meta:
         ordering = ['-start_date', 'name']
         unique_together = ['start_date', 'name'] # probably won't have 2 in the same year but you could have a quarterly / monthly / even weekly competition
@@ -178,12 +203,39 @@ class AbstractTournament(models.Model):
 
     def __str__(self) -> str:
         return self.event.name + _(" tournament @ ") + str(self.competition) # SumoBot tournament at RoboMed 2023
+    
+    @property
+    def is_viewable(self) -> bool:
+        """Whether the object should show up on the website."""
+        return self.status in [Status.OPEN, Status.COMPLETE, Status.CLOSED]
+
+    @property
+    def is_judgable(self) -> bool:
+        """Whether judging for this comptetation should be allowed."""
+        return self.status == Status.OPEN
+    
+    @property
+    def is_complete(self) -> bool:
+        return self.status == Status.COMPLETE
+
+    @property
+    def is_closed(self) -> bool:
+        return self.status == Status.CLOSED
+    
+    @property
+    def is_archived(self) -> bool:
+        return self.status == Status.ARCHIVED
+    
+    @property
+    def is_in_setup(self) -> bool:
+        return self.status == Status.SETUP
+
         
     class Meta:
         ordering = ['competition', 'event']
 
-
 class Ranking(models.Model):
+    """ These will determine the auto-layout of the brackets """
     tournament = models.ForeignKey(AbstractTournament, on_delete=models.CASCADE)
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     rank = models.PositiveSmallIntegerField()
@@ -193,8 +245,8 @@ class Ranking(models.Model):
 
     class Meta:
         ordering = ['tournament', 'rank']
-        unique_together = [['tournament', 'rank'], ['tournament', 'team']]
-
+        unique_together = [['tournament', 'team']] 
+        # unique_together += ['tournament', 'rank'] # NCAA has 4 teams with a #1 seed
 
 
 class SingleEliminationTournament(AbstractTournament):
@@ -271,18 +323,30 @@ class Match(models.Model):
     # Note: admin doesn't enforce the starting teams to be registered for this tournament
     starting_teams = models.ManyToManyField(Team, related_name="round1_matches", blank=True) # Only used for round1 matches, all others use the previous matches. Usually just 2 but could be more (speed race)
     # Note: admin doesn't restrict to previous matches from this tournament
-    prev_matches = models.ManyToManyField('self', blank=True) # Except for round1 of a tournament (or one-off preliminary matches), advancers from the previous matches will be the competitors for this match
+    prev_matches = models.ManyToManyField('self', symmetrical=False, blank=True, related_name="next_matches") # Except for round1 of a tournament (or one-off preliminary matches), advancers from the previous matches will be the competitors for this match
     # Note: admin doesn't restrict advancers to be competitors for this match
     advancers = models.ManyToManyField(Team, related_name="won_matches", blank=True) # usually 1 but could be more (e.g. time trials)
     time = models.DateTimeField() # that it's scheduled for
+    str_recursive_level = 0
 
     def __str__(self) -> str:
+        self.__class__.str_recursive_level += 1
+        competitors = []
         if self.starting_teams.exists():
-            competitors = [team.name for team in self.starting_teams.all()]
-        else:
-            teams = Team.objects.filter(won_matches__in=self.prev_matches.all())
-            competitors = [team.name for team in teams]
-        return _(" vs ").join(competitors) + _(" in ") + str(self.tournament) # Battlebots vs Byters in SumoBot tournament @ RoboMed 2023
+            competitors += [(("[" + team.name + "]") if team in self.advancers.all() else team.name) for team in self.starting_teams.all()]
+        if self.prev_matches.exists():
+            for prev_match in self.prev_matches.all():
+                prior_match_advancing_teams = prev_match.advancers.all()
+                if prev_match.advancers.exists():
+                    competitors += [(("[" + team.name + "]") if team in self.advancers.all() else team.name) for team in prev_match.advancers.all()]
+                else:
+                    competitors += ["Winner of (" + str(prev_match) + ")"]
+        self.__class__.str_recursive_level -= 1
+        res = _(" vs ").join(competitors) # Battlebots vs Byters
+        if self.__class__.str_recursive_level == 0:
+            return res + _(" in ") + str(self.tournament) # Battlebots vs Byters in SumoBot tournament @ RoboMed 2023
+        else: 
+            return res # if part of another match we don't want to repeat the tournament
 
     class Meta:
         ordering = ['tournament']

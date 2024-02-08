@@ -1,160 +1,160 @@
 {% extends 'skeleton.html' %}
+{% load i18n %}
 {% block title %} RoboMed Team Page {% endblock %} 
 {% block content %}
-    <body>
-        <header>
-            <h1>Team: {{ team }}</h1>
-            {% if team.coach.first_name %}
-                {% if team.coach.last_name %}
-                    <p>Coached by {{ team.coach.first_name }} {{ team.coach.last_name }}</p>
-                {% else %}
-                    <p>Coached by @{{ team.coach.username }} </p>
-                {% endif %}
+    <header>
+        <h1>Team: {{ team }}</h1>
+        {% if team.coach.first_name %}
+            {% if team.coach.last_name %}
+                <p>Coached by {{ team.coach.first_name }} {{ team.coach.last_name }}</p>
             {% else %}
-                <p>Coached by @{{ team.coach.username }}</p>
+                <p>Coached by @{{ team.coach.username }} </p>
             {% endif %}
-            <p>TEAM LOGO HERE</p>
-        </header>
-        <div class="organization-information">
-            <h3>Information About {{ team.organization.name }}</h3>
-            <h4>Address:<i>ADDRESS FIELD HERE</i></h4>
-            <p>ORGANIZATION LOGO HERE</p>
-        </div>
-        <div class="match-schedule">
+        {% else %}
+            <p>Coached by @{{ team.coach.username }}</p>
+        {% endif %}
+        <p>TEAM LOGO HERE</p>
+    </header>
+    <div class="organization-information">
+        <h3>Information About {{ team.organization.name }}</h3>
+        <h4>Address:<i>ADDRESS FIELD HERE</i></h4>
+        <p>ORGANIZATION LOGO HERE</p>
+    </div>
+    <div class="match-schedule">
+        <h3>Upcoming Matches</h3>
+        {% if team.competition_set.all %}
+            {% for competition in team.competition_set.all %}
+                {% if competition.check_date %}
+                    {% if competition.status == "OPEN" %}
+                        {% for tournament in competition.tournament_set.all %}
+                            <div class="row">
+                                <h4>{{ competition.name }}, {{ tournament.name }}, {{ competition.start_date }} - {{ competition.end_date }} </h4>
+                                <h5>Your Events</h5>
+                                {% for event in tournament.event_set.all %}
+                                    <div class="column">
+                                        <p>{{ event.name }}</p>
+                                    </div>
+                                    <div class="column">
+                                        {% for match in event.match_set.all.ordering %}
+                                            {% if match.check_time %}
+                                                {% if match.advancers %}
+                                                    {{ break }}
+                                                {% else %}
+                                                    <p>Match {{ match.id }}: Between {{ match }} , Begins At {{ match.time }}</p>
+                                                {% endif %}
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+        {% else %}
+            <p>No upcoming matches!</p>
+        {% endif %}
+    </div> 
+    <div class="competition-set">
+        <h3>Previous Competitions</h3>
+        <ul>
             {% if team.competition_set.all %}
             <h3>Upcoming Matches</h3>
                 {% for competition in team.competition_set.all %}
-                    {% if competition.check_date %}
-                        {% if competition.status == "OPEN" %}
-                            {% for tournament in competition.tournament_set.all %}
-                                <div class="row">
-                                    <h4>{{ competition.name }}, {{ tournament.name }}, {{ competition.start_date }} - {{ competition.end_date }} </h4>
-                                    <h5>Your Events</h5>
-                                    {% for event in tournament.event_set.all %}
-                                        <div class="column">
-                                            <p>{{ event.name }}</p>
-                                        </div>
-                                        <div class="column">
-                                            {% for match in event.match_set.all.ordering %}
-                                                {% if match.check_time %}
-                                                    {% if match.advancers %}
-                                                        {{ break }}
-                                                    {% else %}
-                                                        <p>Match {{ match.id }}: Between {{ match }} , Begins At {{ match.time }}</p>
-                                                    {% endif %}
-                                                {% endif %}
-                                            {% endfor %}
-                                        </div>
-                                    {% endfor %}
-                                </div>
+                    {% if competition.status == "COMPLETE" %}
+                        <li><a href="{% url 'competitions:competition' competition.id %}">{{ competition.name }}</a>, Competed In: 
+                            {% for event in competition.tournament.event_set.all %}
+                                {% if event.id != competition.tournament.event_set.length %}
+                                    {{ event.name }},
+                                {% else %}
+                                    {{ event.name }}
+                                {% endif %}
                             {% endfor %}
+                        </li>
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                <p>No previous competitions.</p>
+            {% endif %}
+        </ul>
+    </div>
+    <div class="tournament-set">
+        <h3>Tournaments Won</h3>
+        <ul>
+            {% if team.tournament_set.all %}
+                {% for tournament in team.tournament_set.all %}
+                    {% if tournament.status == "COMPLETE" %}
+                        {% if tournament.team.ranking.rank == 1 %}
+                            <li>
+                                <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.name }}</a>
+                            </li>
                         {% endif %}
                     {% endif %}
                 {% endfor %}
             {% else %}
-                <p>No upcoming matches!</p>
+                <p>No tournaments won.</p>
             {% endif %}
-        </div> 
-        <div class="competition-set">
-            <h3>Previous Competitions</h3>
+        </ul>
+    </div>
+    <div class="match-records">
+        <h3>Match History</h3>
+        <div class="row">
+            <h4>Wins Against Other Teams</h4>
             <ul>
-                {% if team.competition_set.all %}
-                    {% for competition in team.competition_set.all %}
-                        {% if competition.status == "COMPLETE" %}
-                            <li><a href="{% url 'competitions:competition' competition.id %}">{{ competition.name }}</a>, Competed In: 
-                                {% for event in competition.tournament.event_set.all %}
-                                    {% if event.id != competition.tournament.event_set.length %}
-                                        {{ event.name }},
-                                    {% else %}
-                                        {{ event.name }}
-                                    {% endif %}
+                {% if team.won_matches.all %}
+                    {% for match in team.won_matches.all %}  
+                        {% if match.advancers.length == 1 %}
+                            <li>Tournament: <a href="{% url 'competitions:tournament' match.tournament.id %}">{{ match.tournament.name }}</a>, Event: {{ match.event.name }}, Players:
+                                {% for player in match.event.player_set.all %} 
+                                    {{ player.first_name }},
                                 {% endfor %}
-                            </li>
+                                Score: {{ match.awarded_points }}</li>
                         {% endif %}
                     {% endfor %}
                 {% else %}
-                    <p>No previous competitions.</p>
+                    <p>No wins!</p>
                 {% endif %}
             </ul>
         </div>
-        <div class="tournament-set">
-            <h3>Tournaments Won</h3>
+        <div class="row">
+            <h4>Losses Against Other Teams</h4>
             <ul>
-                {% if team.tournament_set.all %}
-                    {% for tournament in team.tournament_set.all %}
-                        {% if tournament.status == "COMPLETE" %}
-                            {% if tournament.team.ranking.rank == 1 %}
-                                <li>
-                                    <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.name }}</a>
-                                </li>
+                {% if team.match_set.all %}
+                    {% for normal_match in team.match_set.all %}
+                        {% for won_match in team.won_matches.all %}
+                            {% if normal_match != won_match %}
+                                {% if normal_match.advancers.length == 1 %}
+                                <li>Tournament: <a {% url 'competitions:tournament' match.tournament.id %}>{{ match.tournament.name }}</a>, Event: {{ match.event.name }}, Players: 
+                                    {% for player in normal_match.event.player_set.all %} 
+                                        {{ player.first_name }},
+                                    {% endfor %}
+                                    Score: {{ match.awarded_points }}</li>
+                                {% endif %}
                             {% endif %}
-                        {% endif %}
+                        {% endfor %}
                     {% endfor %}
                 {% else %}
-                    <p>No tournaments won.</p>
+                    <p>No lost matches!</p>
                 {% endif %}
             </ul>
         </div>
-        <div class="match-records">
-            <h3>Match History</h3>
-            <div class="row">
-                <h4>Wins Against Other Teams</h4>
-                <ul>
-                    {% if team.won_matches.all %}
-                        {% for match in team.won_matches.all %}  
-                            {% if match.advancers.length == 1 %}
-                                <li>Tournament: <a href="{% url 'competitions:tournament' match.tournament.id %}">{{ match.tournament.name }}</a>, Event: {{ match.event.name }}, Players:
-                                    {% for player in match.event.player_set.all %} 
-                                        {{ player.first_name }},
-                                    {% endfor %}
-                                    Score: {{ match.awarded_points }}</li>
-                            {% endif %}
-                        {% endfor %}
-                    {% else %}
-                        <p>No wins!</p>
-                    {% endif %}
-                </ul>
-            </div>
-            <div class="row">
-                <h4>Losses Against Other Teams</h4>
-                <ul>
-                    {% if team.match_set.all %}
-                        {% for normal_match in team.match_set.all %}
-                            {% for won_match in team.won_matches.all %}
-                                {% if normal_match != won_match %}
-                                    {% if normal_match.advancers.length == 1 %}
-                                    <li>Tournament: <a {% url 'competitions:tournament' match.tournament.id %}>{{ match.tournament.name }}</a>, Event: {{ match.event.name }}, Players: 
-                                        {% for player in normal_match.event.player_set.all %} 
-                                            {{ player.first_name }},
-                                        {% endfor %}
-                                        Score: {{ match.awarded_points }}</li>
-                                    {% endif %}
-                                {% endif %}
-                            {% endfor %}
-                        {% endfor %}
-                    {% else %}
-                        <p>No lost matches!</p>
-                    {% endif %}
-                </ul>
-            </div>
-            <div class="row">
-                <h4>Draws With Other Teams</h4>
-                <ul>
-                    {% if team.won_matches.all %}
-                        {% for match in team.won_matches.all %}  
-                            {% if match.advancers.length > 1 %}
-                                <li>Tournament: <a href="{% url 'competitions:tournament' match.tournament.id %}">{{ match.tournament.name }}</a>, Event: {{ match.event.name }}, Players:
-                                    {% for player in match.event.player_set.all %} 
-                                        {{ player.first_name }},
-                                    {% endfor %}
-                                    Score: {{ match.awarded_points }}</li>
-                            {% endif %}
-                        {% endfor %}
-                    {% else %}
-                        <p>No draws with other teams!</p>
-                    {% endif %}
-                </ul>
-            </div>
+        <div class="row">
+            <h4>Draws With Other Teams</h4>
+            <ul>
+                {% if team.won_matches.all %}
+                    {% for match in team.won_matches.all %}  
+                        {% if match.advancers.length > 1 %}
+                            <li>Tournament: <a href="{% url 'competitions:tournament' match.tournament.id %}">{{ match.tournament.name }}</a>, Event: {{ match.event.name }}, Players:
+                                {% for player in match.event.player_set.all %} 
+                                    {{ player.first_name }},
+                                {% endfor %}
+                                Score: {{ match.awarded_points }}</li>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <p>No draws with other teams!</p>
+                {% endif %}
+            </ul>
         </div>
-    </body>
+    </div>
 {% endblock %}
