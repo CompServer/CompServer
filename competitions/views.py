@@ -45,6 +45,7 @@ def BracketView(request, tournament_id):
         prevs = curr_match.prev_matches.all()
         # checks if there are any previous matches
 
+
         if prevs:
             # if TRUE: recurse
             # if FALSE: base case
@@ -97,6 +98,9 @@ def BracketView(request, tournament_id):
             team_height = 25
             center_height = team_height * num_teams
             top_padding = (match_height - center_height) / 2
+
+            if i is numRounds-1 and len(bracket_array[numRounds-i-1]) < len(bracket_array[numRounds-i-2]): 
+                top_padding = match_data[-1]
 
             match_data.append({
                 "team_data": team_data,
