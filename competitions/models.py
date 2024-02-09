@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 from datetime import datetime
+import pytz
 import random
 import string
 
@@ -328,6 +329,14 @@ class Match(models.Model):
     advancers = models.ManyToManyField(Team, related_name="won_matches", blank=True) # usually 1 but could be more (e.g. time trials)
     time = models.DateTimeField() # that it's scheduled for
     str_recursive_level = 0
+
+    def currently_running(self):
+        utc = pytz.UTC
+        now = utc.localize(datetime.now())
+        if utc.localize(self.time) >= now:
+            return True
+        else: 
+            return False
 
     def __str__(self) -> str:
         self.__class__.str_recursive_level += 1

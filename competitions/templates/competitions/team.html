@@ -20,130 +20,61 @@
         <!-- <h4>Address:<i>ADDRESS FIELD HERE</i></h4> -->
         <!-- <p>ORGANIZATION LOGO HERE</p> -->
     </div>
-
-
-    <h3>Upcoming Matches</h3>
-                {% for competition in team.competition_set.all %}
-                    {% if competition.status == "COMPLETE" %}
-                        <li><a href="{% url 'competitions:competition' competition.id %}">{{ competition.name }}</a>, Competed In: 
-                            {% for event in competition.tournament.event_set.all %}
-                                {% if event.id != competition.tournament.event_set.length %}
-                                    {{ event.name }},
-                                {% else %}
-                                    {{ event.name }}
-                                {% endif %}
-                            {% endfor %}
-                        </li>
-                    {% endif %}
-                {% endfor %}
-        {% endif %}
-
-
     {% if team.competition_set.all %}
         <div class="match-schedule">
             <h3>Upcoming Matches</h3>
             {% for competition in team.competition_set.all %}
                 {% if competition.currently_running and competition.status == "OPEN" %}
-                    {% for tournament in competition.tournament_set.all %}
-                        <div class="row">
-                            <h4>{{ tournament }}, {{ competition.start_date }} - {{ competition.end_date }} </h4>
-                            {% for match in tournament.match_set.all %}
-                                {% if match.check_time and if match.advancers is not None %}
-                                    <div class="column">
-                                        <p>Match {{ match.id }}</p>
-                                    <div class="column">
-                                        <p>Begins At {{ match.time }}</p>
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
-                        </div>
-                    {% endfor %}
+                    <div class="row">
+                        <h4>{{ competition }}maybe add dates, and order matches</h4>
+                        {% for tournament in competition.tournament_set.all %}
+                            {% if tournament.status == "OPEN" %}
+                                {% for match in tournament.match_set.all %}
+                                    {% if match.currently_running %}
+                                        <div class="column">
+                                            <p>Match {{ match.id }}: {{ match }} with competitors</p>
+                                        </div>
+                                        <div class="column">
+                                            <p>Begins At {{ match.time }}</p>
+                                        </div>
+                                    {% endif %}    
+                                {% endfor %}
+                            {% endif %}
+                        {% endfor %}
+                    </div>
                 {% endif %}
-            {% endfor %}
-        </div> 
+           {% endfor %}
+        </div>
     {% endif %}
-
-
-
-    
     {% if team.tournament_set.all %}
         <div class="past-tournament-set">
-            <h3>Past Tournaments</h3>
-            <ul>
-                {% for tournament in team.tournament_set.all %}
-                    {% if tournament.status == "COMPLETE" and tournament.team.ranking.rank == 1%}
-                        <li style="color:green;"><a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}, Win!</a>
-                    {% endif %}
-                    {% elseif tournament.status == "COMPLETE" and tournaments.team.ranking.rank != 1 %}
-                        <li><a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a></li>
-                    {% endif %}
-                {% endfor %}
-            </ul>
+        <h3>Past Tournaments</h3>
+        <ul>
+            {% for tournament in team.tournament_set.all %}
+                {% if tournament.status == "COMPLETE" and tournament.team.ranking.rank == 1%}
+                    <li style="color:green;"><a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}, Win!</a>
+                {% endif %}
+                {% if tournament.status == "COMPLETE" and tournaments.team.ranking.rank != 1 %}
+                    <li><a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a></li>
+                {% endif %}
+                {% if tournament.status != "COMPLETE" %}
+                    <li>This tournament is unavailable for viewing: <p style="color:red;">{{ tournament }}</p></li>
+                {% endif %}
+            {% endfor %}
+        </ul>
         </div>
     {% endif %}
     {% if team.competition_set.all %}
         <div class="past-competitions-set">
-            <h3>Past Competitions</h3>
-            <ul>
-                {% for competition in team.competition_set.all %}
-                    {% if competition.status == "COMPLETE" %}
-                        <li><a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a></li>
-                    {% endif %}
-                {% endfor %}
-            </ul>
-        </div>
-    {% endif %}
-    {% if team.match_set.all %}
-        <h3>Match History</h3>
-        {% for normal_match in team.match_set.all %}
-            {% for won_match in team.won_matches.all %}
-                {% if normal_match != won_match %}
-                    {{ losses_list.append(normal_match) }}
+        <h3>Past Competitions</h3>
+        <ul>
+            {% for competition in team.competition_set.all %}
+                {% if competition.status == "COMPLETE" %}
+                    <li><a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a></li>
+                {% else %}
+                    <li>This competition is unavailable for viewing: <p style="color:red;"> {{ competition }}</p></li>
                 {% endif %}
             {% endfor %}
-        {% endfor%}
-    {% endif %}
-    {% if team.won_matches.all %}
-        <div class="wins-and-draws-set">
-            {% for match in team.won_matches.all %}
-                {% if match.advancers.length == 1 %}
-                    {{ wins_list.append(match) }}
-                {% else %}
-                    {{ draws_list.append(match) }}
-                {% endif %}
-           {% endfor %}
-           {% if wins_list is not None %}
-                <div class="row">
-                    <h4>Wins</h4>
-                    <ul>
-                        {% for match_won in wins_list %}
-                            <li>{{ match_won }}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-           {% endif %}
-           {% if draws_list is not None %}
-                <div class="row">
-                    <h4>Draws</h4>
-                    <ul>
-                        {% for match_drawn in draws_list %}
-                            <li>{{ match_drawn }}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-           {% endif %}
-        </div>
-    {% endif %}
-    {% if losses_list is not None %}
-        <div class="losses-set">
-            <div class="row">
-                <h4>Losses</h4>
-                <ul>
-                    {% for match_lost in losses_list %}
-                        <li>{{ match_lost }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
+        </ul>
     {% endif %}        
 {% endblock %}
