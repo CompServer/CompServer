@@ -85,6 +85,9 @@ def competition(request, competition_id):
 def team(request, team_id):
     context = {
         'team': Team.objects.get(pk=team_id),
+        'wins_list': [],
+        'draws_list': [],
+        'losses_list': [],
     }
     return render(request, "competitions/team.html", context)
 
