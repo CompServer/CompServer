@@ -4,6 +4,7 @@
     <header>
         <h1>{{ competition }}</h1>
     </header>
+    <hr>
     {% if competition.teams.all %}
         <h3>{% trans "Competing Teams" %}</h3>
         {% for team in competition.teams.all %}

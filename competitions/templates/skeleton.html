@@ -78,7 +78,6 @@
                 <li class="nav-item" id="lang">
                     <form action="{% url 'set_language' %}" method="post" style="margin-top: 5px">
                         {% csrf_token %}
-                        <input name="next" type="hidden" value="{{ redirect_to }}" />
                         <select name="language">
                             <option value="en">English</option>
                             <option value="es">Español</option>
