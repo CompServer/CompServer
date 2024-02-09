@@ -1,6 +1,5 @@
 from django.contrib import messages
 from django.shortcuts import render
-import math
 from .models import *
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
