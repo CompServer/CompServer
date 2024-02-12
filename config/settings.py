@@ -16,8 +16,9 @@ SECRET_KEY = 'django-insecure-2y0@hfzu761goc9!m&!#if&(vhcg=!uzre027l48r&oh_c^xcx
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    "localhost",
+ALLOWED_HOSTS = ["*"]
+
+INTERNAL_IPS = [
     "127.0.0.1",
 ]
 
@@ -154,3 +155,7 @@ MEDIA_ROOT = BASE_DIR / '/uploads/'
 MESSAGE_TAGS = {
     messages.ERROR: 'danger',
 }
+
+def show_toolbar(request):
+    return True
+SHOW_TOOLBAR_CALLBACK = show_toolbar
