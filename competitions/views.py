@@ -17,6 +17,7 @@ from django.contrib.auth.mixins import AccessMixin, LoginRequiredMixin, UserPass
 from .models import AbstractTournament, Competition, Match
 
 
+# why are we using camelcase
 def BracketView(request):
     t = ""
 
@@ -31,8 +32,7 @@ def BracketView(request):
 
     t += f'<div class="bracket" style="height: {bracketHeight}px; width: {bracketWidth}px;">'    
 
-    for i in range(0,numRounds):
-
+    for i in range(numRounds):
         t += f'<div class="round" style="height: {roundHeight}px; width: {roundWidth}px;">'
 
         numMatches = 2**(numRounds-i-1)
@@ -50,7 +50,7 @@ def BracketView(request):
             
             t += f'<div class="center" style="height: {centerHeight}px; padding-top: {topPadding}px">'
 
-            for k in range(0,numTeams):
+            for _ in range(0,numTeams):
                 t += f'<div class="team" style="width: {matchWidth}px;">Team</div>'
             
             t += f'</div></div>'
@@ -87,6 +87,7 @@ def not_implemented(request, *args, **kwargs):
     or want to link to a URL to a page that doesn't exist yet.
     """
     messages.error(request, "This feature is not yet implemented.")
+    #raise NotImplementedError()
     return render(request, 'skeleton.html')
 
 def competition(request, competition_id):
