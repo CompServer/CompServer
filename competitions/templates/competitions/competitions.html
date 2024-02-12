@@ -12,11 +12,11 @@
                 </div>
             </div>
         {% else %}
-            <div class="row d-flex">
+            {% comment %} <div class="row d-flex">
                 <div class = "col-12">
                     <p>{% trans "This competition is unavailable." %}</p>
                 </div>
-            </div>
+            </div> {% endcomment %}
         {% endif %}
     {% empty %}
         <div class="row d-flex">
