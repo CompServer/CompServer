@@ -23,7 +23,7 @@ from .forms import *
 def home(request):
     return render(request, "competitions/home.html")
 
-def BracketView(request, tournament_id):
+def bracket(request, tournament_id):
     '''
     This view is responsible for drawing the tournament bracket, it does this by:
     1) Recursively get all matches and put them in a 3d array
@@ -46,16 +46,16 @@ def BracketView(request, tournament_id):
             bracket_array.append({})
 
         # get the names of the teams competing, stolen to the toString
-            
-        # TODO: use mr wheadons new code
         competitors = []
-        prior_match_advancing_teams = Team.objects.filter(won_matches__in=curr_match.prev_matches.all())
         if curr_match.starting_teams.exists():
             competitors += [(("[" + team.name + "]") if team in curr_match.advancers.all() else team.name) for team in curr_match.starting_teams.all()]
-        elif prior_match_advancing_teams:
-            competitors += [(("[" + team.name + "]") if team in curr_match.advancers.all() else team.name) for team in prior_match_advancing_teams]
-        else: 
-            competitors += ["TBD"]
+        if curr_match.prev_matches.exists():
+            for prev_match in curr_match.prev_matches.all():
+                if prev_match.advancers.exists():
+                    competitors += [(("[" + team.name + "]") if team in curr_match.advancers.all() else team.name) for team in prev_match.advancers.all()]
+                else:
+                    competitors += ["TBD"]
+
 
         # place the team names in the right box
         # i.e. bracket_array[2][3] = top 8, 4th match from the top
