@@ -4,27 +4,25 @@
 {% block content %}
     <h1>{% trans "Competitions" %}</h1>
     <hr>
-    {% if competition_list %}
-        {% for competition in competition_list %}
-            {% if competition.status != Status.ARCHIVED %}
-                <div class="row d-flex">
-                    <div class = "col-12">
-                        <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
-                    </div>
+    {% for competition in competition_list %}
+        {% if competition.is_viewable %}
+            <div class="row d-flex">
+                <div class = "col-12">
+                    <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
                 </div>
-            {% else %}
-                <div class="row d-flex">
-                    <div class = "col-12">
-                        <p>{% trans "This Competition is Archived" %}</p>
-                    </div>
+            </div>
+        {% else %}
+            <div class="row d-flex">
+                <div class = "col-12">
+                    <p>{% trans "This competition is unavailable." %}</p>
                 </div>
-            {% endif %}
-        {% endfor %}
-    {% else %}
-    <div class="row d-flex">
-        <div class = "col-12">
-            <p>{% trans "No Competitions Yet" %}</p>
+            </div>
+        {% endif %}
+    {% empty %}
+        <div class="row d-flex">
+            <div class = "col-12">
+                <p>{% trans "No Competitions Yet" %}</p>
+            </div>
         </div>
-    </div>
-    {% endif %}
+    {% endfor %}
 {% endblock %}
