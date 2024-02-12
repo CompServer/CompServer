@@ -16,8 +16,10 @@ SECRET_KEY = 'django-insecure-2y0@hfzu761goc9!m&!#if&(vhcg=!uzre027l48r&oh_c^xcx
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1"
+]
 
 # Application definition
 
@@ -136,7 +138,7 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 STATIC_URL = f"/static/"
 
-STATIC_ROOT = f"/staticfiles/"
+STATIC_ROOT = f"/static/"
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
@@ -144,7 +146,7 @@ STATICFILES_DIRS = [
 
 MEDIA_URL = '/media/'
 
-MEDIA_ROOT = BASE_DIR / 'uploads'
+MEDIA_ROOT = BASE_DIR / '/uploads/'
 
 # for message framework
 # the django red alert class is called "danger", django calls it "error"
