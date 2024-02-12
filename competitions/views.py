@@ -1,21 +1,14 @@
-from django import forms
+import math
+
 from django.contrib import messages
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth.views import login_required
-from django.db.models import Q, QuerySet
+from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
-import math
-
 from django.urls import reverse
 
-from competitions.forms import JudgeForm
 from .models import *
-from django.http import HttpResponseForbidden, HttpResponseRedirect
-from django.shortcuts import render
-from django.views.generic.edit import UpdateView
-from django.contrib.auth.mixins import AccessMixin, LoginRequiredMixin, UserPassesTestMixin
-from .models import AbstractTournament, Competition, Match
-
+from .forms import *
 
 # why are we using camelcase
 def BracketView(request):
