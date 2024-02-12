@@ -1,10 +1,10 @@
 {% extends "skeleton.html" %}
 
-    {% block title %}Competition Page{% endblock %}
+{% block title %}Competition Page{% endblock %}
 
 {% block content %}
     <header>
-        <h1>{{competition}}</h1>
+        <h1>{{ competition }}</h1>
         <p>blah blah</p>
     </header>
     <div class="row">
@@ -12,7 +12,7 @@
         <ul>
             {% for team in competition.teams.all %}
             <li>
-                {{team}}
+                {{ team }}
             </li>
             {% endfor %}
         </ul>
