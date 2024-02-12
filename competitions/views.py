@@ -63,13 +63,11 @@ def BracketView(request):
     return render(request, "competitions/bracket.html", context)
 
 
-def tournament(request, tournament_id):
+def tournament(request, tournament_id: int):
     return render(request, "competitions/tournament.html")
-
 
 def tournaments(request):
     return render(request, "competitions/tournaments.html")
-
 
 def competitions(request):
     competition_list = Competition.objects.all()
@@ -77,26 +75,28 @@ def competitions(request):
     return render(request, "competitions/competitions.html", context)
 
 
-def team(request, team_id):
+def team(request, team_id: int):
     context = {
-        'team': Team.objects.get(id=team_id), #get a team from the team id passed into the view
+        'team': get_object_or_404(Team, id=team_id)
     }
     return render(request, "competitions/team.html", context)
 
 
 def not_implemented(request, *args, **kwargs):
+    """Base view for not implemented features. You can  use this view to show a message to the user that the feature is not yet implemented,
+    or want to link to a URL to a page that doesn't exist yet.
+    """
     messages.error(request, "This feature is not yet implemented.")
     return render(request, 'skeleton.html')
 
-
 def competition(request, competition_id):
     context = {
-        'competition': Competition.objects.get(id=competition_id)
+        'competition': get_object_or_404(Competition, id=competition_id),
     }
     return render(request, "competitions/competition.html", context)
 
 @login_required
-def judge_match(request, match_id):
+def judge_match(request, match_id: int):
     instance = get_object_or_404(Match, pk=match_id)
     user = request.user
 
@@ -120,17 +120,17 @@ def judge_match(request, match_id):
         form = JudgeForm(request.POST, instance=instance, possible_advancers=None)
         if form.is_valid():
             form.save()
-            return HttpResponseRedirect('/')
-    else:
-        winner_choices = []
-        if instance.prev_matches.exists():
-            winner_choice_ids = []
-            for match in instance.prev_matches.all():
-                winner_choice_ids.extend([x.id for x in match.advancers.all()])
-            winner_choices = Team.objects.filter(id__in=winner_choice_ids)
-        elif instance.starting_teams.exists():
-            winner_choices = instance.starting_teams.all()
-        form = JudgeForm(instance=instance, possible_advancers=winner_choices)
+            messages.success(request, "Match judged successfully.")
+
+    winner_choices = []
+    if instance.prev_matches.exists():
+        winner_choice_ids = []
+        for match in instance.prev_matches.all():
+            winner_choice_ids.extend([x.id for x in match.advancers.all()])
+        winner_choices = Team.objects.filter(id__in=winner_choice_ids)
+    elif instance.starting_teams.exists():
+        winner_choices = instance.starting_teams.all()
+    form = JudgeForm(instance=instance, possible_advancers=winner_choices)
     return render(request, 'competitions/match_judge.html', {'form': form})
 
 # class JudgeMatchUpdateView(UserPassesTestMixin, LoginRequiredMixin, UpdateView):
