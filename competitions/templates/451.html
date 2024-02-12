@@ -1,20 +1,24 @@
 {% extends "skeleton.html" %}
+{% load static %}
+
+{% block title %}451 Unavailable for Legal Reasons{% endblock %}
 
 {% block content %}
     <div class="container">
         <div class="row">
             <div class="col-md-12">
-                <h1><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/418">418 I'm A Teapot</a></h1>
+                <h1>451 Unavailable for Legal Reasons</h1>
             </div>
         </div>
         <div class="row">
             <div class="col-md-8">
-                <h2>418 I'm A Teapot</h2>
-                <p>Sorry, you attempted to use coffepot technology and got rejected, raising this error page. Please be careful about brewing an awfully hot coffee pot in the future</p>
+                <p>Sorry, this page is unavailable due to legal reasons.</p>
+                <p>For more information, please contact the site administrator.</p>
                 {% if message %}
                     <p>{{ message }}</p>
                 {% endif %}
             </div>
         </div>
     </div>
+
 {% endblock %}

@@ -1,6 +1,7 @@
 {% load static %}
 {% load hijack %}
 {% load i18n %}
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -9,12 +10,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{% static 'competitions/style.css' %}">
     {% if debug %}
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.css" rel="stylesheet"
-        integrity="sha384-8dbpXuP2nso7zrhApj0aSxeb0ZitbTeO0hTKxRcXavYE0vv4nhBEqvv+o+0X94A8" crossorigin="anonymous">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.css" rel="stylesheet" integrity="sha384-8dbpXuP2nso7zrhApj0aSxeb0ZitbTeO0hTKxRcXavYE0vv4nhBEqvv+o+0X94A8" crossorigin="anonymous">
     {% else %}
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
     {% endif %}
+    <link rel='icon' href="{% static 'favicon.png' %}">
     <title>
         {% block title %}RoboMed{% endblock %}
     </title>
@@ -90,7 +90,7 @@
                 <input class="form-control" type="text" placeholder="Search">
             </form> {% endcomment %}
         </div>
-    </nav>
+    </nav>       
 
     {% block messages %}
     {% if messages %}
@@ -107,6 +107,7 @@
     Template Content TBD
     {% endblock %}
 
+    {% comment %} Language selector in navbar? {% endcomment %}
     <form action="{% url 'set_language' %}" method="post">
         {% csrf_token %}
         <input name="next" type="hidden" value="{{ redirect_to }}" />
@@ -117,6 +118,7 @@
         </select>
         <input type="submit" value="Change Language">
     </form>
+    
     {% if debug %}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.js"
         integrity="sha384-6yr0NH5/NO/eJn8MXILS94sAfqCcf2wpWTTxRwskNor6dIjwbYjw1/PZpr654rQ5"

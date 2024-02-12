@@ -1,9 +1,11 @@
 from django.urls import path
 from . import views
+from django.views.generic.base import RedirectView
 
 app_name = "competitions"
 urlpatterns = [
-    path("", views.home, name="home"),
+    path('', views.home, name="home"),
+    path('', RedirectView.as_view(url='index', permanent=True), name='home'),
     path("competition/", views.competitions, name="competitions"),
     path("competition/<int:competition_id>", views.competition, name="competition"),
     path("teams/team/<int:team_id>/", views.team, name="team"),
