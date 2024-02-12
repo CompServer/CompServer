@@ -1,47 +1,28 @@
 {% extends "skeleton.html" %}
-{% load static %}
-
-{% block title %}Bracket Test{% endblock %}
 
 {% block content %}
-    {{ content|safe }}
+<!-- 
+    There are no errors here, your IDE is lying 
+    - Matt 
+-->
 
-    <hr>
-
-    <div class="bracket" style="height: 400px; width: 400px;">
-        <div class="round" style="height: 400px; width: 200px;">
-            <div class="match" style="height: 200px; width: 200px;">
-                <div class="center" style="height: 50px; padding-top: 75px;">
-                    <div class="team" style="width: 200px;">
-                        Team 1
-                    </div>
-                    <div class="team" style="width: 200px;">
-                        Team 2
-                    </div>
+<div class="bracket" style="height: {{ bracket_dict.bracketHeight }}px; width: {{ bracket_dict.bracketWidth }}px;">
+    {% for round_data in bracket_dict.round_data %}
+    <div class="round" style="height: {{ bracket_dict.roundHeight }}px; width: {{ bracket_dict.roundWidth }}px;">
+        {% for match_data in round_data.match_data %}
+        <div class="match" style="height: {{ match_data.match_height }}px; width: {{ match_data.match_width }}px;">
+            <div class="center"
+                style="height: {{ match_data.center_height }}px; padding-top: {{ match_data.top_padding }}px">
+                {% for team_data in match_data.team_data %}
+                <div class="team" style="width: {{ match_data.match_width }}px;">
+                    {{ team_data.team_name }}
                 </div>
-            </div>
-            <div class="match" style="height: 200px; width: 200px;">
-                <div class="center" style="height: 50px; padding-top: 75px;">
-                    <div class="team" style="width: 200px;">
-                        Team 3
-                    </div>
-                    <div class="team" style="width: 200px;">
-                        Team 4
-                    </div>
-                </div>
+                {% endfor %}
             </div>
         </div>
-        <div class="round" style="height: 400px; width: 200px;">
-            <div class="match" style="height: 400px; width: 200px;">
-                <div class="center" style="height: 50px; width: 200px; padding-top: 175px;">
-                    <div class="team">
-                        Team 2
-                    </div>
-                    <div class="team">
-                        Team 3
-                    </div>
-                </div>
-            </div>
-        </div>
+        {% endfor %}
     </div>
+    {% endfor %}
+</div>
+
 {% endblock %}

@@ -4,6 +4,7 @@ from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User
 from django.dispatch import receiver
+from datetime import datetime
 import random
 import string
 
@@ -60,7 +61,7 @@ class Status(models.TextChoices):
     def max_length(cls):
         lengths = [len(member.value) for member in cls]
         return max(lengths)
-    
+
     @property
     def is_viewable(self) -> bool:
         """Whether the object should show up on the website."""
@@ -77,13 +78,7 @@ class Status(models.TextChoices):
     
     @property
     def is_in_setup(self) -> bool:
-        return self == Status.SETUP
-    
-    # jm: We have all these methods so we can check the status in the template without needing to pass in this class as context
-    # eg. doing status.is_viewable rather than status == Status.OPEN in the template or whereever
-    # also makes it more readable 
-    
-    
+        return self == __class__.SETUP
 
 class StatusField(models.CharField):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -135,6 +130,16 @@ class Competition(models.Model):
     # For scheduling purposes, we need to be able to specify for this competition how many different (Event-specific) arenas are available and their capacity
     # related: tournament_set
 
+    def check_date():
+        today = datetime.now().date()
+        if end_date < today:
+            return True
+        else:
+            return False
+
+    #checks if the competition has ended (true)
+    #checks if the competition hasn't ended (false)
+
     def __str__(self) -> str:
         # dwheadon: check if the name is unique for this year, otherwise add the month/day as well
         if Competition.objects.filter(name=self.name).count() > 1:
@@ -158,6 +163,14 @@ class Competition(models.Model):
     def is_judgable(self) -> bool:
         """Whether judging for this comptetation should be allowed."""
         return self.status == Status.OPEN
+    
+    @property
+    def is_complete(self) -> bool:
+        return self.status == Status.COMPLETE
+
+    @property
+    def is_closed(self) -> bool:
+        return self.status == Status.CLOSED
     
     @property
     def is_archived(self) -> bool:
@@ -233,6 +246,14 @@ class AbstractTournament(models.Model):
         return self.status == Status.OPEN
     
     @property
+    def is_complete(self) -> bool:
+        return self.status == Status.COMPLETE
+
+    @property
+    def is_closed(self) -> bool:
+        return self.status == Status.CLOSED
+    
+    @property
     def is_archived(self) -> bool:
         return self.status == Status.ARCHIVED
     
@@ -244,8 +265,8 @@ class AbstractTournament(models.Model):
     class Meta:
         ordering = ['competition', 'event']
 
-
 class Ranking(models.Model):
+    """ These will determine the auto-layout of the brackets """
     tournament = models.ForeignKey(AbstractTournament, on_delete=models.CASCADE)
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     rank = models.PositiveSmallIntegerField()
@@ -255,8 +276,8 @@ class Ranking(models.Model):
 
     class Meta:
         ordering = ['tournament', 'rank']
-        unique_together = [['tournament', 'rank'], ['tournament', 'team']]
-
+        unique_together = [['tournament', 'team']] 
+        # unique_together += ['tournament', 'rank'] # NCAA has 4 teams with a #1 seed
 
 
 class SingleEliminationTournament(AbstractTournament):
@@ -333,19 +354,30 @@ class Match(models.Model):
     # Note: admin doesn't enforce the starting teams to be registered for this tournament
     starting_teams = models.ManyToManyField(Team, related_name="round1_matches", blank=True) # Only used for round1 matches, all others use the previous matches. Usually just 2 but could be more (speed race)
     # Note: admin doesn't restrict to previous matches from this tournament
-    prev_matches = models.ManyToManyField('self', blank=True) # Except for round1 of a tournament (or one-off preliminary matches), advancers from the previous matches will be the competitors for this match
+    prev_matches = models.ManyToManyField('self', symmetrical=False, blank=True, related_name="next_matches") # Except for round1 of a tournament (or one-off preliminary matches), advancers from the previous matches will be the competitors for this match
     # Note: admin doesn't restrict advancers to be competitors for this match
     advancers = models.ManyToManyField(Team, related_name="won_matches", blank=True) # usually 1 but could be more (e.g. time trials)
     time = models.DateTimeField() # that it's scheduled for
+    str_recursive_level = 0
 
     def __str__(self) -> str:
+        self.__class__.str_recursive_level += 1
         competitors = []
-        prior_match_advancing_teams = Team.objects.filter(won_matches__in=self.prev_matches.all())
         if self.starting_teams.exists():
             competitors += [(("[" + team.name + "]") if team in self.advancers.all() else team.name) for team in self.starting_teams.all()]
-        if prior_match_advancing_teams:
-            competitors += [(("[" + team.name + "]") if team in self.advancers.all() else team.name) for team in prior_match_advancing_teams]
-        return _(" vs ").join(competitors) + _(" in ") + str(self.tournament) # Battlebots vs Byters in SumoBot tournament @ RoboMed 2023
+        if self.prev_matches.exists():
+            for prev_match in self.prev_matches.all():
+                prior_match_advancing_teams = prev_match.advancers.all()
+                if prev_match.advancers.exists():
+                    competitors += [(("[" + team.name + "]") if team in self.advancers.all() else team.name) for team in prev_match.advancers.all()]
+                else:
+                    competitors += ["Winner of (" + str(prev_match) + ")"]
+        self.__class__.str_recursive_level -= 1
+        res = _(" vs ").join(competitors) # Battlebots vs Byters
+        if self.__class__.str_recursive_level == 0:
+            return res + _(" in ") + str(self.tournament) # Battlebots vs Byters in SumoBot tournament @ RoboMed 2023
+        else: 
+            return res # if part of another match we don't want to repeat the tournament
 
     class Meta:
         ordering = ['tournament']

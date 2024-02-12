@@ -1,20 +1,43 @@
-{% extends "skeleton.html" %}
-
-{% block title %}Competition Page{% endblock %}
-
+{% extends 'skeleton.html' %}
+{% load i18n %}
 {% block content %}
     <header>
         <h1>{{ competition }}</h1>
-        <p>blah blah</p>
     </header>
-    <div class="row">
-        <h3>Competing Teams</h3>
-        <ul>
-            {% for team in competition.teams.all %}
-            <li>
-                {{ team }}
-            </li>
-            {% endfor %}
-        </ul>
-    </div>
+    <h3>{% trans "Competing Teams" %}</h3>
+    {% for team in competition.teams.all %}
+        <div class="row d-flex">
+            <div class = "col-12">
+                <a href="{% url 'competitions:team' team.id %}">{{ team }}</a>
+            </div>
+        </div>
+    {% empty %}
+        <div class="row d-flex">
+            <div class = "col-12">
+                <p>{% trans "No Competing Teams." %}</p>
+            </div>
+        </div>
+    {% endfor %}
+    <h3>{% trans "Tournaments" %}</h3>
+    {% for tournament in competition.tournament_set.all %}
+        <div class="row d-flex">
+            <div class = "col-12">
+                {% if tournament.is_judgable %} 
+                    <p><a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a> ({% trans "OPEN" %})</p>
+                {% elif tournament.is_complete %} 
+                    <p><a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a> ({% trans "COMPLETE" %})</p>
+                {% elif tournament.is_closed %} 
+                    <p><a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a> ({% trans "CLOSED" %})</p>
+                {% elif tournament.is_in_setup %}
+                    <p>{{ tournament }} ({% trans "SETUP" %})</p>
+                {% endif %}    
+            </div>
+        </div>      
+    {% empty %}
+        <div class="row d-flex">
+            <div class = "col-12">
+                <p>{% trans "No Tournaments Yet" %}</p>
+            </div>
+        </div>
+    {% endfor %}
 {% endblock %}
