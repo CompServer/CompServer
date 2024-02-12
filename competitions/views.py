@@ -36,8 +36,10 @@ def BracketView(request, tournament_id):
         prior_match_advancing_teams = Team.objects.filter(won_matches__in=curr_match.prev_matches.all())
         if curr_match.starting_teams.exists():
             competitors += [(("[" + team.name + "]") if team in curr_match.advancers.all() else team.name) for team in curr_match.starting_teams.all()]
-        if prior_match_advancing_teams:
+        elif prior_match_advancing_teams:
             competitors += [(("[" + team.name + "]") if team in curr_match.advancers.all() else team.name) for team in prior_match_advancing_teams]
+        else: 
+            competitors += ["TBD"]
 
         # place the team names in the right box
         # i.e. bracket_array[2][3] = top 8, 4th match from the top
