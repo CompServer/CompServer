@@ -4,26 +4,22 @@
 
 {% block content %}
     <h1>{% trans "Competitions" %}</h1>
-    <hr>
-    {% for competition in competition_list %}
-        <div class="row d-flex">
-            <div class = "col-12">
-                {% if competition.is_judgable %}
-                    <p><a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a> ({% trans "OPEN" %})</p>
-                {% elif competition.is_complete %}
-                    <p><a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a> ({% trans "COMPLETE" %})</p>
-                {% elif competition.is_closed %}
-                    <p><a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a> ({% trans "CLOSED" %})</p>
-                {% elif competition.is_in_setup %}
-                    <p>{{ competition }} ({% trans "SETUP" %})</p>
-                {% endif %}
+    <hr style="margin-left: -10px;">
+    {% if competition_list %}
+        {% for competition in competition_list %}
+            <div class="row d-flex">
+                <div class = "col-12">
+                    {% if competition.is_judgable %}
+                        <p><a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a> <i class="bi-activity"></i></p>
+                    {% elif competition.is_complete %}
+                        <p><a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a> <i class="bi-check2-circle"></i></p>
+                    {% elif competition.is_closed %}
+                        <p><a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a> <i class="bi-x-circle"></i></p>
+                    {% elif competition.is_in_setup %}
+                        <p>{{ competition }} <i class="bi-gear"></i></p>
+                    {% endif %}
+                </div>
             </div>
-        </div>
-    {% empty %}
-        <div class="row d-flex">
-            <div class = "col-12">
-                <p>{% trans "No Competitions Yet" %}</p>
-            </div>
-        </div>
-    {% endfor %}
+        {% endfor %}
+    {% endif %}
 {% endblock %}

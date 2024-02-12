@@ -2,34 +2,142 @@ from django import forms
 from django.contrib import messages
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth.mixins import AccessMixin, LoginRequiredMixin, UserPassesTestMixin
-from django.contrib.auth.models import User
-from django.contrib.auth.views import login_required
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.db.models import Q, QuerySet
-from django.http import HttpResponseForbidden, HttpResponseRedirect
-from django.shortcuts import get_object_or_404, render
+from django.http import HttpResponseRedirect
+from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
-import math
-
+from django.views.generic.edit import UpdateView
+import math, random
 from .models import *
 from .forms import *
 
+
+def is_overflowed(list1, num):
+    for item in list1:
+        if item < num:
+            return False
+    return True
+
+def generate_single_elimination_matches(request, tournament_id):
+    tournament = get_object_or_404(AbstractTournament, pk=tournament_id)
+    teams = []
+    num_participated = []
+    for team in tournament.teams.all():
+        teams.append(team)
+        num_participated.append(0)
+    if len(teams) % 2 == 1:
+        num_participated[0] = 1
+    for i in range(len(teams)):
+        if num_participated[i] == 0 and not is_overflowed(num_participated, 1):
+            j = random.randint(0, len(teams)-1)
+            while(num_participated[j] == 1):
+                j = random.randint(0, len(teams)-1)
+            match = Match.objects.create(tournament=tournament)
+            match.starting_teams.add(teams[i], teams[j])
+            match.save()
+            num_participated[i] += 1
+            num_participated[j] += 1
+    #cannot sort matches by skill level because skill level cannot be determined with our current models
+
+def generate_round_robin_matches(request, tournament_id):
+    some_num_matches = 4
+    tournament = get_object_or_404(AbstractTournament, pk=tournament_id)
+    teams = []
+    num_participated = []
+    for team in tournament.teams.all():
+        teams.append(team)
+        num_participated.append(0)
+    for i in range(len(teams)):
+        for k in range(some_num_matches):
+            if num_participated[i] < some_num_matches and not is_overflowed(num_participated, some_num_matches):
+                j = random.randint(0, len(teams)-1)
+                while(num_participated[j] >= some_num_matches):
+                    j = random.randint(0, len(teams)-1)
+                match = Match.objects.create(tournament=tournament)
+                match.starting_teams.add(teams[i], teams[j])
+                match.save()
+                num_participated[i] += 1
+                num_participated[j] += 1
+    #also, this could run infinitely, or at least for very long.
+    #will do ordering of matches once the bracket is fully understood.
+    return render(request, 'skeleton.html')
 
 def home(request):
     return render(request, "competitions/home.html")
 
 
-# why are we using camelcase
-def BracketView(request):
-    t = ""
+def bracket_view(request, tournament_id):
+    '''
+    This view is responsible for drawing the tournament bracket, it does this by:
+    1) Recursively get all matches and put them in a 3d array
+        a) Start at championship
+        b) Get particpants and add them to the array
+        c) Go to each prev match
+        d) repeat
+    2) Loop through array and convert it to dictionaries, packaging styling along side
+    3) Pass new dictionary to the templete for rendering
 
-    numTeams = 8
-    numRounds = int(math.log(numTeams, 2))
+    note: steps 1 and 2 could probably be combined
+    '''
+    # where all the matches get stored, only used in this function, not passed to template
+    bracket_array = []
 
-    roundWidth = 150
-    bracketWidth = (roundWidth+30)*numRounds
+    # recursive
+    def read_tree_from_node(curr_match, curr_round, base_index):
+        # add space for new matches if it doesnt exist
+        if len(bracket_array) <= curr_round:
+            bracket_array.append({})
 
-    bracketHeight = 600
+        # get the names of the teams competing, stolen to the toString
+        competitors = []
+        prior_match_advancing_teams = Team.objects.filter(won_matches__in=curr_match.prev_matches.all())
+        if curr_match.starting_teams.exists():
+            competitors += [(("[" + team.name + "]") if team in curr_match.advancers.all() else team.name) for team in curr_match.starting_teams.all()]
+        if prior_match_advancing_teams:
+            competitors += [(("[" + team.name + "]") if team in curr_match.advancers.all() else team.name) for team in prior_match_advancing_teams]
+
+        # place the team names in the right box
+        # i.e. bracket_array[2][3] = top 8, 4th match from the top
+        bracket_array[curr_round][base_index] = competitors 
+        
+        prevs = curr_match.prev_matches.all()
+        # checks if there are any previous matches
+
+
+        if prevs:
+            # if TRUE: recurse
+            # if FALSE: base case
+            for i, prev in enumerate(prevs):
+                read_tree_from_node(prev, curr_round+1, 2*base_index+i)
+                                                      # ^^^^^^^^^^^^^^
+                                                      # i dont know why this works, it might not 
+
+                
+
+    #mutates bracket_array
+    read_tree_from_node(Match.objects.filter(tournament=tournament_id).filter(next_matches__isnull=True)[0], 0, 0)
+
+    #the number of rounds in the tournament: top 8, semi-finals, championship, etc
+    numRounds = len(bracket_array)
+
+    #find the most number of teams in a single round, used for setting the height
+    mostTeamsInRound = 0
+    for round in bracket_array:
+        teams_count = sum(len(teams) for teams in round.values())
+        if teams_count > mostTeamsInRound:
+            mostTeamsInRound = teams_count
+
+    # _data means it contains the actual stuff to be displayed
+    # everything else is just css styling or not passed
+    # most variables are exactly what they sound like
+    # you can also look at bracket.html to see how its used
+    round_data = []
+    matchWidth = 200
+    connectorWidth = 50
+    bracketWidth = (matchWidth+connectorWidth)*numRounds
+    bracketHeight = mostTeamsInRound*50
     roundHeight = bracketHeight
     roundWidth = matchWidth+connectorWidth
     for i in range(numRounds):
@@ -77,6 +185,7 @@ def BracketView(request):
     context = {"bracket_dict": bracket_dict,}
     return render(request, "competitions/bracket.html", context)
 
+
 def tournament(request, tournament_id):
     context = {"user": request.user}
     return render(request, "competitions/tournament.html", context)
@@ -87,14 +196,14 @@ def tournaments(request):
 
 def competitions(request):
     competition_list = Competition.objects.all()
-    context = {"competition_list": competition_list, "redirect_to": request.path, "user": request.user}
+    context = {"competition_list": competition_list, "user": request.user}
     return render(request, "competitions/competitions.html", context)
 
 def competition(request, competition_id):
     competition = get_object_or_404(Competition, pk=competition_id)
     if competition.is_archived:
         return HttpResponseRedirect(reverse("competitions:competitions"))
-    context = {"competition": competition, "redirect_to": request.path, "user": request.user, "Status": Status}
+    context = {"competition": competition, "user": request.user, "Status": Status}
     return render(request, "competitions/competition.html", context)
 
 def team(request, team_id: int):
@@ -102,6 +211,10 @@ def team(request, team_id: int):
         'team': get_object_or_404(Team, id=team_id)
     }
     return render(request, "competitions/team.html", context)
+
+def credits(request):
+    context = {"user": request.user}
+    return render(request, "competitions/credits.html", context)
 
 def not_implemented(request, *args, **kwargs):
     """
