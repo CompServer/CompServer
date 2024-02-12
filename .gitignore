@@ -1,6 +1,8 @@
 # Django
 *.sqlite3
 media/
+#static/
+# ^ the style.css and others should be checked in to avoid merge conflicts
 
 # Python
 *.pyc
@@ -20,3 +22,6 @@ media/
 # future secret files 
 *.yaml
 *.yml
+
+#localization
+locale/

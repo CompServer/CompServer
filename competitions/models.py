@@ -4,11 +4,14 @@ from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User
 from django.dispatch import receiver
+from datetime import datetime
 import random
 import string
 
 
 ACCESS_KEY_LENGTH = 10
+# ^ should be in settings?
+
 def get_random_access_key():
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=ACCESS_KEY_LENGTH))
 
@@ -19,6 +22,18 @@ def get_random_access_key():
     # related: tournament_set (judged)
     # related: profile
 
+class SiteConfig(models.Model):
+    name = models.CharField(max_length=255)
+    """The name of the site, to be displayed in the header and other places."""
+
+    icon = models.CharField(max_length=255, null=True, blank=True)
+    """The URL to the icon to use for this site. If not set, the default will be used."""
+
+    style_sheet = models.CharField(max_length=255, null=True, blank=True)
+    """The URL to the stylesheet to use for this site. If not set, the default will be used."""
+
+    def __str__(self) -> str:
+        return f"SiteConfig(name={self.name})"
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -50,14 +65,20 @@ class Status(models.TextChoices):
     @property
     def is_viewable(self) -> bool:
         """Whether the object should show up on the website."""
-        return self in [__class__.OPEN, __class__.COMPLETE, __class__.CLOSED]
+        return self in [Status.OPEN, Status.COMPLETE, Status.CLOSED]
 
     @property
     def is_judgable(self) -> bool:
         """Whether judging for this comptetation should be allowed."""
-        return self == __class__.OPEN
+        return self == Status.OPEN
     
-
+    @property
+    def is_archived(self) -> bool:
+        return self == Status.ARCHIVED
+    
+    @property
+    def is_in_setup(self) -> bool:
+        return self == __class__.SETUP
 
 class StatusField(models.CharField):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -65,7 +86,6 @@ class StatusField(models.CharField):
         kwargs['choices'] = Status.choices
         kwargs['default'] = Status.SETUP
         super().__init__(*args, **kwargs)
-
 
 class Organization(models.Model): # probably mostly schools but could also be community organizations
     name = models.CharField(max_length=257) # not unique because there could be schools with the same name just in different cities
@@ -110,6 +130,16 @@ class Competition(models.Model):
     # For scheduling purposes, we need to be able to specify for this competition how many different (Event-specific) arenas are available and their capacity
     # related: tournament_set
 
+    def check_date(self):
+        today = datetime.now().date()
+        if self.end_date < today:
+            return True
+        else:
+            return False
+
+    #checks if the competition has ended (true)
+    #checks if the competition hasn't ended (false)
+
     def __str__(self) -> str:
         # dwheadon: check if the name is unique for this year, otherwise add the month/day as well
         if Competition.objects.filter(name=self.name).count() > 1:
@@ -123,6 +153,32 @@ class Competition(models.Model):
                 return self.name + " " + str(self.start_date.year) # RoboMed 2023
         else:
             return self.name
+
+    @property
+    def is_viewable(self) -> bool:
+        """Whether the object should show up on the website."""
+        return self.status in [Status.OPEN, Status.COMPLETE, Status.CLOSED]
+
+    @property
+    def is_judgable(self) -> bool:
+        """Whether judging for this comptetation should be allowed."""
+        return self.status == Status.OPEN
+    
+    @property
+    def is_complete(self) -> bool:
+        return self.status == Status.COMPLETE
+
+    @property
+    def is_closed(self) -> bool:
+        return self.status == Status.CLOSED
+    
+    @property
+    def is_archived(self) -> bool:
+        return self.status == Status.ARCHIVED
+    
+    @property
+    def is_in_setup(self) -> bool:
+        return self.status == Status.SETUP
     
     class Meta:
         ordering = ['-start_date', 'name']
@@ -178,12 +234,39 @@ class AbstractTournament(models.Model):
 
     def __str__(self) -> str:
         return self.event.name + _(" tournament @ ") + str(self.competition) # SumoBot tournament at RoboMed 2023
+    
+    @property
+    def is_viewable(self) -> bool:
+        """Whether the object should show up on the website."""
+        return self.status in [Status.OPEN, Status.COMPLETE, Status.CLOSED]
+
+    @property
+    def is_judgable(self) -> bool:
+        """Whether judging for this comptetation should be allowed."""
+        return self.status == Status.OPEN
+    
+    @property
+    def is_complete(self) -> bool:
+        return self.status == Status.COMPLETE
+
+    @property
+    def is_closed(self) -> bool:
+        return self.status == Status.CLOSED
+    
+    @property
+    def is_archived(self) -> bool:
+        return self.status == Status.ARCHIVED
+    
+    @property
+    def is_in_setup(self) -> bool:
+        return self.status == Status.SETUP
+
         
     class Meta:
         ordering = ['competition', 'event']
 
-
 class Ranking(models.Model):
+    """ These will determine the auto-layout of the brackets """
     tournament = models.ForeignKey(AbstractTournament, on_delete=models.CASCADE)
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     rank = models.PositiveSmallIntegerField()
@@ -193,8 +276,8 @@ class Ranking(models.Model):
 
     class Meta:
         ordering = ['tournament', 'rank']
-        unique_together = [['tournament', 'rank'], ['tournament', 'team']]
-
+        unique_together = [['tournament', 'team']] 
+        # unique_together += ['tournament', 'rank'] # NCAA has 4 teams with a #1 seed
 
 
 class SingleEliminationTournament(AbstractTournament):
@@ -275,15 +358,26 @@ class Match(models.Model):
     # Note: admin doesn't restrict advancers to be competitors for this match
     advancers = models.ManyToManyField(Team, related_name="won_matches", blank=True) # usually 1 but could be more (e.g. time trials)
     time = models.DateTimeField() # that it's scheduled for
+    str_recursive_level = 0
 
     def __str__(self) -> str:
+        self.__class__.str_recursive_level += 1
         competitors = []
-        prior_match_advancing_teams = Team.objects.filter(won_matches__in=self.prev_matches.all())
         if self.starting_teams.exists():
             competitors += [(("[" + team.name + "]") if team in self.advancers.all() else team.name) for team in self.starting_teams.all()]
-        if prior_match_advancing_teams:
-            competitors += [(("[" + team.name + "]") if team in self.advancers.all() else team.name) for team in prior_match_advancing_teams]
-        return _(" vs ").join(competitors) + _(" in ") + str(self.tournament) # Battlebots vs Byters in SumoBot tournament @ RoboMed 2023
+        if self.prev_matches.exists():
+            for prev_match in self.prev_matches.all():
+                prior_match_advancing_teams = prev_match.advancers.all()
+                if prev_match.advancers.exists():
+                    competitors += [(("[" + team.name + "]") if team in self.advancers.all() else team.name) for team in prev_match.advancers.all()]
+                else:
+                    competitors += ["Winner of (" + str(prev_match) + ")"]
+        self.__class__.str_recursive_level -= 1
+        res = _(" vs ").join(competitors) # Battlebots vs Byters
+        if self.__class__.str_recursive_level == 0:
+            return res + _(" in ") + str(self.tournament) # Battlebots vs Byters in SumoBot tournament @ RoboMed 2023
+        else: 
+            return res # if part of another match we don't want to repeat the tournament
 
     class Meta:
         ordering = ['tournament']
