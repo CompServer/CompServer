@@ -69,6 +69,9 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'competitions:competitions' %}">{% trans "Home" %}</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'competitions:credits' %}">{% trans "Credits" %}</a>
+                </li>
                 {% comment %} only implemented for home page {% endcomment %}
                 {% if user.is_staff %}
                     <li class="nav-item">

@@ -5,16 +5,6 @@
         <h1>{{ competition }}</h1>
     </header>
     <hr style="margin-left: -10px;">
-    {% if competition.teams.all %}
-        <h3>{% trans "Competing Teams" %}</h3>
-        {% for team in competition.teams.all %}
-            <div class="row d-flex">
-                <div class = "col-12">
-                    <a href="{% url 'competitions:team' team.id %}">{{ team }}</a>
-                </div>
-            </div>
-        {% endfor %}
-    {% endif %}
     {% if competition.tournament_set.all %}
         <h3>{% trans "Tournaments" %}</h3>
         {% for tournament in competition.tournament_set.all %}
@@ -31,6 +21,16 @@
                     {% endif %}    
                 </div>
             </div>      
+        {% endfor %}
+    {% endif %}
+    {% if competition.teams.all %}
+        <h3>{% trans "Competing Teams" %}</h3>
+        {% for team in competition.teams.all %}
+            <div class="row d-flex">
+                <div class = "col-12">
+                    <a href="{% url 'competitions:team' team.id %}">{{ team }}</a>
+                </div>
+            </div>
         {% endfor %}
     {% endif %}
 {% endblock %}

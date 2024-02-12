@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.shortcuts import render, get_object_or_404
-import math
+import math, random
 from .models import *
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
@@ -10,6 +10,55 @@ from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from django.contrib.auth.models import User
 
+def is_overflowed(list1, num):
+    for item in list1:
+        if item < num:
+            return False
+    return True
+
+def generate_single_elimination_matches(request, tournament_id):
+    tournament = get_object_or_404(AbstractTournament, pk=tournament_id)
+    teams = []
+    num_participated = []
+    for team in tournament.teams.all():
+        teams.append(team)
+        num_participated.append(0)
+    if len(teams) % 2 == 1:
+        num_participated[0] = 1
+    for i in range(len(teams)):
+        if num_participated[i] == 0 and not is_overflowed(num_participated, 1):
+            j = random.randint(0, len(teams)-1)
+            while(num_participated[j] == 1):
+                j = random.randint(0, len(teams)-1)
+            match = Match.objects.create(tournament=tournament)
+            match.starting_teams.add(teams[i], teams[j])
+            match.save()
+            num_participated[i] += 1
+            num_participated[j] += 1
+    #cannot sort matches by skill level because skill level cannot be determined with our current models
+
+def generate_round_robin_matches(request, tournament_id):
+    some_num_matches = 4
+    tournament = get_object_or_404(AbstractTournament, pk=tournament_id)
+    teams = []
+    num_participated = []
+    for team in tournament.teams.all():
+        teams.append(team)
+        num_participated.append(0)
+    for i in range(len(teams)):
+        for k in range(some_num_matches):
+            if num_participated[i] < some_num_matches and not is_overflowed(num_participated, some_num_matches):
+                j = random.randint(0, len(teams)-1)
+                while(num_participated[j] >= some_num_matches):
+                    j = random.randint(0, len(teams)-1)
+                match = Match.objects.create(tournament=tournament)
+                match.starting_teams.add(teams[i], teams[j])
+                match.save()
+                num_participated[i] += 1
+                num_participated[j] += 1
+    #also, this could run infinitely, or at least for very long.
+    #will do ordering of matches once the bracket is fully understood.
+    return render(request, 'skeleton.html')
 
 def BracketView(request):
     t = ""
@@ -82,6 +131,10 @@ def team(request, team_id):
     team = get_object_or_404(Team, pk=team_id)
     context = {'team': team, "user": request.user}
     return render(request, "competitions/team.html", context)
+
+def credits(request):
+    context = {"user": request.user}
+    return render(request, "competitions/credits.html", context)
 
 def not_implemented(request, *args, **kwargs):
     messages.error(request, "This feature is not yet implemented.")
