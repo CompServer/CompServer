@@ -55,7 +55,6 @@ def BracketView(request):
     context = {"content":t,}
     return render(request, "competitions/bracket.html", context)
 
-
 def tournament(request, tournament_id: int):
     return render(request, "competitions/tournament.html")
 
