@@ -30,6 +30,8 @@ def BracketView(request, tournament_id):
             bracket_array.append({})
 
         # get the names of the teams competing, stolen to the toString
+            
+        # TODO: use mr wheadons new code
         competitors = []
         prior_match_advancing_teams = Team.objects.filter(won_matches__in=curr_match.prev_matches.all())
         if curr_match.starting_teams.exists():
@@ -109,6 +111,7 @@ def BracketView(request, tournament_id):
                 "match_width": matchWidth,
                 "center_height": center_height,
                 "top_padding": top_padding,
+                "scores":[0,0]
             })
 
         round_data.append({
