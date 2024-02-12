@@ -1,11 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Team Page</title>
-</head>
-<body>
+{% extends "skeleton.html" %}
+
+
+{% block title %}Team Page{% endblock %}
+
+{% block content %}
     <header>
         <h1>Team: {{ team }}</h1>
         <!-- this adds the team name and organization name -->
@@ -65,5 +63,4 @@
             <h4>Draws</h4>
         </div>
     </div>
-</body>
-</html>
+{% endblock %}
