@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, ClassVar
 from django.db import models
 from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy as _
@@ -272,7 +272,7 @@ class Ranking(models.Model):
     rank = models.PositiveSmallIntegerField()
 
     def __str__(self) -> str:
-        return str(self.rank) + ") " + str(self.team.name) + " in " + str(self.tournament)
+        return f"{self.rank}) {self.team.name} in {self.tournament})"
 
     class Meta:
         ordering = ['tournament', 'rank']
@@ -349,7 +349,7 @@ class SingleEliminationTournament(AbstractTournament):
 
 
 class Match(models.Model):
-    ''' Could be a one-off preliminary match or part of a larger tournament '''
+    ''' Could be a one-off preliminary match or part of a larger tournament'''
     tournament = models.ForeignKey(AbstractTournament, models.CASCADE, blank=True, null=True)
     # Note: admin doesn't enforce the starting teams to be registered for this tournament
     starting_teams = models.ManyToManyField(Team, related_name="round1_matches", blank=True) # Only used for round1 matches, all others use the previous matches. Usually just 2 but could be more (speed race)
@@ -358,22 +358,21 @@ class Match(models.Model):
     # Note: admin doesn't restrict advancers to be competitors for this match
     advancers = models.ManyToManyField(Team, related_name="won_matches", blank=True) # usually 1 but could be more (e.g. time trials)
     time = models.DateTimeField() # that it's scheduled for
-    str_recursive_level = 0
+    str_recursive_level: ClassVar[int] = 0
 
     def __str__(self) -> str:
         self.__class__.str_recursive_level += 1
         competitors = []
         if self.starting_teams.exists():
-            competitors += [(("[" + team.name + "]") if team in self.advancers.all() else team.name) for team in self.starting_teams.all()]
+            competitors.extend((f"[{team.name}]" if team in self.advancers.all() else team.name) for team in self.starting_teams.all())
         if self.prev_matches.exists():
             for prev_match in self.prev_matches.all():
-                prior_match_advancing_teams = prev_match.advancers.all()
                 if prev_match.advancers.exists():
-                    competitors += [(("[" + team.name + "]") if team in self.advancers.all() else team.name) for team in prev_match.advancers.all()]
+                    competitors.extend((f"[{team.name}]" if team in self.advancers.all() else team.name) for team in prev_match.advancers.all())
                 else:
-                    competitors += ["Winner of (" + str(prev_match) + ")"]
+                    competitors.append(f"Winner of ({prev_match})")
         self.__class__.str_recursive_level -= 1
-        res = _(" vs ").join(competitors) # Battlebots vs Byters
+        res = str(_(" vs ")).join(competitors) # Battlebots vs Byters
         if self.__class__.str_recursive_level == 0:
             return res + _(" in ") + str(self.tournament) # Battlebots vs Byters in SumoBot tournament @ RoboMed 2023
         else: 
