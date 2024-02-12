@@ -25,8 +25,8 @@ class SiteConfig(models.Model):
     name = models.CharField(max_length=255)
     """The name of the site, to be displayed in the header and other places."""
 
-    icon = models.ImageField(null=True, blank=True)
-    """The icon to use for this site. If not set, the default will be used."""
+    icon = models.CharField(max_length=255, null=True, blank=True)
+    """The URL to the icon to use for this site. If not set, the default will be used."""
 
     style_sheet = models.CharField(max_length=255, null=True, blank=True)
     """The URL to the stylesheet to use for this site. If not set, the default will be used."""
