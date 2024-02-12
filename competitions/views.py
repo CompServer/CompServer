@@ -68,7 +68,6 @@ def BracketView(request):
     context = {"bracket_dict": bracket_dict,}
     return render(request, "competitions/bracket.html", context)
 
-
 def tournament(request, tournament_id):
     context = {"user": request.user}
     return render(request, "competitions/tournament.html", context)
@@ -96,18 +95,13 @@ def team(request, team_id: int):
     return render(request, "competitions/team.html", context)
 
 def not_implemented(request, *args, **kwargs):
-    """Base view for not implemented features. You can  use this view to show a message to the user that the feature is not yet implemented,
-    or want to link to a URL to a page that doesn't exist yet.
+    """
+    Base view for not implemented features. You can  use this view to show a message to the user that the feature is not yet implemented,
+    or if you want to add a view for a URL to a page that doesn't exist yet.
     """
     messages.error(request, "This feature is not yet implemented.")
     #raise NotImplementedError()
     return render(request, 'skeleton.html')
-
-def competition(request, competition_id):
-    context = {
-        'competition': get_object_or_404(Competition, id=competition_id),
-    }
-    return render(request, "competitions/competition.html", context)
 
 @login_required
 def judge_match(request, match_id: int):
