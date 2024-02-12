@@ -9,6 +9,8 @@ import string
 
 
 ACCESS_KEY_LENGTH = 10
+# ^ should be in settings?
+
 def get_random_access_key():
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=ACCESS_KEY_LENGTH))
 
@@ -19,6 +21,18 @@ def get_random_access_key():
     # related: tournament_set (judged)
     # related: profile
 
+class SiteConfig(models.Model):
+    name = models.CharField(max_length=255)
+    """The name of the site, to be displayed in the header and other places."""
+
+    icon = models.ImageField(null=True, blank=True)
+    """The icon to use for this site. If not set, the default will be used."""
+
+    style_sheet = models.CharField(max_length=255, null=True, blank=True)
+    """The URL to the stylesheet to use for this site. If not set, the default will be used."""
+
+    def __str__(self) -> str:
+        return f"SiteConfig(name={self.name})"
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
