@@ -288,3 +288,12 @@ class Match(models.Model):
     class Meta:
         ordering = ['tournament']
         verbose_name_plural = _('Matches')
+
+
+    # Match.obects.filter(next_matches__isnull=true).filter(tournament__competition=competition_id)   for views some id for a parameter
+    # of that functon this will give only the matches that were final matches for robomed five different competetions, and I can run 
+    # this in the shell.
+        
+    # git last match of each tournament
+    # competetion id = competition_id
+
