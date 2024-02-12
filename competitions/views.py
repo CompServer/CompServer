@@ -105,21 +105,24 @@ def BracketView(request):
     context = {"content":t,}
     return render(request, "competitions/bracket.html", context)
 
+@login_required
+def single_elim_tournament(request, tournament_id):
+    tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
+    context = {"tournament": tournament, "user": request.user}
+    return render(request, "competitions/single_elim_tournament.html", context)
 
-def tournament(request, tournament_id):
-    context = {"user": request.user}
-    return render(request, "competitions/tournament.html", context)
-
-
+@login_required
 def tournaments(request):
     context = {"user": request.user}
     return render(request, "competitions/tournaments.html", context)
 
+@login_required
 def competitions(request):
     competition_list = Competition.objects.all()
     context = {"competition_list": competition_list, "user": request.user}
     return render(request, "competitions/competitions.html", context)
 
+@login_required
 def competition(request, competition_id):
     competition = get_object_or_404(Competition, pk=competition_id)
     if competition.is_archived:
@@ -127,6 +130,7 @@ def competition(request, competition_id):
     context = {"competition": competition, "user": request.user, "Status": Status}
     return render(request, "competitions/competition.html", context)
 
+@login_required
 def team(request, team_id):
     team = get_object_or_404(Team, pk=team_id)
     context = {'team': team, "user": request.user}

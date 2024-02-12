@@ -2,7 +2,17 @@
 {% load i18n %}
 {% block content %}
     <header>
-        <h1>{{ competition }}</h1>
+        <h1>{{ competition }}
+            {% if competition.is_judgable %}
+                <i class="bi-activity"></i>
+            {% elif competition.is_complete %}
+                <i class="bi-check2-circle"></i>
+            {% elif competition.is_closed %}
+                <i class="bi-x-circle"></i>
+            {% elif competition.is_in_setup %}
+                <i class="bi-gear"></i>
+            {% endif %}
+        </h1>
     </header>
     <hr style="margin-left: -10px;">
     {% if competition.tournament_set.all %}
@@ -11,11 +21,11 @@
             <div class="row d-flex">
                 <div class = "col-12">
                     {% if tournament.is_judgable %} 
-                        <p><a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.event.name }}</a> <i class="bi-activity"></i></p>
+                        <p><a href="{% url 'competitions:single_elim_tournament' tournament.id %}">{{ tournament.event.name }}</a> <i class="bi-activity"></i></p>
                     {% elif tournament.is_complete %} 
-                        <p><a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.event.name }}</a> <i class="bi-check2-circle"></i></p>
+                        <p><a href="{% url 'competitions:single_elim_tournament' tournament.id %}">{{ tournament.event.name }}</a> <i class="bi-check2-circle"></i></p>
                     {% elif tournament.is_closed %} 
-                        <p><a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.event.name }}</a> <i class="bi-x-circle"></i></p>
+                        <p><a href="{% url 'competitions:single_elim_tournament' tournament.id %}">{{ tournament.event.name }}</a> <i class="bi-x-circle"></i></p>
                     {% elif tournament.is_in_setup %}
                         <p>{{ tournament.event.name }} <i class="bi-gear"></i></p>
                     {% endif %}    
