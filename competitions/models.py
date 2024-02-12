@@ -47,28 +47,30 @@ class Status(models.TextChoices):
     def max_length(cls):
         lengths = [len(member.value) for member in cls]
         return max(lengths)
-
-    # jm: We have all these methods so we can check the status in the template without needing to pass in this class as context
-    # eg. doing status.is_viewable rather than status == Status.OPEN in the template or whereever
-    # also makes it more readable 
     
     @property
     def is_viewable(self) -> bool:
         """Whether the object should show up on the website."""
-        return self in [__class__.OPEN, __class__.COMPLETE, __class__.CLOSED]
+        return self in [Status.OPEN, Status.COMPLETE, Status.CLOSED]
 
     @property
     def is_judgable(self) -> bool:
         """Whether judging for this comptetation should be allowed."""
-        return self == __class__.OPEN
+        return self == Status.OPEN
     
     @property
     def is_archived(self) -> bool:
-        return self == __class__.ARCHIVED
+        return self == Status.ARCHIVED
     
     @property
     def is_in_setup(self) -> bool:
-        return self == __class__.SETUP
+        return self == Status.SETUP
+    
+    # jm: We have all these methods so we can check the status in the template without needing to pass in this class as context
+    # eg. doing status.is_viewable rather than status == Status.OPEN in the template or whereever
+    # also makes it more readable 
+    
+    
 
 
 class StatusField(models.CharField):
@@ -77,7 +79,6 @@ class StatusField(models.CharField):
         kwargs['choices'] = Status.choices
         kwargs['default'] = Status.SETUP
         super().__init__(*args, **kwargs)
-
 
 class Organization(models.Model): # probably mostly schools but could also be community organizations
     name = models.CharField(max_length=257) # not unique because there could be schools with the same name just in different cities
@@ -122,9 +123,9 @@ class Competition(models.Model):
     # For scheduling purposes, we need to be able to specify for this competition how many different (Event-specific) arenas are available and their capacity
     # related: tournament_set
 
-    def check_date():
+    def check_date(self):
         today = datetime.now().date()
-        if end_date < today:
+        if self.end_date < today:
             return True
         else:
             return False

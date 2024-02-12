@@ -1,8 +1,16 @@
+from django import forms
 from django.contrib import messages
-from django.shortcuts import render, get_object_or_404
+from django.contrib.auth import PermissionDenied
+from django.contrib.auth.views import login_required
+from django.db.models import Q, QuerySet
+from django.shortcuts import get_object_or_404, render
 import math
+
+from django.urls import reverse
+
+from competitions.forms import JudgeForm
 from .models import *
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import render
 from django.views.generic.edit import UpdateView
 from django.contrib.auth.mixins import AccessMixin, UserPassesTestMixin
@@ -10,6 +18,8 @@ from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from django.contrib.auth.models import User
 from .models import *
+from django.contrib.auth.mixins import AccessMixin, LoginRequiredMixin, UserPassesTestMixin
+from .models import AbstractTournament, Competition, Match
 
 
 def home(request):
@@ -163,35 +173,101 @@ def not_implemented(request, *args, **kwargs):
     messages.error(request, "This feature is not yet implemented.")
     return render(request, 'skeleton.html')
 
-class JudgeMatchUpdateView(UserPassesTestMixin, AccessMixin, UpdateView):
-    def test_func(self):
-        user = self.request.user
-        instance = self.get_object()
-        assert isinstance(instance, Match)
-        tournament = instance.tournament
-        assert isinstance(tournament, AbstractTournament)
-        competition = tournament.competition
-        assert isinstance(competition, Competition)
-        status = competition.status
 
-        if not competition.is_judgable and tournament.is_judgable:
-            return False
+def competition(request, competition_id):
+    context = {
+        'competition': Competition.objects.get(id=competition_id)
+    }
+    return render(request, "competitions/competition.html", context)
 
-        # if the user is a judge for the tournament, or a plenary judge for the competition, or a superuser
-        if user in tournament.judges.all() \
-        or user in competition.plenary_judges.all():# \
-        #or user.is_superuser:
-            return True
-       # elif user.is_authenticated:
-       #     returran PermissionDenied("You are not authorized to judge this match.")
-        return False
+@login_required
+def judge_match(request, match_id):
+    instance = get_object_or_404(Match, pk=match_id)
+    user = request.user
 
-    def handle_no_permission(self):
-        return HttpResponseRedirect('/')
+    tournament = instance.tournament
+    assert isinstance(tournament, AbstractTournament)
+    competetion = tournament.competition
+    assert isinstance(competetion, Competition)
     
-    permission_denied_message = "You are not authorized to judge this match."
+    if not competetion.is_judgable or not tournament.is_judgable:
+        messages.error(request, "This match is not judgable.")
+        return HttpResponseRedirect(reverse('competitions:competition', args=[competetion.id]))
+    # if the user is a judge for the tournament, or a plenary judge for the competition, or a superuser
+    if  not (user in tournament.judges.all() \
+    or user in competetion.plenary_judges.all()):# \
+    #or user.is_superuser:
+        messages.error(request, "You are not authorized to judge this match.")
+        raise PermissionDenied("You are not authorized to judge this match.")
+        #return HttpResponseRedirect(reverse('competitions:competition', args=[competetion.id]))
 
-    model = Match
-    fields = ['advancers']
-    template_name = 'match_judge.html'
-    success_url = "/"
+    if request.method == 'POST':
+        form = JudgeForm(request.POST, instance=instance, possible_advancers=None)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect('/')
+    else:
+        winner_choices = []
+        if instance.prev_matches.exists():
+            winner_choice_ids = []
+            for match in instance.prev_matches.all():
+                winner_choice_ids.extend([x.id for x in match.advancers.all()])
+            winner_choices = Team.objects.filter(id__in=winner_choice_ids)
+        elif instance.starting_teams.exists():
+            winner_choices = instance.starting_teams.all()
+        form = JudgeForm(instance=instance, possible_advancers=winner_choices)
+    return render(request, 'competitions/match_judge.html', {'form': form})
+
+# class JudgeMatchUpdateView(UserPassesTestMixin, LoginRequiredMixin, UpdateView):
+#     def test_func(self):
+#         user = self.request.user
+
+#         instance = self.get_object()
+#         assert isinstance(instance, Match)
+#         tournament = instance.tournament
+#         assert isinstance(tournament, AbstractTournament)
+#         competetion = tournament.competition
+#         assert isinstance(competetion, Competition)
+#         status = competetion.status
+#         assert isinstance(status, Status)
+
+#         if not status.is_judgable:
+#             return False
+
+#         # if the user is a judge for the tournament, or a plenary judge for the competition, or a superuser
+#         if user in tournament.judges.all() \
+#         or user in competetion.plenary_judges.all():# \
+#         #or user.is_superuser:
+#             return True
+#        # elif user.is_authenticated:
+#        #     returran PermissionDenied("You are not authorized to judge this match.")
+#         else:
+#             return False
+
+#     winners = forms.ModelMultipleChoiceField(label='winners', queryset=Team.objects.all(), required=True)
+
+#     def handle_no_permission(self):
+#         messages.error(self.request, "You are not authorized to judge this match.")
+#         return HttpResponseRedirect('/')
+
+#     permission_denied_message = "You are not authorized to judge this match."
+#     template_name = 'competitions/match_judge.html'
+#     success_url = "/"
+#     model = Match
+#     login_url = '/login/' # change to login url
+#     redirect_field_name = 'redirect_to'
+
+#     def __init__(self, *args, **kwargs) -> None:
+#         super().__init__(*args, **kwargs)
+#         instance = self.get_object()
+#         assert isinstance(instance, Match)
+#         if instance:
+#             assert isinstance(instance, Match)
+#             winner_choices = []
+#             if instance.starting_teams:
+#                 winner_choices = [*instance.starting_teams.all()]
+#             elif instance.prev_matches:
+#                 for match in instance.prev_matches.all:
+#                     winner_choices.append(*match.advancers.all())
+                
+#             self.fields['winners'].queryset = winner_choices

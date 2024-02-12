@@ -10,5 +10,6 @@ urlpatterns = [
     path("tournament/", views.tournaments, name="tournaments"),
     path("tournament/<int:tournament_id>/", views.BracketView, name="tournament"),
     # path("coach/<int:coach_id>/", views.coach, name="coach-page"),
-    path('match/<int:pk>/judge/', views.JudgeMatchUpdateView.as_view(), name='judge_match'),
+    path("match/<int:match_id>/judge/", views.judge_match, name="match"),
+    #path('match/<int:pk>/judge/', views.JudgeMatchUpdateView.as_view(), name='judge_match'),
 ]
