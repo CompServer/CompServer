@@ -6,6 +6,8 @@ from django.contrib.auth.models import User
 from django.dispatch import receiver
 from datetime import datetime
 import pytz
+from django.utils import timezone
+from tzlocal import get_localzone
 import random
 import string
 
@@ -80,6 +82,14 @@ class Team(models.Model):
     def __str__(self) -> str:
         return self.name + (_(" from ") + str(self.organization) if self.organization else "")
     
+    def competed_in_at_least_
+
+    def competed_in_at_least_one_tourney(self):
+        for tourney in self.tournament_set:
+            if tourney.status == "COMPLETE":
+                return True
+        return False
+
     class Meta:
         ordering = ['organization', 'name']
         unique_together = ['organization', 'name']
@@ -231,7 +241,6 @@ class AbstractTournament(models.Model):
     def is_in_setup(self) -> bool:
         return self.status == Status.SETUP
 
-        
     class Meta:
         ordering = ['competition', 'event']
 
@@ -331,9 +340,16 @@ class Match(models.Model):
     str_recursive_level = 0
 
     def currently_running(self):
-        utc = pytz.UTC
-        now = utc.localize(datetime.now())
-        if utc.localize(self.time) >= now:
+        now = timezone.localtime(timezone.now())
+        dates = datetime.now()
+        datetime = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+        timezone = get_localzone()
+        one_date = self.time
+        another_date = utc_dt.replace(tzinfo=timezone.utc).astimezone(tz=None)
+        third_date = local_dt.astimezone(pytz.utc)
+        something = datetime.now()
+        now = pytz.utc.localize(something)
+        if self.time >= now:
             return True
         else: 
             return False
