@@ -1,14 +1,23 @@
-import math
-
+from django import forms
 from django.contrib import messages
 from django.contrib.auth import PermissionDenied
+from django.contrib.auth.mixins import AccessMixin, LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.models import User
 from django.contrib.auth.views import login_required
-from django.http import HttpResponseRedirect
+from django.contrib.auth.decorators import login_required
+from django.db.models import Q, QuerySet
+from django.http import HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
+import math
 
 from .models import *
 from .forms import *
+
+
+def home(request):
+    return render(request, "competitions/home.html")
+
 
 # why are we using camelcase
 def BracketView(request):
@@ -103,6 +112,7 @@ def not_implemented(request, *args, **kwargs):
     #raise NotImplementedError()
     return render(request, 'skeleton.html')
 
+
 @login_required
 def judge_match(request, match_id: int):
     instance = get_object_or_404(Match, pk=match_id)
@@ -140,57 +150,3 @@ def judge_match(request, match_id: int):
         winner_choices = instance.starting_teams.all()
     form = JudgeForm(instance=instance, possible_advancers=winner_choices)
     return render(request, 'competitions/match_judge.html', {'form': form})
-
-# class JudgeMatchUpdateView(UserPassesTestMixin, LoginRequiredMixin, UpdateView):
-#     def test_func(self):
-#         user = self.request.user
-
-#         instance = self.get_object()
-#         assert isinstance(instance, Match)
-#         tournament = instance.tournament
-#         assert isinstance(tournament, AbstractTournament)
-#         competetion = tournament.competition
-#         assert isinstance(competetion, Competition)
-#         status = competetion.status
-#         assert isinstance(status, Status)
-
-#         if not status.is_judgable:
-#             return False
-
-#         # if the user is a judge for the tournament, or a plenary judge for the competition, or a superuser
-#         if user in tournament.judges.all() \
-#         or user in competetion.plenary_judges.all():# \
-#         #or user.is_superuser:
-#             return True
-#        # elif user.is_authenticated:
-#        #     returran PermissionDenied("You are not authorized to judge this match.")
-#         else:
-#             return False
-
-#     winners = forms.ModelMultipleChoiceField(label='winners', queryset=Team.objects.all(), required=True)
-
-#     def handle_no_permission(self):
-#         messages.error(self.request, "You are not authorized to judge this match.")
-#         return HttpResponseRedirect('/')
-
-#     permission_denied_message = "You are not authorized to judge this match."
-#     template_name = 'competitions/match_judge.html'
-#     success_url = "/"
-#     model = Match
-#     login_url = '/login/' # change to login url
-#     redirect_field_name = 'redirect_to'
-
-#     def __init__(self, *args, **kwargs) -> None:
-#         super().__init__(*args, **kwargs)
-#         instance = self.get_object()
-#         assert isinstance(instance, Match)
-#         if instance:
-#             assert isinstance(instance, Match)
-#             winner_choices = []
-#             if instance.starting_teams:
-#                 winner_choices = [*instance.starting_teams.all()]
-#             elif instance.prev_matches:
-#                 for match in instance.prev_matches.all:
-#                     winner_choices.append(*match.advancers.all())
-                
-#             self.fields['winners'].queryset = winner_choices

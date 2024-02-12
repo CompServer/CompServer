@@ -61,7 +61,7 @@ class Status(models.TextChoices):
     def max_length(cls):
         lengths = [len(member.value) for member in cls]
         return max(lengths)
-
+    
     @property
     def is_viewable(self) -> bool:
         """Whether the object should show up on the website."""
@@ -130,9 +130,9 @@ class Competition(models.Model):
     # For scheduling purposes, we need to be able to specify for this competition how many different (Event-specific) arenas are available and their capacity
     # related: tournament_set
 
-    def check_date():
+    def check_date(self):
         today = datetime.now().date()
-        if end_date < today:
+        if self.end_date < today:
             return True
         else:
             return False
