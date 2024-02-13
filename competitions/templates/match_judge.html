@@ -4,10 +4,10 @@
 {% block title %} Judge Match form {% endblock %}
 
 {% block content %}
-    <h1>Judge a Match</h1>
+    <h1>{% trans "Judge a Match" %}</h1>
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit">Judge</button>
+        <button type="submit">{% trans "Judge" %}</button>
     </form>
 {% endblock %}
