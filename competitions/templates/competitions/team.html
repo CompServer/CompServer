@@ -30,7 +30,9 @@
                         {% for tournament in competition.tournament_set.all %}
                             {% if tournament.status == "OPEN" %}
                                 {% for match in tournament.match_set.all %}
-                                    {% if match.currently_running %}
+                                    {% load tz %}
+                                    {% if {{ match.time.time() | localtime }} <= datetime.now().time() and match.time.date() <= datetime.now().date() %}
+                                    <!-- {% if match.currently_running %} -->
                                         <div class="column">
                                             <p>Match {{ match.id }}: {{ match }} with competitors</p>
                                         </div>

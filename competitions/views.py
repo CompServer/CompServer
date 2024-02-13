@@ -9,7 +9,21 @@ from django.contrib.auth.mixins import AccessMixin, UserPassesTestMixin
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from django.contrib.auth.models import User
+from django.shortcuts import redirect, render
 
+# Prepare a map of common locations to timezone choices you wish to offer.
+common_timezones = {
+    "London": "Europe/London",
+    "Paris": "Europe/Paris",
+    "New York": "America/New_York",
+}
+
+def set_timezone(request):
+    if request.method == "POST":
+        request.session["django_timezone"] = request.POST["timezone"]
+        return redirect("/")
+    else:
+        return render(request, "set-local-timezone.html", {"timezones": common_timezones})
 
 def home(request):
     return render(request, "competitions/home.html")

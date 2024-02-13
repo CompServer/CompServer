@@ -5,9 +5,6 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 from datetime import datetime
-import pytz
-from django.utils import timezone
-from tzlocal import get_localzone
 import random
 import string
 
@@ -82,7 +79,33 @@ class Team(models.Model):
     def __str__(self) -> str:
         return self.name + (_(" from ") + str(self.organization) if self.organization else "")
     
-    def competed_in_at_least_
+    def won_at_least_one_match(self):
+        for match in self.match_set:
+            for advancer in self.match.advancers:
+                if advancer == self and match.status == "COMPLETE":
+                    return True
+        return False
+
+    def lost_at_least_one_match(self):
+        for match in self.match_set:
+            for advancer in self.match.advancers:
+                if advancer != self and match.status == "COMPLETE":
+                    return True
+        return False
+    
+    def drew_at_least_one_match(self):
+        for match in self.match_set:
+            if self.match.advancers > 1:
+                for advancer in self.match.advancers:
+                    if advancer == self and match.status == "COMPLETE":
+                        return True
+        return False
+
+    def competed_in_at_least_one_comp(self):
+        for comp in self.competition_set:
+            if comp.status == "COMPLETE":
+                return True
+        return False
 
     def competed_in_at_least_one_tourney(self):
         for tourney in self.tournament_set:
@@ -338,21 +361,6 @@ class Match(models.Model):
     advancers = models.ManyToManyField(Team, related_name="won_matches", blank=True) # usually 1 but could be more (e.g. time trials)
     time = models.DateTimeField() # that it's scheduled for
     str_recursive_level = 0
-
-    def currently_running(self):
-        now = timezone.localtime(timezone.now())
-        dates = datetime.now()
-        datetime = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
-        timezone = get_localzone()
-        one_date = self.time
-        another_date = utc_dt.replace(tzinfo=timezone.utc).astimezone(tz=None)
-        third_date = local_dt.astimezone(pytz.utc)
-        something = datetime.now()
-        now = pytz.utc.localize(something)
-        if self.time >= now:
-            return True
-        else: 
-            return False
 
     def __str__(self) -> str:
         self.__class__.str_recursive_level += 1
