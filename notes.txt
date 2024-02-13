@@ -175,4 +175,4 @@ Product Owner (jschwartz) Presentation Notes
 - Speed race could be 1 v 1
 - 20 sportsmanship points that get taken away (penalties)
 - We can estimate times for a match but it depends on how streamlined the setup is (may be different for different venues, hosts)
->>>>>>> main
+

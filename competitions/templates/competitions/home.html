@@ -1,0 +1,11 @@
+{% extends "skeleton.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block content %}
+    <h1>{% trans "Welcome to the Competition Server" %}</h1>
+    <img src="{% static 'logo.png' %}">
+    <ul>
+        <li><a href="{% url 'competitions:competitions' %}">Competitions</a></li>
+    </ul>
+{% endblock %}

@@ -1,0 +1,24 @@
+Making a match schedule:
+    for a tournament:
+        make sure that it is open, complete, or closed for judging (each should have a special display)
+        then check for those tournaments if our team is involved within those tournaments 
+        then check if those tournaments are ongoing or happening currently
+    now list out each event, for every event:
+        there should be a match:
+            check the number of teams and divide by the number of possible pairings in a bracket
+            if our team isn't in the starting teams (we have a bye)
+                list the advancer of the team that:
+                    if they are a higher ranking, and we aren't, them
+                    if we are both high rankings, don'take
+                    if we have a higher ranking, and they don't, that's our next match
+                continue to pair with the otehr teams that advance in our bracket
+                    the number of bracket pairings will decrease
+            if our team is in the starting teams
+                we are against a team with a lower ranking if we have a higher tanking
+                we are against a team with a hgiher ranking if we have a lower ranking
+                anything else should be a random ranking for those that are in-between or lower
+        for matches within a group:
+            we should list every team particpating and our team
+            im not sure if we progress or not but just do the above
+    the end of the events should list these stats with points
+a competition has a tournament. ^^^
