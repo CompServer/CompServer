@@ -86,11 +86,11 @@
             <form class="form-inline my-2 my-md-0" action="{% url 'set_language' %}" method="post">
                 {% csrf_token %}
                 <select name="language" onchange="this.form.submit();">
+                    <option value=""></option>
                     <option value="en">English</option>
                     <option value="es">Español</option>
                     <option value="fr">Français</option>
                 </select>
-                <input type="submit" value={% trans "Change Language" %}>
             </form>
         </div>
                 {% comment %} <li class="nav-item">

@@ -224,7 +224,7 @@ class AbstractTournament(models.Model):
         ordering = ['competition', 'event']
 
 class Ranking(models.Model):
-    tournament = models.ForeignKey(AbstractTournament, on_delete=models.CASCADE)
+    tournament = models.ForeignKey(AbstractTournament, on_delete=models.CASCADE, related_name="ranking_set")
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     rank = models.PositiveSmallIntegerField()
 

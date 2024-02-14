@@ -17,25 +17,42 @@ def is_overflowed(list1, num):
     return True
 
 def generate_single_elimination_matches(request, tournament_id):
+    #sort the list by ranking, then use a two-pointer alogrithm to make the starting matches
+    #figure out how to do the next matches later.
     tournament = get_object_or_404(AbstractTournament, pk=tournament_id)
-    teams = []
-    num_participated = []
-    for team in tournament.teams.all():
-        teams.append(team)
-        num_participated.append(0)
-    if len(teams) % 2 == 1:
-        num_participated[0] = 1
-    for i in range(len(teams)):
-        if num_participated[i] == 0 and not is_overflowed(num_participated, 1):
-            j = random.randint(0, len(teams)-1)
-            while(num_participated[j] == 1):
-                j = random.randint(0, len(teams)-1)
-            match = Match.objects.create(tournament=tournament)
-            match.starting_teams.add(teams[i], teams[j])
-            match.save()
-            num_participated[i] += 1
-            num_participated[j] += 1
-    #cannot sort matches by skill level because skill level cannot be determined with our current models
+    teams = {}
+    max = 0
+    for rank in tournament.ranking_set.all:
+        teams[rank.rank] = rank.team
+        if rank.rank > max:
+            max = rank.rank
+    i = 0
+    j = 0
+    if max % 2 == 1:
+        i = 1
+    while i < j:
+        match = Match.objects.create(tournament=tournament)
+        match.starting_teams.add(teams[i], teams[j])
+        match.save()
+        i += 1
+        j -= 1
+    # teams = []
+    # num_participated = []
+    # for team in tournament.teams.all():
+    #     teams.append(team)
+    #     num_participated.append(0)
+    # if len(teams) % 2 == 1:
+    #     num_participated[0] = 1
+    # for i in range(len(teams)):
+    #     if num_participated[i] == 0 and not is_overflowed(num_participated, 1):
+    #         j = random.randint(0, len(teams)-1)
+    #         while(num_participated[j] == 1):
+    #             j = random.randint(0, len(teams)-1)
+    #         match = Match.objects.create(tournament=tournament)
+    #         match.starting_teams.add(teams[i], teams[j])
+    #         match.save()
+    #         num_participated[i] += 1
+    #         num_participated[j] += 1
 
 def generate_round_robin_matches(request, tournament_id):
     some_num_matches = 4
