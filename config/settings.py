@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'hijack.contrib.admin',
     'debug_toolbar',
     'crispy_forms',
+    #'easy_timezones', # pip install django-easy-timezones
 ]
 
 
@@ -52,10 +53,11 @@ MIDDLEWARE = [
     'hijack.middleware.HijackUserMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.middleware.locale.LocaleMiddleware',
+
+    #'easy_timezones.middleware.EasyTimezoneMiddleware', # django-easy-timezones
 ]
 
 ROOT_URLCONF = 'config.urls'
-
 
 TEMPLATES = [
     {
@@ -159,3 +161,7 @@ MESSAGE_TAGS = {
 def show_toolbar(request):
     return True
 SHOW_TOOLBAR_CALLBACK = show_toolbar
+
+LOGIN_REDIRECT_URL = '/'
+
+LOGIN_URL = '/accounts/login/'
