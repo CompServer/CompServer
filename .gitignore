@@ -24,4 +24,6 @@ media/
 *.yml
 
 #localization
-locale/
+**/locale/
+locale/es/LC_MESSAGES/django.mo
+locale/es/LC_MESSAGES/django.po

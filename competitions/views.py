@@ -2,6 +2,9 @@ from datetime import datetime
 import math
 
 from django.contrib import messages
+from django.shortcuts import render, get_object_or_404
+import math, random
+from .models import *
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth.views import login_required
 from django.http import HttpResponseRedirect
@@ -15,6 +18,72 @@ def home(request):
     #context = {'test_time': datetime.now()}
     #print(context['test_time'])
     return render(request, "competitions/home.html", )#context=context)
+def is_overflowed(list1, num):
+    for item in list1:
+        if item < num:
+            return False
+    return True
+
+def generate_single_elimination_matches(request, tournament_id):
+    #sort the list by ranking, then use a two-pointer alogrithm to make the starting matches
+    #figure out how to do the next matches later.
+    tournament = get_object_or_404(AbstractTournament, pk=tournament_id)
+    teams = {}
+    max = 0
+    for rank in tournament.ranking_set.all:
+        teams[rank.rank] = rank.team
+        if rank.rank > max:
+            max = rank.rank
+    i = 0
+    j = 0
+    if max % 2 == 1:
+        i = 1
+    while i < j:
+        match = Match.objects.create(tournament=tournament)
+        match.starting_teams.add(teams[i], teams[j])
+        match.save()
+        i += 1
+        j -= 1
+    # teams = []
+    # num_participated = []
+    # for team in tournament.teams.all():
+    #     teams.append(team)
+    #     num_participated.append(0)
+    # if len(teams) % 2 == 1:
+    #     num_participated[0] = 1
+    # for i in range(len(teams)):
+    #     if num_participated[i] == 0 and not is_overflowed(num_participated, 1):
+    #         j = random.randint(0, len(teams)-1)
+    #         while(num_participated[j] == 1):
+    #             j = random.randint(0, len(teams)-1)
+    #         match = Match.objects.create(tournament=tournament)
+    #         match.starting_teams.add(teams[i], teams[j])
+    #         match.save()
+    #         num_participated[i] += 1
+    #         num_participated[j] += 1
+
+def generate_round_robin_matches(request, tournament_id):
+    some_num_matches = 4
+    tournament = get_object_or_404(AbstractTournament, pk=tournament_id)
+    teams = []
+    num_participated = []
+    for team in tournament.teams.all():
+        teams.append(team)
+        num_participated.append(0)
+    for i in range(len(teams)):
+        for k in range(some_num_matches):
+            if num_participated[i] < some_num_matches and not is_overflowed(num_participated, some_num_matches):
+                j = random.randint(0, len(teams)-1)
+                while(num_participated[j] >= some_num_matches):
+                    j = random.randint(0, len(teams)-1)
+                match = Match.objects.create(tournament=tournament)
+                match.starting_teams.add(teams[i], teams[j])
+                match.save()
+                num_participated[i] += 1
+                num_participated[j] += 1
+    #also, this could run infinitely, or at least for very long.
+    #will do ordering of matches once the bracket is fully understood.
+    return render(request, 'skeleton.html')
 
 # why are we using camelcase
 def BracketView(request):
@@ -74,31 +143,40 @@ def BracketView(request):
     context = {"bracket_dict": bracket_dict,}
     return render(request, "competitions/bracket.html", context)
 
-def tournament(request, tournament_id):
-    context = {"user": request.user}
-    return render(request, "competitions/tournament.html", context)
+@login_required
+def single_elim_tournament(request, tournament_id):
+    tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
+    context = {"tournament": tournament, "user": request.user}
+    return render(request, "competitions/single_elim_tournament.html", context)
 
+@login_required
 def tournaments(request):
     context = {"user": request.user}
     return render(request, "competitions/tournaments.html", context)
 
+@login_required
 def competitions(request):
     competition_list = Competition.objects.all()
-    context = {"competition_list": competition_list, "redirect_to": request.path, "user": request.user}
+    context = {"competition_list": competition_list, "user": request.user}
     return render(request, "competitions/competitions.html", context)
 
+@login_required
 def competition(request, competition_id):
     competition = get_object_or_404(Competition, pk=competition_id)
     if competition.is_archived:
         return HttpResponseRedirect(reverse("competitions:competitions"))
-    context = {"competition": competition, "redirect_to": request.path, "user": request.user, "Status": Status}
+    context = {"competition": competition, "user": request.user, "Status": Status}
     return render(request, "competitions/competition.html", context)
 
-def team(request, team_id: int):
-    context = {
-        'team': get_object_or_404(Team, id=team_id)
-    }
+@login_required
+def team(request, team_id):
+    team = get_object_or_404(Team, pk=team_id)
+    context = {'team': team, "user": request.user}
     return render(request, "competitions/team.html", context)
+
+def credits(request):
+    context = {"user": request.user}
+    return render(request, "competitions/credits.html", context)
 
 def not_implemented(request, *args, **kwargs):
     """
