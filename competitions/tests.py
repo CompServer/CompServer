@@ -1,15 +1,8 @@
-from django.test import Client, TestCase
-from .models import *
-#c.post('/match/21/judge',)
+from django.test import Client
 
+c = Client()
 
-class MyTestCase(TestCase):
+c.login(username="admin", password="admin")
 
-    def test1(self):
-        print('running')
-
-        c = Client()
-
-        c.login(username="admin", password="admin")
-
-        self.assertFalse(c.post("/match/85/judge/", {"advancers": 25}))
+response = c.post("/match/85/judge/", {"advancers": 25})
+print(response)

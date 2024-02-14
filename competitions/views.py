@@ -189,8 +189,8 @@ def not_implemented(request, *args, **kwargs):
 
 
 @login_required
-def judge_match(request, match_id: int):
-    instance = get_object_or_404(Match, pk=match_id)
+def judge_match(request, pk: int):
+    instance = get_object_or_404(Match, pk=pk)
     user = request.user
 
     tournament = instance.tournament
@@ -208,13 +208,6 @@ def judge_match(request, match_id: int):
         messages.error(request, "You are not authorized to judge this match.")
         raise PermissionDenied("You are not authorized to judge this match.")
         #return HttpResponseRedirect(reverse('competitions:competition', args=[competetion.id]))
-
-    if request.method == 'POST':
-        form = JudgeForm(request.POST, instance=instance, possible_advancers=None)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Match judged successfully.")
-
     winner_choices = []
     if instance.prev_matches.exists():
         winner_choice_ids = []
@@ -223,6 +216,17 @@ def judge_match(request, match_id: int):
         winner_choices = Team.objects.filter(id__in=winner_choice_ids)
     elif instance.starting_teams.exists():
         winner_choices = instance.starting_teams.all()
+    
+    if request.method == 'POST':
+        form = JudgeForm(request.POST, instance=instance, possible_advancers=winner_choices)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Match judged successfully.")
+        else:
+            messages.error(request, "Invalid form submission.")
+            #raise PermissionDenied("Invalid form submission.")
+            # ^ uncoment this line when running the test, for invalid form submission this will raise an error
+
     form = JudgeForm(instance=instance, possible_advancers=winner_choices)
     return render(request, 'competitions/match_judge.html', {'form': form})
 
