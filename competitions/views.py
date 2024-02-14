@@ -1,23 +1,20 @@
-from django import forms
+from datetime import datetime
+import math
+
 from django.contrib import messages
 from django.contrib.auth import PermissionDenied
-from django.contrib.auth.mixins import AccessMixin, LoginRequiredMixin, UserPassesTestMixin
-from django.contrib.auth.models import User
 from django.contrib.auth.views import login_required
-from django.contrib.auth.decorators import login_required
-from django.db.models import Q, QuerySet
-from django.http import HttpResponseForbidden, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
-import math
 
 from .models import *
 from .forms import *
 
-
 def home(request):
-    return render(request, "competitions/home.html")
-
+    #context = {'test_time': datetime.now()}
+    #print(context['test_time'])
+    return render(request, "competitions/home.html", )#context=context)
 
 # why are we using camelcase
 def BracketView(request):
@@ -31,7 +28,7 @@ def BracketView(request):
 
     bracketHeight = 600
     roundHeight = bracketHeight
-    roundWidth = matchWidth+connectorWidth
+    roundWidth =    +connectorWidth
     for i in range(numRounds):
         num_matches = len(bracket_array[numRounds-i-1])
         match_height = roundHeight / num_matches
@@ -125,7 +122,7 @@ def judge_match(request, match_id: int):
     
     if not competetion.is_judgable or not tournament.is_judgable:
         messages.error(request, "This match is not judgable.")
-        return HttpResponseRedirect(reverse('competitions:competition', args=[competetion.id]))
+        raise PermissionDenied("This match is not judgable.")
     # if the user is a judge for the tournament, or a plenary judge for the competition, or a superuser
     if  not (user in tournament.judges.all() \
     or user in competetion.plenary_judges.all()):# \
@@ -150,3 +147,14 @@ def judge_match(request, match_id: int):
         winner_choices = instance.starting_teams.all()
     form = JudgeForm(instance=instance, possible_advancers=winner_choices)
     return render(request, 'competitions/match_judge.html', {'form': form})
+
+def set_timezone_view(request):
+    """
+    View to set the timezone for the user.
+    """
+    if request.method == 'POST':
+        request.session['django_timezone'] = request.POST['timezone']
+        messages.success(request, f"Timezone set successfully to {request.POST['timezone']}.")
+        return HttpResponseRedirect('/')
+    else:
+        return render(request, 'timezones.html', {'timezones': pytz.common_timezones, 'TIME_ZONE': request.session.get('django_timezone',None)})
