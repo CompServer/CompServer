@@ -26,25 +26,42 @@ def is_overflowed(list1, num):
     return True
 
 def generate_single_elimination_matches(request, tournament_id):
+    #sort the list by ranking, then use a two-pointer alogrithm to make the starting matches
+    #figure out how to do the next matches later.
     tournament = get_object_or_404(AbstractTournament, pk=tournament_id)
-    teams = []
-    num_participated = []
-    for team in tournament.teams.all():
-        teams.append(team)
-        num_participated.append(0)
-    if len(teams) % 2 == 1:
-        num_participated[0] = 1
-    for i in range(len(teams)):
-        if num_participated[i] == 0 and not is_overflowed(num_participated, 1):
-            j = random.randint(0, len(teams)-1)
-            while(num_participated[j] == 1):
-                j = random.randint(0, len(teams)-1)
-            match = Match.objects.create(tournament=tournament)
-            match.starting_teams.add(teams[i], teams[j])
-            match.save()
-            num_participated[i] += 1
-            num_participated[j] += 1
-    #cannot sort matches by skill level because skill level cannot be determined with our current models
+    teams = {}
+    max = 0
+    for rank in tournament.ranking_set.all:
+        teams[rank.rank] = rank.team
+        if rank.rank > max:
+            max = rank.rank
+    i = 0
+    j = 0
+    if max % 2 == 1:
+        i = 1
+    while i < j:
+        match = Match.objects.create(tournament=tournament)
+        match.starting_teams.add(teams[i], teams[j])
+        match.save()
+        i += 1
+        j -= 1
+    # teams = []
+    # num_participated = []
+    # for team in tournament.teams.all():
+    #     teams.append(team)
+    #     num_participated.append(0)
+    # if len(teams) % 2 == 1:
+    #     num_participated[0] = 1
+    # for i in range(len(teams)):
+    #     if num_participated[i] == 0 and not is_overflowed(num_participated, 1):
+    #         j = random.randint(0, len(teams)-1)
+    #         while(num_participated[j] == 1):
+    #             j = random.randint(0, len(teams)-1)
+    #         match = Match.objects.create(tournament=tournament)
+    #         match.starting_teams.add(teams[i], teams[j])
+    #         match.save()
+    #         num_participated[i] += 1
+    #         num_participated[j] += 1
 
 def generate_round_robin_matches(request, tournament_id):
     some_num_matches = 4
@@ -72,7 +89,7 @@ def generate_round_robin_matches(request, tournament_id):
 def home(request):
     return render(request, "competitions/home.html")
 
-def bracket(request, tournament_id):
+def single_elimination_tournament(request, tournament_id):
     '''
     This view is responsible for drawing the tournament bracket, it does this by:
     1) Recursively get all matches and put them in a 3d array
@@ -193,22 +210,24 @@ def bracket(request, tournament_id):
         "round_data": round_data
     }
     
-    context = {"bracket_dict": bracket_dict,}
+    tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
+    context = {
+        "tournament": tournament, 
+        "bracket_dict": bracket_dict,
+    }
     return render(request, "competitions/bracket.html", context)
 
-
-def tournament(request, tournament_id):
-    context = {"user": request.user}
-    return render(request, "competitions/tournament.html", context)
 
 def tournaments(request):
     context = {"user": request.user}
     return render(request, "competitions/tournaments.html", context)
 
+
 def competitions(request):
     competition_list = Competition.objects.all()
     context = {"competition_list": competition_list, "user": request.user}
     return render(request, "competitions/competitions.html", context)
+
 
 def competition(request, competition_id):
     competition = get_object_or_404(Competition, pk=competition_id)

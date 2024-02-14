@@ -83,11 +83,11 @@
                     <div class="row d-flex">
                         <div class = "col-12">
                             {% if tournament.is_judgable %} 
-                                <p><i class="bi-activity"></i> <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a></p>
+                                <p><i class="bi-activity"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
                             {% elif tournament.is_complete %} 
-                                <p><i class="bi-check2-circle"></i> <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a></p>
+                                <p><i class="bi-check2-circle"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
                             {% elif tournament.is_closed %} 
-                                <p><i class="bi-x-circle"></i> <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a></p>
+                                <p><i class="bi-x-circle"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
                             {% elif tournament.is_in_setup %}
                                 <p><i class="bi-gear"></i> {{ tournament }}</p>
                             {% endif %}  

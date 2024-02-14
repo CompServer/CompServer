@@ -180,6 +180,8 @@ Translation Notes
 - We have to download gettext tools system library (https://stackoverflow.com/questions/53852961/installing-gettext-in-windows-cant-find-msguniq-make-sure-you-have-gnu-gettex)
 - use{% trans %} tag for built-in html text, and gettext python library function for not built-in html text
 - use {% load i18n %} at beginning of html doc to allow Translation
+- there's no way to translate the items of models, and if there is, it's way too complicated.
+
 
 To anyone reading this, if you want to include a link to the navbar shown only on your specific
 html page, you can use the block links to do so.
