@@ -2,6 +2,9 @@
 {% load hijack %}
 {% load i18n %}
 {% load tz %}
+{% get_current_language as LANGUAGE_CODE %}
+
+{% get_language_info for LANGUAGE_CODE as lang %}
 {% comment %} {% load tz_detect %} {% comment%} pip install django-tz-detect  TTHIS CAN BE COMMENTED OUT IF YOU DONT WANT TO INSTALL{% endcomment %}
 {% comment %} {% load i18n static i18n_switcher tz_detect %} {% endcomment %}
 
@@ -21,7 +24,7 @@
     <link rel="stylesheet" href="{% static 'style.css' %}">
     <link rel='icon' href="{% static 'favicon.png' %}">
     <title>
-        {% block title %}Competitions{% endblock %}
+        {% block title %}Title pending{% endblock %}
     </title>
 </head>
 
@@ -81,13 +84,14 @@
             </ul>
         </div>
         <div class="collapse navbar-collapse justify-content-end" id="lang">
+            {% get_available_languages as LANGUAGES %} 
             <form class="form-inline my-2 my-md-0" action="{% url 'set_language' %}" method="post">
                 {% csrf_token %}
                 <select name="language" onchange="this.form.submit();">
-                    <option value=""></option>
-                    <option value="en">English</option>
-                    <option value="es">Español</option>
-                    <option value="fr">Français</option>
+                    {% for language in LANGUAGES %}
+                        {% get_language_info for language.0 as lang_ %}
+                        <option value="{{ language.0 }}" {% if language.0 == LANGUAGE_CODE %}selected{% endif %}>{{ lang_.name_local.title }}</option>
+                    {% endfor %}
                 </select>
             </form>
         </div>
@@ -125,18 +129,6 @@
     {% block content %}
     Template Content TBD
     {% endblock %}
-
-    {% comment %} Language selector in navbar? {% endcomment %}
-    <form action="{% url 'set_language' %}" method="post">
-        {% csrf_token %}
-        <input name="next" type="hidden" value="{{ redirect_to }}" />
-        <select name="language">
-            <option value="en">English</option>
-            <option value="es">Español</option>
-            <option value="fr">Français</option>
-        </select>
-        <input type="submit" value="Change Language">
-    </form>
     
     {% comment %} 
         This adds a JS cookie that keeps track of the user's timezome
