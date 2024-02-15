@@ -1,6 +1,7 @@
 from pathlib import Path
 from django.utils import timezone
 import os
+<<<<<<< HEAD
 import zoneinfo
 
 from django.utils import timezone
@@ -18,6 +19,9 @@ class TimezoneMiddleware:
         else:
             timezone.deactivate()
         return self.get_response(request)
+=======
+from django.contrib.messages import constants as messages
+>>>>>>> main
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -32,8 +36,11 @@ SECRET_KEY = 'django-insecure-2y0@hfzu761goc9!m&!#if&(vhcg=!uzre027l48r&oh_c^xcx
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
+INTERNAL_IPS = [
+    "127.0.0.1",
+]
 
 # Application definition
 
@@ -49,6 +56,7 @@ INSTALLED_APPS = [
     'hijack.contrib.admin',
     'debug_toolbar',
     'crispy_forms',
+    #'easy_timezones', # pip install django-easy-timezones
 ]
 
 
@@ -65,10 +73,11 @@ MIDDLEWARE = [
     'hijack.middleware.HijackUserMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.middleware.locale.LocaleMiddleware',
+
+    #'easy_timezones.middleware.EasyTimezoneMiddleware', # django-easy-timezones
 ]
 
 ROOT_URLCONF = 'config.urls'
-
 
 TEMPLATES = [
     {
@@ -152,7 +161,7 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 STATIC_URL = f"/static/"
 
-STATIC_ROOT = f"/staticfiles/"
+STATIC_ROOT = f"/static/"
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
@@ -160,4 +169,19 @@ STATICFILES_DIRS = [
 
 MEDIA_URL = '/media/'
 
-MEDIA_ROOT = BASE_DIR / 'uploads'
+MEDIA_ROOT = BASE_DIR / '/uploads/'
+
+# for message framework
+# the django red alert class is called "danger", django calls it "error"
+# this changes it so it uses danger (for the bootstrap class)
+MESSAGE_TAGS = {
+    messages.ERROR: 'danger',
+}
+
+def show_toolbar(request):
+    return True
+SHOW_TOOLBAR_CALLBACK = show_toolbar
+
+LOGIN_REDIRECT_URL = '/'
+
+LOGIN_URL = '/accounts/login/'

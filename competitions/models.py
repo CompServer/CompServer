@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, ClassVar
 from django.db import models
 from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy as _
@@ -10,6 +10,8 @@ import string
 
 
 ACCESS_KEY_LENGTH = 10
+# ^ should be in settings?
+
 def get_random_access_key():
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=ACCESS_KEY_LENGTH))
 
@@ -20,6 +22,18 @@ def get_random_access_key():
     # related: tournament_set (judged)
     # related: profile
 
+class SiteConfig(models.Model):
+    name = models.CharField(max_length=255)
+    """The name of the site, to be displayed in the header and other places."""
+
+    icon = models.CharField(max_length=255, null=True, blank=True)
+    """The URL to the icon to use for this site. If not set, the default will be used."""
+
+    style_sheet = models.CharField(max_length=255, null=True, blank=True)
+    """The URL to the stylesheet to use for this site. If not set, the default will be used."""
+
+    def __str__(self) -> str:
+        return f"SiteConfig(name={self.name})"
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -47,6 +61,24 @@ class Status(models.TextChoices):
     def max_length(cls):
         lengths = [len(member.value) for member in cls]
         return max(lengths)
+    
+    @property
+    def is_viewable(self) -> bool:
+        """Whether the object should show up on the website."""
+        return self in [Status.OPEN, Status.COMPLETE, Status.CLOSED]
+
+    @property
+    def is_judgable(self) -> bool:
+        """Whether judging for this comptetation should be allowed."""
+        return self == Status.OPEN
+    
+    @property
+    def is_archived(self) -> bool:
+        return self == Status.ARCHIVED
+    
+    @property
+    def is_in_setup(self) -> bool:
+        return self == __class__.SETUP
 
 class StatusField(models.CharField):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -55,6 +87,13 @@ class StatusField(models.CharField):
         kwargs['default'] = Status.SETUP
         super().__init__(*args, **kwargs)
 
+
+class Sport(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+
+    def __str__(self) -> str:
+        return str(self.name)
+    
 
 class Organization(models.Model): # probably mostly schools but could also be community organizations
     name = models.CharField(max_length=257) # not unique because there could be schools with the same name just in different cities
@@ -71,6 +110,7 @@ class Organization(models.Model): # probably mostly schools but could also be co
 
 class Team(models.Model):
     name = models.CharField(max_length=255)
+    sport = models.ForeignKey(Sport, blank=True, null=True, on_delete=models.SET_NULL)
     organization = models.ForeignKey(Organization, blank=True, null=True, on_delete=models.CASCADE)
     coach = models.ForeignKey(User, blank=True, null=True, on_delete=models.CASCADE)  # with special permissions to change info WRT the team
     # logo = models.ImageField()
@@ -126,12 +166,13 @@ class Team(models.Model):
     #need to also order the matches by time
 
     class Meta:
-        ordering = ['organization', 'name']
+        ordering = ['sport', 'organization', 'name']
         unique_together = ['organization', 'name']
 
 
 class Competition(models.Model):
     name = models.CharField(max_length=255, blank=True)
+    sport = models.ForeignKey(Sport, blank=True, null=True, on_delete=models.SET_NULL)
     status = StatusField()
     start_date = models.DateField()
     end_date = models.DateField()
@@ -139,7 +180,7 @@ class Competition(models.Model):
     # address_line1 = models.CharField(max_length=255)
     # address_line2 = models.CharField(max_length=255)
     # address_line3 = models.CharField(max_length=255)
-    teams = models.ManyToManyField(Team) # registered
+    teams = models.ManyToManyField(Team, blank=True) # registered
     plenary_judges = models.ManyToManyField(User, blank=True)  # people entrusted to judge this competition as a whole: won't restrict them to a specific event
     access_key = models.CharField(max_length=ACCESS_KEY_LENGTH, default=get_random_access_key, blank=True, null=True)
     # For scheduling purposes, we need to be able to specify for this competition how many different (Event-specific) arenas are available and their capacity
@@ -222,9 +263,13 @@ class Competition(models.Model):
 
 class Event(models.Model):
     name = models.CharField(max_length=255, unique=True)  # sumo bots, speed race, etc.
+    sport = models.ForeignKey(Sport, blank=True, null=True, on_delete=models.SET_NULL)
     # score_units = ScoreUnitsField() # initially just assume scores are place values (1st, 2nd, 3rd, etc.)
     # high_score_advances = models.BooleanField(default=True) # with seconds, low scores will usually advance (unless it's a "how long can you last" situation)
     # related: tournament_set
+
+    class Meta:
+        ordering = ['sport', 'name']
 
     def __str__(self) -> str:
         return str(self.name)
@@ -281,12 +326,12 @@ class AbstractTournament(models.Model):
 
 class Ranking(models.Model):
     """ These will determine the auto-layout of the brackets """
-    tournament = models.ForeignKey(AbstractTournament, on_delete=models.CASCADE)
+    tournament = models.ForeignKey(AbstractTournament, on_delete=models.CASCADE, related_name="ranking_set")
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     rank = models.PositiveSmallIntegerField()
 
     def __str__(self) -> str:
-        return str(self.rank) + ") " + str(self.team.name) + " in " + str(self.tournament)
+        return f"{self.rank}) {self.team.name} in {self.tournament})"
 
     class Meta:
         ordering = ['tournament', 'rank']
@@ -363,7 +408,7 @@ class SingleEliminationTournament(AbstractTournament):
 
 
 class Match(models.Model):
-    ''' Could be a one-off preliminary match or part of a larger tournament '''
+    ''' Could be a one-off preliminary match or part of a larger tournament'''
     tournament = models.ForeignKey(AbstractTournament, models.CASCADE, blank=True, null=True)
     # Note: admin doesn't enforce the starting teams to be registered for this tournament
     starting_teams = models.ManyToManyField(Team, related_name="round1_matches", blank=True) # Only used for round1 matches, all others use the previous matches. Usually just 2 but could be more (speed race)
@@ -372,22 +417,21 @@ class Match(models.Model):
     # Note: admin doesn't restrict advancers to be competitors for this match
     advancers = models.ManyToManyField(Team, related_name="won_matches", blank=True) # usually 1 but could be more (e.g. time trials)
     time = models.DateTimeField() # that it's scheduled for
-    str_recursive_level = 0
+    str_recursive_level: ClassVar[int] = 0
 
     def __str__(self) -> str:
         self.__class__.str_recursive_level += 1
         competitors = []
         if self.starting_teams.exists():
-            competitors += [(("[" + team.name + "]") if team in self.advancers.all() else team.name) for team in self.starting_teams.all()]
+            competitors.extend((f"[{team.name}]" if team in self.advancers.all() else team.name) for team in self.starting_teams.all())
         if self.prev_matches.exists():
             for prev_match in self.prev_matches.all():
-                prior_match_advancing_teams = prev_match.advancers.all()
                 if prev_match.advancers.exists():
-                    competitors += [(("[" + team.name + "]") if team in self.advancers.all() else team.name) for team in prev_match.advancers.all()]
+                    competitors.extend((f"[{team.name}]" if team in self.advancers.all() else team.name) for team in prev_match.advancers.all())
                 else:
-                    competitors += ["Winner of (" + str(prev_match) + ")"]
+                    competitors.append(f"Winner of ({prev_match})")
         self.__class__.str_recursive_level -= 1
-        res = _(" vs ").join(competitors) # Battlebots vs Byters
+        res = str(_(" vs ")).join(competitors) # Battlebots vs Byters
         if self.__class__.str_recursive_level == 0:
             return res + _(" in ") + str(self.tournament) # Battlebots vs Byters in SumoBot tournament @ RoboMed 2023
         else: 

@@ -1,64 +1,42 @@
-{% load static %}
+{% extends "skeleton.html" %}
+{% load i18n %}
 
-<!DOCTYPE html>
-<html lang="en">
+{% block content %}
+<h1>
+    {% if tournament.is_judgable %}
+        <i class="bi-activity"></i>
+    {% elif tournament.is_complete %}
+        <i class="bi-check2-circle"></i>
+    {% elif tournament.is_closed %}
+        <i class="bi-x-circle"></i>
+    {% elif tournament.is_in_setup %}
+        <i class="bi-gear"></i>
+    {% endif %}
+    {{ tournament.competition.name }} {{ tournament.event.name }} {% trans "Tournament" %} 
+    ({{ tournament.points|floatformat:"0" }} {% trans "points" %})
+</h1>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Bracket Test</title>
-
-    <link rel="stylesheet" href="{% static 'competitions/style.css' %}">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-</head>
-
-<body>
-    {{ content|safe }}
-
-    <hr>
-
-    <div class="bracket" style="height: 400px; width: 400px;">
-        <div class="round" style="height: 400px; width: 200px;">
-            <div class="match" style="height: 200px; width: 200px;">
-                <div class="center" style="height: 50px; padding-top: 75px;">
-                    <div class="team" style="width: 200px;">
-                        Team 1
-                    </div>
-                    <div class="team" style="width: 200px;">
-                        Team 2
-                    </div>
+<!-- 
+    There are no errors here, your IDE is lying 
+    - Matt 
+-->
+<div class="bracket" style="height: {{ bracket_dict.bracketHeight }}px; width: {{ bracket_dict.bracketWidth }}px;">
+    {% for round_data in bracket_dict.round_data %}
+    <div class="round" style="height: {{ bracket_dict.roundHeight }}px; width: {{ bracket_dict.roundWidth }}px;">
+        {% for match_data in round_data.match_data %}
+        <div class="match" style="height: {{ match_data.match_height }}px; width: {{ match_data.match_width }}px;">
+            <div class="center"
+                style="height: {{ match_data.center_height }}px; padding-top: {{ match_data.top_padding }}px">
+                {% for team_data in match_data.team_data %}
+                <div class="team" style="width: {{ match_data.match_width }}px;">
+                    {{ team_data.team_name }}
                 </div>
-            </div>
-            <div class="match" style="height: 200px; width: 200px;">
-                <div class="center" style="height: 50px; padding-top: 75px;">
-                    <div class="team" style="width: 200px;">
-                        Team 3
-                    </div>
-                    <div class="team" style="width: 200px;">
-                        Team 4
-                    </div>
-                </div>
+                {% endfor %}
             </div>
         </div>
-        <div class="round" style="height: 400px; width: 200px;">
-            <div class="match" style="height: 400px; width: 200px;">
-                <div class="center" style="height: 50px; width: 200px; padding-top: 175px;">
-                    <div class="team">
-                        Team 2
-                    </div>
-                    <div class="team">
-                        Team 3
-                    </div>
-                </div>
-            </div>
-        </div>
+        {% endfor %}
     </div>
+    {% endfor %}
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
-        crossorigin="anonymous"></script>
-</body>
-
-</html>
+{% endblock %}

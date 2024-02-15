@@ -1,7 +1,8 @@
 # Django
 *.sqlite3
 media/
-static/
+#static/
+# ^ the style.css and others should be checked in to avoid merge conflicts
 
 # Python
 *.pyc
@@ -23,4 +24,6 @@ static/
 *.yml
 
 #localization
-locale/
+**/locale/
+locale/es/LC_MESSAGES/django.mo
+locale/es/LC_MESSAGES/django.po

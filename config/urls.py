@@ -10,6 +10,8 @@ urlpatterns = [
     path('hijack/', include('hijack.urls')),
     path('__debug__/', include("debug_toolbar.urls")),
     path('i18n/', include('django.conf.urls.i18n')),
+    path('accounts/', include('django.contrib.auth.urls')),
+    #path('tz_detect/', include('tz_detect.urls')),
     *static(settings.STATIC_URL, document_root=settings.STATIC_ROOT),
     *staticfiles_urlpatterns(),
 ]
