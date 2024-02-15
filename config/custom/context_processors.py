@@ -1,4 +1,6 @@
-
+"""
+All custom context processors written by John Mulligan.
+"""
 def tz(request):
     from django.utils import timezone
 
