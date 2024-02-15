@@ -1,0 +1,126 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-02-08 14:30-0600\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: .\competitions\models.py:39
+msgid "Setup"
+msgstr "Configurando"
+
+#: .\competitions\models.py:40
+msgid "Open"
+msgstr "Abierto"
+
+#: .\competitions\models.py:41
+msgid "Closed"
+msgstr "Cerrada"
+
+#: .\competitions\models.py:42
+msgid "Complete"
+msgstr "Completa"
+
+#: .\competitions\models.py:43
+msgid "Archived"
+msgstr "Archivado"
+
+#: .\competitions\models.py:79
+msgid " from "
+msgstr " de "
+
+#: .\competitions\models.py:194
+msgid " tournament @ "
+msgstr " torneo en "
+
+#: .\competitions\models.py:326
+msgid " vs "
+msgstr " vs "
+
+#: .\competitions\models.py:326
+msgid " in "
+msgstr " en "
+
+#: .\competitions\models.py:330
+msgid "Matches"
+msgstr "Partidos"
+
+#: .\competitions\templates\competitions\competition.html:8
+msgid "Competing Teams"
+msgstr "Equipos de Competencias"
+
+#: .\competitions\templates\competitions\competition.html:18
+msgid "Tournaments"
+msgstr "Torneos"
+
+#: .\competitions\templates\competitions\competition.html:23
+#: .\competitions\templates\competitions\competitions.html:12
+#: .\competitions\templates\competitions\team.html:29
+#: .\competitions\templates\competitions\team.html:51
+msgid "OPEN"
+msgstr "ABIERTO"
+
+#: .\competitions\templates\competitions\competition.html:25
+#: .\competitions\templates\competitions\competitions.html:14
+#: .\competitions\templates\competitions\team.html:31
+#: .\competitions\templates\competitions\team.html:53
+msgid "COMPLETE"
+msgstr "COMPLETA"
+
+#: .\competitions\templates\competitions\competition.html:27
+#: .\competitions\templates\competitions\competitions.html:16
+#: .\competitions\templates\competitions\team.html:33
+#: .\competitions\templates\competitions\team.html:55
+msgid "CLOSED"
+msgstr "CERRADA"
+
+#: .\competitions\templates\competitions\competition.html:29
+#: .\competitions\templates\competitions\competitions.html:18
+#: .\competitions\templates\competitions\team.html:35
+#: .\competitions\templates\competitions\team.html:57
+msgid "SETUP"
+msgstr "CONFIGURANDO"
+
+#: .\competitions\templates\competitions\competitions.html:6
+msgid "Competitions"
+msgstr "Competencias"
+
+#: .\competitions\templates\competitions\competitions.html:25
+msgid "No Competitions Yet"
+msgstr "No Competencias"
+
+#: .\competitions\templates\skeleton.html:75
+msgid "Home"
+msgstr "Inicio"
+
+#: .\competitions\templates\skeleton.html:81
+msgid "Admin"
+msgstr "Administración"
+
+#: .\competitions\templates\skeleton.html:95
+msgid "Change Language"
+msgstr "Cambiar Lengua"
+
+#~ msgid "English"
+#~ msgstr "Inglés"
+
+#~ msgid "Spanish"
+#~ msgstr "Español"
+
+#~ msgid "No Competing Teams."
+#~ msgstr "No Equipos de Competencias."
+
+#~ msgid "No Tournaments Yet"
+#~ msgstr "No Torneos"

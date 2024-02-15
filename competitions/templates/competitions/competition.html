@@ -39,7 +39,7 @@
             </div>      
         {% endfor %}
     {% endif %}
-    {% if competition.teams.all %}
+    {% if competition.teams.exists %}
         <h3>{% trans "Competing Teams" %}</h3>
         {% for team in competition.teams.all %}
             <div class="row d-flex">
