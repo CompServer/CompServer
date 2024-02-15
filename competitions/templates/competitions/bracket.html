@@ -15,6 +15,7 @@
             <div class="center"
                 style="height: {{ match_data.center_height }}px; padding-top: {{ match_data.top_padding }}px">
                 {% for team_data in match_data.team_data %}
+                <div class="connector" style="height: 12.5px; width: 25px;"></div>
                 <div class="team"
                     style="width: {{ match_data.match_width }}px; {%if team_data.won %}background-color: #fff5a8;{%endif%}">
                     {{ team_data.team_name }}
