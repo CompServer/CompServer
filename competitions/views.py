@@ -1,15 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth.views import login_required
-# <<<<<<< HEAD
-# =======
-# from django.contrib.auth.decorators import login_required
-# from django.db.models import Q, QuerySet
-# from django.http import HttpResponseForbidden, HttpResponseRedirect
-# from django.shortcuts import get_object_or_404, render
-# from django.urls import reverse
-# from .models import *
-# >>>>>>> dev-riggle
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
@@ -92,7 +83,7 @@ def home(request):
 def single_elimination_tournament(request, tournament_id):
     '''
     This view is responsible for drawing the tournament bracket, it does this by:
-    1) Recursively get all matches and put them in a 3d array
+    1) Recursively get all matches and put them in a 4d array
         a) Start at championship
         b) Get particpants and add them to the array
         c) Go to each prev match
@@ -114,13 +105,15 @@ def single_elimination_tournament(request, tournament_id):
         # get the names of the teams competing, stolen to the toString
         competitors = []
         if curr_match.starting_teams.exists():
-            competitors += [[team.name, team in curr_match.advancers.all()] for team in curr_match.starting_teams.all()]
+            for team in curr_match.starting_teams.all():
+                competitors.append({"name": team.name, "won": team in curr_match.advancers.all()}) 
         if curr_match.prev_matches.exists():
             for prev_match in curr_match.prev_matches.all():
                 if prev_match.advancers.exists():
-                    competitors += [[team.name, team in curr_match.advancers.all()]for team in prev_match.advancers.all()]
+                    for team in prev_match.advancers.all():
+                        competitors.append({"name": team.name, "won": team in curr_match.advancers.all()}) 
                 else:
-                    competitors += [["TBD", False]]
+                    competitors.append({"name": "TBD", "won": False}) 
 
         # place the team names in the right box
         # i.e. bracket_array[2][3] = top 8, 4th match from the top
@@ -179,7 +172,7 @@ def single_elimination_tournament(request, tournament_id):
             if j in bracket_array[numRounds-i-1] and bracket_array[numRounds-i-1][j] is not None:
                 num_teams = len(bracket_array[numRounds-i-1][j])
                 team_data = [
-                    {"team_name": bracket_array[numRounds-i-1][j][k][0], "won": bracket_array[numRounds-i-1][j][k][1]} 
+                    {"team_name": bracket_array[numRounds-i-1][j][k]["name"], "won": bracket_array[numRounds-i-1][j][k]["won"]} 
                     for k in range(num_teams)
                 ]
             

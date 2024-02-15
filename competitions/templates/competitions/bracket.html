@@ -4,15 +4,15 @@
 {% block content %}
 <h1>
     {% if tournament.is_judgable %}
-        <i class="bi-activity"></i>
+    <i class="bi-activity"></i>
     {% elif tournament.is_complete %}
-        <i class="bi-check2-circle"></i>
+    <i class="bi-check2-circle"></i>
     {% elif tournament.is_closed %}
-        <i class="bi-x-circle"></i>
+    <i class="bi-x-circle"></i>
     {% elif tournament.is_in_setup %}
-        <i class="bi-gear"></i>
+    <i class="bi-gear"></i>
     {% endif %}
-    {{ tournament.competition.name }} {{ tournament.event.name }} {% trans "Tournament" %} 
+    {{ tournament.competition.name }} {{ tournament.event.name }} {% trans "Tournament" %}
     ({{ tournament.points|floatformat:"0" }} {% trans "points" %})
 </h1>
 
@@ -29,11 +29,15 @@
             <div class="center"
                 style="height: {{ match_data.center_height }}px; padding-top: {{ match_data.top_padding }}px">
                 {% for team_data in match_data.team_data %}
-                <div class="connector" style="height: 12.5px; width: 25px;"></div>
+                <div class="connector-left" style="height: 12.5px; width: 24px;"></div>
+                {%if team_data.won %}
+                <div class="connector-right" style="height: 12.5px; width: 24px;"></div>
+                {%endif%}
                 <div class="team"
                     style="width: {{ match_data.match_width }}px; {%if team_data.won %}background-color: #fff5a8;{%endif%}">
                     {{ team_data.team_name }}
                 </div>
+
                 {% endfor %}
             </div>
         </div>
