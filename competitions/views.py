@@ -7,9 +7,12 @@ from django.shortcuts import render, get_object_or_404, redirect
 from .models import *
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth.views import login_required
+from django.http import HttpResponseRedirect
+from django.shortcuts import render, get_object_or_404
 from django.http import HttpRequest, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
+import random
 import zoneinfo
 
 from .models import *
@@ -113,16 +116,16 @@ def BracketView(request: HttpRequest):
     roundWidth =    +connectorWidth
     for i in range(numRounds):
         num_matches = len(bracket_array[numRounds-i-1])
-        match_height = roundHeight / num_matches
-        match_width = matchWidth
+        match_height = bracketHeight / num_matches
         match_data = []
         for j in range(num_matches):
             team_data = []
             #this is where we convert from bracket_array (made above) to bracket_dict (used in template)
-            if j in bracket_array[numRounds-i-1] and  bracket_array[numRounds-i-1][j] is not None:
+            num_teams = 0
+            if j in bracket_array[numRounds-i-1] and bracket_array[numRounds-i-1][j] is not None:
                 num_teams = len(bracket_array[numRounds-i-1][j])
                 team_data = [
-                    {"team_name": bracket_array[numRounds-i-1][j][k]}
+                    {"team_name": bracket_array[numRounds-i-1][j][k][0], "won": bracket_array[numRounds-i-1][j][k][1]} 
                     for k in range(num_teams)
                 ]
             
@@ -130,15 +133,13 @@ def BracketView(request: HttpRequest):
             center_height = team_height * num_teams
             top_padding = (match_height - center_height) / 2
 
-            if i is numRounds-1 and len(bracket_array[numRounds-i-1]) < len(bracket_array[numRounds-i-2]): 
-                top_padding = match_data[-1]
-
             match_data.append({
                 "team_data": team_data,
                 "match_height": match_height,
-                "match_width": match_width,
+                "match_width": matchWidth,
                 "center_height": center_height,
                 "top_padding": top_padding,
+                "scores":[0,0]
             })
 
         round_data.append({
@@ -153,7 +154,11 @@ def BracketView(request: HttpRequest):
         "round_data": round_data
     }
     
-    context = {"bracket_dict": bracket_dict,}
+    tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
+    context = {
+        "tournament": tournament, 
+        "bracket_dict": bracket_dict,
+    }
     return render(request, "competitions/bracket.html", context)
 
 @login_required
@@ -214,9 +219,12 @@ def judge_match(request: HttpRequest, pk: int):
     competetion = tournament.competition
     assert isinstance(competetion, Competition)
     
-    if not competetion.is_judgable or not tournament.is_judgable:
-        messages.error(request, "This match is not judgable.")
-        raise PermissionDenied("This match is not judgable.")
+    if not competetion.is_judgable:
+        messages.error(request, "This competition is not currently open for judging.")
+        raise PermissionDenied("This competition is not currently open for judging.")
+    if not tournament.is_judgable:
+        messages.error(request, "This tournament is not currently open for judging.")
+        raise PermissionDenied("This tournament is not currently open for judging.")
     # if the user is a judge for the tournament, or a plenary judge for the competition, or a superuser
     if  not (user in tournament.judges.all() \
     or user in competetion.plenary_judges.all()):# \

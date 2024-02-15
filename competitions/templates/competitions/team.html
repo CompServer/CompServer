@@ -1,22 +1,17 @@
 {% extends 'skeleton.html' %}
 {% load i18n %}
-{% block title %} RoboMed Team Page {% endblock %} 
+{% block title %}Team: {{ team.name }}{% endblock %} 
 {% block content %}
     <header>
         <h1>{% trans "Team:" %} {{ team }}</h1>
-        <!-- this adds the team name and organization name -->
-        <p>{% trans "Coached by" %} {{ team.coach }}</p>
-        <!-- needs to pull the coach's name and possibly link their profile -->
-        <!-- <p>Team logo would go here.</p> -->
-        <h1>Team: {{ team }}</h1>
         {% if team.coach.first_name %}
             {% if team.coach.last_name %}
-                <p>Coached by {{ team.coach.first_name }} {{ team.coach.last_name }}</p>
+                <p>{% trans "Coached by" %} {{ team.coach.first_name }} {{ team.coach.last_name }}</p>
             {% else %}
-                <p>Coached by @{{ team.coach.username }} </p>
+                <p>{% trans "Coached by" %} @{{ team.coach.username }} </p>
             {% endif %}
         {% else %}
-            <p>Coached by @{{ team.coach.username }}</p>
+            <p>{% trans "Coached by" %} @{{ team.coach.username }}</p>
         {% endif %}
         <p>TEAM LOGO HERE</p>
     </header>
@@ -27,16 +22,14 @@
         <p>logo...</p>
     </div>
     <div class="match-schedule">
-        <h3>{% trans "Upcoming Match Schedule" %}</h3>
+        <h3>{% trans "Upcoming Matches" %}</h3>
         {% comment %} all incomplete matches ordered by time... {% endcomment %}
-        <h3>Upcoming Matches</h3>
-        
         {% for competition in team.competition_set.all %}
             {% if competition.is_judgable and competition.check_date %}
                 {% for tournament in competition.tournament_set.all %}
                     <div class="row">
                         <h4>{{ competition.name }}, {{ tournament.name }}, {{ competition.start_date }} - {{ competition.end_date }} </h4>
-                        <h5>Your Events</h5>
+                        <h5>{% trans "Your Events" %}</h5>
                         {% for event in tournament.event_set.all %}
                             <div class="column">
                                 <p>{{ event.name }}</p>
@@ -47,7 +40,7 @@
                                         {% if match.advancers %}
                                             {{ break }}
                                         {% else %}
-                                            <p>Match {{ match.id }}: Between {{ match }} , Begins At {{ match.time }}</p>
+                                            <p>{% trans "Match" %} {{ match.id }}: {% trans "Between" %} {{ match }}, {% trans "Begins At" %} {{ match.time }}</p>
                                         {% endif %}
                                     {% endif %}
                                 {% endfor %}
@@ -57,7 +50,7 @@
                 {% endfor %}
             {% endif %}
         {% empty %}
-            <p>No upcoming matches!</p>
+            <p>{% trans "No upcoming matches!" %}</p>
         {% endfor %}
     </div> 
     <div class="competition-set">
@@ -68,19 +61,17 @@
                     <div class="row d-flex">
                         <div class = "col-12">
                             {% if competition.is_judgable %}
-                                <p><a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a> <i class="bi-activity"></i></p>
+                                <p><i class="bi-activity"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a></p>
                             {% elif competition.is_complete %}
-                                <p><a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a> <i class="bi-check2-circle"></i></p>
+                                <p><i class="bi-check2-circle"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a></p>
                             {% elif competition.is_closed %}
-                                <p><a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a> <i class="bi-x-circle"></i></p>
+                                <p><i class="bi-x-circle"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a></p>
                             {% elif competition.is_in_setup %}
-                                <p>{{ competition }} <i class="bi-gear"></i></p>
+                                <p><i class="bi-gear"></i> {{ competition }}</p>
                             {% endif %}
-                        {% endfor %}
-                    </li>
-                {% endif %}
-            {% empty %}
-                <p>No previous competitions.</p>
+                        </div>
+                    </div>
+                </li>
             {% endfor %}
         </ul>
     </div>
@@ -92,14 +83,14 @@
                     <div class="row d-flex">
                         <div class = "col-12">
                             {% if tournament.is_judgable %} 
-                                <p><a href="{% url 'competitions:single_elim_tournament' tournament.id %}">{{ tournament.event.name }}</a> <i class="bi-activity"></i></p>
+                                <p><i class="bi-activity"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
                             {% elif tournament.is_complete %} 
-                                <p><a href="{% url 'competitions:single_elim_tournament' tournament.id %}">{{ tournament.event.name }}</a> <i class="bi-check2-circle"></i></p>
+                                <p><i class="bi-check2-circle"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
                             {% elif tournament.is_closed %} 
-                                <p><a href="{% url 'competitions:single_elim_tournament' tournament.id %}">{{ tournament.event.name }}</a> <i class="bi-x-circle"></i></p>
+                                <p><i class="bi-x-circle"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
                             {% elif tournament.is_in_setup %}
-                                <p>{{ tournament.event.name }} <i class="bi-gear"></i></p>
-                            {% endif %} 
+                                <p><i class="bi-gear"></i> {{ tournament }}</p>
+                            {% endif %}  
                         </div>
                     </div>
                 </li>
