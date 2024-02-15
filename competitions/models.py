@@ -386,7 +386,18 @@ class Match(models.Model):
     # Match.obects.filter(next_matches__isnull=true).filter(tournament__competition=competition_id)   for views some id for a parameter
     # of that functon this will give only the matches that were final matches for robomed five different competetions, and I can run 
     # this in the shell.
-        
     # git last match of each tournament
     # competetion id = competition_id
+        
+        # from competitions.models import *
+
+        # each match has previous match so we go backwards to find opp match
+        # filter match that has no following matchlist of matches
+
+        # winner=Match.obects.filter(next_matches__isnull=True, tournment__id=2).first().advances.all()
+        
+    # showing results for complete means:
+            
+        # - after the competetion the rsults will be put through to the system
+        # - i need to be able to show the results of the competetion physically on the html page.
 
