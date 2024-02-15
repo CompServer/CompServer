@@ -30,6 +30,3 @@ locale/es/LC_MESSAGES/django.po
 
 # geoip DB
 *.mmdb
-
-# for now
-config/middleware
