@@ -79,6 +79,12 @@ class Team(models.Model):
     def __str__(self) -> str:
         return self.name + (_(" from ") + str(self.organization) if self.organization else "")
     
+    def competed_one_match(self):
+        for match in self.match_set:
+            if match.status == "COMPLETE":
+                return True
+        return False
+
     def won_at_least_one_match(self):
         for match in self.match_set:
             for advancer in self.match.advancers:
@@ -112,6 +118,12 @@ class Team(models.Model):
             if tourney.status == "COMPLETE":
                 return True
         return False
+
+    def has_a_match_schedule(self):
+        #here
+        return False
+    
+    #need to also order the matches by time
 
     class Meta:
         ordering = ['organization', 'name']
@@ -380,6 +392,13 @@ class Match(models.Model):
             return res + _(" in ") + str(self.tournament) # Battlebots vs Byters in SumoBot tournament @ RoboMed 2023
         else: 
             return res # if part of another match we don't want to repeat the tournament
+
+    def compare_time_and_date(self):
+        today = datetime.now().astimezone(self.time.asimezone())
+        check = self.time
+        if self.time >= today:
+            return True
+        return false
 
     class Meta:
         ordering = ['tournament']

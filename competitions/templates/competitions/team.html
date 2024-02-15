@@ -30,8 +30,11 @@
                         {% for tournament in competition.tournament_set.all %}
                             {% if tournament.status == "OPEN" %}
                                 {% for match in tournament.match_set.all %}
-                                    {% load tz %}
-                                    {% if {{ match.time.time() | localtime }} <= datetime.now().time() and match.time.date() <= datetime.now().date() %}
+                                    <!-- {% load tz %} -->
+                                    {% if match.compare_time_and_date %}
+                                        {% if match.advancers %}
+                                            {{ break }}
+                                        {% else %}
                                     <!-- {% if match.currently_running %} -->
                                         <div class="column">
                                             <p>Match {{ match.id }}: {{ match }} with competitors</p>
@@ -39,7 +42,9 @@
                                         <div class="column">
                                             <p>Begins At {{ match.time }}</p>
                                         </div>
-                                    {% endif %}    
+                                    {% endif %}  
+                                    {% endif %}
+                                    {% endif %}  
                                 {% endfor %}
                             {% endif %}
                         {% endfor %}
@@ -48,7 +53,7 @@
            {% endfor %}
         </div>
     {% endif %}
-    {% if team.tournament_set.all %}
+    {% if team.competed_in_at_least_one_tourney %}
         <div class="past-tournament-set">
         <h3>Past Tournaments</h3>
         <ul>
@@ -66,7 +71,7 @@
         </ul>
         </div>
     {% endif %}
-    {% if team.competition_set.all %}
+    {% if team.competed_in_at_least_one_comp %}
         <div class="past-competitions-set">
         <h3>Past Competitions</h3>
         <ul>
@@ -78,5 +83,52 @@
                 {% endif %}
             {% endfor %}
         </ul>
-    {% endif %}        
+    {% endif %}  
+    {% if team.completed_one_match %}
+        <h3>Match History</h3>
+        <div class="losses-set"
+        {% for normal_match in team.match_set.all %}
+            {% for won_match in team.won_matches.all %}
+                {% if normal_match != won_match %}
+
+                    {{ losses_list.add(normal_match) }}
+                {% endif %}
+            {% endfor %}
+        {% endfor%}
+    {% endif %}
+    {% if team.draw_at_least_one_match %}
+        <div class="row">
+            <h4>Draws</h4>
+            <ul>
+            {% for match in team.won_matches.all %}
+                {% if match.advancers.length > 1 %}
+                    <li>{{ match}}</li>
+                {% endif %
+            {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+    {% if team.won_at_least_one_match %}
+    <div class="row">
+        <h4>Wins</h4>
+        <ul>
+            {% for match in team.won_matches.all %}
+                {% if match.advancers.length == 1 %}
+                    <li>{{ match }}</li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    {% if team.lost_at_least_one_match %}
+        <div class="row">
+            <h4>Losses</h4>
+            <ul>
+                {% for match in team.match_set.exclude(team.won_matches.all) %}
+                    <li>{{ match }}</li>
+                {% endfor %}
+            </ul>
+        </div> 
+    {% endif %}      
+        
 {% endblock %}
