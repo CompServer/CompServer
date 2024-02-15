@@ -28,4 +28,10 @@
     text-align: left;
     background-color: lightgray;
     border: 1px black solid;
+    margin: 0px 25px 0px 25px
+}
+
+.connector {
+    border-bottom: 2px black dotted;
+    float: left;
 }
