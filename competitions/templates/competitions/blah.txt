@@ -1,2 +1,0 @@
-this is the code for wins, losses, and draws but it wasn't working so i placed it here
-orderings
