@@ -1,22 +1,14 @@
-from datetime import datetime, timezone
-import math
-import random
-
 from django.contrib import messages
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import *
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth.views import login_required
-from django.http import HttpResponseRedirect
-from django.shortcuts import render, get_object_or_404
 from django.http import HttpRequest, HttpResponseRedirect
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 import random
 import zoneinfo
-
 from .models import *
 from .forms import *
+
 
 def set_timezone_view(request: HttpRequest):
     if request.method == "POST":
@@ -29,16 +21,13 @@ def set_timezone_view(request: HttpRequest):
     timezones = sorted(zoneinfo.available_timezones())
     return render(request, "timezones.html", {"timezones": timezones})
 
-def home(request: HttpRequest):
-    #context = {'test_time': datetime.now()}
-    #print(context['test_time'])
-    return render(request, "competitions/home.html", )#context=context)
 
 def is_overflowed(list1, num):
     for item in list1:
         if item < num:
             return False
     return True
+
 
 def generate_single_elimination_matches(request: HttpRequest, tournament_id):
     #sort the list by ranking, then use a two-pointer alogrithm to make the starting matches
@@ -101,19 +90,90 @@ def generate_round_robin_matches(request: HttpRequest, tournament_id):
     #will do ordering of matches once the bracket is fully understood.
     return render(request, 'skeleton.html')
 
-# why are we using camelcase
-def BracketView(request: HttpRequest):
-    t = ""
 
-    numTeams = 8
-    numRounds = int(math.log(numTeams, 2))
+def home(request):
+    return render(request, "competitions/home.html")
 
-    roundWidth = 150
-    bracketWidth = (roundWidth+30)*numRounds
 
-    bracketHeight = 600
-    roundHeight = bracketHeight
-    roundWidth =    +connectorWidth
+def single_elimination_tournament(request: HttpRequest, tournament_id):
+    '''
+    This view is responsible for drawing the tournament bracket, it does this by:
+    1) Recursively get all matches and put them in a 3d array
+        a) Start at championship
+        b) Get particpants and add them to the array
+        c) Go to each prev match
+        d) repeat
+    2) Loop through array and convert it to dictionaries, packaging styling along side
+    3) Pass new dictionary to the templete for rendering
+
+    note: steps 1 and 2 could probably be combined
+    '''
+    # where all the matches get stored, only used in this function, not passed to template
+    bracket_array = []
+
+    # recursive
+    def read_tree_from_node(curr_match, curr_round, base_index):
+        # add space for new matches if it doesnt exist
+        if len(bracket_array) <= curr_round:
+            bracket_array.append({})
+
+        # get the names of the teams competing, stolen to the toString
+        competitors = []
+        if curr_match.starting_teams.exists():
+            competitors += [[team.name, team in curr_match.advancers.all()] for team in curr_match.starting_teams.all()]
+        if curr_match.prev_matches.exists():
+            for prev_match in curr_match.prev_matches.all():
+                if prev_match.advancers.exists():
+                    competitors += [[team.name, team in curr_match.advancers.all()]for team in prev_match.advancers.all()]
+                else:
+                    competitors += [["TBD", False]]
+
+        # place the team names in the right box
+        # i.e. bracket_array[2][3] = top 8, 4th match from the top
+        bracket_array[curr_round][base_index] = competitors 
+        
+        prevs = curr_match.prev_matches.all()
+        # checks if there are any previous matches
+        if prevs:
+            # if TRUE: recurse
+            # if FALSE: base case
+            for i, prev in enumerate(prevs):
+                read_tree_from_node(prev, curr_round+1, 2*base_index+i)
+                                                      # ^^^^^^^^^^^^^^
+                                                      # i dont know why this works, it might not 
+        else:
+            # this fixes one of preliminary matches, but also creates a weird empty round which gets adressed later
+            if len(bracket_array) <= curr_round+1:
+                bracket_array.append({})
+            bracket_array[curr_round+1][base_index] = None
+
+    #mutates bracket_array
+    read_tree_from_node(Match.objects.filter(tournament=tournament_id).filter(next_matches__isnull=True)[0], 0, 0)
+
+    #this gets weird of the weird empty round caused by the previous section
+    bracket_array.pop()
+
+    #the number of rounds in the tournament: top 8, semi-finals, championship, etc
+    numRounds = len(bracket_array)
+
+    #find the most number of teams in a single round, used for setting the height
+    mostTeamsInRound = 0
+    for round in bracket_array:
+        teams_count = sum((len(teams) if teams is not None else 0) for teams in round.values())
+        if teams_count > mostTeamsInRound:
+            mostTeamsInRound = teams_count
+
+    # _data means it contains the actual stuff to be displayed
+    # everything else is just css styling or not passed
+    # most variables are exactly what they sound like
+    # you can also look at bracket.html to see how its used
+    round_data = []
+    matchWidth = 200
+    connectorWidth = 50
+    bracketWidth = (matchWidth+connectorWidth)*numRounds
+    bracketHeight = mostTeamsInRound*50
+    roundWidth = matchWidth+connectorWidth
+
     for i in range(numRounds):
         num_matches = len(bracket_array[numRounds-i-1])
         match_height = bracketHeight / num_matches
@@ -161,23 +221,17 @@ def BracketView(request: HttpRequest):
     }
     return render(request, "competitions/bracket.html", context)
 
-@login_required
-def single_elim_tournament(request: HttpRequest, tournament_id):
-    tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
-    context = {"tournament": tournament}
-    return render(request, "competitions/single_elim_tournament.html", context)
 
-@login_required
 def tournaments(request: HttpRequest):
     return render(request, "competitions/tournaments.html")
 
-@login_required
+
 def competitions(request: HttpRequest):
     competition_list = Competition.objects.all()
     context = {"competition_list": competition_list}
     return render(request, "competitions/competitions.html", context)
 
-@login_required
+
 def competition(request: HttpRequest, competition_id):
     competition = get_object_or_404(Competition, pk=competition_id)
     if competition.is_archived:
@@ -185,7 +239,7 @@ def competition(request: HttpRequest, competition_id):
     context = {"competition": competition, "Status": Status}
     return render(request, "competitions/competition.html", context)
 
-@login_required
+
 def team(request: HttpRequest, team_id):
     team = get_object_or_404(Team, pk=team_id)
     context = {'team': team}
@@ -203,7 +257,7 @@ def not_implemented(request: HttpRequest, *args, **kwargs):
     #raise NotImplementedError()
     return render(request, 'skeleton.html')
 
-@login_required
+
 def match(request: HttpRequest, match_id):
     match = get_object_or_404(Match, pk=match_id)
     context = {'match': match, "user": request.user}
