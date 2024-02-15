@@ -19,11 +19,12 @@
     {% endif %}
     <link rel="stylesheet" href="{% static 'style.css' %}">
     <link rel='icon' href="{% static 'favicon.png' %}">
-    {% block head %}{% endblock %}
-    {% comment %} ^ a block for inserting custom stylesheets/other stuff into the head if nessesary {% endcomment %}
     <title>
         {% block title %}Robocomp{% endblock %}
     </title>
+    {% block head %}{% endblock %}
+    {% comment %} ^ a block for inserting custom stylesheets/other stuff into the head if nessesary {% endcomment %}
+    
 </head>
 
 <body>
