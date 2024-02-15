@@ -9,8 +9,6 @@ from django.db.models import Q, QuerySet
 from django.http import HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
-import math
-
 from .models import *
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
@@ -48,13 +46,13 @@ def bracket(request, tournament_id):
         # get the names of the teams competing, stolen to the toString
         competitors = []
         if curr_match.starting_teams.exists():
-            competitors += [(("[" + team.name + "]") if team in curr_match.advancers.all() else team.name) for team in curr_match.starting_teams.all()]
+            competitors += [[team.name, team in curr_match.advancers.all()] for team in curr_match.starting_teams.all()]
         if curr_match.prev_matches.exists():
             for prev_match in curr_match.prev_matches.all():
                 if prev_match.advancers.exists():
-                    competitors += [(("[" + team.name + "]") if team in curr_match.advancers.all() else team.name) for team in prev_match.advancers.all()]
+                    competitors += [[team.name, team in curr_match.advancers.all()]for team in prev_match.advancers.all()]
                 else:
-                    competitors += ["TBD"]
+                    competitors += [["TBD", False]]
 
 
         # place the team names in the right box
@@ -115,7 +113,7 @@ def bracket(request, tournament_id):
             if j in bracket_array[numRounds-i-1] and bracket_array[numRounds-i-1][j] is not None:
                 num_teams = len(bracket_array[numRounds-i-1][j])
                 team_data = [
-                    {"team_name": bracket_array[numRounds-i-1][j][k]}
+                    {"team_name": bracket_array[numRounds-i-1][j][k][0], "won": bracket_array[numRounds-i-1][j][k][1]} 
                     for k in range(num_teams)
                 ]
             

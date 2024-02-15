@@ -7,6 +7,7 @@
 -->
 
 <div class="bracket" style="height: {{ bracket_dict.bracketHeight }}px; width: {{ bracket_dict.bracketWidth }}px;">
+
     {% for round_data in bracket_dict.round_data %}
     <div class="round" style="height: {{ bracket_dict.roundHeight }}px; width: {{ bracket_dict.roundWidth }}px;">
         {% for match_data in round_data.match_data %}
@@ -14,7 +15,8 @@
             <div class="center"
                 style="height: {{ match_data.center_height }}px; padding-top: {{ match_data.top_padding }}px">
                 {% for team_data in match_data.team_data %}
-                <div class="team" style="width: {{ match_data.match_width }}px;">
+                <div class="team"
+                    style="width: {{ match_data.match_width }}px; {%if team_data.won %}background-color: #fff5a8;{%endif%}">
                     {{ team_data.team_name }}
                 </div>
                 {% endfor %}
@@ -24,5 +26,7 @@
     </div>
     {% endfor %}
 </div>
+
+<div class="connector" style="padding-top: {{ match_data.top_padding }}px"></div>
 
 {% endblock %}
