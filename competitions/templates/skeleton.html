@@ -1,15 +1,20 @@
 {% load static %}
 {% load hijack %}
 {% load i18n %}
-
-{% comment %} activity check2-circle gear x-circle {% endcomment %}
+{% load tz %}
+{% get_current_language as LANGUAGE_CODE %}
+{% get_language_info for LANGUAGE_CODE as lang %}
+{% comment %} {% load tz_detect %} {% comment%} pip install django-tz-detect  TTHIS CAN BE COMMENTED OUT IF YOU DONT WANT TO INSTALL{% endcomment %}
+{% comment %} {% load i18n static i18n_switcher tz_detect %} {% endcomment %}
+{% comment %} activity check2-circle gear x-circle{% endcomment %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">    {% if debug %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    {% if debug %}
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.css" rel="stylesheet" integrity="sha384-8dbpXuP2nso7zrhApj0aSxeb0ZitbTeO0hTKxRcXavYE0vv4nhBEqvv+o+0X94A8" crossorigin="anonymous">
     {% else %}
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
@@ -18,7 +23,7 @@
     <link rel="stylesheet" href="{% static 'style.css' %}">
     <link rel="stylesheet" href="{% static 'competitions/style.css' %}">
     <title>
-        {% block title %}Competitions{% endblock %}
+        {% block title %}Title pending{% endblock %}
     </title>
 </head>
 
@@ -78,13 +83,14 @@
             </ul>
         </div>
         <div class="collapse navbar-collapse justify-content-end" id="lang">
+            {% get_available_languages as LANGUAGES %} 
             <form class="form-inline my-2 my-md-0" action="{% url 'set_language' %}" method="post">
                 {% csrf_token %}
                 <select name="language" onchange="this.form.submit();">
-                    <option value=""></option>
-                    <option value="en">English</option>
-                    <option value="es">Español</option>
-                    <option value="fr">Français</option>
+                    {% for language in LANGUAGES %}
+                        {% get_language_info for language.0 as lang_ %}
+                        <option value="{{ language.0 }}" {% if language.0 == LANGUAGE_CODE %}selected{% endif %}>{{ lang_.name_local.title }}</option>
+                    {% endfor %}
                 </select>
             </form>
         </div>
@@ -125,15 +131,29 @@
         {% endblock %}
     </div>
 
+    {% comment %} 
+        This adds a JS cookie that keeps track of the user's timezome
+        so the user doesn't manually have to set it
+        not needed when using the lib
+    {% endcomment %}
+    <script>
+        let tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (!tz) {
+            tz = "UTC"
+        }
+        document.cookie = "mytz=" + tz + ";path=/";
+    </script>
+
     {% if debug %}
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.js"
-        integrity="sha384-6yr0NH5/NO/eJn8MXILS94sAfqCcf2wpWTTxRwskNor6dIjwbYjw1/PZpr654rQ5"
-        crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.js"
+            integrity="sha384-6yr0NH5/NO/eJn8MXILS94sAfqCcf2wpWTTxRwskNor6dIjwbYjw1/PZpr654rQ5"
+            crossorigin="anonymous"></script>
     {% else %}
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
-        crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+            crossorigin="anonymous"></script>
     {% endif %}
+    {% comment %} {% tz_detect %} {% endcomment %}
 </body>
 
 </html>

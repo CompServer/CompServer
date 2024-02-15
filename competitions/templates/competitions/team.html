@@ -23,7 +23,7 @@
     </div>
     <div class="match-schedule">
         <h3>{% trans "Upcoming Matches" %}</h3>
-        
+        {% comment %} all incomplete matches ordered by time... {% endcomment %}
         {% for competition in team.competition_set.all %}
             {% if competition.is_judgable and competition.check_date %}
                 {% for tournament in competition.tournament_set.all %}
@@ -100,7 +100,7 @@
     <div class="match-records">
         <h3>{% trans "Match History" %}</h3>
         <div class="row">
-            <h4>Wins</h4>
+            <h4>{% trans "Wins" %}</h4>
             <ul>
                 {% for match in team.won_matches.all %}  
                     {% if match.advancers.length == 1 %}
@@ -116,11 +116,10 @@
             </ul>
         </div>
         <div class="row">
-            <h4>Losses</h4>
-            
+            <h4>{% trans "Losses" %}</h4>
         </div>
         <div class="row">
-            <h4>Draws</h4>
+            <h4>{% trans "Draws" %}</h4>
         </div>
     </div>
 {% endblock %}

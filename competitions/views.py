@@ -1,20 +1,11 @@
-from django import forms
 from django.contrib import messages
 from django.contrib.auth import PermissionDenied
-from django.contrib.auth.mixins import AccessMixin, LoginRequiredMixin, UserPassesTestMixin
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
-from django.db.models import Q, QuerySet
+from django.contrib.auth.views import login_required
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
-from django.views.generic.edit import UpdateView
-import math, random
-from .models import *
-from django.http import HttpResponseRedirect
-from django.shortcuts import render
-from django.views.generic.edit import UpdateView
-from django.contrib.auth.mixins import AccessMixin, UserPassesTestMixin
+import random
+
 from .models import *
 from .forms import *
 
@@ -122,15 +113,12 @@ def single_elimination_tournament(request, tournament_id):
                 else:
                     competitors += ["TBD"]
 
-
         # place the team names in the right box
         # i.e. bracket_array[2][3] = top 8, 4th match from the top
         bracket_array[curr_round][base_index] = competitors 
         
         prevs = curr_match.prev_matches.all()
         # checks if there are any previous matches
-
-
         if prevs:
             # if TRUE: recurse
             # if FALSE: base case
@@ -170,6 +158,7 @@ def single_elimination_tournament(request, tournament_id):
     bracketWidth = (matchWidth+connectorWidth)*numRounds
     bracketHeight = mostTeamsInRound*50
     roundWidth = matchWidth+connectorWidth
+
     for i in range(numRounds):
         num_matches = len(bracket_array[numRounds-i-1])
         match_height = bracketHeight / num_matches
@@ -218,6 +207,12 @@ def single_elimination_tournament(request, tournament_id):
     return render(request, "competitions/bracket.html", context)
 
 
+def single_elim_tournament(request, tournament_id):
+    tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
+    context = {"tournament": tournament, "user": request.user}
+    return render(request, "competitions/single_elim_tournament.html", context)
+
+
 def tournaments(request):
     context = {"user": request.user}
     return render(request, "competitions/tournaments.html", context)
@@ -236,15 +231,18 @@ def competition(request, competition_id):
     context = {"competition": competition, "user": request.user, "Status": Status}
     return render(request, "competitions/competition.html", context)
 
+
 def team(request, team_id: int):
     context = {
         'team': get_object_or_404(Team, id=team_id)
     }
     return render(request, "competitions/team.html", context)
 
+
 def credits(request):
     context = {"user": request.user}
     return render(request, "competitions/credits.html", context)
+
 
 def not_implemented(request, *args, **kwargs):
     """
@@ -257,8 +255,8 @@ def not_implemented(request, *args, **kwargs):
 
 
 @login_required
-def judge_match(request, match_id: int):
-    instance = get_object_or_404(Match, pk=match_id)
+def judge_match(request, pk: int):
+    instance = get_object_or_404(Match, pk=pk)
     user = request.user
 
     tournament = instance.tournament
@@ -268,7 +266,7 @@ def judge_match(request, match_id: int):
     
     if not competetion.is_judgable or not tournament.is_judgable:
         messages.error(request, "This match is not judgable.")
-        return HttpResponseRedirect(reverse('competitions:competition', args=[competetion.id]))
+        raise PermissionDenied("This match is not judgable.")
     # if the user is a judge for the tournament, or a plenary judge for the competition, or a superuser
     if  not (user in tournament.judges.all() \
     or user in competetion.plenary_judges.all()):# \
@@ -276,13 +274,6 @@ def judge_match(request, match_id: int):
         messages.error(request, "You are not authorized to judge this match.")
         raise PermissionDenied("You are not authorized to judge this match.")
         #return HttpResponseRedirect(reverse('competitions:competition', args=[competetion.id]))
-
-    if request.method == 'POST':
-        form = JudgeForm(request.POST, instance=instance, possible_advancers=None)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Match judged successfully.")
-
     winner_choices = []
     if instance.prev_matches.exists():
         winner_choice_ids = []
@@ -291,5 +282,28 @@ def judge_match(request, match_id: int):
         winner_choices = Team.objects.filter(id__in=winner_choice_ids)
     elif instance.starting_teams.exists():
         winner_choices = instance.starting_teams.all()
+    
+    if request.method == 'POST':
+        form = JudgeForm(request.POST, instance=instance, possible_advancers=winner_choices)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Match judged successfully.")
+        else:
+            messages.error(request, "Invalid form submission.")
+            #raise PermissionDenied("Invalid form submission.")
+            # ^ uncoment this line when running the test, for invalid form submission this will raise an error
+
     form = JudgeForm(instance=instance, possible_advancers=winner_choices)
     return render(request, 'competitions/match_judge.html', {'form': form})
+
+
+def set_timezone_view(request):
+    """
+    View to set the timezone for the user.
+    """
+    if request.method == 'POST':
+        request.session['django_timezone'] = request.POST['timezone']
+        messages.success(request, f"Timezone set successfully to {request.POST['timezone']}.")
+        return HttpResponseRedirect('/')
+    else:
+        return render(request, 'timezones.html', {'timezones': pytz.common_timezones, 'TIME_ZONE': request.session.get('django_timezone',None)})

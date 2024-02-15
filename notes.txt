@@ -185,3 +185,27 @@ Translation Notes
 
 To anyone reading this, if you want to include a link to the navbar shown only on your specific
 html page, you can use the block links to do so.
+
+
+
+
+JM + HF
+TIMEZONE STUFF
+In a template we can present TZ aware times like this 
+```
+{% load tz %}
+
+{% localtime on %}
+    {{ value }}
+{% endlocaltime %}
+
+{% localtime off %}
+    {{ value }}
+{% endlocaltime %}
+```
+where value is a datetime object
+
+
+Turns out the ^^^ doesn't work as easy as you might think. Found a different post where there is a lib that handles this for you.
+It has context processors, and converts any datetime objects it sees to the user's timezone.
+pip install django-tz-detect
