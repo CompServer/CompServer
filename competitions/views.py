@@ -264,9 +264,12 @@ def judge_match(request, pk: int):
     competetion = tournament.competition
     assert isinstance(competetion, Competition)
     
-    if not competetion.is_judgable or not tournament.is_judgable:
-        messages.error(request, "This match is not judgable.")
-        raise PermissionDenied("This match is not judgable.")
+    if not competetion.is_judgable:
+        messages.error(request, "This competition is not currently open for judging.")
+        raise PermissionDenied("This competition is not currently open for judging.")
+    if not tournament.is_judgable:
+        messages.error(request, "This tournament is not currently open for judging.")
+        raise PermissionDenied("This tournament is not currently open for judging.")
     # if the user is a judge for the tournament, or a plenary judge for the competition, or a superuser
     if  not (user in tournament.judges.all() \
     or user in competetion.plenary_judges.all()):# \
