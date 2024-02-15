@@ -4,8 +4,12 @@ from .models import *
 class MatchAdmin(admin.ModelAdmin):
     list_filter = ["tournament"]
 
+class TeamAdmin(admin.ModelAdmin):
+    list_filter = ["sport"]
+
+admin.site.register(Sport)
 admin.site.register(Organization)
-admin.site.register(Team)
+admin.site.register(Team, TeamAdmin)
 admin.site.register(Competition)
 admin.site.register(Event)
 admin.site.register(Ranking)
