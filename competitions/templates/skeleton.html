@@ -3,12 +3,8 @@
 {% load i18n %}
 {% load tz %}
 {% get_current_language as LANGUAGE_CODE %}
-
 {% get_language_info for LANGUAGE_CODE as lang %}
-{% comment %} {% load tz_detect %} {% comment%} pip install django-tz-detect  TTHIS CAN BE COMMENTED OUT IF YOU DONT WANT TO INSTALL{% endcomment %}
-{% comment %} {% load i18n static i18n_switcher tz_detect %} {% endcomment %}
 
-{% comment %} activity check2-circle gear x-circle{% endcomment %}
 <!DOCTYPE html>
 <html lang="{{ lang }}">
 
@@ -23,14 +19,14 @@
     {% endif %}
     <link rel="stylesheet" href="{% static 'style.css' %}">
     <link rel='icon' href="{% static 'favicon.png' %}">
+    {% block head %}{% endblock %}
+    {% comment %} ^ a block for inserting custom stylesheets/other stuff into the head if nessesary {% endcomment %}
     <title>
-        {% block title %}Title pending{% endblock %}
+        {% block title %}Robocomp{% endblock %}
     </title>
 </head>
 
 <body>
-    {% comment %}Bootstrap wrapper around this stuff (navbar, etc) {% endcomment %}
-
     {% comment %} We need this so HTMX will work (when its implemented) with the debug toolbar {% endcomment %}
     {% comment %} https://django-debug-toolbar.readthedocs.io/en/latest/installation.html#htmx {% endcomment %}
     {% comment %}
@@ -49,14 +45,13 @@
     {% endcomment %}
 
     {% comment %} make sure to install django hijack before using this {% endcomment %}
-    {% comment %} https://pypi.org/project/django-hijack/ {% endcomment %}
     {% if request.user|can_hijack:another_user %}
-    <form action="{% url 'hijack:acquire' %}" method="POST">
-        {% csrf_token %}
-        <input type="hidden" name="user_pk" value="{{ another_user.pk }}">
-        <button type="submit">hijack {{ another_user }}</button>
-        <input type="hidden" name="next" value="{{ request.path }}">
-    </form>
+        <form action="{% url 'hijack:acquire' %}" method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="user_pk" value="{{ another_user.pk }}">
+            <button type="submit">hijack {{ another_user }}</button>
+            <input type="hidden" name="next" value="{{ request.path }}">
+        </form>
     {% endif %}
 
     <nav class="navbar navbar-expand-md navbar-dark bg-dark d-flex" id="Navbar">
