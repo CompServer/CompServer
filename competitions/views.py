@@ -1,15 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth.views import login_required
-# <<<<<<< HEAD
-# =======
-# from django.contrib.auth.decorators import login_required
-# from django.db.models import Q, QuerySet
-# from django.http import HttpResponseForbidden, HttpResponseRedirect
-# from django.shortcuts import get_object_or_404, render
-# from django.urls import reverse
-# from .models import *
-# >>>>>>> dev-riggle
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
