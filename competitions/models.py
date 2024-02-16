@@ -7,6 +7,7 @@ from django.dispatch import receiver
 from datetime import datetime
 import random
 import string
+from functools import lru_cache
 
 
 ACCESS_KEY_LENGTH = 10
@@ -374,7 +375,11 @@ class Match(models.Model):
     time = models.DateTimeField() # that it's scheduled for
     str_recursive_level: ClassVar[int] = 0
 
-    def __str__(self) -> str:
+    @lru_cache(maxsize=128)
+    def _generate_str_recursive(self, *args, **kwargs) -> str:
+        """Recursive algorithm for generating the string representation of this match.
+        This is called whenever casted, and the result is saved to a variable to avoid recalculating it.
+        It can be forced to recalculate by setting the force parameter to True, or passing in other kwargs"""
         self.__class__.str_recursive_level += 1
         competitors = []
         if self.starting_teams.exists():
@@ -388,10 +393,18 @@ class Match(models.Model):
         self.__class__.str_recursive_level -= 1
         res = str(_(" vs ")).join(competitors) # Battlebots vs Byters
         if self.__class__.str_recursive_level == 0:
-            return res + _(" in ") + str(self.tournament) # Battlebots vs Byters in SumoBot tournament @ RoboMed 2023
+            __str =  res + _(" in ") + str(self.tournament) # Battlebots vs Byters in SumoBot tournament @ RoboMed 2023
         else: 
-            return res # if part of another match we don't want to repeat the tournament
+            __str =  res # if part of another match we don't want to repeat the tournament
+        return __str
+
+    def __str__(self) -> str:
+        return self._generate_str_recursive()
 
     class Meta:
         ordering = ['tournament']
         verbose_name_plural = _('Matches')
+
+@receiver(post_save, sender=Match)
+def update_str_match(sender, instance, **kwargs):
+    instance._generate_str_recursive(force=True)
