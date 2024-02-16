@@ -103,17 +103,19 @@ def single_elimination_tournament(request, tournament_id):
             bracket_array.append({})
 
         # get the names of the teams competing, stolen to the toString
+        #    
+        #TODO: theres definitely a prettier way to do this 
         competitors = []
         if curr_match.starting_teams.exists():
             for team in curr_match.starting_teams.all():
-                competitors.append({"name": team.name, "won": team in curr_match.advancers.all()}) 
+                competitors.append({"name": team.name, "won": team in curr_match.advancers.all(), "prev":False}) 
         if curr_match.prev_matches.exists():
             for prev_match in curr_match.prev_matches.all():
                 if prev_match.advancers.exists():
                     for team in prev_match.advancers.all():
-                        competitors.append({"name": team.name, "won": team in curr_match.advancers.all()}) 
+                        competitors.append({"name": team.name, "won": team in curr_match.advancers.all(), "prev": True}) 
                 else:
-                    competitors.append({"name": "TBD", "won": False}) 
+                    competitors.append({"name": "TBD", "won": False, "prev": False}) 
 
         # place the team names in the right box
         # i.e. bracket_array[2][3] = top 8, 4th match from the top
@@ -172,8 +174,7 @@ def single_elimination_tournament(request, tournament_id):
             if j in bracket_array[numRounds-i-1] and bracket_array[numRounds-i-1][j] is not None:
                 num_teams = len(bracket_array[numRounds-i-1][j])
                 team_data = [
-                    {"team_name": bracket_array[numRounds-i-1][j][k]["name"], "won": bracket_array[numRounds-i-1][j][k]["won"]} 
-                    for k in range(num_teams)
+                    bracket_array[numRounds-i-1][j][k] for k in range(num_teams)
                 ]
             
             team_height = 25
