@@ -407,4 +407,4 @@ class Match(models.Model):
 
 @receiver(post_save, sender=Match)
 def update_str_match(sender, instance, **kwargs):
-    instance._generate_str_recursive(force=True)
+    instance._generate_str_recursive(force=True, **kwargs) # because kwargs are different, cache will not be used and we force it to recalculate
