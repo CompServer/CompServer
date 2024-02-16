@@ -1,6 +1,6 @@
 {% extends 'skeleton.html' %}
 {% load i18n %}
-{% block title %} RoboMed Team Page {% endblock %} 
+{% block title %}Team: {{ team.name }}{% endblock %} 
 {% block content %}
     <header>
         <h1>{% trans "Team:" %} {{ team }}</h1>
@@ -23,7 +23,7 @@
     </div>
     <div class="match-schedule">
         <h3>{% trans "Upcoming Matches" %}</h3>
-        
+        {% comment %} all incomplete matches ordered by time... {% endcomment %}
         {% for competition in team.competition_set.all %}
             {% if competition.is_judgable and competition.check_date %}
                 {% for tournament in competition.tournament_set.all %}
@@ -83,11 +83,11 @@
                     <div class="row d-flex">
                         <div class = "col-12">
                             {% if tournament.is_judgable %} 
-                                <p><i class="bi-activity"></i> <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a></p>
+                                <p><i class="bi-activity"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
                             {% elif tournament.is_complete %} 
-                                <p><i class="bi-check2-circle"></i> <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a></p>
+                                <p><i class="bi-check2-circle"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
                             {% elif tournament.is_closed %} 
-                                <p><i class="bi-x-circle"></i> <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a></p>
+                                <p><i class="bi-x-circle"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
                             {% elif tournament.is_in_setup %}
                                 <p><i class="bi-gear"></i> {{ tournament }}</p>
                             {% endif %}  
@@ -100,7 +100,7 @@
     <div class="match-records">
         <h3>{% trans "Match History" %}</h3>
         <div class="row">
-            <h4>Wins</h4>
+            <h4>{% trans "Wins" %}</h4>
             <ul>
                 {% for match in team.won_matches.all %}  
                     {% if match.advancers.length == 1 %}
@@ -116,11 +116,10 @@
             </ul>
         </div>
         <div class="row">
-            <h4>Losses</h4>
-            
+            <h4>{% trans "Losses" %}</h4>
         </div>
         <div class="row">
-            <h4>Draws</h4>
+            <h4>{% trans "Draws" %}</h4>
         </div>
     </div>
 {% endblock %}

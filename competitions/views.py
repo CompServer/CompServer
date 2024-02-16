@@ -1,22 +1,25 @@
-from django import forms
 from django.contrib import messages
 from django.contrib.auth import PermissionDenied
-from django.contrib.auth.mixins import AccessMixin, LoginRequiredMixin, UserPassesTestMixin
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
-from django.db.models import Q, QuerySet
-from django.http import HttpResponseRedirect
-from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.views import login_required
+from django.http import HttpRequest, HttpResponseRedirect
+from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
-from django.views.generic.edit import UpdateView
-import math, random
-from .models import *
-from django.http import HttpResponseRedirect
-from django.shortcuts import render
-from django.views.generic.edit import UpdateView
-from django.contrib.auth.mixins import AccessMixin, UserPassesTestMixin
+import random
+import zoneinfo
 from .models import *
 from .forms import *
+
+
+def set_timezone_view(request: HttpRequest):
+    if request.method == "POST":
+        if request.POST["timezone"]:
+            request.session["timezone"] = request.POST["timezone"]
+            messages.success(request, f"Timezone set successfully to {request.POST['timezone']}.")
+            return redirect("/")
+        else:   
+            messages.error(request, "Invalid timezone.")
+    timezones = sorted(zoneinfo.available_timezones())
+    return render(request, "timezones.html", {"timezones": timezones})
 
 
 def is_overflowed(list1, num):
@@ -25,28 +28,46 @@ def is_overflowed(list1, num):
             return False
     return True
 
-def generate_single_elimination_matches(request, tournament_id):
-    tournament = get_object_or_404(AbstractTournament, pk=tournament_id)
-    teams = []
-    num_participated = []
-    for team in tournament.teams.all():
-        teams.append(team)
-        num_participated.append(0)
-    if len(teams) % 2 == 1:
-        num_participated[0] = 1
-    for i in range(len(teams)):
-        if num_participated[i] == 0 and not is_overflowed(num_participated, 1):
-            j = random.randint(0, len(teams)-1)
-            while(num_participated[j] == 1):
-                j = random.randint(0, len(teams)-1)
-            match = Match.objects.create(tournament=tournament)
-            match.starting_teams.add(teams[i], teams[j])
-            match.save()
-            num_participated[i] += 1
-            num_participated[j] += 1
-    #cannot sort matches by skill level because skill level cannot be determined with our current models
 
-def generate_round_robin_matches(request, tournament_id):
+def generate_single_elimination_matches(request: HttpRequest, tournament_id):
+    #sort the list by ranking, then use a two-pointer alogrithm to make the starting matches
+    #figure out how to do the next matches later.
+    tournament = get_object_or_404(AbstractTournament, pk=tournament_id)
+    teams = {}
+    max = 0
+    for rank in tournament.ranking_set.all:
+        teams[rank.rank] = rank.team
+        if rank.rank > max:
+            max = rank.rank
+    i = 0
+    j = 0
+    if max % 2 == 1:
+        i = 1
+    while i < j:
+        match = Match.objects.create(tournament=tournament)
+        match.starting_teams.add(teams[i], teams[j])
+        match.save()
+        i += 1
+        j -= 1
+    # teams = []
+    # num_participated = []
+    # for team in tournament.teams.all():
+    #     teams.append(team)
+    #     num_participated.append(0)
+    # if len(teams) % 2 == 1:
+    #     num_participated[0] = 1
+    # for i in range(len(teams)):
+    #     if num_participated[i] == 0 and not is_overflowed(num_participated, 1):
+    #         j = random.randint(0, len(teams)-1)
+    #         while(num_participated[j] == 1):
+    #             j = random.randint(0, len(teams)-1)
+    #         match = Match.objects.create(tournament=tournament)
+    #         match.starting_teams.add(teams[i], teams[j])
+    #         match.save()
+    #         num_participated[i] += 1
+    #         num_participated[j] += 1
+
+def generate_round_robin_matches(request: HttpRequest, tournament_id):
     some_num_matches = 4
     tournament = get_object_or_404(AbstractTournament, pk=tournament_id)
     teams = []
@@ -69,10 +90,12 @@ def generate_round_robin_matches(request, tournament_id):
     #will do ordering of matches once the bracket is fully understood.
     return render(request, 'skeleton.html')
 
+
 def home(request):
     return render(request, "competitions/home.html")
 
-def bracket(request, tournament_id):
+
+def single_elimination_tournament(request: HttpRequest, tournament_id):
     '''
     This view is responsible for drawing the tournament bracket, it does this by:
     1) Recursively get all matches and put them in a 3d array
@@ -97,14 +120,13 @@ def bracket(request, tournament_id):
         # get the names of the teams competing, stolen to the toString
         competitors = []
         if curr_match.starting_teams.exists():
-            competitors += [(("[" + team.name + "]") if team in curr_match.advancers.all() else team.name) for team in curr_match.starting_teams.all()]
+            competitors += [[team.name, team in curr_match.advancers.all()] for team in curr_match.starting_teams.all()]
         if curr_match.prev_matches.exists():
             for prev_match in curr_match.prev_matches.all():
                 if prev_match.advancers.exists():
-                    competitors += [(("[" + team.name + "]") if team in curr_match.advancers.all() else team.name) for team in prev_match.advancers.all()]
+                    competitors += [[team.name, team in curr_match.advancers.all()]for team in prev_match.advancers.all()]
                 else:
-                    competitors += ["TBD"]
-
+                    competitors += [["TBD", False]]
 
         # place the team names in the right box
         # i.e. bracket_array[2][3] = top 8, 4th match from the top
@@ -112,8 +134,6 @@ def bracket(request, tournament_id):
         
         prevs = curr_match.prev_matches.all()
         # checks if there are any previous matches
-
-
         if prevs:
             # if TRUE: recurse
             # if FALSE: base case
@@ -153,6 +173,7 @@ def bracket(request, tournament_id):
     bracketWidth = (matchWidth+connectorWidth)*numRounds
     bracketHeight = mostTeamsInRound*50
     roundWidth = matchWidth+connectorWidth
+
     for i in range(numRounds):
         num_matches = len(bracket_array[numRounds-i-1])
         match_height = bracketHeight / num_matches
@@ -164,7 +185,7 @@ def bracket(request, tournament_id):
             if j in bracket_array[numRounds-i-1] and bracket_array[numRounds-i-1][j] is not None:
                 num_teams = len(bracket_array[numRounds-i-1][j])
                 team_data = [
-                    {"team_name": bracket_array[numRounds-i-1][j][k]}
+                    {"team_name": bracket_array[numRounds-i-1][j][k][0], "won": bracket_array[numRounds-i-1][j][k][1]} 
                     for k in range(num_teams)
                 ]
             
@@ -193,41 +214,41 @@ def bracket(request, tournament_id):
         "round_data": round_data
     }
     
-    context = {"bracket_dict": bracket_dict,}
+    tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
+    context = {
+        "tournament": tournament, 
+        "bracket_dict": bracket_dict,
+    }
     return render(request, "competitions/bracket.html", context)
 
 
-def tournament(request, tournament_id):
-    context = {"user": request.user}
-    return render(request, "competitions/tournament.html", context)
+def tournaments(request: HttpRequest):
+    return render(request, "competitions/tournaments.html")
 
-def tournaments(request):
-    context = {"user": request.user}
-    return render(request, "competitions/tournaments.html", context)
 
-def competitions(request):
+def competitions(request: HttpRequest):
     competition_list = Competition.objects.all()
-    context = {"competition_list": competition_list, "user": request.user}
+    context = {"competition_list": competition_list}
     return render(request, "competitions/competitions.html", context)
 
-def competition(request, competition_id):
+
+def competition(request: HttpRequest, competition_id):
     competition = get_object_or_404(Competition, pk=competition_id)
     if competition.is_archived:
         return HttpResponseRedirect(reverse("competitions:competitions"))
-    context = {"competition": competition, "user": request.user, "Status": Status}
+    context = {"competition": competition, "Status": Status}
     return render(request, "competitions/competition.html", context)
 
-def team(request, team_id: int):
-    context = {
-        'team': get_object_or_404(Team, id=team_id)
-    }
+
+def team(request: HttpRequest, team_id):
+    team = get_object_or_404(Team, pk=team_id)
+    context = {'team': team}
     return render(request, "competitions/team.html", context)
 
-def credits(request):
-    context = {"user": request.user}
-    return render(request, "competitions/credits.html", context)
+def credits(request: HttpRequest):
+    return render(request, "competitions/credits.html")
 
-def not_implemented(request, *args, **kwargs):
+def not_implemented(request: HttpRequest, *args, **kwargs):
     """
     Base view for not implemented features. You can  use this view to show a message to the user that the feature is not yet implemented,
     or if you want to add a view for a URL to a page that doesn't exist yet.
@@ -237,9 +258,14 @@ def not_implemented(request, *args, **kwargs):
     return render(request, 'skeleton.html')
 
 
+def match(request: HttpRequest, match_id):
+    match = get_object_or_404(Match, pk=match_id)
+    context = {'match': match, "user": request.user}
+    return render(request, "competitions/match.html", context)
+
 @login_required
-def judge_match(request, match_id: int):
-    instance = get_object_or_404(Match, pk=match_id)
+def judge_match(request: HttpRequest, pk: int):
+    instance = get_object_or_404(Match, pk=pk)
     user = request.user
 
     tournament = instance.tournament
@@ -247,9 +273,12 @@ def judge_match(request, match_id: int):
     competetion = tournament.competition
     assert isinstance(competetion, Competition)
     
-    if not competetion.is_judgable or not tournament.is_judgable:
-        messages.error(request, "This match is not judgable.")
-        return HttpResponseRedirect(reverse('competitions:competition', args=[competetion.id]))
+    if not competetion.is_judgable:
+        messages.error(request, "This competition is not currently open for judging.")
+        raise PermissionDenied("This competition is not currently open for judging.")
+    if not tournament.is_judgable:
+        messages.error(request, "This tournament is not currently open for judging.")
+        raise PermissionDenied("This tournament is not currently open for judging.")
     # if the user is a judge for the tournament, or a plenary judge for the competition, or a superuser
     if  not (user in tournament.judges.all() \
     or user in competetion.plenary_judges.all()):# \
@@ -257,13 +286,6 @@ def judge_match(request, match_id: int):
         messages.error(request, "You are not authorized to judge this match.")
         raise PermissionDenied("You are not authorized to judge this match.")
         #return HttpResponseRedirect(reverse('competitions:competition', args=[competetion.id]))
-
-    if request.method == 'POST':
-        form = JudgeForm(request.POST, instance=instance, possible_advancers=None)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Match judged successfully.")
-
     winner_choices = []
     if instance.prev_matches.exists():
         winner_choice_ids = []
@@ -272,5 +294,16 @@ def judge_match(request, match_id: int):
         winner_choices = Team.objects.filter(id__in=winner_choice_ids)
     elif instance.starting_teams.exists():
         winner_choices = instance.starting_teams.all()
+    
+    if request.method == 'POST':
+        form = JudgeForm(request.POST, instance=instance, possible_advancers=winner_choices)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Match judged successfully.")
+        else:
+            messages.error(request, "Invalid form submission.")
+            #raise PermissionDenied("Invalid form submission.")
+            # ^ uncoment this line when running the test, for invalid form submission this will raise an error
+
     form = JudgeForm(instance=instance, possible_advancers=winner_choices)
     return render(request, 'competitions/match_judge.html', {'form': form})

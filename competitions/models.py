@@ -87,6 +87,14 @@ class StatusField(models.CharField):
         kwargs['default'] = Status.SETUP
         super().__init__(*args, **kwargs)
 
+
+class Sport(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+
+    def __str__(self) -> str:
+        return str(self.name)
+    
+
 class Organization(models.Model): # probably mostly schools but could also be community organizations
     name = models.CharField(max_length=257) # not unique because there could be schools with the same name just in different cities
     # logo = models.ImageField()
@@ -102,6 +110,7 @@ class Organization(models.Model): # probably mostly schools but could also be co
 
 class Team(models.Model):
     name = models.CharField(max_length=255)
+    sport = models.ForeignKey(Sport, blank=True, null=True, on_delete=models.SET_NULL)
     organization = models.ForeignKey(Organization, blank=True, null=True, on_delete=models.CASCADE)
     coach = models.ForeignKey(User, blank=True, null=True, on_delete=models.CASCADE)  # with special permissions to change info WRT the team
     # logo = models.ImageField()
@@ -111,12 +120,13 @@ class Team(models.Model):
         return self.name + (_(" from ") + str(self.organization) if self.organization else "")
     
     class Meta:
-        ordering = ['organization', 'name']
+        ordering = ['sport', 'organization', 'name']
         unique_together = ['organization', 'name']
 
 
 class Competition(models.Model):
     name = models.CharField(max_length=255, blank=True)
+    sport = models.ForeignKey(Sport, blank=True, null=True, on_delete=models.SET_NULL)
     status = StatusField()
     start_date = models.DateField()
     end_date = models.DateField()
@@ -124,7 +134,7 @@ class Competition(models.Model):
     # address_line1 = models.CharField(max_length=255)
     # address_line2 = models.CharField(max_length=255)
     # address_line3 = models.CharField(max_length=255)
-    teams = models.ManyToManyField(Team) # registered
+    teams = models.ManyToManyField(Team, blank=True) # registered
     plenary_judges = models.ManyToManyField(User, blank=True)  # people entrusted to judge this competition as a whole: won't restrict them to a specific event
     access_key = models.CharField(max_length=ACCESS_KEY_LENGTH, default=get_random_access_key, blank=True, null=True)
     # For scheduling purposes, we need to be able to specify for this competition how many different (Event-specific) arenas are available and their capacity
@@ -207,9 +217,13 @@ class Competition(models.Model):
 
 class Event(models.Model):
     name = models.CharField(max_length=255, unique=True)  # sumo bots, speed race, etc.
+    sport = models.ForeignKey(Sport, blank=True, null=True, on_delete=models.SET_NULL)
     # score_units = ScoreUnitsField() # initially just assume scores are place values (1st, 2nd, 3rd, etc.)
     # high_score_advances = models.BooleanField(default=True) # with seconds, low scores will usually advance (unless it's a "how long can you last" situation)
     # related: tournament_set
+
+    class Meta:
+        ordering = ['sport', 'name']
 
     def __str__(self) -> str:
         return str(self.name)
@@ -267,7 +281,7 @@ class AbstractTournament(models.Model):
 
 class Ranking(models.Model):
     """ These will determine the auto-layout of the brackets """
-    tournament = models.ForeignKey(AbstractTournament, on_delete=models.CASCADE)
+    tournament = models.ForeignKey(AbstractTournament, on_delete=models.CASCADE, related_name="ranking_set")
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     rank = models.PositiveSmallIntegerField()
 
