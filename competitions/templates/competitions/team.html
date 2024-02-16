@@ -1,6 +1,6 @@
 {% extends 'skeleton.html' %}
 {% load i18n %}
-{% block title %}Team: {{ team.name }}{% endblock %} 
+{% block title %}{% trans "Team:" %} {{ team.name }}{% endblock %} 
 {% block content %}
     <header>
         <h1>{% trans "Team:" %} {{ team }}</h1>
@@ -104,14 +104,14 @@
             <ul>
                 {% for match in team.won_matches.all %}  
                     {% if match.advancers.length == 1 %}
-                        <li>Tournament: <a href="{% url 'competitions:tournament' match.tournament.id %}">{{ match.tournament.name }}</a>, Event: {{ match.event.name }}, Players:
+                        <li>{% trans "Tournament:" %} <a href="{% url 'competitions:tournament' match.tournament.id %}">{{ match.tournament.name }}</a>, {% trans "Event:" %} {{ match.event.name }}, {% trans "Players:" %}
                             {% for player in match.event.player_set.all %} 
                                 {{ player.first_name }},
                             {% endfor %}
-                            Score: {{ match.awarded_points }}</li>
+                            {% trans "Score:" %} {{ match.awarded_points }}</li>
                     {% endif %}
                 {% empty %}
-                    <p>No wins!</p>
+                    <p>{% trans "No wins!" %}</p>
                 {% endfor %}
             </ul>
         </div>
