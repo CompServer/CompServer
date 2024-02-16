@@ -120,41 +120,41 @@ class Team(models.Model):
         return self.name + (_(" from ") + str(self.organization) if self.organization else "")
     
     def competed_one_match(self):
-        for match in self.match_set:
+        for match in self.match_set.all():
             if match.status == "COMPLETE":
                 return True
         return False
 
     def won_at_least_one_match(self):
-        for match in self.match_set:
-            for advancer in self.match.advancers:
-                if advancer == self and match.status == "COMPLETE":
+        for match in self.match_set.all():
+            for advancer in self.match.advancers.all():
+                if advancer == self and match.status == "COMPLETE" and self.match.advancers.exists():
                     return True
         return False
 
     def lost_at_least_one_match(self):
-        for match in self.match_set:
-            for advancer in self.match.advancers:
+        for match in self.match_set.all():
+            for advancer in self.match.advancers.all():
                 if advancer != self and match.status == "COMPLETE":
                     return True
         return False
     
     def drew_at_least_one_match(self):
-        for match in self.match_set:
-            if self.match.advancers > 1:
-                for advancer in self.match.advancers:
+        for match in self.match_set.all():
+            if self.match.advancers.count() > 1:
+                for advancer in self.match.advancers.all():
                     if advancer == self and match.status == "COMPLETE":
                         return True
         return False
 
     def competed_in_at_least_one_comp(self):
-        for comp in self.competition_set:
+        for comp in self.competition_set.all():
             if comp.status == "COMPLETE":
                 return True
         return False
 
     def competed_in_at_least_one_tourney(self):
-        for tourney in self.tournament_set:
+        for tourney in self.tournament_set.all():
             if tourney.status == "COMPLETE":
                 return True
         return False
@@ -186,12 +186,10 @@ class Competition(models.Model):
     # For scheduling purposes, we need to be able to specify for this competition how many different (Event-specific) arenas are available and their capacity
     # related: tournament_set
 
+    @property
     def currently_running(self):
         today = datetime.now().date()
-        if self.start_date <= today and self.end_date >= today:
-            return True
-        else:
-            return False
+        return  today >= self.start_date
 
     #checks if the competition has ended (true)
     #checks if the competition hasn't ended (false)
@@ -419,6 +417,11 @@ class Match(models.Model):
     time = models.DateTimeField() # that it's scheduled for
     str_recursive_level: ClassVar[int] = 0
 
+    @property
+    def currently_running(self):
+        today = datetime.now()
+        return  today >= self.time
+
     def __str__(self) -> str:
         self.__class__.str_recursive_level += 1
         competitors = []
@@ -438,8 +441,7 @@ class Match(models.Model):
             return res # if part of another match we don't want to repeat the tournament
 
     def compare_time_and_date(self):
-        today = datetime.now().astimezone(self.time.asimezone())
-        check = self.time
+        today = datetime.now()
         if self.time >= today:
             return True
         return false

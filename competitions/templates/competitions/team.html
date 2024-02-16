@@ -19,21 +19,12 @@
         <h4>{% trans "Address" %}:<i>....</i></h4>
         <h3>{% trans "Information About" %} {{ team.organization.name }}</h3>
     </div>
-                    <div class="row">
-                        
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% empty %}
-            <p>{% trans "No upcoming matches!" %}</p>
-        {% endfor %}
-    </div> 
     {% if team.competition_set.all %}
         <div class="match-schedule">
             <h3>{% trans "Upcoming Matches" %}</h3>
             {% comment %} all incomplete matches ordered by time... {% endcomment %}
             {% for competition in team.competition_set.all %}
-                {% if competition.is_judgable and competition.current_running %}
+                {% if competition.is_judgable and competition.currently_running %}
                     {% for tournament in competition.tournament_set.all %}
                         <div class="row">
                             <h4>{{ competition.name }}, {{ tournament.name }}, {{ competition.start_date }} - {{ competition.end_date }} </h4>
@@ -43,10 +34,10 @@
                                     <p>{{ event.name }}</p>
                                 </div>
                                 <div class="column">
-                                    {% for match in event.match_set.all.ordering %}
-                                        {% if match.check_time %}
-                                            {% if match.advancers %}
-                                                {{ break }}
+                                    {% for match in event.match_set.all %}
+                                        {% if match.currently_running %}
+                                            {% if match.advancers.exists %}
+                                                {{ continue }}
                                             {% else %}
                                                 <p>{% trans "Match" %} {{ match.id }}: {% trans "Between" %} {{ match }}, {% trans "Begins At" %} {{ match.time }}</p>
                                             {% endif %}
@@ -68,12 +59,12 @@
                     <div class="row">
                         <h4>{{ competition }}maybe add dates, and order matches</h4>
                         {% for tournament in competition.tournament_set.all %}
-                            {% if tournament.is_judgable" %}
+                            {% if tournament.is_judgable %}
                                 {% for match in tournament.match_set.all %}
                                     <!-- {% load tz %} -->
                                     {% if match.compare_time_and_date %}
-                                        {% if match.advancers %}
-                                            {{ break }}
+                                        {% if match.advancers.exists %}
+                                            {{ continue }}
                                         {% else %}
                                     <!-- {% if match.currently_running %} -->
                                         <div class="column">
@@ -125,9 +116,9 @@
                     <li>
                         <div class="row d-flex">
                             <div class = "col-12">
-                                {% if tournament.is_complete and tournament.advancers.contains(team) %} 
+                                {% if tournament.is_complete and team in tournament.advancers.all %} 
                                     <p><i class="bi-check2-circle"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
-                                {% elif tournament.is_closed and tournament.advancers.contains(team) %} 
+                                {% elif tournament.is_closed and team in tournament.advancers.all %} 
                                     <p><i class="bi-x-circle"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
                                 {% endif %}  
                             </div>
@@ -147,9 +138,9 @@
                             <div class = "col-12">
                                 {% if tournament.is_judgable %} 
                                     <p><i class="bi-activity"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
-                                {% elif tournament.is_complete and tournament.advancers.does_not_contain(team) %} 
+                                {% elif tournament.is_complete and team not in tournament.advancers.all %} 
                                     <p><i class="bi-check2-circle"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
-                                {% elif tournament.is_closed and tournament.advancers.does_not_contain(team) %} 
+                                {% elif tournament.is_closed and team not in tournament.advancers.all %} 
                                     <p><i class="bi-x-circle"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
                                 {% elif tournament.is_in_setup %}
                                     <p><i class="bi-gear"></i> {{ tournament }}</p>
@@ -179,8 +170,10 @@
                 <div class="row">
                     <h4>{% trans "Losses Against Other Teams" %}</h4>
                     <ul>
-                        {% for match in team.match_set.exclude(team.won_matches.all) %}
-                            <li>{{ match }}</li>
+                        {% for match in team.match_set.all %}
+                            {% if match not in team.won_matches.all %}
+                                <li>{{ match }}</li>
+                            {% endif %}
                         {% endfor %}
                     </ul>
                 </div> 
@@ -191,8 +184,8 @@
                     <ul>
                         {% for match in team.won_matches.all %}
                             {% if match.advancers.length > 1 %}
-                                <li>{{ match}}</li>
-                            {% endif %
+                                <li>{{ match }}</li>
+                            {% endif %}
                         {% endfor %}
                     </ul>
                 </div>
