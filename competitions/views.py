@@ -108,14 +108,14 @@ def single_elimination_tournament(request, tournament_id):
         competitors = []
         if curr_match.starting_teams.exists():
             for team in curr_match.starting_teams.all():
-                competitors.append({"name": team.name, "won": team in curr_match.advancers.all(), "prev":False}) 
+                competitors.append({"name": team.name, "won": team in curr_match.advancers.all(), "prev":False, "match_id": curr_match.id}) 
         if curr_match.prev_matches.exists():
             for prev_match in curr_match.prev_matches.all():
                 if prev_match.advancers.exists():
                     for team in prev_match.advancers.all():
-                        competitors.append({"name": team.name, "won": team in curr_match.advancers.all(), "prev": True}) 
+                        competitors.append({"name": team.name, "won": team in curr_match.advancers.all(), "prev": True, "match_id": curr_match.id}) 
                 else:
-                    competitors.append({"name": "TBD", "won": False, "prev": False}) 
+                    competitors.append({"name": "TBD", "won": False, "prev": False, "match_id": curr_match.id}) 
 
         # place the team names in the right box
         # i.e. bracket_array[2][3] = top 8, 4th match from the top
@@ -131,7 +131,7 @@ def single_elimination_tournament(request, tournament_id):
                                                       # ^^^^^^^^^^^^^^
                                                       # i dont know why this works, it might not 
         else:
-            # this fixes one of preliminary matches, but also creates a weird empty round which gets adressed later
+            # this fixes one off preliminary matches, but also creates a weird empty round which gets adressed later
             if len(bracket_array) <= curr_round+1:
                 bracket_array.append({})
             bracket_array[curr_round+1][base_index] = None
@@ -178,7 +178,8 @@ def single_elimination_tournament(request, tournament_id):
                 ]
             
             team_height = 25
-            center_height = team_height * num_teams
+            #1 pixel extra for the borders
+            center_height = (team_height+1) * num_teams
             top_padding = (match_height - center_height) / 2
 
             match_data.append({

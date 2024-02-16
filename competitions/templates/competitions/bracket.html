@@ -27,7 +27,7 @@
         {% for match_data in round_data.match_data %}
         <div class="match" style="height: {{ match_data.match_height }}px; width: {{ match_data.match_width }}px;">
             <div class="center"
-                style="height: {{ match_data.center_height }}px; padding-top: {{ match_data.top_padding }}px">
+                style="height: {{ match_data.center_height }}px; margin-top: {{ match_data.top_padding }}px; ">
                 {% for team_data in match_data.team_data %}
                 {%if team_data.prev %}
                 <div class="connector-left" style="height: 12.5px; width: 24px;"></div>
@@ -36,7 +36,8 @@
                 <div class="connector-right" style="height: 12.5px; width: 24px;"></div>
                 {%endif%}
                 <div class="team"
-                    style="width: {{ match_data.match_width }}px; {%if team_data.won %}background-color: #fff5a8;{%endif%}">
+                    style="width: {{ match_data.match_width }}px; {%if team_data.won %}background-color: #fff5a8;{%endif%} cursor: pointer;"
+                    onclick="location.href='{% url 'competitions:judge_match' team_data.match_id %}';">
                     {{ team_data.name }}
                 </div>
 
