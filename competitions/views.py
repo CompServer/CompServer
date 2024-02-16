@@ -29,20 +29,29 @@ def generate_single_elimination_matches(request, tournament_id):
     #figure out how to do the next matches later.
     tournament = get_object_or_404(AbstractTournament, pk=tournament_id)
     teams = {}
-    j = 0
+    matches = []
+    num_matches = 0
     for rank in tournament.ranking_set.all:
         teams[rank.rank] = rank.team
-        if rank.rank > j:
-            j = rank.rank
+        if rank.rank > num_matches:
+            num_matches = rank.rank
     i = 1
+    j = num_matches - 1
     if j % 2 == 1:
         i = 2
     while i < j:
         match = Match.objects.create(tournament=tournament)
         match.starting_teams.add(teams[i], teams[j])
         match.save()
+        matches.append(match)
         i += 1
         j -= 1
+    num_matches = int(num_matches/2)
+    while num_matches > 1:
+        new_matches = []
+        for i in range(0, num_matches, 2):
+            match = Match.objects.create(tournament=tournament)
+    
     # teams = []
     # num_participated = []
     # for team in tournament.teams.all():
