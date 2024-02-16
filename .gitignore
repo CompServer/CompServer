@@ -22,11 +22,3 @@ media/
 # future secret files 
 *.yaml
 *.yml
-
-#localization
-**/locale/
-locale/es/LC_MESSAGES/django.mo
-locale/es/LC_MESSAGES/django.po
-
-# geoip DB
-*.mmdb

@@ -1,4 +1,10 @@
+from datetime import datetime
+import math
+
 from django.contrib import messages
+from django.shortcuts import render, get_object_or_404
+import math, random
+from .models import *
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth.views import login_required
 from django.http import HttpRequest, HttpResponseRedirect
@@ -8,18 +14,6 @@ import random
 import zoneinfo
 from .models import *
 from .forms import *
-
-
-def set_timezone_view(request: HttpRequest):
-    if request.method == "POST":
-        if request.POST["timezone"]:
-            request.session["timezone"] = request.POST["timezone"]
-            messages.success(request, f"Timezone set successfully to {request.POST['timezone']}.")
-            return redirect("/")
-        else:   
-            messages.error(request, "Invalid timezone.")
-    timezones = sorted(zoneinfo.available_timezones())
-    return render(request, "timezones.html", {"timezones": timezones})
 
 
 def is_overflowed(list1, num):
@@ -34,21 +28,29 @@ def generate_single_elimination_matches(request: HttpRequest, tournament_id):
     #figure out how to do the next matches later.
     tournament = get_object_or_404(AbstractTournament, pk=tournament_id)
     teams = {}
-    max = 0
+    matches = []
+    num_matches = 0
     for rank in tournament.ranking_set.all:
         teams[rank.rank] = rank.team
-        if rank.rank > max:
-            max = rank.rank
-    i = 0
-    j = 0
-    if max % 2 == 1:
-        i = 1
+        if rank.rank > num_matches:
+            num_matches = rank.rank
+    i = 1
+    j = num_matches - 1
+    if j % 2 == 1:
+        i = 2
     while i < j:
         match = Match.objects.create(tournament=tournament)
         match.starting_teams.add(teams[i], teams[j])
         match.save()
+        matches.append(match)
         i += 1
         j -= 1
+    num_matches = int(num_matches/2)
+    while num_matches > 1:
+        new_matches = []
+        for i in range(0, num_matches, 2):
+            match = Match.objects.create(tournament=tournament)
+    
     # teams = []
     # num_participated = []
     # for team in tournament.teams.all():
@@ -222,6 +224,8 @@ def single_elimination_tournament(request: HttpRequest, tournament_id):
     return render(request, "competitions/bracket.html", context)
 
 
+
+
 def tournaments(request: HttpRequest):
     return render(request, "competitions/tournaments.html")
 
@@ -245,8 +249,10 @@ def team(request: HttpRequest, team_id):
     context = {'team': team}
     return render(request, "competitions/team.html", context)
 
+
 def credits(request: HttpRequest):
     return render(request, "competitions/credits.html")
+
 
 def not_implemented(request: HttpRequest, *args, **kwargs):
     """
@@ -307,3 +313,17 @@ def judge_match(request: HttpRequest, pk: int):
 
     form = JudgeForm(instance=instance, possible_advancers=winner_choices)
     return render(request, 'competitions/match_judge.html', {'form': form})
+
+
+def set_timezone_view(request: HttpRequest):
+    if request.method == "POST":
+        if request.POST["timezone"]:
+            request.session["timezone"] = request.POST["timezone"]
+            messages.success(request, f"Timezone set successfully to {request.POST['timezone']}.")
+            return redirect("/")
+        else:   
+            messages.error(request, "Invalid timezone.")
+    timezones = sorted(zoneinfo.available_timezones())
+    return render(request, "timezones.html", {"timezones": timezones})
+
+
