@@ -144,10 +144,7 @@ class Competition(models.Model):
 
     def check_date(self):
         today = timezone.now().date()
-        if self.end_date < today:
-            return True
-        else:
-            return False
+        return self.end_date < today
 
     #checks if the competition has ended (true)
     #checks if the competition hasn't ended (false)
@@ -163,7 +160,7 @@ class Competition(models.Model):
                     s += f" {self.start_date.day}" # RoboMed June, 2023
 
                 s += f",  {self.start_date.year}" # RoboMed June, 2023
-                
+
             else:
                 s += f" {self.start_date.year}" # RoboMed 2023
         return s
