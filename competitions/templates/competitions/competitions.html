@@ -9,15 +9,29 @@
         {% for competition in competition_list %}
             <div class="row d-flex">
                 <div class = "col-12">
+                    <p>
                     {% if competition.is_judgable %}
-                        <p><i class="bi-activity"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a></p>
+                        <i class="bi-activity"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
                     {% elif competition.is_complete %}
-                        <p><i class="bi-check2-circle"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a></p>
+                        <i class="bi-check2-circle"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
                     {% elif competition.is_closed %}
-                        <p><i class="bi-x-circle"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a></p>
+                        <i class="bi-x-circle"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
                     {% elif competition.is_in_setup %}
-                        <p><i class="bi-gear"></i> {{ competition }}</p>
+                        <i class="bi-gear"></i> {{ competition }}
                     {% endif %}
+                    {% if not competition.is_archived %}
+                        <form class="form-inline my-2 my-md-0 justify-content-end" action="" method="POST">
+                            {% csrf_token %}
+                            <select name="status" onchange="this.form.submit();">
+                                <option value="SETUP" {% if competition.is_in_setup %}selected{% endif %}><i class="bi-activity"></i>SETUP</option>
+                                <option value="OPEN" {% if competition.is_judgable %}selected{% endif %}>OPEN</option>
+                                <option value="COMPLETE" {% if competition.is_complete %}selected{% endif %}>COMPLETE</option>
+                                <option value="CLOSED" {% if competition.is_closed %}selected{% endif %}>CLOSED</option>
+                                <option value="ARCHIVED" {% if competition.is_archived %}selected{% endif %}>ARCHIVED</option>
+                            </select>
+                        </form>
+                    {% endif %}
+                    </p>
                 </div>
             </div>
         {% endfor %}

@@ -47,23 +47,25 @@ def generate_single_elimination_matches(request, tournament_id):
     matches = []
     i = 1
     j = num_matches
-    if j % 2 == 1:
-        i = 2
     while i < j:
         match = Match.objects.create(tournament=tournament)
         match.starting_teams.add(teams[i], teams[j])
+        if j % 2 == 1 and i == 1:
+            i += 1
+            match.starting_teams.add(teams[i])
         match.save()
         matches.append(match)
         i += 1
         j -= 1
     while num_matches > 1:
         new_matches = []
-        for i in range(1, num_matches+1, 2):
-            if i < num_matches:
-                match = Match.objects.create(tournament=tournament)
-                match.prev_matches.add(matches[i], matches[i+1])
-                match.save()
-                new_matches.append(match)
+        for i in range(0, num_matches, 2):
+            match = Match.objects.create(tournament=tournament)
+            match.prev_matches.add(matches[i], matches[i+1])
+            if i + 2 == num_matches - 1:
+                match.prev_matches.add(matches[i+2])
+            match.save()
+            new_matches.append(match)
         matches = []
         for match in new_matches:
             matches.append(match)
