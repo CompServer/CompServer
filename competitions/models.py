@@ -1,10 +1,11 @@
 from typing import Any, ClassVar
 from django.db import models
+from django.db.models import Q
 from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User
 from django.dispatch import receiver
-from datetime import datetime
+from django.utils import timezone
 import random
 import string
 from functools import lru_cache
@@ -142,7 +143,7 @@ class Competition(models.Model):
     # related: tournament_set
 
     def check_date(self):
-        today = datetime.now().date()
+        today = timezone.now().date()
         if self.end_date < today:
             return True
         else:
@@ -153,17 +154,19 @@ class Competition(models.Model):
 
     def __str__(self) -> str:
         # dwheadon: check if the name is unique for this year, otherwise add the month/day as well
-        if Competition.objects.filter(name=self.name).count() > 1:
-            if Competition.objects.filter(name=self.name, start_date__year=self.start_date.year).count() > 1:
-                if Competition.objects.filter(name=self.name, start_date__year=self.start_date.year, start_date__month=self.start_date.month).count() > 1:
+        s = f'{self.name}'
+        if (qs := (Competition.objects.filter(name=self.name))).exists(): # saves the queryset to a variable to avoid running the same query twice
+            if (qs2 := (qs.filter(start_date__year=self.start_date.year))).exists():
+                s += f" {self.start_date.month}"
+                if qs2.filter(start_date__month=self.start_date.month).exists():
                     # if you have two on the same day, good luck
-                    return self.name + " " + str(self.start_date.month)+ " " + str(self.start_date.day) + ", " + str(self.start_date.year) # RoboMed June, 2023
-                else:
-                    return self.name + " " + str(self.start_date.month) + ", " + str(self.start_date.year) # RoboMed June, 2023
+                    s += f" {self.start_date.day}" # RoboMed June, 2023
+
+                s += f",  {self.start_date.year}" # RoboMed June, 2023
+                
             else:
-                return self.name + " " + str(self.start_date.year) # RoboMed 2023
-        else:
-            return self.name
+                s += f" {self.start_date.year}" # RoboMed 2023
+        return s
 
     @property
     def is_viewable(self) -> bool:
