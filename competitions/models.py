@@ -408,7 +408,7 @@ class Match(models.Model):
         # each match has previous match so we go backwards to find opp match
         # filter match that has no following matchlist of matches
 
-        # winner=Match.obects.filter(next_matches__isnull=True, tournment__id=2).first().advances.all()
+        # winner=Match.obects.filter(next_matches__isnull=true, tournment__id=2).first().advances.all()
         
     # showing results for complete means:
             
