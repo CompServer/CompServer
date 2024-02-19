@@ -32,12 +32,46 @@
     float: none;
 }
 
-.connector-left {
+.connector-back-up {
     border-bottom: 2px black solid;
+    border-left: 2px black solid;
     float: left;
+    margin-top: 0px;
+    height: 12.5px;
+    width: 24px;
 }
 
-.connector-right {
+.connector-back-down {
+    border-top: 2px black solid;
+    border-left: 2px black solid;
+    float: left;
+    margin-top: 12.5px;
+    height: 12.5px;
+    width: 24px;
+}
+
+.connector-front-up {
+    border-bottom: 2px black solid;
+    border-right: 2px black solid;
+    float: right;
+    margin-top: 0px;
+    height: 12.5px;
+    width: 24px;
+}
+
+.connector-front-down {
+    border-top: 2px black solid;
+    border-right: 2px black solid;
+    float: right;
+    margin-top: 12.5px;
+    height: 12.5px;
+    width: 24px;
+}
+
+.connector-front-none {
     border-bottom: 2px black solid;
     float: right;
+    margin-top: 0px;
+    height: 12.5px;
+    width: 24px;
 }
