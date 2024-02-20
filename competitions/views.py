@@ -100,7 +100,7 @@ def home(request):
 def single_elimination_tournament(request: HttpRequest, tournament_id):
     '''
     This view is responsible for drawing the tournament bracket, it does this by:
-    1) Recursively get all matches and put them in a 3d array
+    1) Recursively get all matches and put them in a 4d array
         a) Start at championship
         b) Get particpants and add them to the array
         c) Go to each prev match
@@ -120,15 +120,19 @@ def single_elimination_tournament(request: HttpRequest, tournament_id):
             bracket_array.append({})
 
         # get the names of the teams competing, stolen to the toString
+        #    
+        #TODO: theres definitely a prettier way to do this 
         competitors = []
         if curr_match.starting_teams.exists():
-            competitors += [[team.name, team in curr_match.advancers.all()] for team in curr_match.starting_teams.all()]
+            for team in curr_match.starting_teams.all():
+                competitors.append({"name": team.name, "won": team in curr_match.advancers.all(), "prev":False, "match_id": curr_match.id}) 
         if curr_match.prev_matches.exists():
             for prev_match in curr_match.prev_matches.all():
                 if prev_match.advancers.exists():
-                    competitors += [[team.name, team in curr_match.advancers.all()]for team in prev_match.advancers.all()]
+                    for team in prev_match.advancers.all():
+                        competitors.append({"name": team.name, "won": team in curr_match.advancers.all(), "prev": True, "match_id": curr_match.id}) 
                 else:
-                    competitors += [["TBD", False]]
+                    competitors.append({"name": "TBD", "won": False, "prev": False, "match_id": curr_match.id}) 
 
         # place the team names in the right box
         # i.e. bracket_array[2][3] = top 8, 4th match from the top
@@ -144,7 +148,7 @@ def single_elimination_tournament(request: HttpRequest, tournament_id):
                                                       # ^^^^^^^^^^^^^^
                                                       # i dont know why this works, it might not 
         else:
-            # this fixes one of preliminary matches, but also creates a weird empty round which gets adressed later
+            # this fixes one off preliminary matches, but also creates a weird empty round which gets adressed later
             if len(bracket_array) <= curr_round+1:
                 bracket_array.append({})
             bracket_array[curr_round+1][base_index] = None
@@ -187,12 +191,12 @@ def single_elimination_tournament(request: HttpRequest, tournament_id):
             if j in bracket_array[numRounds-i-1] and bracket_array[numRounds-i-1][j] is not None:
                 num_teams = len(bracket_array[numRounds-i-1][j])
                 team_data = [
-                    {"team_name": bracket_array[numRounds-i-1][j][k][0], "won": bracket_array[numRounds-i-1][j][k][1]} 
-                    for k in range(num_teams)
+                    bracket_array[numRounds-i-1][j][k] for k in range(num_teams)
                 ]
             
             team_height = 25
-            center_height = team_height * num_teams
+            #1 pixel extra for the borders
+            center_height = (team_height+1) * num_teams
             top_padding = (match_height - center_height) / 2
 
             match_data.append({
