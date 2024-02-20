@@ -409,6 +409,7 @@ class Match(models.Model):
         # filter match that has no following matchlist of matches
 
         # winner=Match.obects.filter(next_matches__isnull=true, tournment__id=2).first().advances.all()
+        #  Match.obects.filter(next_matches__isnull=true).filter(tournament__competition=competition_id)
         
     # showing results for complete means:
             

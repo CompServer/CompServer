@@ -8,6 +8,7 @@ import random
 import zoneinfo
 from .models import *
 from .forms import *
+from competitions.models import *
 
 
 def set_timezone_view(request: HttpRequest):
@@ -149,6 +150,27 @@ def single_elimination_tournament(request: HttpRequest, tournament_id):
 
     #mutates bracket_array
     read_tree_from_node(Match.objects.filter(tournament=tournament_id).filter(next_matches__isnull=True)[0], 0, 0)
+    read_tree_from_node(winner=Match.objects.filter(next_matches__isnull=True, tournment__id=2).first().advances.all())
+    # read_tree_from_node(Match.objects.filter(next_matches__isnull=True).filter(advancer.all[0], 0, 0)
+    # read_tree_from_node(Match.obects.filter(next_matches__isnull=true).filter(tournament__competition=competition_id)
+    # .advancer.all[0]
+    # Match.obects.filter(next_matches__isnull=true).filter(tournament__competition=competition_id)   for views some id for a parameter
+    # of that functon this will give only the matches that were final matches for robomed five different competetions, and I can run 
+    # this in the shell.
+    # git last match of each tournament
+    # competetion id = competition_id
+        # from competitions.models import *
+        # each match has previous match so we go backwards to find opp match
+        # filter match that has no following matchlist of matches
+        # winner=Match.obects.filter(next_matches__isnull=true, tournment__id=2).first().advances.all()
+        #  Match.obects.filter(next_matches__isnull=true).filter(tournament__competition=competition_id)
+    # showing results for complete means:
+        # - after the competetion the rsults will be put through to the system
+        # - i need to be able to show the results of the competetion physically on the html page.
+                        
+
+
+
 
     #this gets weird of the weird empty round caused by the previous section
     bracket_array.pop()
