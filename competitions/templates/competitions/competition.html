@@ -22,8 +22,8 @@
         <h3>{% trans "Tournaments" %}</h3>
         {% for tournament in competition.tournament_set.all %}
             <div class="row d-flex">
-                <div class = "col-12">
-                    <p>
+                {% if not tournament.is_archived %}
+                    <div class = "col-12 tournament">
                         {% if tournament.is_judgable %} 
                             <i class="bi-activity"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
                         {% elif tournament.is_complete %} 
@@ -33,9 +33,23 @@
                         {% elif tournament.is_in_setup %}
                             <i class="bi-gear"></i> {{ tournament.event.name }}
                         {% endif %}  
-                        ({{ tournament.points|floatformat:"0" }} {% trans "points" %})  
-                    </p>
-                </div>
+                        ({{ tournament.points|floatformat:"0" }} {% trans "points" %}) 
+                        {% if user.is_staff %}
+                            <form class="form-inline my-2 my-md-0 justify-content-end" action="/tournament/{{ tournament.id }}/" method="POST" id="status">
+                                {% csrf_token %}
+                                <div class="input-group">
+                                    <select name="status" onchange="this.form.submit();">
+                                        <option value="SETUP" {% if tournament.is_in_setup %}selected{% endif %}>SETUP</option>
+                                        <option value="OPEN" {% if tournament.is_judgable %}selected{% endif %}>OPEN</option>
+                                        <option value="COMPLETE" {% if tournament.is_complete %}selected{% endif %}>COMPLETE</option>
+                                        <option value="CLOSED" {% if tournament.is_closed %}selected{% endif %}>CLOSED</option>
+                                        <option value="ARCHIVED" {% if tournament.is_archived %}selected{% endif %}>ARCHIVED</option>
+                                    </select>
+                                </div>
+                            </form>
+                        {% endif %} 
+                    </div>
+                {% endif %}
             </div>      
         {% endfor %}
     {% endif %}
@@ -48,5 +62,21 @@
                 </div>
             </div>
         {% endfor %}
+    {% endif %}
+    {% if user.is_staff %}
+        {% comment %} <hr>
+        <h3>Change Status</h3>
+        <form class="form-inline my-2 my-md-0 justify-content-end" action="" method="POST">
+            {% csrf_token %}
+            <div class="input-group">
+                <select class="form-select" name="status" onchange="this.form.submit();">
+                    <option value="SETUP" {% if competition.is_in_setup %}selected{% endif %}>SETUP</option>
+                    <option value="OPEN" {% if competition.is_judgable %}selected{% endif %}>OPEN</option>
+                    <option value="COMPLETE" {% if competition.is_complete %}selected{% endif %}>COMPLETE</option>
+                    <option value="CLOSED" {% if competition.is_closed %}selected{% endif %}>CLOSED</option>
+                    <option value="ARCHIVED" {% if competition.is_archived %}selected{% endif %}>ARCHIVED</option>
+                </select>
+            </div>
+        </form> {% endcomment %}
     {% endif %}
 {% endblock %}

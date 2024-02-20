@@ -3,7 +3,7 @@
 from django import forms
 from django.contrib import messages
 
-from competitions.models import Team, Match
+from competitions.models import Competition, SingleEliminationTournament, Team, Match
 
 
 class JudgeForm(forms.ModelForm):
@@ -30,3 +30,13 @@ class JudgeForm(forms.ModelForm):
         fields = ['advancers']
         template_name = 'competitions/match_judge.html'
         success_url = "/"
+
+class CompetitionStatusForm(forms.ModelForm):
+    class Meta:
+        model = Competition
+        fields = ['status']
+
+class SETournamentStatusForm(forms.ModelForm):
+    class Meta:
+        model = SingleEliminationTournament
+        fields = ['status']
