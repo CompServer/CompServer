@@ -538,6 +538,7 @@ def competition(request, competition_id):
     return render(request, "competitions/competition.html", context)
 
 def team(request, team_id):
+    upcoming_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), tournament__competition__start_date__lte=today, tournament__competition__end_date__gte=today, advancers=None).order_by("time")
     context = {
         'team': Team.objects.get(pk=team_id),
         'wins_list': [],
