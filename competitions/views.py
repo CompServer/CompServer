@@ -336,6 +336,5 @@ def team(request, team_id):
         'wins_list': [],
         'draws_list': [],
         'losses_list': [],
-        'upcoming_matches': upcoming_matches,
     }
     return render(request, "competitions/team.html", context)
