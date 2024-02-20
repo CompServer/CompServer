@@ -111,15 +111,10 @@ def generate_round_robin_matches(request, tournament_id):
     #will do ordering of matches once the bracket is fully understood.
     return render(request, 'skeleton.html')
 
-# why are we using camelcase
-def BracketView(request):
-    t = ""
 
-    numTeams = 8
-    numRounds = int(math.log(numTeams, 2))
+def home(request):
+    return render(request, "competitions/home.html")
 
-    roundWidth = 150
-    bracketWidth = (roundWidth+30)*numRounds
 
 def single_elimination_tournament(request: HttpRequest, tournament_id):
     '''
