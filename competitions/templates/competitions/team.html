@@ -28,23 +28,17 @@
                     {% for tournament in competition.tournament_set.all %}
                         <div class="row">
                             <h4>{{ competition.name }}, {{ tournament.name }}, {{ competition.start_date }} - {{ competition.end_date }} </h4>
-                            <h5>{% trans "Your Events" %}</h5>
-                            {% for event in tournament.event_set.all %}
-                                <div class="column">
-                                    <p>{{ event.name }}</p>
-                                </div>
-                                <div class="column">
-                                    {% for match in event.match_set.all %}
-                                        {% if match.currently_running %}
-                                            {% if match.advancers.exists %}
-                                                {{ continue }}
-                                            {% else %}
-                                                <p>{% trans "Match" %} {{ match.id }}: {% trans "Between" %} {{ match }}, {% trans "Begins At" %} {{ match.time }}</p>
-                                            {% endif %}
+                            <div class="column">
+                                {% for match in tournament.match_set.all %}
+                                    {% if match.currently_running %}
+                                        {% if match.advancers.exists %}
+                                            {{ continue }}
+                                        {% else %}
+                                            <p>{% trans "Match" %} {{ match.id }}: {% trans "Between" %} {{ match }}, {% trans "Begins At" %} {{ match.time }}</p>
                                         {% endif %}
-                                    {% endfor %}
-                                </div>
-                            {% endfor %}
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
                         </div>
                     {% endfor %}
                 {% endif %}
