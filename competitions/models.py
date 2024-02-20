@@ -151,7 +151,7 @@ class Competition(models.Model):
 
     def __str__(self) -> str:
         # dwheadon: check if the name is unique for this year, otherwise add the month/day as well
-        s = f'{self.name}'
+        s: str = self.name
         if (qs := (Competition.objects.filter(name=self.name))).exists(): # saves the queryset to a variable to avoid running the same query twice
             if (qs2 := (qs.filter(start_date__year=self.start_date.year))).exists():
                 s += f" {self.start_date.month}"
