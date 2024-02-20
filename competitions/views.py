@@ -14,13 +14,12 @@ from django.shortcuts import render
 from django.views.generic.edit import UpdateView
 from django.contrib.auth.mixins import AccessMixin, UserPassesTestMixin
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 from django.urls import reverse
+from django.utils import timezone
 from django.contrib.auth.models import User
 from django.shortcuts import redirect, render
-
-from .models import *
 from .forms import *
-
 
 def is_overflowed(list1, num):
     for item in list1:
@@ -372,13 +371,6 @@ def competition(request, competition_id):
     return render(request, "competitions/competition.html", context)
 
 
-def team(request, team_id: int):
-    context = {
-        'team': get_object_or_404(Team, id=team_id)
-    }
-    return render(request, "competitions/team.html", context)
-
-
 def credits(request):
     context = {"user": request.user}
     return render(request, "competitions/credits.html", context)
@@ -538,12 +530,14 @@ def competition(request, competition_id):
     return render(request, "competitions/competition.html", context)
 
 def team(request, team_id):
+    today = timezone.now().date()
     upcoming_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), tournament__competition__start_date__lte=today, tournament__competition__end_date__gte=today, advancers=None).order_by("time")
     context = {
         'team': Team.objects.get(pk=team_id),
         'wins_list': [],
         'draws_list': [],
         'losses_list': [],
+        'upcoming_matches': upcoming_matches,
     }
     return render(request, "competitions/team.html", context)
 

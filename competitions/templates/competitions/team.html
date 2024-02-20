@@ -19,63 +19,14 @@
         <h4>{% trans "Address" %}:<i>....</i></h4>
         <h3>{% trans "Information About" %} {{ team.organization.name }}</h3>
     </div>
-    {% if team.competition_set.all %}
+    {% if upcoming_matches.exists %}
         <div class="match-schedule">
             <h3>{% trans "Upcoming Matches" %}</h3>
-            {% comment %} all incomplete matches ordered by time... {% endcomment %}
-            {% for competition in team.competition_set.all %}
-                {% if competition.is_judgable and competition.currently_running %}
-                    {% for tournament in competition.tournament_set.all %}
-                        <div class="row">
-                            <h4>{{ competition.name }}, {{ tournament.name }}, {{ competition.start_date }} - {{ competition.end_date }} </h4>
-                            <div class="column">
-                                {% for match in tournament.match_set.all %}
-                                    {% if match.currently_running %}
-                                        {% if match.advancers.exists %}
-                                            {{ continue }}
-                                        {% else %}
-                                            <p>{% trans "Match" %} {{ match.id }}: {% trans "Between" %} {{ match }}, {% trans "Begins At" %} {{ match.time }}</p>
-                                        {% endif %}
-                                    {% endif %}
-                                {% endfor %}
-                            </div>
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endfor %}
-        </div>
-    {% endif %}
-    {% if team.competition_set.all %}
-        <div class="match-schedule">
-            <h3>Upcoming Matches</h3>
-            {% for competition in team.competition_set.all %}
-                {% if competition.currently_running and competition.is_judgable %}
-                    <div class="row">
-                        <h4>{{ competition }}maybe add dates, and order matches</h4>
-                        {% for tournament in competition.tournament_set.all %}
-                            {% if tournament.is_judgable %}
-                                {% for match in tournament.match_set.all %}
-                                    <!-- {% load tz %} -->
-                                    {% if match.compare_time_and_date %}
-                                        {% if match.advancers.exists %}
-                                            {{ continue }}
-                                        {% else %}
-                                    <!-- {% if match.currently_running %} -->
-                                        <div class="column">
-                                            <p>Match {{ match.id }}: {{ match }} with competitors</p>
-                                        </div>
-                                        <div class="column">
-                                            <p>Begins At {{ match.time }}</p>
-                                        </div>
-                                    {% endif %}  
-                                    {% endif %}
-                                    {% endif %}  
-                                {% endfor %}
-                            {% endif %}
-                        {% endfor %}
-                    </div>
-                {% endif %}
-           {% endfor %}
+            <ul>
+                {% for match in upcoming_matches %}
+                    <li>{{ match.time }} {% trans "between" %} {{ match }}</li>
+                {% endfor %}
+            </ul>
         </div>
     {% endif %}
     {% if team.competed_in_at_least_one_comp %}
