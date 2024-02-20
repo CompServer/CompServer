@@ -287,7 +287,8 @@ def judge_match(request: HttpRequest, pk: int):
         raise PermissionDenied("This tournament is not currently open for judging.")
     # if the user is a judge for the tournament, or a plenary judge for the competition, or a superuser
     if  not (user in tournament.judges.all() \
-    or user in competetion.plenary_judges.all()):# \
+    or user in competetion.plenary_judges.all() \
+    or user.is_superuser):# \
     #or user.is_superuser:
         messages.error(request, "You are not authorized to judge this match.")
         raise PermissionDenied("You are not authorized to judge this match.")

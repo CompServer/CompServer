@@ -15,6 +15,5 @@ urlpatterns = [
     path('match/<int:pk>/judge/', views.judge_match, name='match_judge'),
     path('credits/', views.credits, name="credits"),
     path("match/<int:pk>/judge/", views.judge_match, name="match"),
-    path('credits/', views.credits, name="credits"),
     path('settings/timezone/',views.set_timezone_view, name='set_timezone'),
 ]
