@@ -28,4 +28,50 @@
     text-align: left;
     background-color: lightgray;
     border: 1px black solid;
+    margin: 0px 25px 0px 25px;
+    float: none;
+}
+
+.connector-back-up {
+    border-bottom: 2px black solid;
+    border-left: 2px black solid;
+    float: left;
+    margin-top: 0px;
+    height: 12.5px;
+    width: 24px;
+}
+
+.connector-back-down {
+    border-top: 2px black solid;
+    border-left: 2px black solid;
+    float: left;
+    margin-top: 12.5px;
+    height: 12.5px;
+    width: 24px;
+}
+
+.connector-front-up {
+    border-bottom: 2px black solid;
+    border-right: 2px black solid;
+    float: right;
+    margin-top: 0px;
+    height: 12.5px;
+    width: 24px;
+}
+
+.connector-front-down {
+    border-top: 2px black solid;
+    border-right: 2px black solid;
+    float: right;
+    margin-top: 12.5px;
+    height: 12.5px;
+    width: 24px;
+}
+
+.connector-front-none {
+    border-bottom: 2px black solid;
+    float: right;
+    margin-top: 0px;
+    height: 12.5px;
+    width: 24px;
 }

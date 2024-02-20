@@ -119,52 +119,6 @@ class Team(models.Model):
     def __str__(self) -> str:
         return self.name + (_(" from ") + str(self.organization) if self.organization else "")
     
-    def competed_one_match(self):
-        for match in self.match_set.all():
-            if match.status == "COMPLETE":
-                return True
-        return False
-
-    def won_at_least_one_match(self):
-        for match in self.match_set.all():
-            for advancer in self.match.advancers.all():
-                if advancer == self and match.status == "COMPLETE" and self.match.advancers.exists():
-                    return True
-        return False
-
-    def lost_at_least_one_match(self):
-        for match in self.match_set.all():
-            for advancer in self.match.advancers.all():
-                if advancer != self and match.status == "COMPLETE":
-                    return True
-        return False
-    
-    def drew_at_least_one_match(self):
-        for match in self.match_set.all():
-            if self.match.advancers.count() > 1:
-                for advancer in self.match.advancers.all():
-                    if advancer == self and match.status == "COMPLETE":
-                        return True
-        return False
-
-    def competed_in_at_least_one_comp(self):
-        for comp in self.competition_set.all():
-            if comp.status == "COMPLETE":
-                return True
-        return False
-
-    def competed_in_at_least_one_tourney(self):
-        for tourney in self.tournament_set.all():
-            if tourney.status == "COMPLETE":
-                return True
-        return False
-
-    def has_a_match_schedule(self):
-        #here
-        return False
-    
-    #need to also order the matches by time
-
     class Meta:
         ordering = ['sport', 'organization', 'name']
         unique_together = ['organization', 'name']
@@ -186,10 +140,12 @@ class Competition(models.Model):
     # For scheduling purposes, we need to be able to specify for this competition how many different (Event-specific) arenas are available and their capacity
     # related: tournament_set
 
-    @property
-    def currently_running(self):
+    def check_date(self):
         today = datetime.now().date()
-        return  today >= self.start_date
+        if self.end_date < today:
+            return True
+        else:
+            return False
 
     #checks if the competition has ended (true)
     #checks if the competition hasn't ended (false)
@@ -278,7 +234,7 @@ class AbstractTournament(models.Model):
     status = StatusField()
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="tournament_set") # besides helpfing to identify this tournament this will change how teams advance (high or low score)
     competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name="tournament_set")
-    points = models.DecimalField(max_digits=20, decimal_places=10) # for winner # dwheadon: is 10 digits / decimals enough / too much?
+    points = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True) # for winner # dwheadon: is 10 digits / decimals enough / too much?
     # interpolate_points = models.BooleanField(default=False) # otherwise winner takes all: RoboMed doesn't need this but it could be generally useful
     teams = models.ManyToManyField(Team, related_name="tournament_set")
     judges = models.ManyToManyField(User, blank=True, related_name="tournament_set")  # people entrusted to judge this tournament alone (as opposed to plenary judges)
@@ -319,6 +275,7 @@ class AbstractTournament(models.Model):
     def is_in_setup(self) -> bool:
         return self.status == Status.SETUP
 
+        
     class Meta:
         ordering = ['competition', 'event']
 
@@ -414,13 +371,8 @@ class Match(models.Model):
     prev_matches = models.ManyToManyField('self', symmetrical=False, blank=True, related_name="next_matches") # Except for round1 of a tournament (or one-off preliminary matches), advancers from the previous matches will be the competitors for this match
     # Note: admin doesn't restrict advancers to be competitors for this match
     advancers = models.ManyToManyField(Team, related_name="won_matches", blank=True) # usually 1 but could be more (e.g. time trials)
-    time = models.DateTimeField() # that it's scheduled for
+    time = models.DateTimeField(blank=True, null=True) # that it's scheduled for
     str_recursive_level: ClassVar[int] = 0
-
-    @property
-    def currently_running(self):
-        today = datetime.now()
-        return  today >= self.time
 
     def __str__(self) -> str:
         self.__class__.str_recursive_level += 1
@@ -439,12 +391,6 @@ class Match(models.Model):
             return res + _(" in ") + str(self.tournament) # Battlebots vs Byters in SumoBot tournament @ RoboMed 2023
         else: 
             return res # if part of another match we don't want to repeat the tournament
-
-    def compare_time_and_date(self):
-        today = datetime.now()
-        if self.time >= today:
-            return True
-        return false
 
     class Meta:
         ordering = ['tournament']

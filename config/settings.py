@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'hijack.contrib.admin',
     'debug_toolbar',
     'crispy_forms',
+
     #'easy_timezones', # pip install django-easy-timezones
 ]
 
@@ -53,8 +54,7 @@ MIDDLEWARE = [
     'hijack.middleware.HijackUserMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.middleware.locale.LocaleMiddleware',
-
-    #'easy_timezones.middleware.EasyTimezoneMiddleware', # django-easy-timezones
+    'config.custom.middleware.TimezoneMiddleware', # custom
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -70,6 +70,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'config.custom.context_processors.tz', # custom context processor: passes in current timezone as "TIME_ZONE"
+                'config.custom.context_processors.user', # custom context processor: passes in user as variable "user"
             ],
         },
     },
@@ -160,8 +162,11 @@ MESSAGE_TAGS = {
 
 def show_toolbar(request):
     return True
+
 SHOW_TOOLBAR_CALLBACK = show_toolbar
 
 LOGIN_REDIRECT_URL = '/'
 
 LOGIN_URL = '/accounts/login/'
+
+GEOIP_DATABASE = 'geoIP.mmdb'

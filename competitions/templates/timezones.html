@@ -1,14 +1,15 @@
 {% extends "skeleton.html" %}
 {% load tz %}   
+{% load i18n %}
 
-{% block title %}Timezone Settings{% endblock %}
+{% block title %} {% trans "Set timezone" %} {% endblock %}
 
 {% block content %}
     <h1>Timezone Settings</h1> 
 
     <form action="" method="POST">
         {% csrf_token %}
-        <label for="timezone">Time zone:</label>
+        <label for="timezone">{% trans "Time zone:" %}</label>
         <select name="timezone">
             {% if not TIME_ZONE %}
                 <option value="" selected></option>

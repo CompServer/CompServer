@@ -4,15 +4,15 @@
 {% block content %}
 <h1>
     {% if tournament.is_judgable %}
-        <i class="bi-activity"></i>
+    <i class="bi-activity"></i>
     {% elif tournament.is_complete %}
-        <i class="bi-check2-circle"></i>
+    <i class="bi-check2-circle"></i>
     {% elif tournament.is_closed %}
-        <i class="bi-x-circle"></i>
+    <i class="bi-x-circle"></i>
     {% elif tournament.is_in_setup %}
-        <i class="bi-gear"></i>
+    <i class="bi-gear"></i>
     {% endif %}
-    {{ tournament.competition.name }} {{ tournament.event.name }} {% trans "Tournament" %} 
+    {{ tournament.competition.name }} {{ tournament.event.name }} {% trans "Tournament" %}
     ({{ tournament.points|floatformat:"0" }} {% trans "points" %})
 </h1>
 
@@ -21,22 +21,41 @@
     - Matt 
 -->
 <div class="bracket" style="height: {{ bracket_dict.bracketHeight }}px; width: {{ bracket_dict.bracketWidth }}px;">
+
     {% for round_data in bracket_dict.round_data %}
     <div class="round" style="height: {{ bracket_dict.roundHeight }}px; width: {{ bracket_dict.roundWidth }}px;">
         {% for match_data in round_data.match_data %}
         <div class="match" style="height: {{ match_data.match_height }}px; width: {{ match_data.match_width }}px;">
             <div class="center"
-                style="height: {{ match_data.center_height }}px; padding-top: {{ match_data.top_padding }}px">
-                {% for team_data in match_data.team_data %}
-                <div class="team" style="width: {{ match_data.match_width }}px;">
-                    {{ team_data.team_name }}
-                </div>
-                {% endfor %}
+                style="height: {{ match_data.center_height }}px; margin-top: {{ match_data.top_padding }}px; ">
+            {% for team_data in match_data.team_data %}
+
+                {% if team_data.prev %} 
+                    {% if forloop.counter <= match_data.team_data|length|divisibleby:2 %}
+                    <div class="connector-back-up" style=""></div>
+                    {% else %}
+                    <div class="connector-back-down" style=""></div>
+                    {% endif %}
+                {% endif %}
+
+
+                {% if team_data.won%}<div class="connector-front-none" style=""></div>{%endif%}
+
+
+            <div class="team"
+                style="width: {{ match_data.match_width }}px; {%if team_data.won %}background-color: #fff5a8;{%endif%} cursor: pointer;"
+                onclick="location.href='{% url 'competitions:judge_match' team_data.match_id %}';">
+                {{ team_data.name }}
             </div>
+
+            {% endfor %}
         </div>
-        {% endfor %}
     </div>
     {% endfor %}
 </div>
+{% endfor %}
+</div>
+
+<div class="connector" style="padding-top: {{ match_data.top_padding }}px"></div>
 
 {% endblock %}
