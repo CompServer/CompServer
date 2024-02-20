@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-02-16 00:07-0600\n"
+"POT-Creation-Date: 2024-02-19 13:50-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -85,16 +85,16 @@ msgid "Competing Teams"
 msgstr "Equipos de Competencias"
 
 #: .\competitions\templates\competitions\competitions.html:7
-#: .\competitions\templates\competitions\home.html:9
+#: .\competitions\templates\skeleton.html:75
 msgid "Competitions"
 msgstr "Competencias"
 
-#: .\competitions\templates\competitions\credits.html:4
-#: .\competitions\templates\skeleton.html:81
+#: .\competitions\templates\competitions\credits.html:5
+#: .\competitions\templates\skeleton.html:78
 msgid "Credits"
 msgstr "Créditos"
 
-#: .\competitions\templates\competitions\credits.html:6
+#: .\competitions\templates\competitions\credits.html:7
 #, fuzzy
 #| msgid ""
 #| "RoboComp was developed as a final project in the Web Application "
@@ -106,25 +106,35 @@ msgstr ""
 "RoboComp fue desarrollado como proyecto final en la clase de Web Application "
 "Frameworks (2024) en "
 
-#: .\competitions\templates\competitions\credits.html:6
+#: .\competitions\templates\competitions\credits.html:7
 msgid "University of Chicago Laboratory Schools"
 msgstr "University of Chicago Laboratory Schools"
 
-#: .\competitions\templates\competitions\credits.html:6
+#: .\competitions\templates\competitions\credits.html:7
 msgid "taught by"
 msgstr "enseñado por"
 
-#: .\competitions\templates\competitions\credits.html:6
+#: .\competitions\templates\competitions\credits.html:7
 msgid "The following students contributed to the project."
 msgstr "Los siguientes estudiantes contribuyeron al proyecto."
 
-#: .\competitions\templates\competitions\credits.html:7
+#: .\competitions\templates\competitions\credits.html:8
 msgid "Student Contributors"
 msgstr "contribuyentes estudiantiles"
 
 #: .\competitions\templates\competitions\home.html:6
 msgid "Welcome to the Competition Server"
 msgstr "Bienvenido al Servidor de las Competencias"
+
+#: .\competitions\templates\competitions\home.html:8
+msgid "Use the navigation bar to browse through the webite."
+msgstr ""
+
+#: .\competitions\templates\competitions\match_judge.html:5
+#, fuzzy
+#| msgid "Judge a Match"
+msgid "Judge a Match Form"
+msgstr "Juzgar un partido"
 
 #: .\competitions\templates\competitions\match_judge.html:8
 msgid "Judge a Match"
@@ -239,10 +249,18 @@ msgstr "Pérdidas"
 msgid "Draws"
 msgstr "Tablas"
 
-#: .\competitions\templates\skeleton.html:78
+#: .\competitions\templates\skeleton.html:72
 msgid "Home"
 msgstr "Inicio"
 
-#: .\competitions\templates\skeleton.html:87
+#: .\competitions\templates\skeleton.html:84
 msgid "Admin"
 msgstr "Administración"
+
+#: .\competitions\templates\timezones.html:4
+msgid "Set timezone"
+msgstr "blah"
+
+#: .\competitions\templates\timezones.html:11
+msgid "Time zone:"
+msgstr ""

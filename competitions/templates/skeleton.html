@@ -84,7 +84,7 @@
                 {% get_available_languages as LANGUAGES %} 
                 <form class="form-inline my-2 my-md-0 justify-content-end" action="{% url 'set_language' %}" method="post">
                     {% csrf_token %}
-                    <select name="language" onchange="this.form.submit();">
+                    <select class="form-select" name="language" onchange="this.form.submit();">
                         {% for language in LANGUAGES %}
                             {% get_language_info for language.0 as lang_ %}
                             <option value="{{ language.0 }}" {% if language.0 == LANGUAGE_CODE %}selected{% endif %}>{{ lang_.name_local.title }}</option>

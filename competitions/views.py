@@ -10,7 +10,7 @@ from django.contrib.auth.views import login_required
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
-
+ 
 from .models import *
 from .forms import *
 
@@ -18,6 +18,7 @@ def home(request):
     #context = {'test_time': datetime.now()}
     #print(context['test_time'])
     return render(request, "competitions/home.html", )#context=context)
+
 def is_overflowed(list1, num):
     for item in list1:
         if item < num:
@@ -173,6 +174,13 @@ def BracketView(request):
 @login_required
 def single_elimination_tournament(request, tournament_id):
     tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
+    if request.method == 'POST':
+        form = SETournamentStatusForm(request.POST)
+        if form.is_valid():
+            status = form.cleaned_data.get('status')
+            tournament.status = status
+            tournament.save()
+            # return HttpResponseRedirect(reverse("competitions:"))
     context = {"tournament": tournament, "user": request.user}
     return render(request, "competitions/single_elim_tournament.html", context)
 
@@ -184,15 +192,26 @@ def tournaments(request):
 @login_required
 def competitions(request):
     competition_list = Competition.objects.all()
-    context = {"competition_list": competition_list, "user": request.user}
+    context = {"competition_list": competition_list, "user": request.user, "form": CompetitionStatusForm()}
     return render(request, "competitions/competitions.html", context)
 
 @login_required
 def competition(request, competition_id):
+    redirect_to = request.GET.get('next', '')
+    redirect_id = request.GET.get('id', None)
+    if redirect_id:
+        redirect_id = [redirect_id]
     competition = get_object_or_404(Competition, pk=competition_id)
+    if request.method == 'POST':
+        form = CompetitionStatusForm(request.POST)
+        if form.is_valid():
+            status = form.cleaned_data.get('status')
+            competition.status = status
+            competition.save()
+            return HttpResponseRedirect(reverse(f"competitions:{redirect_to}",args=redirect_id))
     if competition.is_archived:
         return HttpResponseRedirect(reverse("competitions:competitions"))
-    context = {"competition": competition, "user": request.user, "Status": Status}
+    context = {"competition": competition, "user": request.user, "form": SETournamentStatusForm()}
     return render(request, "competitions/competition.html", context)
 
 @login_required

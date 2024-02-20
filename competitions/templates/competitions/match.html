@@ -10,7 +10,7 @@
                 <h1>Match: {{ match }}</h1>
 
                 {% if match.advancers.exists %}
-                    <h2>Advancing teams: </h2>
+                    <h2>{% trans "Advancing teams:" %}</h2>
                     <ul>
                         {% for team in match.advancers.all %}
                             <li>{{ team }}</li>
