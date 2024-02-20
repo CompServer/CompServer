@@ -16,32 +16,22 @@
     ({{ tournament.points|floatformat:"0" }} {% trans "points" %})
 </h1>
 
-<!-- 
-    There are no errors here, your IDE is lying 
-    - Matt 
--->
 <div class="bracket" style="height: {{ bracket_dict.bracketHeight }}px; width: {{ bracket_dict.bracketWidth }}px;">
-
     {% for round_data in bracket_dict.round_data %}
     <div class="round" style="height: {{ bracket_dict.roundHeight }}px; width: {{ bracket_dict.roundWidth }}px;">
         {% for match_data in round_data.match_data %}
         <div class="match" style="height: {{ match_data.match_height }}px; width: {{ match_data.match_width }}px;">
             <div class="center"
-                style="height: {{ match_data.center_height }}px; margin-top: {{ match_data.top_padding }}px; ">
+                style="height: {{ match_data.center_height }}px; margin-top: {{ match_data.center_top_margin }}px; ">
             {% for team_data in match_data.team_data %}
-
                 {% if team_data.prev %} 
                     {% if forloop.counter <= match_data.team_data|length|divisibleby:2 %}
-                    <div class="connector-back-up" style=""></div>
+                    <div class="connector-back-none" style=""></div>
                     {% else %}
-                    <div class="connector-back-down" style=""></div>
+                    <div class="connector-back-none" style=""></div>
                     {% endif %}
                 {% endif %}
-
-
                 {% if team_data.won%}<div class="connector-front-none" style=""></div>{%endif%}
-
-
             <div class="team"
                 style="width: {{ match_data.match_width }}px; {%if team_data.won %}background-color: #fff5a8;{%endif%} cursor: pointer;"
                 onclick="location.href='{% url 'competitions:judge_match' team_data.match_id %}';">
@@ -55,7 +45,5 @@
 </div>
 {% endfor %}
 </div>
-
-<div class="connector" style="padding-top: {{ match_data.top_padding }}px"></div>
 
 {% endblock %}

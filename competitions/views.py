@@ -93,6 +93,7 @@ def single_elimination_tournament(request, tournament_id):
 
     note: steps 1 and 2 could probably be combined
     '''
+
     # where all the matches get stored, only used in this function, not passed to template
     bracket_array = []
 
@@ -103,8 +104,6 @@ def single_elimination_tournament(request, tournament_id):
             bracket_array.append({})
 
         # get the names of the teams competing, stolen to the toString
-        #    
-        #TODO: theres definitely a prettier way to do this 
         competitors = []
         if curr_match.starting_teams.exists():
             for team in curr_match.starting_teams.all():
@@ -142,6 +141,8 @@ def single_elimination_tournament(request, tournament_id):
     #this gets weird of the weird empty round caused by the previous section
     bracket_array.pop()
 
+    bracket_array
+
     #the number of rounds in the tournament: top 8, semi-finals, championship, etc
     numRounds = len(bracket_array)
 
@@ -158,8 +159,8 @@ def single_elimination_tournament(request, tournament_id):
     # you can also look at bracket.html to see how its used
     round_data = []
     matchWidth = 200
-    connectorWidth = 50
-    bracketWidth = (matchWidth+connectorWidth)*numRounds
+    connectorWidth = 25
+    bracketWidth = (matchWidth+(connectorWidth*2))*numRounds
     bracketHeight = mostTeamsInRound*50
     roundWidth = matchWidth+connectorWidth
 
@@ -178,17 +179,15 @@ def single_elimination_tournament(request, tournament_id):
                 ]
             
             team_height = 25
-            #1 pixel extra for the borders
-            center_height = (team_height+1) * num_teams
-            top_padding = (match_height - center_height) / 2
+            center_height = (team_height) * num_teams
+            center_top_margin = (match_height - center_height) / 2
 
             match_data.append({
                 "team_data": team_data,
                 "match_height": match_height,
                 "match_width": matchWidth,
                 "center_height": center_height,
-                "top_padding": top_padding,
-                "scores":[0,0]
+                "center_top_margin": center_top_margin,
             })
 
         round_data.append({
