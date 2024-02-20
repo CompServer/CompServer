@@ -7,14 +7,15 @@ import math, random
 from .models import *
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth.views import login_required
+from django.db.models import Q
 from django.http import HttpRequest, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
+from django.utils import timezone
 import random
 import zoneinfo
 from .models import *
 from .forms import *
-
 
 def is_overflowed(list1, num):
     for item in list1:
@@ -248,14 +249,9 @@ def competition(request: HttpRequest, competition_id):
     return render(request, "competitions/competition.html", context)
 
 
-def team(request: HttpRequest, team_id):
-    team = get_object_or_404(Team, pk=team_id)
-    context = {'team': team}
-    return render(request, "competitions/team.html", context)
-
-
-def credits(request: HttpRequest):
-    return render(request, "competitions/credits.html")
+def credits(request):
+    context = {"user": request.user}
+    return render(request, "competitions/credits.html", context)
 
 
 def not_implemented(request: HttpRequest, *args, **kwargs):
@@ -332,3 +328,14 @@ def set_timezone_view(request: HttpRequest):
     return render(request, "timezones.html", {"timezones": timezones})
 
 
+def team(request, team_id):
+    today = timezone.now().date()
+    upcoming_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), tournament__competition__start_date__lte=today, tournament__competition__end_date__gte=today, advancers=None).order_by("time")
+    context = {
+        'team': Team.objects.get(pk=team_id),
+        'wins_list': [],
+        'draws_list': [],
+        'losses_list': [],
+        'upcoming_matches': upcoming_matches,
+    }
+    return render(request, "competitions/team.html", context)
