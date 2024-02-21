@@ -130,7 +130,6 @@ class JudgeTests(TestCase):
         cls.open_old_competition = Competition.objects.create(name='open_old_competition', status=Status.OPEN, start_date=cls.yesterday, end_date=cls.yesterday)
         cls.open_current_competition = Competition.objects.create(name='open_current_competition', status=Status.OPEN, start_date=cls.yesterday, end_date=cls.tomorrow)
         cls.other_open_current_competition = Competition.objects.create(name='other_open_current_competition', status=Status.OPEN, start_date=cls.yesterday, end_date=cls.tomorrow)
-        cls.other_open_current_competition = Competition.objects.create(name='other_open_current_competition', status=Status.OPEN, start_date=cls.yesterday, end_date=cls.tomorrow)
         cls.open_future_competition = Competition.objects.create(name='open_future_competition', status=Status.OPEN, start_date=cls.tomorrow, end_date=cls.tomorrow)
         cls.closed_current_competition = Competition.objects.create(name='closed_current_competition', status=Status.CLOSED, start_date=cls.yesterday, end_date=cls.tomorrow)
         cls.open_tournament = SingleEliminationTournament.objects.create(status=Status.OPEN, event=cls.event, competition=cls.open_current_competition)
@@ -230,6 +229,7 @@ class JudgeTests(TestCase):
         url = reverse("competitions:judge_match", args=[self.__class__.match_closed_tournament.id])
         response = self.tournament_judge_client.post(url, {"advancers": self.__class__.team1_in_competition_and_tournament_and_match.id})
         self.assertNotEqual(response.status_code, 200, "Shouldn't have been able to judge a match in a closed tournament")
+        # failing for the wrong reasons...
 
     def test_judge_but_tournament_not_open(self):
         pass
