@@ -16,6 +16,7 @@ class SanityTests(TestCase):
         cls.today = date.today()
         cls.yesterday = cls.today - timedelta(days=1)
         cls.tomorrow = cls.today + timedelta(days=1)
+        cls.organization = Organization.objects.create(name="University of Chicago Laboratory Schools")
         cls.sport = Sport.objects.create(name="Robotics")
         cls.event = Event.objects.create(name="Sumo", sport=cls.sport)
         cls.non_judge = User.objects.create(username="norm")
@@ -51,6 +52,8 @@ class SanityTests(TestCase):
         cls.open_tournament.teams.add(cls.team_in_competition_and_tournament)
         cls.open_tournament.teams.add(cls.team1_in_competition_and_tournament_and_match)
         cls.open_tournament.teams.add(cls.team2_in_competition_and_tournament_and_match)
+        cls.match_rank1 = Ranking.objects.create(tournament=cls.open_tournament, team=cls.team1_in_competition_and_tournament_and_match, rank=1)
+        cls.match_rank1 = Ranking.objects.create(tournament=cls.open_tournament, team=cls.team2_in_competition_and_tournament_and_match, rank=2)
         cls.match = Match.objects.create(tournament=cls.open_tournament)
         cls.match.starting_teams.add(cls.team1_in_competition_and_tournament_and_match)
         cls.match.starting_teams.add(cls.team2_in_competition_and_tournament_and_match)
@@ -83,11 +86,14 @@ class SanityTests(TestCase):
                 self.assertEqual(response.status_code, 200, "For "+str(url))
 
     def test_all_admin_pages(self):
-        pass
-        # for model in admin.site._registry:
-        #     if model.__module__[:12] == "competitions":
-        #         response = SanityTests.client.get('/admin/competitions/'+model.__name__.lower())
-        #         self.assertEqual(response.status_code, 200, "Could not view admin page for model " + model.__name__)
+        for model in admin.site._registry:
+            if model.__module__[:12] == "competitions":
+                # try the list page
+                response = self.admin_client.get('/admin/competitions/'+model.__name__.lower()+"/")
+                self.assertEqual(response.status_code, 200, "Could not view admin list page for model " + model.__name__)
+                # try the change page
+                response = self.admin_client.get('/admin/competitions/'+model.__name__.lower()+"/1/change/")
+                self.assertEqual(response.status_code, 200, "Could not view admin change page for model " + model.__name__)
     
 
 class JudgeTests(TestCase):
