@@ -19,7 +19,8 @@ class SanityTests(TestCase):
         cls.sport = Sport.objects.create(name="Robotics")
         cls.event = Event.objects.create(name="Sumo", sport=cls.sport)
         cls.non_judge = User.objects.create(username="norm")
-        cls.admin = User.objects.create(username="albert", password="adminPass")
+        cls.admin = User.objects.create(username="albert")
+        cls.admin.set_password("adminPass")
         cls.admin.is_superuser = True
         cls.admin.is_staff = True
         cls.admin.save()
@@ -28,9 +29,13 @@ class SanityTests(TestCase):
         cls.open_future_competition = Competition.objects.create(name='open_future_competition', status=Status.OPEN, start_date=cls.tomorrow, end_date=cls.tomorrow)
         cls.open_tournament = SingleEliminationTournament.objects.create(status=Status.OPEN, event=cls.event, competition=cls.open_current_competition)
         cls.closed_tournament = SingleEliminationTournament.objects.create(status=Status.CLOSED, event=cls.event, competition=cls.open_current_competition)
-        cls.tournament_judge = User.objects.create(username="terry", password="tournamentPass")
+        cls.tournament_judge = User.objects.create(username="terry")
+        cls.tournament_judge.set_password("tournamentPass")
+        cls.tournament_judge.save()
         cls.open_tournament.judges.add(cls.tournament_judge)
         cls.competition_judge = User.objects.create(username="carl")
+        cls.competition_judge.set_password("competitionPass")
+        cls.competition_judge.save()
         cls.open_old_competition.plenary_judges.add(cls.competition_judge)
         cls.open_current_competition.plenary_judges.add(cls.competition_judge)
         cls.open_future_competition.plenary_judges.add(cls.competition_judge)
@@ -49,17 +54,17 @@ class SanityTests(TestCase):
         cls.match = Match.objects.create(tournament=cls.open_tournament)
         cls.match.starting_teams.add(cls.team1_in_competition_and_tournament_and_match)
         cls.match.starting_teams.add(cls.team2_in_competition_and_tournament_and_match)
-        # cls.admin = User.objects.create(username="albert", password="adminPass")
-        # cls.client = Client()
-        # cls.client.login(username="albert", password="adminPass")
 
     def setUp(self):
         self.admin_client = Client()
-        self.admin_client.login(username="albert", password="adminPass")
+        success = self.admin_client.login(username="albert", password="adminPass")
+        self.assertTrue(success, "Failed to login admin")
         self.competition_judge_client = Client()
-        self.competition_judge_client.login(username="albert", password="adminPass")
+        success = self.competition_judge_client.login(username="carl", password="competitionPass")
+        self.assertTrue(success, "Failed to login competition judge")
         self.tournament_judge_client = Client()
-        self.tournament_judge_client.login(username="albert", password="adminPass")
+        success = self.tournament_judge_client.login(username="terry", password="tournamentPass")
+        self.assertTrue(success, "Failed to login tournament judge")
         
     def test_all_url_patterns(self):
         # pass
@@ -69,13 +74,13 @@ class SanityTests(TestCase):
                 url = reverse(app_name+":"+path.name)
             except:
                 try:
-                    url = reverse(app_name+":"+path.name, args=[1])
+                    url = reverse(app_name+":"+path.name, args=[1]) # try the first one
                 except:
-                    pass
+                    continue
             if url:
-                print(url, flush=True)
+                # Admin should be able to get to all pages
                 response = self.admin_client.get(url)
-                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.status_code, 200, "For "+str(url))
 
     def test_all_admin_pages(self):
         pass
