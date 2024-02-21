@@ -68,9 +68,9 @@ class SanityTests(TestCase):
         self.tournament_judge_client = Client()
         success = self.tournament_judge_client.login(username="terry", password="tournamentPass")
         self.assertTrue(success, "Failed to login tournament judge")
-        
+
     def test_all_url_patterns(self):
-        # pass
+        # Admin should be able to get to all pages
         for path in urlpatterns:
             url = None
             try:
@@ -81,7 +81,6 @@ class SanityTests(TestCase):
                 except:
                     continue
             if url:
-                # Admin should be able to get to all pages
                 response = self.admin_client.get(url)
                 self.assertEqual(response.status_code, 200, "For "+str(url))
 
@@ -95,6 +94,23 @@ class SanityTests(TestCase):
                 response = self.admin_client.get('/admin/competitions/'+model.__name__.lower()+"/1/change/")
                 self.assertEqual(response.status_code, 200, "Could not view admin change page for model " + model.__name__)
     
+    def test_public_pages(self):
+        # All pages except judging should be accessible to an anonymous user (without being redirected to login)
+        anon_client = Client()
+        for path in urlpatterns:
+            if 'judg' not in path.name:
+                url = None
+                try:
+                    url = reverse(app_name+":"+path.name)
+                except:
+                    try:
+                        url = reverse(app_name+":"+path.name, args=[1]) # try the first one
+                    except:
+                        continue
+                if url:
+                    response = anon_client.get(url)
+                    self.assertEqual(response.status_code, 200, "For "+str(url))
+
 
 class JudgeTests(TestCase):
     @classmethod
@@ -113,19 +129,37 @@ class JudgeTests(TestCase):
         cls.admin.save()
         cls.open_old_competition = Competition.objects.create(name='open_old_competition', status=Status.OPEN, start_date=cls.yesterday, end_date=cls.yesterday)
         cls.open_current_competition = Competition.objects.create(name='open_current_competition', status=Status.OPEN, start_date=cls.yesterday, end_date=cls.tomorrow)
+        cls.other_open_current_competition = Competition.objects.create(name='other_open_current_competition', status=Status.OPEN, start_date=cls.yesterday, end_date=cls.tomorrow)
+        cls.other_open_current_competition = Competition.objects.create(name='other_open_current_competition', status=Status.OPEN, start_date=cls.yesterday, end_date=cls.tomorrow)
         cls.open_future_competition = Competition.objects.create(name='open_future_competition', status=Status.OPEN, start_date=cls.tomorrow, end_date=cls.tomorrow)
+        cls.closed_current_competition = Competition.objects.create(name='closed_current_competition', status=Status.CLOSED, start_date=cls.yesterday, end_date=cls.tomorrow)
         cls.open_tournament = SingleEliminationTournament.objects.create(status=Status.OPEN, event=cls.event, competition=cls.open_current_competition)
+        cls.other_tournament = SingleEliminationTournament.objects.create(status=Status.OPEN, event=cls.event, competition=cls.open_current_competition)
         cls.closed_tournament = SingleEliminationTournament.objects.create(status=Status.CLOSED, event=cls.event, competition=cls.open_current_competition)
+        
         cls.tournament_judge = User.objects.create(username="terry")
         cls.tournament_judge.set_password("tournamentPass")
         cls.tournament_judge.save()
         cls.open_tournament.judges.add(cls.tournament_judge)
+        cls.closed_tournament.judges.add(cls.tournament_judge)
+
+        cls.other_tournament_judge = User.objects.create(username="other_terry")
+        cls.other_tournament_judge.set_password("tournamentPass")
+        cls.other_tournament_judge.save()
+        cls.other_tournament.judges.add(cls.other_tournament_judge)
+
         cls.competition_judge = User.objects.create(username="carl")
         cls.competition_judge.set_password("competitionPass")
         cls.competition_judge.save()
         cls.open_old_competition.plenary_judges.add(cls.competition_judge)
         cls.open_current_competition.plenary_judges.add(cls.competition_judge)
         cls.open_future_competition.plenary_judges.add(cls.competition_judge)
+
+        cls.other_competition_judge = User.objects.create(username="other_carl")
+        cls.other_competition_judge.set_password("competitionPass")
+        cls.other_competition_judge.save()
+        cls.other_open_current_competition.plenary_judges.add(cls.other_competition_judge)
+
         cls.team_no_competition = Team.objects.create(name="Ninjas")
         cls.team_in_competition_but_no_tournament = Team.objects.create(name="Cobras")
         cls.team_in_competition_and_tournament_but_no_match = Team.objects.create(name="Tridents")
@@ -138,11 +172,17 @@ class JudgeTests(TestCase):
         cls.open_tournament.teams.add(cls.team_in_competition_and_tournament_but_no_match)
         cls.open_tournament.teams.add(cls.team1_in_competition_and_tournament_and_match)
         cls.open_tournament.teams.add(cls.team2_in_competition_and_tournament_and_match)
+        cls.closed_tournament.teams.add(cls.team1_in_competition_and_tournament_and_match)
+        cls.closed_tournament.teams.add(cls.team2_in_competition_and_tournament_and_match)
+        
         cls.match_rank1 = Ranking.objects.create(tournament=cls.open_tournament, team=cls.team1_in_competition_and_tournament_and_match, rank=1)
         cls.match_rank1 = Ranking.objects.create(tournament=cls.open_tournament, team=cls.team2_in_competition_and_tournament_and_match, rank=2)
         cls.match = Match.objects.create(tournament=cls.open_tournament)
         cls.match.starting_teams.add(cls.team1_in_competition_and_tournament_and_match)
         cls.match.starting_teams.add(cls.team2_in_competition_and_tournament_and_match)
+        cls.match_closed_tournament = Match.objects.create(tournament=cls.closed_tournament)
+        cls.match_closed_tournament.starting_teams.add(cls.team1_in_competition_and_tournament_and_match)
+        cls.match_closed_tournament.starting_teams.add(cls.team2_in_competition_and_tournament_and_match)
 
     def setUp(self):
         self.admin_client = Client()
@@ -151,8 +191,14 @@ class JudgeTests(TestCase):
         self.competition_judge_client = Client()
         success = self.competition_judge_client.login(username="carl", password="competitionPass")
         self.assertTrue(success, "Failed to login competition judge")
+        self.other_competition_judge_client = Client()
+        success = self.other_competition_judge_client.login(username="other_carl", password="competitionPass")
+        self.assertTrue(success, "Failed to login competition judge")
         self.tournament_judge_client = Client()
         success = self.tournament_judge_client.login(username="terry", password="tournamentPass")
+        self.assertTrue(success, "Failed to login tournament judge")
+        self.other_tournament_judge_client = Client()
+        success = self.other_tournament_judge_client.login(username="other_terry", password="tournamentPass")
         self.assertTrue(success, "Failed to login tournament judge")
  
     def test_judge_but_not_logged_in(self):
@@ -162,10 +208,14 @@ class JudgeTests(TestCase):
         self.assertNotEqual(response.status_code, 200, "Shouldn't have been able to judge a match if you're not logged in")
 
     def test_judge_but_not_for_this_competition(self):
-        pass
+        url = reverse("competitions:judge_match", args=[self.__class__.match.id])
+        response = self.other_competition_judge_client.post(url, {"advancers": self.__class__.team1_in_competition_and_tournament_and_match.id})
+        self.assertNotEqual(response.status_code, 200, "Shouldn't have been able to judge a match if you're not a judge for this competition")
     
     def test_judge_for_this_competition_but_not_this_tournament(self):
-        pass
+        url = reverse("competitions:judge_match", args=[self.__class__.match.id])
+        response = self.other_tournament_judge_client.post(url, {"advancers": self.__class__.team1_in_competition_and_tournament_and_match.id})
+        self.assertNotEqual(response.status_code, 200, "Shouldn't have been able to judge a match if you're not a judge for this competition or this tournament")
 
     def test_judge_is_plenary_judge(self):
         pass
@@ -177,7 +227,9 @@ class JudgeTests(TestCase):
         pass
 
     def test_judge_but_tournament_not_open(self):
-        pass
+        url = reverse("competitions:judge_match", args=[self.__class__.match_closed_tournament.id])
+        response = self.tournament_judge_client.post(url, {"advancers": self.__class__.team1_in_competition_and_tournament_and_match.id})
+        self.assertNotEqual(response.status_code, 200, "Shouldn't have been able to judge a match in a closed tournament")
 
     def test_judge_but_tournament_not_open(self):
         pass
