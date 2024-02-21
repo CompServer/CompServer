@@ -129,6 +129,7 @@ def single_elimination_tournament(request: HttpRequest, tournament_id):
 
     note: steps 1 and 2 could probably be combined
     '''
+
     # where all the matches get stored, only used in this function, not passed to template
     bracket_array = []
 
@@ -139,8 +140,6 @@ def single_elimination_tournament(request: HttpRequest, tournament_id):
             bracket_array.append({})
 
         # get the names of the teams competing, stolen to the toString
-        #    
-        #TODO: theres definitely a prettier way to do this 
         competitors = []
         if curr_match.starting_teams.exists():
             for team in curr_match.starting_teams.all():
@@ -178,6 +177,8 @@ def single_elimination_tournament(request: HttpRequest, tournament_id):
     #this gets weird of the weird empty round caused by the previous section
     bracket_array.pop()
 
+    bracket_array
+
     #the number of rounds in the tournament: top 8, semi-finals, championship, etc
     numRounds = len(bracket_array)
 
@@ -194,39 +195,35 @@ def single_elimination_tournament(request: HttpRequest, tournament_id):
     # you can also look at bracket.html to see how its used
     round_data = []
     matchWidth = 200
-    connectorWidth = 50
-    bracketWidth = (matchWidth+connectorWidth)*numRounds
+    connectorWidth = 25
+    bracketWidth = (matchWidth+(connectorWidth*2))*numRounds
     bracketHeight = mostTeamsInRound*50
     roundWidth = matchWidth+connectorWidth
 
     for i in range(numRounds):
         num_matches = len(bracket_array[numRounds-i-1])
-        match_height = roundHeight / num_matches
-        match_width = matchWidth
+        match_height = bracketHeight / num_matches
         match_data = []
         for j in range(num_matches):
             team_data = []
             #this is where we convert from bracket_array (made above) to bracket_dict (used in template)
-            if j in bracket_array[numRounds-i-1] and  bracket_array[numRounds-i-1][j] is not None:
+            num_teams = 0
+            if j in bracket_array[numRounds-i-1] and bracket_array[numRounds-i-1][j] is not None:
                 num_teams = len(bracket_array[numRounds-i-1][j])
                 team_data = [
                     bracket_array[numRounds-i-1][j][k] for k in range(num_teams)
                 ]
             
             team_height = 25
-            #1 pixel extra for the borders
-            center_height = (team_height+1) * num_teams
-            top_padding = (match_height - center_height) / 2
-
-            if i is numRounds-1 and len(bracket_array[numRounds-i-1]) < len(bracket_array[numRounds-i-2]): 
-                top_padding = match_data[-1]
+            center_height = (team_height) * num_teams
+            center_top_margin = (match_height - center_height) / 2
 
             match_data.append({
                 "team_data": team_data,
                 "match_height": match_height,
-                "match_width": match_width,
+                "match_width": matchWidth,
                 "center_height": center_height,
-                "top_padding": top_padding,
+                "center_top_margin": center_top_margin,
             })
 
         round_data.append({
@@ -241,34 +238,25 @@ def single_elimination_tournament(request: HttpRequest, tournament_id):
         "round_data": round_data
     }
     
-    context = {"bracket_dict": bracket_dict,}
+    tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
+    context = {
+        "tournament": tournament, 
+        "bracket_dict": bracket_dict,
+    }
     return render(request, "competitions/bracket.html", context)
 
-@login_required
-def single_elimination_tournament(request, tournament_id):
-    tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
-    if request.method == 'POST':
-        form = SETournamentStatusForm(request.POST)
-        if form.is_valid():
-            status = form.cleaned_data.get('status')
-            tournament.status = status
-            tournament.save()
-            # return HttpResponseRedirect(reverse("competitions:"))
-    context = {"tournament": tournament, "user": request.user}
-    return render(request, "competitions/single_elim_tournament.html", context)
 
-@login_required
 def tournaments(request):
     context = {"user": request.user}
     return render(request, "competitions/tournaments.html", context)
 
-@login_required
+
 def competitions(request):
     competition_list = Competition.objects.all()
     context = {"competition_list": competition_list, "user": request.user, "form": CompetitionStatusForm()}
     return render(request, "competitions/competitions.html", context)
 
-@login_required
+
 def competition(request, competition_id):
     redirect_to = request.GET.get('next', '')
     redirect_id = request.GET.get('id', None)
