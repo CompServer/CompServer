@@ -290,7 +290,8 @@ def judge_match(request: HttpRequest, pk: int):
     if instance.prev_matches.exists():
         winner_choice_ids = []
         for match in instance.prev_matches.all():
-            winner_choice_ids.extend([x.id for x in match.advancers.all()])
+            if match.advancers.exists():
+                winner_choice_ids.extend([x.id for x in match.advancers.all()])
         winner_choices = Team.objects.filter(id__in=winner_choice_ids)
     elif instance.starting_teams.exists():
         winner_choices = instance.starting_teams.all()
