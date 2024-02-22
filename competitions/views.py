@@ -32,7 +32,6 @@ def sort_list(list1, list2):
 
 def generate_single_elimination_matches(request, tournament_id):
     #sort the list by ranking, then use a two-pointer alogrithm to make the starting matches
-    #figure out how to do the next matches later.
     tournament = get_object_or_404(AbstractTournament, pk=tournament_id)
     teams = []
     ranks = []
@@ -43,21 +42,56 @@ def generate_single_elimination_matches(request, tournament_id):
     rank_teams = {}
     for i in range(len(teams)):
         rank_teams[i+1] = teams[i]
-    
-    num_matches = len(rank_teams)
-    matches = []
+    #i have no idea if this'll work but I'm thinking about setting up a round of dummy mathces with just one team and straggler matches.
+    num_teams = len(rank_teams)
+    num_matches = 1
+    extra_matches = []
+    while num_matches * 2 < num_teams:
+        num_matches *= 2
     i = 1
-    j = num_matches
+    while i < num_matches - (num_teams - num_matches):
+        match = Match.objects.create(tournament=tournament)
+        match.starting_teams.add(teams[i])
+        match.save()
+        extra_matches.append(match)
+        i += 1
+    j = num_teams
     while i < j:
         match = Match.objects.create(tournament=tournament)
         match.starting_teams.add(teams[i], teams[j])
-        if j % 2 == 1 and i == 1:
-            i += 1
-            match.starting_teams.add(teams[i])
+        match.save()
+        extra_matches.append(match)
+        i += 1
+        j -= 1
+    # #getting straggler matches
+    # num_matches = len(rank_teams)
+    # i = 1
+    # while i < num_matches:
+    #     i *= 2
+    # temp = i
+    # j = num_matches
+    # extra_matches = []
+    # while i < j:
+    #     match = Match.objects.create(tournament=tournament)
+    #     match.starting_teams.add(teams[i], teams[j])
+    #     match.save()
+    #     matches.append(match)
+    #     i += 1
+    #     j -= 1
+
+    #regular starting matches
+    i = 0
+    j = num_matches - 1
+    matches = []
+    while i < j:
+        match = Match.objects.create(tournament=tournament)
+        match.prev_matches.add(extra_matches[i], extra_matches[j])
         match.save()
         matches.append(match)
         i += 1
         j -= 1
+    num_matches = len(matches)
+    #rest of the matches
     while num_matches > 1:
         new_matches = []
         for i in range(0, num_matches, 2):
