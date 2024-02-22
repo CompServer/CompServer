@@ -64,18 +64,18 @@
             <div class="collapse navbar-collapse" id="navbarcontent">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'competitions:home' %}">{% trans "Home" %}</a>
+                        <a class="nav-link" href="{% url 'competitions:home' %}">{% translate "Home" %}</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'competitions:competitions' %}">{% trans "Competitions" %}</a>
+                        <a class="nav-link" href="{% url 'competitions:competitions' %}">{% translate "Competitions" %}</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'competitions:credits' %}">{% trans "Credits" %}</a>
+                        <a class="nav-link" href="{% url 'competitions:credits' %}">{% translate "Credits" %}</a>
                     </li>
                     {% comment %} only implemented for home page {% endcomment %}
                     {% if user.is_staff %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'admin:index' %}">{% trans "Admin" %}</a>
+                            <a class="nav-link" href="{% url 'admin:index' %}">{% translate "Admin" %}</a>
                         </li>
                     {% endif %}
                     {% block links %}

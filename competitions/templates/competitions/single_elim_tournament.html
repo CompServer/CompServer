@@ -10,11 +10,11 @@
         {% elif tournament.is_in_setup %}
             <i class="bi-gear"></i>
         {% endif %}
-        {{ tournament.event.name }} {% trans "from" %} {{ tournament.competition.name }}      
+        {{ tournament.event.name }} {% translate "from" %} {{ tournament.competition.name }}      
     </h1>
     <hr>
     {% if tournament.teams.all %}
-        <h3>{% trans "Teams" %}</h3>
+        <h3>{% translate "Teams" %}</h3>
         {% for team in tournament.teams.all %}
             <div class="row d-flex">
                 <div class = "col-12">
@@ -23,5 +23,5 @@
             </div>
         {% endfor %}
     {% endif %}
-    {% comment %} <h3>{% trans "Matches" %}</h3> {% endcomment %}
+    {% comment %} <h3>{% translate "Matches" %}</h3> {% endcomment %}
 {% endblock %}
