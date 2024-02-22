@@ -231,8 +231,6 @@ class JudgeTests(TestCase):
         self.assertNotEqual(response.status_code, 200, "Shouldn't have been able to judge a match in a closed tournament")
         # failing for the wrong reasons...
 
-    def test_judge_but_tournament_not_open(self):
-        pass
 
 
 class JudgingTests(TestCase):
