@@ -32,38 +32,27 @@
     float: none;
 }
 
-/* Optimized css magic */
-.connector-back-up,
-.connector-back-down,
-.connector-back-none,
-.connector-front-up,
-.connector-front-down,
-.connector-front-none {
+
+.connector {
     border-bottom: 2px black solid;
     height: 12.5px;
     width: 25px;
 }
 
-.connector-back-up,
-.connector-back-down,
-.connector-back-none {
+.connector-back {
     border-left: 2px black solid;
     float: left;
 }
 
-.connector-front-up,
-.connector-front-down,
-.connector-front-none {
+.connector-front {
     border-right: 2px black solid;
     float: right;
 }
 
-.connector-back-up,
-.connector-front-up {
+.connector-up {
     margin-top: 0px;
 }
 
-.connector-back-down,
-.connector-front-down {
+.connector-down {
     margin-top: 12.5px;
 }
