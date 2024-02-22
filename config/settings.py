@@ -72,6 +72,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'config.custom.context_processors.tz', # custom context processor: passes in current timezone as "TIME_ZONE"
                 'config.custom.context_processors.user', # custom context processor: passes in user as variable "user"
+                'config.custom.context_processors.current_time', # custom context processor: passes in variables "NOW", "CURRENT_TIME", "CURRENT_DATE"
             ],
         },
     },
@@ -166,5 +167,3 @@ SHOW_TOOLBAR_CALLBACK = show_toolbar
 LOGIN_REDIRECT_URL = '/'
 
 LOGIN_URL = '/accounts/login/'
-
-GEOIP_DATABASE = 'geoIP.mmdb'
