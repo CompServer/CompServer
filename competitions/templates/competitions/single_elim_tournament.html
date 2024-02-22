@@ -2,13 +2,13 @@
 {% load i18n %}
 {% block content %}
     <h1>{% if tournament.is_judgable %}
-            <i class="bi-activity"></i>
+            <i class="bi-activity" title="{{ competition.status }}"></i>
         {% elif tournament.is_complete %}
-            <i class="bi-check2-circle"></i>
+            <i class="bi-check2-circle" title="{{ competition.status }}"></i>
         {% elif tournament.is_closed %}
-            <i class="bi-x-circle"></i>
+            <i class="bi-x-circle" title="{{ competition.status }}"></i>
         {% elif tournament.is_in_setup %}
-            <i class="bi-gear"></i>
+            <i class="bi-gear" title="{{ competition.status }}"></i>
         {% endif %}
         {{ tournament.event.name }} {% translate "from" %} {{ tournament.competition.name }}      
     </h1>

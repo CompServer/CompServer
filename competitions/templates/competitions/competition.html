@@ -6,13 +6,13 @@
     <header>
         <h1>
             {% if competition.is_judgable %}
-                <i class="bi-activity"></i>
+                <i class="bi-activity" title="{{ competition.status }}"></i>
             {% elif competition.is_complete %}
-                <i class="bi-check2-circle"></i>
+                <i class="bi-check2-circle" title="{{ competition.status }}"></i>
             {% elif competition.is_closed %}
-                <i class="bi-x-circle"></i>
+                <i class="bi-x-circle" title="{{ competition.status }}"></i>
             {% elif competition.is_in_setup %}
-                <i class="bi-gear"></i>
+                <i class="bi-gear" title="{{ competition.status }}"></i>
             {% endif %}
             {{ competition }}
         </h1>
@@ -25,13 +25,13 @@
                 {% if not tournament.is_archived %}
                     <div class = "col-12 tournament">
                         {% if tournament.is_judgable %} 
-                            <i class="bi-activity"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
+                            <i class="bi-activity" title="{{ competition.status }}"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
                         {% elif tournament.is_complete %} 
-                            <i class="bi-check2-circle"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
+                            <i class="bi-check2-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
                         {% elif tournament.is_closed %} 
-                            <i class="bi-x-circle"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
+                            <i class="bi-x-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
                         {% elif tournament.is_in_setup %}
-                            <i class="bi-gear"></i> {{ tournament.event.name }}
+                            <i class="bi-gear" title="{{ competition.status }}"></i> {{ tournament.event.name }}
                         {% endif %}  
                         ({{ tournament.points|floatformat:"0" }} {% translate "points" %}) 
                         {% if user.is_staff %}
