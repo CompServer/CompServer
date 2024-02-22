@@ -13,13 +13,10 @@
         {% else %}
             <p>{% trans "Coached by" %} @{{ team.coach.username }}</p>
         {% endif %}
-        <p>TEAM LOGO HERE</p>
     </header>
     <div class="organization-information">
         <h3>{% trans "Information About" %} {{team.organization.name}}</h3>
-        <h4>{% trans "Address" %}:<i>....</i></h4>
-        <!-- There isn't a field for address for organizations yet -->
-        <p>logo...</p>
+        <h4>{% trans "Address" %}</h4>
     </div>
     {% if upcoming_matches.exists %}
         <div class="match-schedule">
@@ -31,11 +28,11 @@
             </ul>
         </div>
     {% endif %}
-    {% if team.competed_in_at_least_one_comp %}
+    {% if past_competitions.exists %}
         <div class="past-competitions-set">
             <h3>{% trans "Past Competitions" %}</h3>
             <ul>
-                {% for competition in team.competition_set.all %}
+                {% for competition in past_competitions %}
                     <li>
                         <div class="row d-flex">
                             <div class = "col-12">
@@ -55,72 +52,62 @@
             </ul>
         </div>
     {% endif %}
-    <div class="competition-set">
-        <h3>{% trans "Competitions participated in" %}</h3>
-        <ul>
-            {% for competition in team.competition_set.all %}
-                <li>
-                    <div class="row d-flex">
-                        <div class = "col-12">
-                            {% if competition.is_judgable %}
-                                <p><i class="bi-activity"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a></p>
-                            {% elif competition.is_complete %}
-                                <p><i class="bi-check2-circle"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a></p>
-                            {% elif competition.is_closed %}
-                                <p><i class="bi-x-circle"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a></p>
-                            {% elif competition.is_in_setup %}
-                                <p><i class="bi-gear"></i> {{ competition }}</p>
-                            {% endif %}
-                        </div>
-                    </div>
-                </li>
-            {% endfor %}
-        </ul>
-    </div>
-    <div class="tournament-set">
-        <h3>{% trans "Tournaments Won" %}</h3>
-        <ul>
-            {% for tournament in team.tournament_set.all %}
-                <li>
-                    <div class="row d-flex">
-                        <div class = "col-12">
-                            {% if tournament.is_judgable %} 
-                                <p><i class="bi-activity"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
-                            {% elif tournament.is_complete %} 
-                                <p><i class="bi-check2-circle"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
-                            {% elif tournament.is_closed %} 
-                                <p><i class="bi-x-circle"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
-                            {% elif tournament.is_in_setup %}
-                                <p><i class="bi-gear"></i> {{ tournament }}</p>
-                            {% endif %}  
-                        </div>
-                    </div>
-                </li>
-            {% endfor %}
-        </ul>
-    </div>
-    <div class="match-records">
-        <h3>{% trans "Match History" %}</h3>
-        <div class="row">
-            <h4>{% trans "Wins" %}</h4>
+    {% if won_tournaments.exists %}
+        <div class="tournament-set">
+            <h3>{% trans "Tournaments Won" %}</h3>
             <ul>
-                {% for match in won_matches %}  
-                    <li>{% trans "Tournament:" %} <a href="{% url 'competitions:tournament' match.tournament.id %}">{{ match.tournament.name }}</a>, {% trans "Event:" %} {{ match.event.name }}, {% trans "Players:" %}
-                            {% for player in match.event.player_set.all %} 
-                                {{ player.first_name }},
-                            {% endfor %}
-                            {% trans "Score:" %} {{ match.awarded_points }}</li>
-                    {% endif %}
-                {% empty %}
-                    <p>{% trans "No wins!" %}</p>
+                {% for tournament in won_tournaments %}
+                    <li>
+                        <div class="row d-flex">
+                            <div class = "col-12">
+                                {% if tournament.is_judgable %} 
+                                    <p><i class="bi-activity"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
+                                {% elif tournament.is_complete %} 
+                                    <p><i class="bi-check2-circle"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
+                                {% elif tournament.is_closed %} 
+                                    <p><i class="bi-x-circle"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
+                                {% elif tournament.is_in_setup %}
+                                    <p><i class="bi-gear"></i> {{ tournament }}</p>
+                                {% endif %}  
+                            </div>
+                        </div>
+                    </li>
                 {% endfor %}
             </ul>
         </div>
-        <div class="row">
-            <h4>{% trans "Losses" %}</h4>
+    {% endif %}
+    {% if past_matches.exists %}
+        <div class="match-records">
+            <h3>{% trans "Match History" %}</h3>
+            {% if won_matches.exists %}
+                <div class="row">
+                    <h4>{% trans "Wins" %}</h4>
+                    <ul>
+                        {% for match in won_matches %}  
+                            <li>{{ match }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% if lost_matches.exists %}
+                <div class="row">
+                    <h4>{% trans "Losses" %}</h4>
+                    <ul>
+                        {% for match in lost_matches %}
+                            <li>{{ match }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+            {% if draw_matches.exists %}
+                <div class="row">
+                    <h4>{% trans "Draws" %}</h4>
+                    <ul>
+                        {% for match in draw_matches %}
+                            <li>{{ match }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
         </div>
-        <div class="row">
-            <h4>{% trans "Draws" %}</h4>
-        </div>
-    </div>
+    {% endif %}
 {% endblock %}
