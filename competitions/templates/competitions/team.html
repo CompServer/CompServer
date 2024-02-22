@@ -104,9 +104,8 @@
         <div class="row">
             <h4>{% trans "Wins" %}</h4>
             <ul>
-                {% for match in team.won_matches.all %}  
-                    {% if match.advancers.length == 1 %}
-                        <li>{% trans "Tournament:" %} <a href="{% url 'competitions:tournament' match.tournament.id %}">{{ match.tournament.name }}</a>, {% trans "Event:" %} {{ match.event.name }}, {% trans "Players:" %}
+                {% for match in won_matches %}  
+                    <li>{% trans "Tournament:" %} <a href="{% url 'competitions:tournament' match.tournament.id %}">{{ match.tournament.name }}</a>, {% trans "Event:" %} {{ match.event.name }}, {% trans "Players:" %}
                             {% for player in match.event.player_set.all %} 
                                 {{ player.first_name }},
                             {% endfor %}

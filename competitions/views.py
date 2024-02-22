@@ -331,10 +331,14 @@ def set_timezone_view(request: HttpRequest):
 def team(request, team_id):
     today = timezone.now().date()
     upcoming_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), tournament__competition__start_date__lte=today, tournament__competition__end_date__gte=today, advancers=None).order_by("time")
+    won_matches = Match.objects.filter(Q(advancers__id = team_id), advancers.count() == 1).order_by("time")
+    draw_matches = Match.objects.filter(Q(advancers__id = team_id), advancers.count() > 1).order_by("time")
+    lost_matches = Match.objects.filter(Q(starting_teams__id = team_id), Q(advancers__id != team_id)).order_by("time")
     context = {
         'team': Team.objects.get(pk=team_id),
-        'wins_list': [],
-        'draws_list': [],
-        'losses_list': [],
+        'upcoming_matches': upcoming_matches,
+        'wins_list': won_matches,
+        'draws_list': draw_matches,
+        'losses_list': lost_matches,
     }
     return render(request, "competitions/team.html", context)
