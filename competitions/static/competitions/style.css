@@ -30,29 +30,24 @@
     border: 1px black solid;
     margin: 0px 25px 0px 25px;
     float: none;
-}
-
-
-.connector {
-    border-bottom: 2px black solid;
-    height: 12.5px;
-    width: 25px;
+    position: relative;
 }
 
 .connector-back {
-    border-left: 2px black solid;
-    float: left;
+    border-top: 2px black solid;
+    position: absolute;
+    height: 0px;
+    width: 25px;
+    left: 0px;
+    top: 12.5px
 }
 
 .connector-front {
+    border-top: 2px black solid;
     border-right: 2px black solid;
-    float: right;
-}
-
-.connector-up {
-    margin-top: 0px;
-}
-
-.connector-down {
-    margin-top: 12.5px;
+    position: absolute;
+    height: 50px;
+    width: 28px;
+    right: -28px;
+    top: 12.5px
 }
