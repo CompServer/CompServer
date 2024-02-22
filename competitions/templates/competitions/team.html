@@ -1,6 +1,6 @@
 {% extends 'skeleton.html' %}
 {% load i18n %}
-{% block title %}Team: {{ team.name }}{% endblock %} 
+{% block title %}{% trans "Team:" %} {{ team.name }}{% endblock %} 
 {% block content %}
     <header>
         <h1>{% trans "Team:" %} {{ team }}</h1>
@@ -21,59 +21,73 @@
         <!-- There isn't a field for address for organizations yet -->
         <p>logo...</p>
     </div>
-    <div class="match-schedule">
-        <h3>{% trans "Upcoming Matches" %}</h3>
-        {% comment %} all incomplete matches ordered by time... {% endcomment %}
-        {% for competition in team.competition_set.all %}
-            {% if competition.is_judgable and competition.check_date %}
-                {% for tournament in competition.tournament_set.all %}
-                    <div class="row">
-                        <h4>{{ competition.name }}, {{ tournament.name }}, {{ competition.start_date }} - {{ competition.end_date }} </h4>
-                        <h5>{% trans "Your Events" %}</h5>
-                        {% for event in tournament.event_set.all %}
-                            <div class="column">
-                                <p>{{ event.name }}</p>
-                            </div>
-                            <div class="column">
-                                {% for match in event.match_set.all.ordering %}
-                                    {% if match.check_time %}
-                                        {% if match.advancers %}
-                                            {{ break }}
-                                        {% else %}
-                                            <p>{% trans "Match" %} {{ match.id }}: {% trans "Between" %} {{ match }}, {% trans "Begins At" %} {{ match.time }}</p>
-                                        {% endif %}
-                                    {% endif %}
-                                {% endfor %}
-                            </div>
-                        {% endfor %}
-                    </div>
+    {% if upcoming_matches.exists %}
+        <div class="match-schedule">
+            <h3>{% trans "Upcoming Matches" %}</h3>
+            <ul>
+                {% for match in upcoming_matches %}
+                    <li>{{ match.time }} {% trans "between" %} {{ match }}</li>
                 {% endfor %}
-            {% endif %}
-        {% empty %}
-            <p>{% trans "No upcoming matches!" %}</p>
-        {% endfor %}
-    </div> 
+            </ul>
+        </div>
+    {% endif %}
+    {% if team.competed_in_at_least_one_comp %}
+        <div class="past-competitions-set">
+            <h3>{% trans "Past Competitions" %}</h3>
+            <ul>
+                {% for competition in team.competition_set.all %}
+                    <li>
+                        <div class="row d-flex">
+                            <div class = "col-12">
+                                {% if competition.is_judgable %}
+                                    <p><i class="bi-activity"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a></p>
+                                {% elif competition.is_complete %}
+                                    <p><i class="bi-check2-circle"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a></p>
+                                {% elif competition.is_closed %}
+                                    <p><i class="bi-x-circle"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a></p>
+                                {% elif competition.is_in_setup %}
+                                    <p><i class="bi-gear"></i> {{ competition }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
     <div class="competition-set">
         <h3>{% trans "Competitions participated in" %}</h3>
-        <ul>
-            {% for competition in team.competition_set.all %}
-                <li>
-                    <div class="row d-flex">
-                        <div class = "col-12">
-                            {% if competition.is_judgable %}
-                                <p><i class="bi-activity"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a></p>
-                            {% elif competition.is_complete %}
-                                <p><i class="bi-check2-circle"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a></p>
-                            {% elif competition.is_closed %}
-                                <p><i class="bi-x-circle"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a></p>
-                            {% elif competition.is_in_setup %}
-                                <p><i class="bi-gear"></i> {{ competition }}</p>
-                            {% endif %}
-                        </div>
+        {% for competition in team.competition_set.all %}
+            <div class="row d-flex">
+                {% if not competition.is_archived %}
+                    <div class = "col-12 competition">
+                        {% if competition.is_judgable %}
+                            <i class="bi-activity"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
+                        {% elif competition.is_complete %}
+                            <i class="bi-check2-circle"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
+                        {% elif competition.is_closed %}
+                            <i class="bi-x-circle"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
+                        {% elif competition.is_in_setup %}
+                            <i class="bi-gear"></i> {{ competition }}
+                        {% endif %}
+                        {% if user.is_staff %}
+                            <form class="form-inline my-2 my-md-0 justify-content-end" action="/competition/{{ competition.id }}/?next=team&id={{ team.id }}" method="POST" id="status">
+                                {% csrf_token %}
+                                <div class="input-group">
+                                    <select name="status" onchange="this.form.submit();">
+                                        <option value="SETUP" {% if competition.is_in_setup %}selected{% endif %}>SETUP</option>
+                                        <option value="OPEN" {% if competition.is_judgable %}selected{% endif %}>OPEN</option>
+                                        <option value="COMPLETE" {% if competition.is_complete %}selected{% endif %}>COMPLETE</option>
+                                        <option value="CLOSED" {% if competition.is_closed %}selected{% endif %}>CLOSED</option>
+                                        <option value="ARCHIVED" {% if competition.is_archived %}selected{% endif %}>ARCHIVED</option>
+                                    </select>
+                                </div>
+                            </form>
+                        {% endif %}
                     </div>
-                </li>
-            {% endfor %}
-        </ul>
+                {% endif %}
+            </div>
+        {% endfor %}
     </div>
     <div class="tournament-set">
         <h3>{% trans "Tournaments Won" %}</h3>
@@ -81,17 +95,33 @@
             {% for tournament in team.tournament_set.all %}
                 <li>
                     <div class="row d-flex">
-                        <div class = "col-12">
-                            {% if tournament.is_judgable %} 
-                                <p><i class="bi-activity"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
-                            {% elif tournament.is_complete %} 
-                                <p><i class="bi-check2-circle"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
-                            {% elif tournament.is_closed %} 
-                                <p><i class="bi-x-circle"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
-                            {% elif tournament.is_in_setup %}
-                                <p><i class="bi-gear"></i> {{ tournament }}</p>
-                            {% endif %}  
-                        </div>
+                        {% if not tournament.is_archived %}
+                            <div class = "col-12 tournament">
+                                {% if tournament.is_judgable %} 
+                                    <p><i class="bi-activity"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
+                                {% elif tournament.is_complete %} 
+                                    <p><i class="bi-check2-circle"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
+                                {% elif tournament.is_closed %} 
+                                    <p><i class="bi-x-circle"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
+                                {% elif tournament.is_in_setup %}
+                                    <p><i class="bi-gear"></i> {{ tournament }}</p>
+                                {% endif %}  
+                                {% if user.is_staff %}
+                                    <form class="form-inline my-2 my-md-0 justify-content-end" action="/tournament/{{ tournament.id }}/" method="POST" id="status">
+                                        {% csrf_token %}
+                                        <div class="input-group">
+                                            <select name="status" onchange="this.form.submit();">
+                                                <option value="SETUP" {% if tournament.is_in_setup %}selected{% endif %}>SETUP</option>
+                                                <option value="OPEN" {% if tournament.is_judgable %}selected{% endif %}>OPEN</option>
+                                                <option value="COMPLETE" {% if tournament.is_complete %}selected{% endif %}>COMPLETE</option>
+                                                <option value="CLOSED" {% if tournament.is_closed %}selected{% endif %}>CLOSED</option>
+                                                <option value="ARCHIVED" {% if tournament.is_archived %}selected{% endif %}>ARCHIVED</option>
+                                            </select>
+                                        </div>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        {% endif %}
                     </div>
                 </li>
             {% endfor %}
@@ -104,14 +134,14 @@
             <ul>
                 {% for match in team.won_matches.all %}  
                     {% if match.advancers.length == 1 %}
-                        <li>Tournament: <a href="{% url 'competitions:tournament' match.tournament.id %}">{{ match.tournament.name }}</a>, Event: {{ match.event.name }}, Players:
+                        <li>{% trans "Tournament:" %} <a href="{% url 'competitions:tournament' match.tournament.id %}">{{ match.tournament.name }}</a>, {% trans "Event:" %} {{ match.event.name }}, {% trans "Players:" %}
                             {% for player in match.event.player_set.all %} 
                                 {{ player.first_name }},
                             {% endfor %}
-                            Score: {{ match.awarded_points }}</li>
+                            {% trans "Score:" %} {{ match.awarded_points }}</li>
                     {% endif %}
                 {% empty %}
-                    <p>No wins!</p>
+                    <p>{% trans "No wins!" %}</p>
                 {% endfor %}
             </ul>
         </div>

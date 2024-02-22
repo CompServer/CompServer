@@ -144,8 +144,6 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 STATIC_URL = f"/static/"
 
-STATIC_ROOT = f"/static/"
-
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]

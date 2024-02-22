@@ -55,42 +55,43 @@
             <input type="hidden" name="next" value="{{ request.path }}">
         </form>
     {% endif %}
-
-    <nav class="navbar navbar-expand-md navbar-dark bg-dark d-flex" id="Navbar">
-        <b class="navbar-brand p-0 ps-2" href="{% url 'competitions:home' %}"><img src="{% static 'logo.png' %}" style="height: 40px;"></b>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExample04"
-            aria-controls="navbarsExample04" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarcontent">
-            <ul class="navbar-nav mr-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'competitions:home' %}">{% trans "Home" %}</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'competitions:credits' %}">{% trans "Credits" %}</a>
-                </li>
-                {% comment %} only implemented for home page {% endcomment %}
-                {% if user.is_staff %}
+    <nav class="navbar navbar-expand-sm navbar-dark bg-dark d-flex" aria-label="navbar" id="Navbar">
+        <div class="container-fluid">
+            <a class="navbar-brand p-0 ps-2" href="{% url 'competitions:home' %}"><img src="{% static 'logo.png' %}" style="height: 40px;"></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarcontent" aria-controls="navbarcontent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarcontent">
+                <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'admin:index' %}">{% trans "Admin" %}</a>
+                        <a class="nav-link" href="{% url 'competitions:home' %}">{% trans "Home" %}</a>
                     </li>
-                {% endif %}
-                {% block links %}
-                {% endblock %}
-            </ul>
-        </div>
-        <div class="collapse navbar-collapse justify-content-end" id="lang">
-            {% get_available_languages as LANGUAGES %} 
-            <form class="form-inline my-2 my-md-0" action="{% url 'set_language' %}" method="post">
-                {% csrf_token %}
-                <select name="language" onchange="this.form.submit();">
-                    {% for language in LANGUAGES %}
-                        {% get_language_info for language.0 as lang_ %}
-                        <option value="{{ language.0 }}" {% if language.0 == LANGUAGE_CODE %}selected{% endif %}>{{ lang_.name_local.title }}</option>
-                    {% endfor %}
-                </select>
-            </form>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'competitions:competitions' %}">{% trans "Competitions" %}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'competitions:credits' %}">{% trans "Credits" %}</a>
+                    </li>
+                    {% comment %} only implemented for home page {% endcomment %}
+                    {% if user.is_staff %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'admin:index' %}">{% trans "Admin" %}</a>
+                        </li>
+                    {% endif %}
+                    {% block links %}
+                    {% endblock %}
+                </ul>
+                {% get_available_languages as LANGUAGES %} 
+                <form class="form-inline my-2 my-md-0 justify-content-end" action="{% url 'set_language' %}" method="post">
+                    {% csrf_token %}
+                    <select class="form-select" name="language" onchange="this.form.submit();">
+                        {% for language in LANGUAGES %}
+                            {% get_language_info for language.0 as lang_ %}
+                            <option value="{{ language.0 }}" {% if language.0 == LANGUAGE_CODE %}selected{% endif %}>{{ lang_.name_local.title }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </div>
         </div>
                 {% comment %} <li class="nav-item">
                     <a class="nav-link" href="#">Link</a>

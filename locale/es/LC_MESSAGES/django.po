@@ -1,0 +1,266 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-02-19 13:50-0600\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: .\competitions\models.py:54
+msgid "Setup"
+msgstr "Configurando"
+
+#: .\competitions\models.py:55
+msgid "Open"
+msgstr "Abierto"
+
+#: .\competitions\models.py:56
+msgid "Closed"
+msgstr "Cerrada"
+
+#: .\competitions\models.py:57
+msgid "Complete"
+msgstr "Completa"
+
+#: .\competitions\models.py:58
+msgid "Archived"
+msgstr "Archivado"
+
+#: .\competitions\models.py:120
+msgid " from "
+msgstr " de "
+
+#: .\competitions\models.py:250
+msgid " tournament @ "
+msgstr "torneo en "
+
+#: .\competitions\models.py:389
+msgid " vs "
+msgstr " vs "
+
+#: .\competitions\models.py:391
+msgid " in "
+msgstr " en "
+
+#: .\competitions\models.py:397
+msgid "Matches"
+msgstr " Partidos "
+
+#: .\competitions\templates\competitions\bracket.html:15
+#, fuzzy
+#| msgid "Tournaments"
+msgid "Tournament"
+msgstr " Torneos "
+
+#: .\competitions\templates\competitions\bracket.html:16
+#: .\competitions\templates\competitions\competition.html:36
+#, fuzzy
+#| msgid "Wins"
+msgid "points"
+msgstr "Ganados"
+
+#: .\competitions\templates\competitions\competition.html:4
+#, fuzzy
+#| msgid "Competitions"
+msgid "Competition Page"
+msgstr "Competencias"
+
+#: .\competitions\templates\competitions\competition.html:22
+msgid "Tournaments"
+msgstr " Torneos "
+
+#: .\competitions\templates\competitions\competition.html:43
+msgid "Competing Teams"
+msgstr "Equipos de Competencias"
+
+#: .\competitions\templates\competitions\competitions.html:7
+#: .\competitions\templates\skeleton.html:75
+msgid "Competitions"
+msgstr "Competencias"
+
+#: .\competitions\templates\competitions\credits.html:5
+#: .\competitions\templates\skeleton.html:78
+msgid "Credits"
+msgstr "Créditos"
+
+#: .\competitions\templates\competitions\credits.html:7
+#, fuzzy
+#| msgid ""
+#| "RoboComp was developed as a final project in the Web Application "
+#| "Frameworks (2024) class at the"
+msgid ""
+"CompServer was developed as a final project in the Web Application "
+"Frameworks (2024) class at the"
+msgstr ""
+"RoboComp fue desarrollado como proyecto final en la clase de Web Application "
+"Frameworks (2024) en "
+
+#: .\competitions\templates\competitions\credits.html:7
+msgid "University of Chicago Laboratory Schools"
+msgstr "University of Chicago Laboratory Schools"
+
+#: .\competitions\templates\competitions\credits.html:7
+msgid "taught by"
+msgstr "enseñado por"
+
+#: .\competitions\templates\competitions\credits.html:7
+msgid "The following students contributed to the project."
+msgstr "Los siguientes estudiantes contribuyeron al proyecto."
+
+#: .\competitions\templates\competitions\credits.html:8
+msgid "Student Contributors"
+msgstr "contribuyentes estudiantiles"
+
+#: .\competitions\templates\competitions\home.html:6
+msgid "Welcome to the Competition Server"
+msgstr "Bienvenido al Servidor de las Competencias"
+
+#: .\competitions\templates\competitions\home.html:8
+msgid "Use the navigation bar to browse through the webite."
+msgstr ""
+
+#: .\competitions\templates\competitions\match_judge.html:5
+#, fuzzy
+#| msgid "Judge a Match"
+msgid "Judge a Match Form"
+msgstr "Juzgar un partido"
+
+#: .\competitions\templates\competitions\match_judge.html:8
+msgid "Judge a Match"
+msgstr "Juzgar un partido"
+
+#: .\competitions\templates\competitions\match_judge.html:12
+msgid "Judge"
+msgstr "Juzgar"
+
+#: .\competitions\templates\competitions\single_elim_tournament.html:13
+msgid "from"
+msgstr "de"
+
+#: .\competitions\templates\competitions\single_elim_tournament.html:17
+msgid "Teams"
+msgstr "Equipos"
+
+#: .\competitions\templates\competitions\team.html:3
+#: .\competitions\templates\competitions\team.html:6
+msgid "Team:"
+msgstr "Equipo:"
+
+#: .\competitions\templates\competitions\team.html:9
+#: .\competitions\templates\competitions\team.html:11
+#: .\competitions\templates\competitions\team.html:14
+msgid "Coached by"
+msgstr "Entrenado por"
+
+#: .\competitions\templates\competitions\team.html:19
+msgid "Information About"
+msgstr "Informacion Sobre"
+
+#: .\competitions\templates\competitions\team.html:20
+msgid "Address"
+msgstr "Dirección"
+
+#: .\competitions\templates\competitions\team.html:25
+#, fuzzy
+#| msgid "Upcoming Match Schedule"
+msgid "Upcoming Matches"
+msgstr "Calendario de Próximos Partidos"
+
+#: .\competitions\templates\competitions\team.html:33
+#, fuzzy
+#| msgid "Tournaments"
+msgid "Your Events"
+msgstr " Torneos "
+
+#: .\competitions\templates\competitions\team.html:44
+#, fuzzy
+#| msgid "Matches"
+msgid "Match"
+msgstr " Partidos "
+
+#: .\competitions\templates\competitions\team.html:44
+msgid "Between"
+msgstr " entre de "
+
+#: .\competitions\templates\competitions\team.html:44
+msgid "Begins At"
+msgstr "Empeza a"
+
+#: .\competitions\templates\competitions\team.html:54
+#, fuzzy
+#| msgid "Upcoming Match Schedule"
+msgid "No upcoming matches!"
+msgstr "Calendario de Próximos Partidos"
+
+#: .\competitions\templates\competitions\team.html:58
+msgid "Competitions participated in"
+msgstr "Competencias participados en"
+
+#: .\competitions\templates\competitions\team.html:80
+msgid "Tournaments Won"
+msgstr "Torneos Ganados"
+
+#: .\competitions\templates\competitions\team.html:102
+msgid "Match History"
+msgstr "Historial de Partidos"
+
+#: .\competitions\templates\competitions\team.html:104
+msgid "Wins"
+msgstr "Ganados"
+
+#: .\competitions\templates\competitions\team.html:108
+#, fuzzy
+#| msgid "Tournaments"
+msgid "Tournament:"
+msgstr "Torneos:"
+
+#: .\competitions\templates\competitions\team.html:108
+msgid "Event:"
+msgstr "Evento:"
+
+#: .\competitions\templates\competitions\team.html:108
+msgid "Players:"
+msgstr "Jugadores:"
+
+#: .\competitions\templates\competitions\team.html:112
+msgid "Score:"
+msgstr "Puntaje:"
+
+#: .\competitions\templates\competitions\team.html:115
+msgid "No wins!"
+msgstr "No Ganados!"
+
+#: .\competitions\templates\competitions\team.html:120
+msgid "Losses"
+msgstr "Pérdidas"
+
+#: .\competitions\templates\competitions\team.html:123
+msgid "Draws"
+msgstr "Tablas"
+
+#: .\competitions\templates\skeleton.html:72
+msgid "Home"
+msgstr "Inicio"
+
+#: .\competitions\templates\skeleton.html:84
+msgid "Admin"
+msgstr "Administración"
+
+#: .\competitions\templates\timezones.html:4
+msgid "Set timezone"
+msgstr "blah"
+
+#: .\competitions\templates\timezones.html:11
+msgid "Time zone:"
+msgstr ""
