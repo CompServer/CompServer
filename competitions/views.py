@@ -342,6 +342,26 @@ def set_timezone_view(request: HttpRequest):
     timezones = sorted(zoneinfo.available_timezones())
     return render(request, "timezones.html", {"timezones": timezones})
 
+def competition_score_page(request, competition_id):
+    #getting tournament points
+    #get tournament
+    #get a team
+    tourney_total = 0
+    if tournament.status == Status.COMPLETE:
+        for match in team.match_set.all().filter(tournament__id = tournament.id):
+            tourney_total += match.points #if we can get each awarded points for a match
+    #then create a list of all match set points for each team
+    #filter ttpl later for each team
+    total_tourney_points_lists = []
+    context = {
+        'competition': Competition.objects.filter(id = competition_id),
+        'ranked_teams': Team.objects.filter(competition__id = competition_id), 
+        'total_tourney_points_lists': total_tourney_points_lists,
+        #name, sport, status, start_date, end_date, teams, planeary judges, 
+    }
+    return render(request, "competitions/comp_scoring.html", context)
+
+
 def team(request, team_id):
     today = timezone.now().date()
     upcoming_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), tournament__competition__start_date__lte=today, tournament__competition__end_date__gte=today, advancers=None).order_by("time")

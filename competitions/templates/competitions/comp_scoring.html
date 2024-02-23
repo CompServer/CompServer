@@ -1,0 +1,57 @@
+{% extends 'skeleton.html' %}
+{% load i18n %}
+{% block title %}{% trans "Competition:" %} {{ competition.name }}{% endblock %} 
+{% block content %}
+    <header>
+        must check if competition is available for scoring
+        sport logo
+        <h1>{% trans "Scores For " %} {{ competition.name }} {{ competition.start_date }} - {{competition.end_date }}</h1>
+        <h2>{% trans "Judged by " %}</h2>
+        {% for judge in competition.planeary_judges.all %}
+            if one judge or
+            star before or something
+            {{ judge.name }},
+        {% endfor %}
+    </header>
+    <div section="body">
+        check that there are tournaments first
+        <div class="row">
+            <div class="column">
+                <p>Blank for style</p>
+            </div>
+            {% for tournament in competition.tournaments.all %}
+                <div class="column">
+                    <p>{{ tournament.event.name }}</p>
+                </div>
+            {% endfor %}
+            <div class="column">
+                <p>Total</p>
+            </div>
+        </div>
+        add links?? to headers
+        check that there are teams
+        {% for team in ranked_teams %}
+            <div class="row">
+                <div class="column">
+                    {{ team.name }}
+                </div>
+                events listed here with scores
+                get the row for your team below
+                {% for points in total_tourney_points_lists %}
+                need tournament total 
+                    make sure there is a value, if not "???" or "Incomplete"
+                    make sure tourney for when nothing happend put incomplete
+                    <div class="column">
+                        {{ points }}
+                    </div>
+                {% endfor %}
+                total should updates
+                <div class="row">
+                    {{ add up all tourney points in the above list }}
+                </div>
+            </div>
+            highlight high rankings for a team
+            should rank highest to lowest tournament event awarded points so maybe ranked tournaments
+        {% endfor %}
+    </div>
+{% endblock %}

@@ -10,6 +10,8 @@ urlpatterns = [
     path("team/<int:team_id>/", views.team, name="team"),
     path("tournament/", views.tournaments, name="tournaments"),
     path("tournament/<int:tournament_id>/", views.single_elimination_tournament, name="single_elimination_tournament"),
+    path("competition/<int:competition_id>/scoring/", views.competition_score_page, name="competition_score_page"),
+    #new alpha 2
     # path("coach/<int:coach_id>/", views.coach, name="coach-page"),
     # path("match/<int:match_id>/", views.match, name="match"),
     path("match/<int:match_id>/judge/", views.judge_match, name="judge_match"),
