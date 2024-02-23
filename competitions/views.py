@@ -267,17 +267,15 @@ def single_elimination_tournament(request: HttpRequest, tournament_id):
 
 
 def tournaments(request):
-    context = {"user": request.user}
-    return render(request, "competitions/tournaments.html", context)
-
+    return render(request, "competitions/tournaments.html")
 
 def competitions(request):
     competition_list = Competition.objects.all()
-    context = {"competition_list": competition_list, "user": request.user, "form": CompetitionStatusForm()}
+    context = {"competition_list": competition_list, "form": CompetitionStatusForm()}
     return render(request, "competitions/competitions.html", context)
 
 
-def competition(request, competition_id):
+def competition(request, competition_id: int):
     redirect_to = request.GET.get('next', '')
     redirect_id = request.GET.get('id', None)
     if redirect_id:
@@ -295,11 +293,8 @@ def competition(request, competition_id):
     context = {"competition": competition, "user": request.user, "form": SETournamentStatusForm()}
     return render(request, "competitions/competition.html", context)
 
-
 def credits(request):
-    context = {"user": request.user}
-    return render(request, "competitions/credits.html", context)
-
+    return render(request, "competitions/credits.html")
 
 def not_implemented(request: HttpRequest, *args, **kwargs):
     """
@@ -363,7 +358,6 @@ def judge_match(request, match_id: int):
 
     form = JudgeForm(instance=instance, possible_advancers=winner_choices)
     return render(request, 'competitions/match_judge.html', {'form': form})
-
 
 def set_timezone_view(request: HttpRequest):
     if request.method == "POST":
