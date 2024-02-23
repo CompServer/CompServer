@@ -43,11 +43,18 @@
 }
 
 .connector-front {
-    border-top: 2px black solid;
     border-right: 2px black solid;
     position: absolute;
-    height: 50px;
     width: 28px;
     right: -28px;
-    top: 12.5px
+}
+
+.connector-up {
+    border-bottom: 2px black solid;
+    bottom: 12.5px;
+}
+
+.connector-down {
+    border-top: 2px black solid;
+    top: 12.5px;
 }

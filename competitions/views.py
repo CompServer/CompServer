@@ -175,10 +175,8 @@ def single_elimination_tournament(request, tournament_id):
             if j in bracket_array[numRounds-i-1] and bracket_array[numRounds-i-1][j] is not None:
                 num_teams = len(bracket_array[numRounds-i-1][j])
                 for k in range(num_teams):
-                    connectorHeight = 100
-                    data = bracket_array[numRounds-i-1][j][k]
-                    data.append(connectorHeight)
-                    team_data.append(data)
+                    team_data.append(bracket_array[numRounds-i-1][j][k])
+                
             
             team_height = 25
             center_height = (team_height) * num_teams
