@@ -2,6 +2,7 @@ from datetime import datetime
 import math
 
 from django.contrib import messages
+from django.core.exceptions import BadRequest
 from django.shortcuts import render, get_object_or_404
 import math, random
 from .models import *
@@ -17,45 +18,82 @@ import zoneinfo
 from .models import *
 from .forms import *
 
-def is_overflowed(list1, num):
+def is_overflowed(list1: list, num: int):
     for item in list1:
         if item < num:
             return False
     return True
 
-def sort_list(list1, list2):
-    zipped_pairs = zip(list2, list1)
-    z = [x for _, x in sorted(zipped_pairs)]
-    return z
-
 def generate_single_elimination_matches(request, tournament_id):
     #sort the list by ranking, then use a two-pointer alogrithm to make the starting matches
-    #figure out how to do the next matches later.
     tournament = get_object_or_404(AbstractTournament, pk=tournament_id)
-    teams = []
-    ranks = []
-    for rank in tournament.ranking_set.all:
-        teams.append(rank.team)
-        ranks.append(rank.rank)
-    sort_list(teams, ranks)
+    # sort the teams by rank
+    team_ranks = sorted([(rank.team, rank.rank) for rank in tournament.ranking_set.all()],key=lambda x: x[1])
+    #sort_list(teams, ranks)
     rank_teams = {}
-    for i in range(len(teams)):
-        rank_teams[i+1] = teams[i]
-    
-    num_matches = len(rank_teams)
-    matches = []
-    i = 1
-    j = num_matches
+    for i in range(len(rank_teams)):
+        rank_teams[i+1] = team_ranks[i][0]
+    num_teams = len(rank_teams)
+    num_matches, i = 1, 1
+    extra_matches = []
+    while num_matches * 2 < num_teams:
+        num_matches *= 2
+    while i < num_matches - (num_teams - num_matches):
+        extra_matches.append(i)
+        i += 1
+    j = num_teams
     while i < j:
         match = Match.objects.create(tournament=tournament)
-        match.starting_teams.add(teams[i], teams[j])
-        if j % 2 == 1 and i == 1:
-            i += 1
-            match.starting_teams.add(teams[i])
+        match.starting_teams.add(rank_teams[i], rank_teams[j])
+        match.save()
+        extra_matches.append(match)
+        i += 1
+        j -= 1
+
+    #regular starting matches
+    i = 0
+    j = num_matches - 1
+    matches = []
+    while i < j:
+        match = Match.objects.create(tournament=tournament)
+        if(isinstance(extra_matches[i], int)):
+            match.starting_teams.add(extra_matches[i])
+        else:
+             match.prev_matches.add(extra_matches[i])
+        if(isinstance(extra_matches[j], int)):
+            match.starting_teams.add(extra_matches[j])
+        else:
+            match.prev_matches.add(extra_matches[j])
         match.save()
         matches.append(match)
         i += 1
         j -= 1
+    num_matches = len(matches)
+
+    #2nd round
+    i = 0
+    j = num_matches - 1
+    new_matches = []
+    while i < j:
+        match = Match.objects.create(tournament=tournament)
+        match.prev_matches.add(matches[i], matches[j])
+        match.save()
+        new_matches.append(match)
+        i += 2
+        j -= 2
+    i = 1
+    j = num_matches - 2
+    while i < j:
+        match = Match.objects.create(tournament=tournament)
+        match.prev_matches.add(matches[i], matches[j])
+        match.save()
+        new_matches.append(match)
+        i += 2
+        j -= 2
+    matches.extend(new_matches)
+    num_matches = len(matches)
+
+    #rest of the matches
     while num_matches > 1:
         new_matches = []
         for i in range(0, num_matches, 2):
@@ -69,24 +107,6 @@ def generate_single_elimination_matches(request, tournament_id):
         for match in new_matches:
             matches.append(match)
         num_matches = len(matches)
-    
-    # teams = []
-    # num_participated = []
-    # for team in tournament.teams.all():
-    #     teams.append(team)
-    #     num_participated.append(0)
-    # if len(teams) % 2 == 1:
-    #     num_participated[0] = 1
-    # for i in range(len(teams)):
-    #     if num_participated[i] == 0 and not is_overflowed(num_participated, 1):
-    #         j = random.randint(0, len(teams)-1)
-    #         while(num_participated[j] == 1):
-    #             j = random.randint(0, len(teams)-1)
-    #         match = Match.objects.create(tournament=tournament)
-    #         match.starting_teams.add(teams[i], teams[j])
-    #         match.save()
-    #         num_participated[i] += 1
-    #         num_participated[j] += 1
 
 def generate_round_robin_matches(request, tournament_id):
     some_num_matches = 4
@@ -247,17 +267,15 @@ def single_elimination_tournament(request: HttpRequest, tournament_id):
 
 
 def tournaments(request):
-    context = {"user": request.user}
-    return render(request, "competitions/tournaments.html", context)
-
+    return render(request, "competitions/tournaments.html")
 
 def competitions(request):
     competition_list = Competition.objects.all()
-    context = {"competition_list": competition_list, "user": request.user, "form": CompetitionStatusForm()}
+    context = {"competition_list": competition_list, "form": CompetitionStatusForm()}
     return render(request, "competitions/competitions.html", context)
 
 
-def competition(request, competition_id):
+def competition(request, competition_id: int):
     redirect_to = request.GET.get('next', '')
     redirect_id = request.GET.get('id', None)
     if redirect_id:
@@ -275,11 +293,8 @@ def competition(request, competition_id):
     context = {"competition": competition, "user": request.user, "form": SETournamentStatusForm()}
     return render(request, "competitions/competition.html", context)
 
-
 def credits(request):
-    context = {"user": request.user}
-    return render(request, "competitions/credits.html", context)
-
+    return render(request, "competitions/credits.html")
 
 def not_implemented(request: HttpRequest, *args, **kwargs):
     """
@@ -303,6 +318,7 @@ def judge_match(request, match_id: int):
     
     if not competetion.is_judgable or not tournament.is_judgable:
         messages.error(request, "This match is not judgable.")
+        #print("This match is not judgable.")
         raise PermissionDenied("This match is not judgable.")
     # if the user is a judge for the tournament, or a plenary judge for the competition, or a superuser
     if  not (user in tournament.judges.all() \
@@ -310,26 +326,38 @@ def judge_match(request, match_id: int):
     or user.is_superuser):# \
     #or user.is_superuser:
         messages.error(request, "You are not authorized to judge this match.")
+        #print("You are not authorized to judge this match.")
         raise PermissionDenied("You are not authorized to judge this match.")
         #return HttpResponseRedirect(reverse('competitions:competition', args=[competetion.id]))
-
-    if request.method == 'POST':
-        form = JudgeForm(request.POST, instance=instance, possible_advancers=None)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Match judged successfully.")
 
     winner_choices = []
     if instance.prev_matches.exists():
         winner_choice_ids = []
         for match in instance.prev_matches.all():
-            winner_choice_ids.extend([x.id for x in match.advancers.all()])
+            if match.advancers.exists():
+                winner_choice_ids.extend([x.id for x in match.advancers.all()])
+            else:
+                messages.error(request, "One or more previous matches have not been judged.")
+                #print("One or more previous matches have not been judged.")
+                raise BadRequest("One or more previous matches have not been judged.")
         winner_choices = Team.objects.filter(id__in=winner_choice_ids)
     elif instance.starting_teams.exists():
         winner_choices = instance.starting_teams.all()
+    else:
+        messages.error(request, "This match has no starting teams or previous matches.")
+        #print("This match has no starting teams or previous matches.")
+        raise PermissionDenied("This match has no starting teams or previous matches.")
+
+    if request.method == 'POST':
+        form = JudgeForm(request.POST, instance=instance, possible_advancers=winner_choices)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Match judged successfully.")
+            #print("Match judged successfully.")
+            return HttpResponseRedirect(reverse('competitions:judge_match', args=[instance.id]))
+
     form = JudgeForm(instance=instance, possible_advancers=winner_choices)
     return render(request, 'competitions/match_judge.html', {'form': form})
-
 
 def set_timezone_view(request: HttpRequest):
     if request.method == "POST":

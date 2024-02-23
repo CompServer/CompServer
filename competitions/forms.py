@@ -18,8 +18,9 @@ class JudgeForm(forms.ModelForm):
 
     def is_valid(self):
         assert isinstance(self.instance, Match)
-        #print(self.instance.advancers.all())
-        #print(self.possible_advancers)
+        # if hasattr(self, "possible_advancers"): return False
+        # ^ above doesn't work, gotta use this try except -_-
+
         for team in self.instance.advancers.all():
             if team not in self.possible_advancers.all():
                 return False

@@ -1,22 +1,22 @@
 {% extends 'skeleton.html' %}
 {% load i18n %}
-{% block title %}{% trans "Team:" %} {{ team.name }}{% endblock %} 
+{% block title %}{% translate "Team:" %} {{ team.name }}{% endblock %} 
 {% block content %}
     <header>
-        <h1>{% trans "Team:" %} {{ team }}</h1>
+        <h1>{% translate "Team:" %} {{ team }}</h1>
         {% if team.coach.first_name %}
             {% if team.coach.last_name %}
-                <p>{% trans "Coached by" %} {{ team.coach.first_name }} {{ team.coach.last_name }}</p>
+                <p>{% translate "Coached by" %} {{ team.coach.first_name }} {{ team.coach.last_name }}</p>
             {% else %}
-                <p>{% trans "Coached by" %} @{{ team.coach.username }} </p>
+                <p>{% translate "Coached by" %} @{{ team.coach.username }} </p>
             {% endif %}
         {% else %}
-            <p>{% trans "Coached by" %} @{{ team.coach.username }}</p>
+            <p>{% translate "Coached by" %} @{{ team.coach.username }}</p>
         {% endif %}
     </header>
     <div class="organization-information">
-        <h3>{% trans "Information About" %} {{team.organization.name}}</h3>
-        <p>{% trans "Address" %}</p>
+        <h3>{% translate "Information About" %} {{team.organization.name}}</h3>
+        <h4>{% translate "Address" %}:<i>....</i></h4>
     </div>
     {% if upcoming_matches.exists %}
         <div class="match-schedule">
@@ -79,20 +79,20 @@
     {% endif %}
     {% if won_tournaments.exists %}
         <div class="tournament-set">
-            <h3>{% trans "Tournaments Won" %}</h3>
+            <h3>{% translate "Tournaments Won" %}</h3>
             <ul>
                 {% for tournament in won_tournaments %}
                     <li>
                         <div class="row d-flex">
                             <div class = "col-12">
                                 {% if tournament.is_judgable %} 
-                                    <p><i class="bi-activity"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
+                                    <p><i class="bi-activity" title="{{ competition.status }}"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
                                 {% elif tournament.is_complete %} 
-                                    <p><i class="bi-check2-circle"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
+                                    <p><i class="bi-check2-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
                                 {% elif tournament.is_closed %} 
-                                    <p><i class="bi-x-circle"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
+                                    <p><i class="bi-x-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
                                 {% elif tournament.is_in_setup %}
-                                    <p><i class="bi-gear"></i> {{ tournament }}</p>
+                                    <p><i class="bi-gear" title="{{ competition.status }}"></i> {{ tournament }}</p>
                                 {% endif %}  
                             </div>
                         </div>
@@ -103,19 +103,20 @@
     {% endif %}
     {% if past_matches.exists %}
         <div class="match-records">
-            <h3>{% trans "Match History" %}</h3>
+            <h3>{% translate "Match History" %}</h3>
             {% if won_matches %}
                 <div class="row">
-                    <h4>{% trans "Wins" %}</h4>
+                    <h4>{% translate "Wins" %}</h4>
                     <ul>
                         {% for match in won_matches %}  
                             <li>{{ match }}</li>
                         {% endfor %}
                     </ul>
                 </div>
+            {% endif %}
             {% if lost_matches %}
                 <div class="row">
-                    <h4>{% trans "Losses" %}</h4>
+                    <h4>{% translate "Losses" %}</h4>
                     <ul>
                         {% for match in lost_matches %}
                             <li>{{ match }}</li>
@@ -125,7 +126,7 @@
             {% endif %}
             {% if draw_matches %}
                 <div class="row">
-                    <h4>{% trans "Draws" %}</h4>
+                    <h4>{% translate "Draws" %}</h4>
                     <ul>
                         {% for match in draw_matches %}
                             <li>{{ match }}</li>
@@ -134,6 +135,5 @@
                 </div>
             {% endif %}
         </div>
-    {% endif %}
     {% endif %}
 {% endblock %}

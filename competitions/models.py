@@ -67,16 +67,16 @@ class Status(models.TextChoices):
     @property
     def is_viewable(self) -> bool:
         """Whether the object should show up on the website."""
-        return self in [Status.OPEN, Status.COMPLETE, Status.CLOSED]
+        return self in [__class__.OPEN, __class__.COMPLETE, __class__.CLOSED]
 
     @property
     def is_judgable(self) -> bool:
         """Whether judging for this comptetation should be allowed."""
-        return self == Status.OPEN
+        return self == __class__.OPEN
     
     @property
     def is_archived(self) -> bool:
-        return self == Status.ARCHIVED
+        return self == __class__.ARCHIVED
     
     @property
     def is_in_setup(self) -> bool:
@@ -157,10 +157,9 @@ class Competition(models.Model):
                 s += f" {self.start_date.month}"
                 if qs2.filter(start_date__month=self.start_date.month).exists():
                     # if you have two on the same day, good luck
-                    s += f" {self.start_date.day}" # RoboMed June, 2023
+                    s += f"/{self.start_date.day}" # RoboMed June, 2023
 
                 s += f",  {self.start_date.year}" # RoboMed June, 2023
-
             else:
                 s += f" {self.start_date.year}" # RoboMed 2023
         return s
@@ -373,33 +372,36 @@ class Match(models.Model):
     # Note: admin doesn't restrict advancers to be competitors for this match
     advancers = models.ManyToManyField(Team, related_name="won_matches", blank=True) # usually 1 but could be more (e.g. time trials)
     time = models.DateTimeField(blank=True, null=True) # that it's scheduled for
+
+    _cached_str = models.TextField(blank=True, null=True) # for caching the string representation
+
     str_recursive_level: ClassVar[int] = 0
 
-    @lru_cache(maxsize=128)
-    def _generate_str_recursive(self, *args, **kwargs) -> str:
+    def _generate_str_recursive(self, force: bool=False) -> str:
         """Recursive algorithm for generating the string representation of this match.
         This is called whenever casted, and the result is saved to a variable to avoid recalculating it.
         It can be forced to recalculate by setting the force parameter to True, or passing in other kwargs"""
-        self.__class__.str_recursive_level += 1
-        competitors = []
-        if self.starting_teams.exists():
-            competitors.extend((f"[{team.name}]" if team in self.advancers.all() else team.name) for team in self.starting_teams.all())
-        if self.prev_matches.exists():
-            for prev_match in self.prev_matches.all():
-                if prev_match.advancers.exists():
-                    competitors.extend((f"[{team.name}]" if team in self.advancers.all() else team.name) for team in prev_match.advancers.all())
-                else:
-                    competitors.append(f"Winner of ({prev_match})")
-        self.__class__.str_recursive_level -= 1
-        res = str(_(" vs ")).join(competitors) # Battlebots vs Byters
-        if self.__class__.str_recursive_level == 0:
-            __str =  res + _(" in ") + str(self.tournament) # Battlebots vs Byters in SumoBot tournament @ RoboMed 2023
-        else: 
-            __str =  res # if part of another match we don't want to repeat the tournament
-        return __str
+        if force or not self._cached_str:
+            self.__class__.str_recursive_level += 1
+            competitors = []
+            if self.starting_teams.exists():
+                competitors.extend((f"[{team.name}]" if team in self.advancers.all() else team.name) for team in self.starting_teams.all())
+            if self.prev_matches.exists():
+                for prev_match in self.prev_matches.all():
+                    if prev_match.advancers.exists():
+                        competitors.extend((f"[{team.name}]" if team in self.advancers.all() else team.name) for team in prev_match.advancers.all())
+                    else:
+                        competitors.append(f"Winner of ({prev_match})")
+            self.__class__.str_recursive_level -= 1
+            res = str(_(" vs ")).join(competitors) # Battlebots vs Byters
+            if self.__class__.str_recursive_level == 0:
+                self._cached_str =  res + _(" in ") + str(self.tournament) # Battlebots vs Byters in SumoBot tournament @ RoboMed 2023
+            else: 
+                self._cached_str =  res # if part of another match we don't want to repeat the tournament
+        return str(self._cached_str)
 
     def __str__(self) -> str:
-        return self._generate_str_recursive()
+        return str(self._cached_str) or str(self._generate_str_recursive())
 
     class Meta:
         ordering = ['tournament']
@@ -407,4 +409,4 @@ class Match(models.Model):
 
 @receiver(post_save, sender=Match)
 def update_str_match(sender, instance, **kwargs):
-    instance._generate_str_recursive(force=True, **kwargs) # because kwargs are different, cache will not be used and we force it to recalculate
+    instance._generate_str_recursive(force=True) # because kwargs are different, cache will not be used and we force it to recalculate

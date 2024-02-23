@@ -3,7 +3,7 @@
 {% load static %}
 
 {% block content %}
-    <h1>{% trans "Welcome to the Competition Server" %}</h1>
-    <img src="{% static 'logo.png' %}">
-    <p>{% trans "Use the navigation bar to browse through the webite." %} </p>
+    <h1>{% translate "Welcome to the Competition Server" %}</h1>
+    <img src="{% static 'logo.png' %}" id="logo" >
+    <p>{% translate "Use the navigation bar to browse through the webite." %} </p>
 {% endblock %}
