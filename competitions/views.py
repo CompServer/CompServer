@@ -313,11 +313,6 @@ def judge_match(request, match_id: int):
         raise PermissionDenied("You are not authorized to judge this match.")
         #return HttpResponseRedirect(reverse('competitions:competition', args=[competetion.id]))
 
-    if request.method == 'POST':
-        form = JudgeForm(request.POST, instance=instance, possible_advancers=None)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Match judged successfully.")
 
     winner_choices = []
     if instance.prev_matches.exists():
@@ -328,6 +323,13 @@ def judge_match(request, match_id: int):
         winner_choices = Team.objects.filter(id__in=winner_choice_ids)
     elif instance.starting_teams.exists():
         winner_choices = instance.starting_teams.all()
+
+    if request.method == 'POST':
+        form = JudgeForm(request.POST, instance=instance, possible_advancers=winner_choices)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Match judged successfully.")
+
     form = JudgeForm(instance=instance, possible_advancers=winner_choices)
     return render(request, 'competitions/match_judge.html', {'form': form})
 
