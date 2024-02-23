@@ -157,7 +157,7 @@ class Competition(models.Model):
                 s += f" {self.start_date.month}"
                 if qs2.filter(start_date__month=self.start_date.month).exists():
                     # if you have two on the same day, good luck
-                    s += f" {self.start_date.day}" # RoboMed June, 2023
+                    s += f"/{self.start_date.day}" # RoboMed June, 2023
 
                 s += f",  {self.start_date.year}" # RoboMed June, 2023
             else:
