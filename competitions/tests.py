@@ -228,7 +228,7 @@ class JudgeTests(TestCase):
     def test_judge_but_tournament_not_open(self):
         url = reverse("competitions:judge_match", args=[self.__class__.match_closed_tournament.id])
         response = self.tournament_judge_client.post(url, {"advancers": self.__class__.team1_in_competition_and_tournament_and_match.id})
-        self.assertNotEqual(response.status_code, 200, "Shouldn't have been able to judge a match in a closed tournament")
+        self.assertNotIn(response.status_code, range(200,400), "Shouldn't have been able to judge a match in a closed tournament")
         # failing for the wrong reasons...
 
 
@@ -343,8 +343,6 @@ class JudgingTests(TestCase):
 
     def test_prereqs_satisfied_before_judge_allowed(self):
         url = reverse("competitions:judge_match", args=[self.__class__.match_2previous_undetermined.id])
-
-        threexx_errorcodes = [*range(300,400)]
 
         response = self.admin_client.post(url, {"advancers": self.__class__.team1_in_competition_and_tournament_and_match.id})
         self.assertNotIn(response.status_code, range(300,400), "Shouldn't have been able to advance a team from a previously undetermined match")
