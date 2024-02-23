@@ -2,13 +2,13 @@
 {% load static %}
 {% load i18n %}
 
-{% block title %} {% trans "Judge a Match Form" %} {% endblock %}
+{% block title %} {% translate "Judge a Match Form" %} {% endblock %}
 
 {% block content %}
-    <h1>{% trans "Judge a Match" %}</h1>
+    <h1>{% translate "Judge a Match" %}</h1>
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit">{% trans "Judge" %}</button>
+        <button type="submit">{% translate "Judge" %}</button>
     </form>
 {% endblock %}

@@ -1,43 +1,43 @@
 {% extends 'skeleton.html' %}
 {% load i18n %}
 
-{% block title %}{% trans "Competition Page" %}{% endblock %}
+{% block title %}{% translate "Competition Page" %}{% endblock %}
 {% block content %}
     <header>
         <h1>
             {% if competition.is_judgable %}
-                <i class="bi-activity"></i>
+                <i class="bi-activity" title="{{ competition.status }}"></i>
             {% elif competition.is_complete %}
-                <i class="bi-check2-circle"></i>
+                <i class="bi-check2-circle" title="{{ competition.status }}"></i>
             {% elif competition.is_closed %}
-                <i class="bi-x-circle"></i>
+                <i class="bi-x-circle" title="{{ competition.status }}"></i>
             {% elif competition.is_in_setup %}
-                <i class="bi-gear"></i>
+                <i class="bi-gear" title="{{ competition.status }}"></i>
             {% endif %}
             {{ competition }}
         </h1>
     </header>
     <hr>
     {% if competition.tournament_set.all %}
-        <h3>{% trans "Tournaments" %}</h3>
+        <h3>{% translate "Tournaments" %}</h3>
         {% for tournament in competition.tournament_set.all %}
             <div class="row d-flex">
                 {% if not tournament.is_archived %}
                     <div class = "col-12 tournament">
                         {% if tournament.is_judgable %} 
-                            <i class="bi-activity"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
+                            <i class="bi-activity" title="{{ competition.status }}"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
                         {% elif tournament.is_complete %} 
-                            <i class="bi-check2-circle"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
+                            <i class="bi-check2-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
                         {% elif tournament.is_closed %} 
-                            <i class="bi-x-circle"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
+                            <i class="bi-x-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
                         {% elif tournament.is_in_setup %}
-                            <i class="bi-gear"></i> {{ tournament.event.name }}
+                            <i class="bi-gear" title="{{ competition.status }}"></i> {{ tournament.event.name }}
                         {% endif %}  
-                        ({{ tournament.points|floatformat:"0" }} {% trans "points" %}) 
+                        ({{ tournament.points|floatformat:"0" }} {% translate "points" %}) 
                         {% if user.is_staff %}
-                            <form class="form-inline my-2 my-md-0 justify-content-end" action="/tournament/{{ tournament.id }}/" method="POST" id="status">
+                            <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/tournament/{{ tournament.id }}/" method="POST" id="status">
                                 {% csrf_token %}
-                                <div class="input-group">
+                                <div class="input-group d-inline">
                                     <select name="status" onchange="this.form.submit();">
                                         <option value="SETUP" {% if tournament.is_in_setup %}selected{% endif %}>SETUP</option>
                                         <option value="OPEN" {% if tournament.is_judgable %}selected{% endif %}>OPEN</option>
@@ -54,7 +54,7 @@
         {% endfor %}
     {% endif %}
     {% if competition.teams.exists %}
-        <h3>{% trans "Competing Teams" %}</h3>
+        <h3>{% translate "Competing Teams" %}</h3>
         {% for team in competition.teams.all %}
             <div class="row d-flex">
                 <div class = "col-12">
@@ -66,9 +66,9 @@
     {% if user.is_staff %}
         {% comment %} <hr>
         <h3>Change Status</h3>
-        <form class="form-inline my-2 my-md-0 justify-content-end" action="" method="POST">
+        <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="" method="POST">
             {% csrf_token %}
-            <div class="input-group">
+            <div class="input-group d-inline">
                 <select class="form-select" name="status" onchange="this.form.submit();">
                     <option value="SETUP" {% if competition.is_in_setup %}selected{% endif %}>SETUP</option>
                     <option value="OPEN" {% if competition.is_judgable %}selected{% endif %}>OPEN</option>

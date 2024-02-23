@@ -3,7 +3,7 @@
 {% comment %} {% load crispy_forms_tags %} {% endcomment %}
 
 {% block content %}
-    <h1>{% trans "Competitions" %}</h1>
+    <h1>{% translate "Competitions" %}</h1>
     <hr>
     {% if competition_list %}
         {% for competition in competition_list %}
@@ -11,18 +11,18 @@
                 {% if not competition.is_archived %}
                     <div class = "col-12 competition">
                         {% if competition.is_judgable %}
-                            <i class="bi-activity"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
+                            <i class="bi-activity" title="{{ competition.status }}"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
                         {% elif competition.is_complete %}
-                            <i class="bi-check2-circle"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
+                            <i class="bi-check2-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
                         {% elif competition.is_closed %}
-                            <i class="bi-x-circle"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
+                            <i class="bi-x-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
                         {% elif competition.is_in_setup %}
-                            <i class="bi-gear"></i> {{ competition }}
+                            <i class="bi-gear" title="{{ competition.status }}"></i> {{ competition }}
                         {% endif %}
                         {% if user.is_staff %}
-                            <form class="form-inline my-2 my-md-0 justify-content-end" action="/competition/{{ competition.id }}/?next=competitions" method="POST" id="status">
+                            <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/competition/{{ competition.id }}/?next=competitions" method="POST" id="status">
                                 {% csrf_token %}
-                                <div class="input-group">
+                                <div class="input-group d-inline">
                                     <select name="status" onchange="this.form.submit();">
                                         <option value="SETUP" {% if competition.is_in_setup %}selected{% endif %}>SETUP</option>
                                         <option value="OPEN" {% if competition.is_judgable %}selected{% endif %}>OPEN</option>
