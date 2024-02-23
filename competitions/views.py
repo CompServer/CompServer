@@ -30,20 +30,16 @@ def sort_list(list1, list2):
 def generate_single_elimination_matches(request, tournament_id):
     #sort the list by ranking, then use a two-pointer alogrithm to make the starting matches
     tournament = get_object_or_404(AbstractTournament, pk=tournament_id)
-    team_ranks = []
-    for rank in tournament.ranking_set.all():
-        team_ranks.append((rank.team, rank.rank))
-    team_ranks.sort(key=lambda x: x[1])
+    team_ranks = sorted([(rank.team, rank.rank) for rank in tournament.ranking_set.all()],key=lambda x: x[1])
     #sort_list(teams, ranks)
     rank_teams = {}
     for i in range(len(rank_teams)):
         rank_teams[i+1] = team_ranks[i][0]
     num_teams = len(rank_teams)
-    num_matches = 1
+    num_matches, i = 1, 1
     extra_matches = []
     while num_matches * 2 < num_teams:
         num_matches *= 2
-    i = 1
     while i < num_matches - (num_teams - num_matches):
         extra_matches.append(i)
         i += 1
@@ -96,8 +92,7 @@ def generate_single_elimination_matches(request, tournament_id):
         new_matches.append(match)
         i += 2
         j -= 2
-    for match in new_matches:
-        matches.append(match)
+    matches.extend(new_matches)
     num_matches = len(matches)
 
     #rest of the matches
