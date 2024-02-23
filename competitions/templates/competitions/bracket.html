@@ -12,8 +12,8 @@
     {% elif tournament.is_in_setup %}
     <i class="bi-gear"></i>
     {% endif %}
-    {{ tournament.competition.name }} {{ tournament.event.name }} {% trans "Tournament" %}
-    ({{ tournament.points|floatformat:"0" }} {% trans "points" %})
+    {{ tournament.competition.name }} {{ tournament.event.name }} {% translate "Tournament" %}
+    ({{ tournament.points|floatformat:"0" }} {% translate "points" %})
 </h1>
 
 <div class="bracket" style="height: {{ bracket_dict.bracketHeight }}px; width: {{ bracket_dict.bracketWidth }}px;">

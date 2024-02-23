@@ -37,3 +37,7 @@
 div.competition, div.tournament {
     margin-bottom: 20px;
 }
+img#logo {
+    width: 490px;
+    height: 490px;
+}

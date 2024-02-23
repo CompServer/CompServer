@@ -1,23 +1,23 @@
 {% extends 'skeleton.html' %}
 {% load i18n %}
-{% block title %}{% trans "Team:" %} {{ team.name }}{% endblock %} 
+{% block title %}{% translate "Team:" %} {{ team.name }}{% endblock %} 
 {% block content %}
     <header>
-        <h1>{% trans "Team:" %} {{ team }}</h1>
+        <h1>{% translate "Team:" %} {{ team }}</h1>
         {% if team.coach.first_name %}
             {% if team.coach.last_name %}
-                <p>{% trans "Coached by" %} {{ team.coach.first_name }} {{ team.coach.last_name }}</p>
+                <p>{% translate "Coached by" %} {{ team.coach.first_name }} {{ team.coach.last_name }}</p>
             {% else %}
-                <p>{% trans "Coached by" %} @{{ team.coach.username }} </p>
+                <p>{% translate "Coached by" %} @{{ team.coach.username }} </p>
             {% endif %}
         {% else %}
-            <p>{% trans "Coached by" %} @{{ team.coach.username }}</p>
+            <p>{% translate "Coached by" %} @{{ team.coach.username }}</p>
         {% endif %}
         <p>TEAM LOGO HERE</p>
     </header>
     <div class="organization-information">
-        <h3>{% trans "Information About" %} {{team.organization.name}}</h3>
-        <h4>{% trans "Address" %}:<i>....</i></h4>
+        <h3>{% translate "Information About" %} {{team.organization.name}}</h3>
+        <h4>{% translate "Address" %}:<i>....</i></h4>
         <!-- There isn't a field for address for organizations yet -->
         <p>logo...</p>
     </div>
@@ -56,19 +56,19 @@
         </div>
     {% endif %}
     <div class="competition-set">
-        <h3>{% trans "Competitions participated in" %}</h3>
+        <h3>{% translate "Competitions participated in" %}</h3>
         {% for competition in team.competition_set.all %}
             <div class="row d-flex">
                 {% if not competition.is_archived %}
                     <div class = "col-12 competition">
                         {% if competition.is_judgable %}
-                            <i class="bi-activity"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
+                            <i class="bi-activity" title="{{ competition.status }}"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
                         {% elif competition.is_complete %}
-                            <i class="bi-check2-circle"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
+                            <i class="bi-check2-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
                         {% elif competition.is_closed %}
-                            <i class="bi-x-circle"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
+                            <i class="bi-x-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
                         {% elif competition.is_in_setup %}
-                            <i class="bi-gear"></i> {{ competition }}
+                            <i class="bi-gear" title="{{ competition.status }}"></i> {{ competition }}
                         {% endif %}
                         {% if user.is_staff %}
                             <form class="form-inline my-2 my-md-0 justify-content-end" action="/competition/{{ competition.id }}/?next=team&id={{ team.id }}" method="POST" id="status">
@@ -90,7 +90,7 @@
         {% endfor %}
     </div>
     <div class="tournament-set">
-        <h3>{% trans "Tournaments Won" %}</h3>
+        <h3>{% translate "Tournaments Won" %}</h3>
         <ul>
             {% for tournament in team.tournament_set.all %}
                 <li>
@@ -98,13 +98,13 @@
                         {% if not tournament.is_archived %}
                             <div class = "col-12 tournament">
                                 {% if tournament.is_judgable %} 
-                                    <p><i class="bi-activity"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
+                                    <p><i class="bi-activity" title="{{ competition.status }}"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
                                 {% elif tournament.is_complete %} 
-                                    <p><i class="bi-check2-circle"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
+                                    <p><i class="bi-check2-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
                                 {% elif tournament.is_closed %} 
-                                    <p><i class="bi-x-circle"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
+                                    <p><i class="bi-x-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a></p>
                                 {% elif tournament.is_in_setup %}
-                                    <p><i class="bi-gear"></i> {{ tournament }}</p>
+                                    <p><i class="bi-gear" title="{{ competition.status }}"></i> {{ tournament }}</p>
                                 {% endif %}  
                                 {% if user.is_staff %}
                                     <form class="form-inline my-2 my-md-0 justify-content-end" action="/tournament/{{ tournament.id }}/" method="POST" id="status">
@@ -128,28 +128,28 @@
         </ul>
     </div>
     <div class="match-records">
-        <h3>{% trans "Match History" %}</h3>
+        <h3>{% translate "Match History" %}</h3>
         <div class="row">
-            <h4>{% trans "Wins" %}</h4>
+            <h4>{% translate "Wins" %}</h4>
             <ul>
                 {% for match in team.won_matches.all %}  
                     {% if match.advancers.length == 1 %}
-                        <li>{% trans "Tournament:" %} <a href="{% url 'competitions:tournament' match.tournament.id %}">{{ match.tournament.name }}</a>, {% trans "Event:" %} {{ match.event.name }}, {% trans "Players:" %}
+                        <li>{% translate "Tournament:" %} <a href="{% url 'competitions:tournament' match.tournament.id %}">{{ match.tournament.name }}</a>, {% translate "Event:" %} {{ match.event.name }}, {% translate "Players:" %}
                             {% for player in match.event.player_set.all %} 
                                 {{ player.first_name }},
                             {% endfor %}
-                            {% trans "Score:" %} {{ match.awarded_points }}</li>
+                            {% translate "Score:" %} {{ match.awarded_points }}</li>
                     {% endif %}
                 {% empty %}
-                    <p>{% trans "No wins!" %}</p>
+                    <p>{% translate "No wins!" %}</p>
                 {% endfor %}
             </ul>
         </div>
         <div class="row">
-            <h4>{% trans "Losses" %}</h4>
+            <h4>{% translate "Losses" %}</h4>
         </div>
         <div class="row">
-            <h4>{% trans "Draws" %}</h4>
+            <h4>{% translate "Draws" %}</h4>
         </div>
     </div>
 {% endblock %}

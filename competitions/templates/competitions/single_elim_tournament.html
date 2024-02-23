@@ -2,19 +2,19 @@
 {% load i18n %}
 {% block content %}
     <h1>{% if tournament.is_judgable %}
-            <i class="bi-activity"></i>
+            <i class="bi-activity" title="{{ competition.status }}"></i>
         {% elif tournament.is_complete %}
-            <i class="bi-check2-circle"></i>
+            <i class="bi-check2-circle" title="{{ competition.status }}"></i>
         {% elif tournament.is_closed %}
-            <i class="bi-x-circle"></i>
+            <i class="bi-x-circle" title="{{ competition.status }}"></i>
         {% elif tournament.is_in_setup %}
-            <i class="bi-gear"></i>
+            <i class="bi-gear" title="{{ competition.status }}"></i>
         {% endif %}
-        {{ tournament.event.name }} {% trans "from" %} {{ tournament.competition.name }}      
+        {{ tournament.event.name }} {% translate "from" %} {{ tournament.competition.name }}      
     </h1>
     <hr>
     {% if tournament.teams.all %}
-        <h3>{% trans "Teams" %}</h3>
+        <h3>{% translate "Teams" %}</h3>
         {% for team in tournament.teams.all %}
             <div class="row d-flex">
                 <div class = "col-12">
@@ -23,5 +23,5 @@
             </div>
         {% endfor %}
     {% endif %}
-    {% comment %} <h3>{% trans "Matches" %}</h3> {% endcomment %}
+    {% comment %} <h3>{% translate "Matches" %}</h3> {% endcomment %}
 {% endblock %}
