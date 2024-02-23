@@ -2,6 +2,7 @@ from datetime import datetime
 import math
 
 from django.contrib import messages
+from django.core.exceptions import BadRequest
 from django.shortcuts import render, get_object_or_404
 import math, random
 from .models import *
@@ -322,6 +323,7 @@ def judge_match(request, match_id: int):
     
     if not competetion.is_judgable or not tournament.is_judgable:
         messages.error(request, "This match is not judgable.")
+        #print("This match is not judgable.")
         raise PermissionDenied("This match is not judgable.")
     # if the user is a judge for the tournament, or a plenary judge for the competition, or a superuser
     if  not (user in tournament.judges.all() \
@@ -329,9 +331,9 @@ def judge_match(request, match_id: int):
     or user.is_superuser):# \
     #or user.is_superuser:
         messages.error(request, "You are not authorized to judge this match.")
+        #print("You are not authorized to judge this match.")
         raise PermissionDenied("You are not authorized to judge this match.")
         #return HttpResponseRedirect(reverse('competitions:competition', args=[competetion.id]))
-
 
     winner_choices = []
     if instance.prev_matches.exists():
@@ -339,15 +341,25 @@ def judge_match(request, match_id: int):
         for match in instance.prev_matches.all():
             if match.advancers.exists():
                 winner_choice_ids.extend([x.id for x in match.advancers.all()])
+            else:
+                messages.error(request, "One or more previous matches have not been judged.")
+                #print("One or more previous matches have not been judged.")
+                raise BadRequest("One or more previous matches have not been judged.")
         winner_choices = Team.objects.filter(id__in=winner_choice_ids)
     elif instance.starting_teams.exists():
         winner_choices = instance.starting_teams.all()
+    else:
+        messages.error(request, "This match has no starting teams or previous matches.")
+        #print("This match has no starting teams or previous matches.")
+        raise PermissionDenied("This match has no starting teams or previous matches.")
 
     if request.method == 'POST':
         form = JudgeForm(request.POST, instance=instance, possible_advancers=winner_choices)
         if form.is_valid():
             form.save()
             messages.success(request, "Match judged successfully.")
+            #print("Match judged successfully.")
+            return HttpResponseRedirect(reverse('competitions:judge_match', args=[instance.id]))
 
     form = JudgeForm(instance=instance, possible_advancers=winner_choices)
     return render(request, 'competitions/match_judge.html', {'form': form})
