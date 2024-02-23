@@ -6,7 +6,7 @@
 {% get_language_info for LANGUAGE_CODE as lang %}
 
 <!DOCTYPE html>
-<html lang="{{ lang }}">
+<html lang="{{ LANGUAGE_CODE }}">
 
 <head>
     <meta charset="UTF-8">
@@ -107,7 +107,7 @@
                         <a class="dropdown-item" href="#">Another action</a>
                         <a class="dropdown-item" href="#">Something else here</a>
                     </div>
-                </li> {% endcomment %}
+                </li>
             {% comment %} <form class="form-inline my-2 my-md-0">
                 <input class="form-control" type="text" placeholder="Search">
             </form> {% endcomment %}
@@ -152,7 +152,8 @@
             integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
             crossorigin="anonymous"></script>
     {% endif %}
-    {% comment %} {% tz_detect %} {% endcomment %}
+
+    {% block js %}{% endblock %}
 </body>
 
 </html>

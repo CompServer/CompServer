@@ -7,17 +7,15 @@ import math, random
 from .models import *
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth.views import login_required
-from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404, render
+from django.db.models import Q
+from django.http import HttpRequest, HttpResponseRedirect
+from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
- 
+from django.utils import timezone
+import random
+import zoneinfo
 from .models import *
 from .forms import *
-
-def home(request):
-    #context = {'test_time': datetime.now()}
-    #print(context['test_time'])
-    return render(request, "competitions/home.html", )#context=context)
 
 def is_overflowed(list1, num):
     for item in list1:
@@ -140,47 +138,119 @@ def generate_round_robin_matches(request, tournament_id):
     #will do ordering of matches once the bracket is fully understood.
     return render(request, 'skeleton.html')
 
-# why are we using camelcase
-def BracketView(request):
-    t = ""
 
-    numTeams = 8
-    numRounds = int(math.log(numTeams, 2))
+def home(request):
+    return render(request, "competitions/home.html")
 
-    roundWidth = 150
-    bracketWidth = (roundWidth+30)*numRounds
 
-    bracketHeight = 600
-    roundHeight = bracketHeight
-    roundWidth =    +connectorWidth
+def single_elimination_tournament(request: HttpRequest, tournament_id):
+    '''
+    This view is responsible for drawing the tournament bracket, it does this by:
+    1) Recursively get all matches and put them in a 4d array
+        a) Start at championship
+        b) Get particpants and add them to the array
+        c) Go to each prev match
+        d) repeat
+    2) Loop through array and convert it to dictionaries, packaging styling along side
+    3) Pass new dictionary to the templete for rendering
+
+    note: steps 1 and 2 could probably be combined
+    '''
+
+    # where all the matches get stored, only used in this function, not passed to template
+    bracket_array = []
+
+    # recursive
+    def read_tree_from_node(curr_match, curr_round, base_index):
+        # add space for new matches if it doesnt exist
+        if len(bracket_array) <= curr_round:
+            bracket_array.append({})
+
+        # get the names of the teams competing, stolen to the toString
+        competitors = []
+        if curr_match.starting_teams.exists():
+            for team in curr_match.starting_teams.all():
+                competitors.append({"name": team.name, "won": team in curr_match.advancers.all(), "prev":False, "match_id": curr_match.id}) 
+        if curr_match.prev_matches.exists():
+            for prev_match in curr_match.prev_matches.all():
+                if prev_match.advancers.exists():
+                    for team in prev_match.advancers.all():
+                        competitors.append({"name": team.name, "won": team in curr_match.advancers.all(), "prev": True, "match_id": curr_match.id}) 
+                else:
+                    competitors.append({"name": "TBD", "won": False, "prev": False, "match_id": curr_match.id}) 
+
+        # place the team names in the right box
+        # i.e. bracket_array[2][3] = top 8, 4th match from the top
+        bracket_array[curr_round][base_index] = competitors 
+        
+        prevs = curr_match.prev_matches.all()
+        # checks if there are any previous matches
+        if prevs:
+            # if TRUE: recurse
+            # if FALSE: base case
+            for i, prev in enumerate(prevs):
+                read_tree_from_node(prev, curr_round+1, 2*base_index+i)
+                                                      # ^^^^^^^^^^^^^^
+                                                      # i dont know why this works, it might not 
+        else:
+            # this fixes one off preliminary matches, but also creates a weird empty round which gets adressed later
+            if len(bracket_array) <= curr_round+1:
+                bracket_array.append({})
+            bracket_array[curr_round+1][base_index] = None
+
+    #mutates bracket_array
+    read_tree_from_node(Match.objects.filter(tournament=tournament_id).filter(next_matches__isnull=True)[0], 0, 0)
+
+    #this gets weird of the weird empty round caused by the previous section
+    bracket_array.pop()
+
+    bracket_array
+
+    #the number of rounds in the tournament: top 8, semi-finals, championship, etc
+    numRounds = len(bracket_array)
+
+    #find the most number of teams in a single round, used for setting the height
+    mostTeamsInRound = 0
+    for round in bracket_array:
+        teams_count = sum((len(teams) if teams is not None else 0) for teams in round.values())
+        if teams_count > mostTeamsInRound:
+            mostTeamsInRound = teams_count
+
+    # _data means it contains the actual stuff to be displayed
+    # everything else is just css styling or not passed
+    # most variables are exactly what they sound like
+    # you can also look at bracket.html to see how its used
+    round_data = []
+    matchWidth = 200
+    connectorWidth = 25
+    bracketWidth = (matchWidth+(connectorWidth*2))*numRounds
+    bracketHeight = mostTeamsInRound*50
+    roundWidth = matchWidth+connectorWidth
+
     for i in range(numRounds):
         num_matches = len(bracket_array[numRounds-i-1])
-        match_height = roundHeight / num_matches
-        match_width = matchWidth
+        match_height = bracketHeight / num_matches
         match_data = []
         for j in range(num_matches):
             team_data = []
             #this is where we convert from bracket_array (made above) to bracket_dict (used in template)
-            if j in bracket_array[numRounds-i-1] and  bracket_array[numRounds-i-1][j] is not None:
+            num_teams = 0
+            if j in bracket_array[numRounds-i-1] and bracket_array[numRounds-i-1][j] is not None:
                 num_teams = len(bracket_array[numRounds-i-1][j])
                 team_data = [
-                    {"team_name": bracket_array[numRounds-i-1][j][k]}
-                    for k in range(num_teams)
+                    bracket_array[numRounds-i-1][j][k] for k in range(num_teams)
                 ]
             
             team_height = 25
-            center_height = team_height * num_teams
-            top_padding = (match_height - center_height) / 2
-
-            if i is numRounds-1 and len(bracket_array[numRounds-i-1]) < len(bracket_array[numRounds-i-2]): 
-                top_padding = match_data[-1]
+            center_height = (team_height) * num_teams
+            center_top_margin = (match_height - center_height) / 2
 
             match_data.append({
                 "team_data": team_data,
                 "match_height": match_height,
-                "match_width": match_width,
+                "match_width": matchWidth,
                 "center_height": center_height,
-                "top_padding": top_padding,
+                "center_top_margin": center_top_margin,
             })
 
         round_data.append({
@@ -195,34 +265,25 @@ def BracketView(request):
         "round_data": round_data
     }
     
-    context = {"bracket_dict": bracket_dict,}
+    tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
+    context = {
+        "tournament": tournament, 
+        "bracket_dict": bracket_dict,
+    }
     return render(request, "competitions/bracket.html", context)
 
-@login_required
-def single_elimination_tournament(request, tournament_id):
-    tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
-    if request.method == 'POST':
-        form = SETournamentStatusForm(request.POST)
-        if form.is_valid():
-            status = form.cleaned_data.get('status')
-            tournament.status = status
-            tournament.save()
-            # return HttpResponseRedirect(reverse("competitions:"))
-    context = {"tournament": tournament, "user": request.user}
-    return render(request, "competitions/single_elim_tournament.html", context)
 
-@login_required
 def tournaments(request):
     context = {"user": request.user}
     return render(request, "competitions/tournaments.html", context)
 
-@login_required
+
 def competitions(request):
     competition_list = Competition.objects.all()
     context = {"competition_list": competition_list, "user": request.user, "form": CompetitionStatusForm()}
     return render(request, "competitions/competitions.html", context)
 
-@login_required
+
 def competition(request, competition_id):
     redirect_to = request.GET.get('next', '')
     redirect_id = request.GET.get('id', None)
@@ -241,17 +302,13 @@ def competition(request, competition_id):
     context = {"competition": competition, "user": request.user, "form": SETournamentStatusForm()}
     return render(request, "competitions/competition.html", context)
 
-@login_required
-def team(request, team_id):
-    team = get_object_or_404(Team, pk=team_id)
-    context = {'team': team, "user": request.user}
-    return render(request, "competitions/team.html", context)
 
 def credits(request):
     context = {"user": request.user}
     return render(request, "competitions/credits.html", context)
 
-def not_implemented(request, *args, **kwargs):
+
+def not_implemented(request: HttpRequest, *args, **kwargs):
     """
     Base view for not implemented features. You can  use this view to show a message to the user that the feature is not yet implemented,
     or if you want to add a view for a URL to a page that doesn't exist yet.
@@ -276,7 +333,8 @@ def judge_match(request, match_id: int):
         raise PermissionDenied("This match is not judgable.")
     # if the user is a judge for the tournament, or a plenary judge for the competition, or a superuser
     if  not (user in tournament.judges.all() \
-    or user in competetion.plenary_judges.all()):# \
+    or user in competetion.plenary_judges.all() \
+    or user.is_superuser):# \
     #or user.is_superuser:
         messages.error(request, "You are not authorized to judge this match.")
         raise PermissionDenied("You are not authorized to judge this match.")
@@ -299,13 +357,26 @@ def judge_match(request, match_id: int):
     form = JudgeForm(instance=instance, possible_advancers=winner_choices)
     return render(request, 'competitions/match_judge.html', {'form': form})
 
-def set_timezone_view(request):
-    """
-    View to set the timezone for the user.
-    """
-    if request.method == 'POST':
-        request.session['django_timezone'] = request.POST['timezone']
-        messages.success(request, f"Timezone set successfully to {request.POST['timezone']}.")
-        return HttpResponseRedirect('/')
-    else:
-        return render(request, 'timezones.html', {'timezones': pytz.common_timezones, 'TIME_ZONE': request.session.get('django_timezone',None)})
+
+def set_timezone_view(request: HttpRequest):
+    if request.method == "POST":
+        if request.POST["timezone"]:
+            request.session["timezone"] = request.POST["timezone"]
+            messages.success(request, f"Timezone set successfully to {request.POST['timezone']}.")
+            return redirect("/")
+        else:   
+            messages.error(request, "Invalid timezone.")
+    timezones = sorted(zoneinfo.available_timezones())
+    return render(request, "timezones.html", {"timezones": timezones})
+
+
+def team(request, team_id):
+    today = timezone.now().date()
+    upcoming_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), tournament__competition__start_date__lte=today, tournament__competition__end_date__gte=today, advancers=None).order_by("time")
+    context = {
+        'team': Team.objects.get(pk=team_id),
+        'wins_list': [],
+        'draws_list': [],
+        'losses_list': [],
+    }
+    return render(request, "competitions/team.html", context)
