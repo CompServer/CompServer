@@ -271,7 +271,7 @@ def tournaments(request):
 
 def competitions(request):
     competition_list = Competition.objects.all()
-    context = {"competition_list": competition_list, "form": CompetitionStatusForm()}
+    context = {"competition_list": competition_list, "Status": Status, "form": CompetitionStatusForm()}
     return render(request, "competitions/competitions.html", context)
 
 
@@ -290,7 +290,7 @@ def competition(request, competition_id: int):
             return HttpResponseRedirect(reverse(f"competitions:{redirect_to}",args=redirect_id))
     if competition.is_archived:
         return HttpResponseRedirect(reverse("competitions:competitions"))
-    context = {"competition": competition, "user": request.user, "form": SETournamentStatusForm()}
+    context = {"competition": competition, "Status": Status, "form": SETournamentStatusForm()}
     return render(request, "competitions/competition.html", context)
 
 def credits(request):

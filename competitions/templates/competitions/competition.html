@@ -5,15 +5,18 @@
 {% block content %}
     <header>
         <h1>
+            <i class=
             {% if competition.is_judgable %}
-                <i class="bi-activity" title="{{ competition.status }}"></i>
+                "bi-activity"
             {% elif competition.is_complete %}
-                <i class="bi-check2-circle" title="{{ competition.status }}"></i>
+                "bi-check2-circle"
             {% elif competition.is_closed %}
-                <i class="bi-x-circle" title="{{ competition.status }}"></i>
+                "bi-x-circle"
             {% elif competition.is_in_setup %}
-                <i class="bi-gear" title="{{ competition.status }}"></i>
+                "bi-gear"
             {% endif %}
+            title="{{ competition.status }}"></i>
+
             {{ competition }}
         </h1>
     </header>
@@ -39,11 +42,9 @@
                                 {% csrf_token %}
                                 <div class="input-group">
                                     <select name="status" onchange="this.form.submit();">
-                                        <option value="SETUP" {% if tournament.is_in_setup %}selected{% endif %}>SETUP</option>
-                                        <option value="OPEN" {% if tournament.is_judgable %}selected{% endif %}>OPEN</option>
-                                        <option value="COMPLETE" {% if tournament.is_complete %}selected{% endif %}>COMPLETE</option>
-                                        <option value="CLOSED" {% if tournament.is_closed %}selected{% endif %}>CLOSED</option>
-                                        <option value="ARCHIVED" {% if tournament.is_archived %}selected{% endif %}>ARCHIVED</option>
+                                        {% for setup_type in Status.__all__ %}
+                                            <option value="{{ setup_type }}" {% if tournament.status == setup_type %}selected{% endif %}>{{ setup_type }}</option>
+                                        {% endfor %}
                                     </select>
                                 </div>
                             </form>

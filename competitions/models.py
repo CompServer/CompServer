@@ -13,6 +13,7 @@ from functools import lru_cache
 
 ACCESS_KEY_LENGTH = 10
 # ^ should be in settings?
+# yes
 
 def get_random_access_key():
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=ACCESS_KEY_LENGTH))
@@ -58,6 +59,8 @@ class Status(models.TextChoices):
     CLOSED = "CLOSED", _("Closed")  # for judging
     COMPLETE = "COMPLETE", _("Complete")  # ready to show results
     ARCHIVED = "ARCHIVED", _("Archived")  # don't show to anyone (but data will be kept)
+    
+    __all__ = [SETUP, OPEN, CLOSED, COMPLETE, ARCHIVED]
 
     @classmethod
     def max_length(cls):

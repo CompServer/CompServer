@@ -4,13 +4,13 @@
 {% block content %}
 <h1>
     {% if tournament.is_judgable %}
-    <i class="bi-activity"></i>
+        <i class="bi-activity"></i>
     {% elif tournament.is_complete %}
-    <i class="bi-check2-circle"></i>
+        <i class="bi-check2-circle"></i>
     {% elif tournament.is_closed %}
-    <i class="bi-x-circle"></i>
+        <i class="bi-x-circle"></i>
     {% elif tournament.is_in_setup %}
-    <i class="bi-gear"></i>
+        <i class="bi-gear"></i>
     {% endif %}
     {{ tournament.competition.name }} {{ tournament.event.name }} {% translate "Tournament" %}
     ({{ tournament.points|floatformat:"0" }} {% translate "points" %})
