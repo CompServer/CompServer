@@ -35,9 +35,9 @@
                         {% endif %}  
                         ({{ tournament.points|floatformat:"0" }} {% translate "points" %}) 
                         {% if user.is_staff %}
-                            <form class="form-inline my-2 my-md-0 justify-content-end" action="/tournament/{{ tournament.id }}/" method="POST" id="status">
+                            <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/tournament/{{ tournament.id }}/" method="POST" id="status">
                                 {% csrf_token %}
-                                <div class="input-group">
+                                <div class="input-group d-inline">
                                     <select name="status" onchange="this.form.submit();">
                                         <option value="SETUP" {% if tournament.is_in_setup %}selected{% endif %}>SETUP</option>
                                         <option value="OPEN" {% if tournament.is_judgable %}selected{% endif %}>OPEN</option>
@@ -66,9 +66,9 @@
     {% if user.is_staff %}
         {% comment %} <hr>
         <h3>Change Status</h3>
-        <form class="form-inline my-2 my-md-0 justify-content-end" action="" method="POST">
+        <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="" method="POST">
             {% csrf_token %}
-            <div class="input-group">
+            <div class="input-group d-inline">
                 <select class="form-select" name="status" onchange="this.form.submit();">
                     <option value="SETUP" {% if competition.is_in_setup %}selected{% endif %}>SETUP</option>
                     <option value="OPEN" {% if competition.is_judgable %}selected{% endif %}>OPEN</option>
