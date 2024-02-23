@@ -327,32 +327,42 @@ def set_timezone_view(request: HttpRequest):
     timezones = sorted(zoneinfo.available_timezones())
     return render(request, "timezones.html", {"timezones": timezones})
 
-
 def team(request, team_id):
     today = timezone.now().date()
     upcoming_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), tournament__competition__start_date__lte=today, tournament__competition__end_date__gte=today, advancers=None).order_by("time")
     past_matches = Match.objects.filter(starting_teams__id = team_id, tournament__status = Status.COMPLETE)
-    won_matches = past_matches.filter(advancers__id = team_id).annotate("advancers")
-    #new_matches = won_matches.filter(advancers__count = 1)).order_by("time")
-    draw_matches = past_matches.exclude(won_matches).order_by("time")
-    lost_matches = past_matches.filter(Q(starting_teams__id = team_id), Q(advancers__id != team_id)).order_by("time")
-    past_tournaments = Tournament.objects.filter(Q(teams__id = team_id), is_complete())
+    unchecked_won_matches = past_matches.filter(advancers__id = team_id)
+    official_won_matches = []
+    for match in unchecked_won_matches:
+        if match.advancers.count() == 1:
+            official_won_matches.append(match)
+    #need to order the time
+    #can someone figure out how to annotate the query set and count the advancers?
+    unchecked_draw_matches = past_matches.filter(advancers__id = team_id)
+    official_draw_matches = []
+    for match in unchecked_draw_matches:
+        if match.advancers.count() > 1:
+            official_draw_matches.append(match)
+    lost_matches = past_matches.filter(starting_teams__id = team_id).exclude(advancers__id = team_id).order_by("time")
+    past_tournaments = SingleEliminationTournament.objects.filter(teams__id = team_id, status = Status.COMPLETE)
+    #how do you use properties in query sets?
     won_tournaments = []
     if past_tournaments.exists():
         for tournament in past_tournaments:
-            for match in past_tournaments.match_set():
-                if team not in match.advancers:
-                    break
-            won_tournaments.append(tournament)
-    past_competitions = Competition.objects.filter(Q(teams__id = team_id), is_complete()).order_by("end_date")
+            matches = Match.objects.filter(tournament__id = tournament.id)
+            for match in matches:
+                if team in match.advancers.all():
+                    won_tournaments.append(tournament)
+    past_competitions = Competition.objects.filter(teams__id = team_id, status = Status.COMPLETE).order_by("end_date")
     context = {
         'team': Team.objects.get(pk=team_id),
         'upcoming_matches': upcoming_matches,
-        'wins_list': won_matches,
-        'draws_list': draw_matches,
-        'losses_list': lost_matches,
+        'won_matches': official_won_matches,
+        'past_matches': past_matches,
+        'draw_matches': official_draw_matches,
+        'lost_matches': lost_matches,
         'won_tournaments': won_tournaments,
-        #how do you order tournaments
+        #how do you order tournaments by time?
         'past_tournaments': past_tournaments,
         'past_competitions': past_competitions,
     }
