@@ -401,7 +401,10 @@ class Match(models.Model):
         return str(self._cached_str)
 
     def __str__(self) -> str:
-        return str(self._cached_str) or str(self._generate_str_recursive())
+        if self._cached_str == None:
+            self._generate_str_recursive()
+            self.save()
+        return self._cached_str
 
     class Meta:
         ordering = ['tournament']
