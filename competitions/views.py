@@ -17,19 +17,16 @@ import zoneinfo
 from .models import *
 from .forms import *
 
-def is_overflowed(list1, num):
+def is_overflowed(list1: list, num: int):
     for item in list1:
         if item < num:
             return False
     return True
 
-def sort_list(list1, list2):
-    z = [x for _, x in sorted(zip(list2, list1))]
-    return z
-
 def generate_single_elimination_matches(request, tournament_id):
     #sort the list by ranking, then use a two-pointer alogrithm to make the starting matches
     tournament = get_object_or_404(AbstractTournament, pk=tournament_id)
+    # sort the teams by rank
     team_ranks = sorted([(rank.team, rank.rank) for rank in tournament.ranking_set.all()],key=lambda x: x[1])
     #sort_list(teams, ranks)
     rank_teams = {}
