@@ -1,4 +1,5 @@
 from datetime import datetime
+from io import SEEK_CUR
 import math
 
 from django.contrib import messages
@@ -114,6 +115,7 @@ def generate_single_elimination_matches(request, tournament_id):
         for match in new_matches:
             matches.append(match)
         num_matches = len(matches)
+    return HttpResponseRedirect(reverse("competitions:single_elim_tournament", args=tournament_id))
 
 def generate_round_robin_matches(request, tournament_id):
     some_num_matches = 4
@@ -136,7 +138,7 @@ def generate_round_robin_matches(request, tournament_id):
                 num_participated[j] += 1
     #also, this could run infinitely, or at least for very long.
     #will do ordering of matches once the bracket is fully understood.
-    return render(request, 'skeleton.html')
+    
 
 
 def home(request):
@@ -144,6 +146,23 @@ def home(request):
 
 
 def single_elimination_tournament(request: HttpRequest, tournament_id):
+    redirect_to = request.GET.get('next', '')
+    redirect_id = request.GET.get('id', None)
+    if redirect_id:
+        redirect_id = [redirect_id]
+    tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
+    if request.method == 'POST':
+        form = SETournamentStatusForm(request.POST)
+        if form.is_valid():
+            status = form.cleaned_data.get('status')
+            tournament.status = status
+            tournament.save()
+            if redirect_id == None:
+                return HttpResponseRedirect(reverse(f"competitions:{redirect_to}"))
+            else:
+                return HttpResponseRedirect(reverse(f"competitions:{redirect_to}",args=redirect_id))
+    if tournament.is_archived:
+        return HttpResponseRedirect(reverse("competitions:competitions"))
     '''
     This view is responsible for drawing the tournament bracket, it does this by:
     1) Recursively get all matches and put them in a 4d array
@@ -296,7 +315,10 @@ def competition(request, competition_id):
             status = form.cleaned_data.get('status')
             competition.status = status
             competition.save()
-            return HttpResponseRedirect(reverse(f"competitions:{redirect_to}",args=redirect_id))
+            if redirect_id == None:
+                return HttpResponseRedirect(reverse(f"competitions:{redirect_to}"))
+            else:
+                return HttpResponseRedirect(reverse(f"competitions:{redirect_to}",args=redirect_id))
     if competition.is_archived:
         return HttpResponseRedirect(reverse("competitions:competitions"))
     context = {"competition": competition, "user": request.user, "form": SETournamentStatusForm()}

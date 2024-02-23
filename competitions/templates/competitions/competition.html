@@ -35,15 +35,15 @@
                         {% endif %}  
                         ({{ tournament.points|floatformat:"0" }} {% translate "points" %}) 
                         {% if user.is_staff %}
-                            <form class="form-inline my-2 my-md-0 justify-content-end" action="/tournament/{{ tournament.id }}/" method="POST" id="status">
+                            <form class="form-inline my-2 my-md-0 justify-content-end" action="/competition/{{ competition.id }}/?next=competition&id={{ competition.id }}" method="POST" id="status">
                                 {% csrf_token %}
                                 <div class="input-group">
                                     <select name="status" onchange="this.form.submit();">
-                                        <option value="SETUP" {% if tournament.is_in_setup %}selected{% endif %}>SETUP</option>
-                                        <option value="OPEN" {% if tournament.is_judgable %}selected{% endif %}>OPEN</option>
-                                        <option value="COMPLETE" {% if tournament.is_complete %}selected{% endif %}>COMPLETE</option>
-                                        <option value="CLOSED" {% if tournament.is_closed %}selected{% endif %}>CLOSED</option>
-                                        <option value="ARCHIVED" {% if tournament.is_archived %}selected{% endif %}>ARCHIVED</option>
+                                        <option value="SETUP" {% if tournament.is_in_setup %}selected{% endif %}>{% translate "SETUP" %}</option>
+                                        <option value="OPEN" {% if tournament.is_judgable %}selected{% endif %}>{% translate "OPEN" %}</option>
+                                        <option value="COMPLETE" {% if tournament.is_complete %}selected{% endif %}>{% translate "COMPLETE" %}</option>
+                                        <option value="CLOSED" {% if tournament.is_closed %}selected{% endif %}>{% translate "CLOSED" %}</option>
+                                        <option value="ARCHIVED" {% if tournaments.is_archived %}selected{% endif %}>{% translate "ARCHIVED" %}</option>
                                     </select>
                                 </div>
                             </form>

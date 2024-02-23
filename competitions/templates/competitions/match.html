@@ -7,7 +7,7 @@
     <div class="container">
         <div class="row">
             <div class="col-md-12">
-                <h1>Match: {{ match }}</h1>
+                <h1>{% translate "Match:" %} {{ match }}</h1>
 
                 {% if match.advancers.exists %}
                     <h2>{% translate "Advancing teams:" %}</h2>
@@ -18,7 +18,7 @@
                     </ul>
                 {% endif %}
 
-                <h2>Participating teams: </h2>
+                <h2>{% translate "Participating teams:" %} </h2>
                 <ul>
                     {% if match.starting_teams.all %}
                             {% for team in match.starting_teams.all %}
@@ -33,7 +33,7 @@
                     {% endif %}
                 </ul>
                  
-                <h2>Match Date/Time</h2>
+                <h2>{% translate "Match Date/Time" %}</h2>
                 <date>{{ match.time }}</date>
             </div>
         </div>
