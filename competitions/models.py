@@ -190,6 +190,14 @@ class Competition(models.Model):
     def is_in_setup(self) -> bool:
         return self.status == Status.SETUP
     
+    @property
+    def is_scorable(self) -> bool:
+        for tournament in Tournament.objects.get(competition__id = self.id):
+            if tournament.is_complete():
+                    return True
+        return False
+    #if at least one tournament has finished completely, it can be scored
+
     class Meta:
         ordering = ['-start_date', 'name']
         unique_together = ['start_date', 'name'] # probably won't have 2 in the same year but you could have a quarterly / monthly / even weekly competition

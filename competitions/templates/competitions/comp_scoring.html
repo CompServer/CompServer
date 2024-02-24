@@ -3,55 +3,59 @@
 {% block title %}{% trans "Competition:" %} {{ competition.name }}{% endblock %} 
 {% block content %}
     <header>
-        must check if competition is available for scoring
-        sport logo
         <h1>{% trans "Scores For " %} {{ competition.name }} {{ competition.start_date }} - {{competition.end_date }}</h1>
         <h2>{% trans "Judged by " %}</h2>
-        {% for judge in competition.planeary_judges.all %}
-            if one judge or
-            star before or something
-            {{ judge.name }},
-        {% endfor %}
-    </header>
-    <div section="body">
-        check that there are tournaments first
-        <div class="row">
-            <div class="column">
-                <p>Blank for style</p>
-            </div>
-            {% for tournament in competition.tournaments.all %}
-                <div class="column">
-                    <p>{{ tournament.event.name }}</p>
-                </div>
+        <ul>
+            {% for judge in competition.planeary_judges.all %}
+                <li> {{ judge.first_name }} {{ judge.last_name }}</li>
             {% endfor %}
-            <div class="column">
-                <p>Total</p>
-            </div>
-        </div>
-        add links?? to headers
-        check that there are teams
-        {% for team in ranked_teams %}
+        </ul>
+    </header>
+    {% if competition.is_scorable %}
+        <div section="body">
             <div class="row">
                 <div class="column">
-                    {{ team.name }}
+                    <p></p>
                 </div>
-                events listed here with scores
-                get the row for your team below
-                {% for points in total_tourney_points_lists %}
-                need tournament total 
-                    make sure there is a value, if not "???" or "Incomplete"
-                    make sure tourney for when nothing happend put incomplete
+                {% for tournament in competition.tournaments.all %}
                     <div class="column">
-                        {{ points }}
+                        <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</s>
                     </div>
                 {% endfor %}
-                total should updates
-                <div class="row">
-                    {{ add up all tourney points in the above list }}
+                <div class="column">
+                    <p>Total Score</p>
                 </div>
             </div>
-            highlight high rankings for a team
-            should rank highest to lowest tournament event awarded points so maybe ranked tournaments
-        {% endfor %}
-    </div>
+            {% for team in ranked_teams %}
+                <div class="row">
+                    <div class="column">
+                        {{ team.name }}
+                    </div>
+                    {% for tournament in selected_competition.tournaments.all %}
+                        {% if tournament.is_complete %}
+                            <div class="column">
+                                {{ Ranking.objects.filter(tournament__id = tournament.id, team__id = team.id).rank.get_points }}
+                            </div>
+                            how do you get points based on rank?
+                        {% elif %}
+                            <div class="column">
+                                <p>Unavailable</p>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                    {% for tournament in scorable_tournaments %}
+                        {% for tourney_team in tournament.teams.all %}
+                            {% if tourney_team == Team.objects.get(id = team.id) %}
+                                add the points to the totla points for this Team
+                            {% endif %}
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+                colorcode team rankings
+                rank tournaments by most available points
+            {% endfor %}
+        </div>
+    {% elif %}
+        <p>All of the tournaments are currently ongoing and haven't finished yet.</p>
+    {% endif %} 
 {% endblock %}

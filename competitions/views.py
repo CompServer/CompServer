@@ -371,24 +371,23 @@ def set_timezone_view(request: HttpRequest):
     return render(request, "timezones.html", {"timezones": timezones})
 
 def competition_score_page(request, competition_id):
-    #getting tournament points
+    scorable_tournaments = Tournament.objects.filter(id = tournament__id, is_scorable() == True)
+    selected_competition = Competition.objects.filter(id = competition_id)
     #get tournament
     #get a team
-    tourney_total = 0
-    if tournament.status == Status.COMPLETE:
-        for match in team.match_set.all().filter(tournament__id = tournament.id):
-            tourney_total += match.points #if we can get each awarded points for a match
-    #then create a list of all match set points for each team
-    #filter ttpl later for each team
-    total_tourney_points_lists = []
+    #tourney_total = 0
+    #if tournament.status == Status.COMPLETE:
+    #    for match in team.match_set.all().filter(tournament__id = tournament.id):
+    #        tourney_total += match.points #if we can get each awarded points for a match
+    def overall_team_rankings_auto():
+        #this should auto update rankings of team and switch their order as listed scores
+        return False
     context = {
-        'competition': Competition.objects.filter(id = competition_id),
-        'ranked_teams': Team.objects.filter(competition__id = competition_id), 
-        'total_tourney_points_lists': total_tourney_points_lists,
-        #name, sport, status, start_date, end_date, teams, planeary judges, 
+        'competition': selected_competition,
+        'ranked_teams': selected_competition.teams.all(), 
+        'scorable_tournaments': scorable_tournaments,
     }
     return render(request, "competitions/comp_scoring.html", context)
-
 
 def team(request, team_id):
     today = timezone.now().date()
