@@ -25,7 +25,7 @@
         <h3>{% translate "Tournaments" %}</h3>
         {% for tournament in competition.tournament_set.all %}
             <div class="row d-flex">
-                {% if not tournament.is_archived %}
+                {% if not tournament.is_archived or user.is_staff %}
                     <div class = "col-12 tournament">
                         {% if tournament.is_judgable %} 
                             <i class="bi-activity" title="{{ competition.status }}"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
@@ -35,15 +35,17 @@
                             <i class="bi-x-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
                         {% elif tournament.is_in_setup %}
                             <i class="bi-gear" title="{{ competition.status }}"></i> {{ tournament.event.name }}
-                        {% endif %}  
+                        {% elif competition.is_archived %}
+                            <i class="bi-archive" title="{{ competition.status }}"></i> {{ tournament }} <small>You can see this archived item because you are signed in as a superuser.</small>
+                        {% endif %}
                         ({{ tournament.points|floatformat:"0" }} {% translate "points" %}) 
                         {% if user.is_staff %}
-                            <form class="form-inline my-2 my-md-0 justify-content-end" action="/tournament/{{ tournament.id }}/" method="POST" id="status">
+                            <form class="form-inline my-2 my-md-0 justify-content-end" action="/competition/{{ competition.id }}/?next=competition&id={{ competition.id }}" method="POST" id="status">
                                 {% csrf_token %}
                                 <div class="input-group">
                                     <select name="status" onchange="this.form.submit();">
-                                        {% for setup_type in Status.__all__ %}
-                                            <option value="{{ setup_type }}" {% if tournament.status == setup_type %}selected{% endif %}>{{ setup_type }}</option>
+                                        {% for value, translated_value in form.status.field.choices %}
+                                            <option value="{{ value }}" {% if tournament.status == value %}selected{% endif %}>{{ translated_value }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
