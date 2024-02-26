@@ -261,6 +261,10 @@ def competition(request: HttpRequest, competition_id):
     context = {"competition": competition, "Status": Status}
     return render(request, "competitions/competition.html", context)
 
+# tourmaent query set annotate with the winners of the tournament have something called iwnner add as an annotaton to query set in template go through tournaments passing through context
+# four point awarded too blah blah 
+# look up tutorial on annotation firgure out which tema won
+
 
 def team(request: HttpRequest, team_id):
     team = get_object_or_404(Team, pk=team_id)
