@@ -1,6 +1,16 @@
 {% extends "skeleton.html" %}
 {% load i18n %}
 
+{% block head %}
+
+<style>
+  .team {
+    margin: 0px {{connectorWidth}}px 0px {{connectorWidth}}px;
+  }
+</style>
+
+{% endblock%}
+
 {% block content %}
 <h1>
     {% if tournament.is_judgable %}
@@ -16,7 +26,7 @@
     ({{ tournament.points|floatformat:"0" }} {% translate "points" %})
 </h1>
 
-<div class="bracket" style="height: {{ bracket_dict.bracketHeight }}px; width: {{ bracket_dict.bracketWidth }}px;">
+<div class="bracket" style="height:{{bracket_dict.bracketHeight}}px; width:{{bracket_dict.bracketWidth}}px;">
     {% for round_data in bracket_dict.round_data %}
     <div class="round" style="height: {{ bracket_dict.roundHeight }}px; width: {{ bracket_dict.roundWidth }}px;">
         {% for match_data in round_data.match_data %}
