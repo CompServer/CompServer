@@ -32,10 +32,10 @@
                             <div class="connector-back" style=""></div>
                         {% endif %}
                         {% if team_data.won%}
-                            {% with true1=forloop.parentloop.counter|divisibleby:2 true2=forloop.counter|divisibleby:2%}                          
+                            {% with A=forloop.parentloop.counter|divisibleby:2 B=forloop.counter|divisibleby:2%}                          
                             {% widthratio match_data.match_height 2 1 as connector_height%}
-                            <div class="connector-front {{ true1|yesno:'connector-up,connector-down'}}" 
-                            style="height: {% if true1 and not true2 or true2 and not true1 %}{{connector_height|add:-25}}{%else%}{{connector_height}}{%endif%}px;">
+                            <div class="connector-front {{ A|yesno:'connector-up,connector-down'}}" 
+                            style="height: {% if A and not B or B and not A %}{{connector_height|add:-25}}{%else%}{{connector_height}}{%endif%}px;">
                             {%endwith %}
                             </div>
                         {%endif%}
