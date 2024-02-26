@@ -371,21 +371,34 @@ def set_timezone_view(request: HttpRequest):
     return render(request, "timezones.html", {"timezones": timezones})
 
 def competition_score_page(request, competition_id):
-    scorable_tournaments = Tournament.objects.filter(id = tournament__id, is_scorable() == True)
     selected_competition = Competition.objects.filter(id = competition_id)
-    #get tournament
-    #get a team
-    #tourney_total = 0
-    #if tournament.status == Status.COMPLETE:
-    #    for match in team.match_set.all().filter(tournament__id = tournament.id):
-    #        tourney_total += match.points #if we can get each awarded points for a match
-    def overall_team_rankings_auto():
-        #this should auto update rankings of team and switch their order as listed scores
-        return False
+    ranked_tournaments = selected_competition.tournament_set.order_by("points")
+    total_team_rankings_dictionary = dict()
+    for team in selected_competition.teams.all():
+        val = 0
+        for tournament in ranked_tournaments.all():
+            val = val + Ranking.objects.get(tournament__id = tournament.id, team__id = team.id)
+        team_name = team.name
+        total_team_rankings_dictionary[team.name] = val
+    sorted_total_team_rankings_dictionary = sorted(total_team_rankings_dictionary.items(), key=lambda x:x[1])
+    list_of_team_names = list(sorted_total_team_rankings_dictionary.keys())[0]
+    list_of_team_objects = list()
+    for team_name in list_of_team_names:
+        list_of_team_objects.append(Team.objects.get(mame = team_name))
+    total_scores_for_each_team_dictionary = dict()
+    for team in selected_competition.teams.all():
+        val = 0
+        for completed_tournament in completed_tournaments.all():
+            if completed_tournament.advancers__id == team.id():
+                val = val + completed_tournament.points
+        team_name = team.name
+        total_score = val
+        total_scores_for_each_team_dictionary[team_name] = total_score
     context = {
         'competition': selected_competition,
-        'ranked_teams': selected_competition.teams.all(), 
-        'scorable_tournaments': scorable_tournaments,
+        'ranked_teams': list_of_team_objects, 
+        'ranked_tournaments': ranked_tournaments,
+        'total_scores_for_each_team_dictionary': total_scores_for_each_team_dictionary,
     }
     return render(request, "competitions/comp_scoring.html", context)
 

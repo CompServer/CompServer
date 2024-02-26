@@ -3,7 +3,7 @@
 {% block title %}{% trans "Competition:" %} {{ competition.name }}{% endblock %} 
 {% block content %}
     <header>
-        <h1>{% trans "Scores For " %} {{ competition.name }} {{ competition.start_date }} - {{competition.end_date }}</h1>
+        <h1>{% trans "Results For " %} {{ competition.name }} {{ competition.start_date }} - {{competition.end_date }}</h1>
         <h2>{% trans "Judged by " %}</h2>
         <ul>
             {% for judge in competition.planeary_judges.all %}
@@ -11,13 +11,13 @@
             {% endfor %}
         </ul>
     </header>
-    {% if competition.is_scorable %}
+    {% if ranked_tournaments.exists %}
         <div section="body">
             <div class="row">
                 <div class="column">
                     <p></p>
                 </div>
-                {% for tournament in competition.tournaments.all %}
+                {% for tournament in ranked_tournaments %}
                     <div class="column">
                         <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</s>
                     </div>
@@ -32,27 +32,20 @@
                         {{ team.name }}
                     </div>
                     {% for tournament in selected_competition.tournaments.all %}
-                        {% if tournament.is_complete %}
+                        {% if team.id == tournament.advancers.id%}
                             <div class="column">
-                                {{ Ranking.objects.filter(tournament__id = tournament.id, team__id = team.id).rank.get_points }}
+                                <p>{{ tournament.points }}</p>
                             </div>
-                            how do you get points based on rank?
                         {% elif %}
                             <div class="column">
-                                <p>Unavailable</p>
+                                <p>0</p>
                             </div>
                         {% endif %}
                     {% endfor %}
-                    {% for tournament in scorable_tournaments %}
-                        {% for tourney_team in tournament.teams.all %}
-                            {% if tourney_team == Team.objects.get(id = team.id) %}
-                                add the points to the totla points for this Team
-                            {% endif %}
-                        {% endfor %}
-                    {% endfor %}
+                    <div class="column">
+                        {{ total_scores_for_each_team.get(team.name) }}
+                    </div>
                 </div>
-                colorcode team rankings
-                rank tournaments by most available points
             {% endfor %}
         </div>
     {% elif %}
