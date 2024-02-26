@@ -63,6 +63,9 @@
             </div>
         {% endfor %}
     {% endif %}
+    <div class="row d-flex">
+        <a href="{% url 'competitions:competition_score_page' competition_id %}">See Results</a>
+    </div>
     {% if user.is_staff %}
         {% comment %} <hr>
         <h3>Change Status</h3>
