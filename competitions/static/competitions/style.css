@@ -30,40 +30,31 @@
     border: 1px black solid;
     margin: 0px 25px 0px 25px;
     float: none;
+    position: relative;
 }
 
-/* Optimized css magic */
-.connector-back-up,
-.connector-back-down,
-.connector-back-none,
-.connector-front-up,
-.connector-front-down,
-.connector-front-none {
-    border-bottom: 2px black solid;
-    height: 12.5px;
+.connector-back {
+    border-top: 2px black solid;
+    position: absolute;
+    height: 0px;
     width: 25px;
+    left: -25px;
+    top: 12.5px
 }
 
-.connector-back-up,
-.connector-back-down,
-.connector-back-none {
-    border-left: 2px black solid;
-    float: left;
-}
-
-.connector-front-up,
-.connector-front-down,
-.connector-front-none {
+.connector-front {
     border-right: 2px black solid;
-    float: right;
+    position: absolute;
+    width: 28px;
+    right: -28px;
 }
 
-.connector-back-up,
-.connector-front-up {
-    margin-top: 0px;
+.connector-up {
+    border-bottom: 2px black solid;
+    bottom: 12.5px;
 }
 
-.connector-back-down,
-.connector-front-down {
-    margin-top: 12.5px;
+.connector-down {
+    border-top: 2px black solid;
+    top: 12.5px;
 }
