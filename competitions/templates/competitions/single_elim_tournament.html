@@ -13,6 +13,13 @@
         {{ tournament.event.name }} {% translate "from" %} {{ tournament.competition.name }}      
     </h1>
     <hr>
+    {% if tournament.match_set.all %}
+    {% else %}
+        <form class="form-inline my-2 my-md-0 justify-content-end" action="/tournament/{{ tournament.id }}/generate/" method="POST" id="status">
+            {% csrf_token %}
+            <input type="submit">
+        </form>
+    {% endif %}
     {% if tournament.teams.all %}
         <h3>{% translate "Teams" %}</h3>
         {% for team in tournament.teams.all %}
