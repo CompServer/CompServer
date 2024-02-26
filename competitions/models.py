@@ -1,12 +1,14 @@
 from typing import Any, ClassVar
 from django.db import models
+from django.db.models import Q
 from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User
 from django.dispatch import receiver
-from datetime import datetime
+from django.utils import timezone
 import random
 import string
+from functools import lru_cache
 
 
 ACCESS_KEY_LENGTH = 10
@@ -65,16 +67,16 @@ class Status(models.TextChoices):
     @property
     def is_viewable(self) -> bool:
         """Whether the object should show up on the website."""
-        return self in [Status.OPEN, Status.COMPLETE, Status.CLOSED]
+        return self in [__class__.OPEN, __class__.COMPLETE, __class__.CLOSED]
 
     @property
     def is_judgable(self) -> bool:
         """Whether judging for this comptetation should be allowed."""
-        return self == Status.OPEN
+        return self == __class__.OPEN
     
     @property
     def is_archived(self) -> bool:
-        return self == Status.ARCHIVED
+        return self == __class__.ARCHIVED
     
     @property
     def is_in_setup(self) -> bool:
@@ -141,28 +143,26 @@ class Competition(models.Model):
     # related: tournament_set
 
     def check_date(self):
-        today = datetime.now().date()
-        if self.end_date < today:
-            return True
-        else:
-            return False
+        today = timezone.now().date()
+        return self.end_date < today
 
     #checks if the competition has ended (true)
     #checks if the competition hasn't ended (false)
 
     def __str__(self) -> str:
         # dwheadon: check if the name is unique for this year, otherwise add the month/day as well
-        if Competition.objects.filter(name=self.name).count() > 1:
-            if Competition.objects.filter(name=self.name, start_date__year=self.start_date.year).count() > 1:
-                if Competition.objects.filter(name=self.name, start_date__year=self.start_date.year, start_date__month=self.start_date.month).count() > 1:
+        s: str = self.name
+        if (qs := (Competition.objects.filter(name=self.name))).count() > 1: # saves the queryset to a variable to avoid running the same query twice
+            if (qs2 := (qs.filter(start_date__year=self.start_date.year))).count() > 1:
+                s += f" {self.start_date.month}"
+                if qs2.filter(start_date__month=self.start_date.month).exists():
                     # if you have two on the same day, good luck
-                    return self.name + " " + str(self.start_date.month)+ " " + str(self.start_date.day) + ", " + str(self.start_date.year) # RoboMed June, 2023
-                else:
-                    return self.name + " " + str(self.start_date.month) + ", " + str(self.start_date.year) # RoboMed June, 2023
+                    s += f"/{self.start_date.day}" # RoboMed June, 2023
+
+                s += f",  {self.start_date.year}" # RoboMed June, 2023
             else:
-                return self.name + " " + str(self.start_date.year) # RoboMed 2023
-        else:
-            return self.name
+                s += f" {self.start_date.year}" # RoboMed 2023
+        return s
 
     @property
     def is_viewable(self) -> bool:
@@ -234,7 +234,7 @@ class AbstractTournament(models.Model):
     status = StatusField()
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="tournament_set") # besides helpfing to identify this tournament this will change how teams advance (high or low score)
     competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name="tournament_set")
-    points = models.DecimalField(max_digits=20, decimal_places=10,default=0) # for winner # dwheadon: is 10 digits / decimals enough / too much?
+    points = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True) # for winner # dwheadon: is 10 digits / decimals enough / too much?
     # interpolate_points = models.BooleanField(default=False) # otherwise winner takes all: RoboMed doesn't need this but it could be generally useful
     teams = models.ManyToManyField(Team, related_name="tournament_set")
     judges = models.ManyToManyField(User, blank=True, related_name="tournament_set")  # people entrusted to judge this tournament alone (as opposed to plenary judges)
@@ -277,14 +277,13 @@ class AbstractTournament(models.Model):
 
         
     class Meta:
-        ordering = ['competition', 'points', 'event']
+        ordering = ['competition', 'event']
 
 class Ranking(models.Model):
     """ These will determine the auto-layout of the brackets """
     tournament = models.ForeignKey(AbstractTournament, on_delete=models.CASCADE, related_name="ranking_set")
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     rank = models.PositiveSmallIntegerField()
-    points = models.DecimalField(max_digits=20, decimal_places=10,default=0)
 
     def __str__(self) -> str:
         return f"{self.rank}) {self.team.name} in {self.tournament})"
@@ -365,34 +364,52 @@ class SingleEliminationTournament(AbstractTournament):
 
 class Match(models.Model):
     ''' Could be a one-off preliminary match or part of a larger tournament'''
-    tournament = models.ForeignKey(AbstractTournament, models.CASCADE, blank=True, null=True)
+    tournament = models.ForeignKey(AbstractTournament, models.CASCADE, blank=True, null=True, related_name="match_set")
     # Note: admin doesn't enforce the starting teams to be registered for this tournament
     starting_teams = models.ManyToManyField(Team, related_name="round1_matches", blank=True) # Only used for round1 matches, all others use the previous matches. Usually just 2 but could be more (speed race)
     # Note: admin doesn't restrict to previous matches from this tournament
     prev_matches = models.ManyToManyField('self', symmetrical=False, blank=True, related_name="next_matches") # Except for round1 of a tournament (or one-off preliminary matches), advancers from the previous matches will be the competitors for this match
     # Note: admin doesn't restrict advancers to be competitors for this match
     advancers = models.ManyToManyField(Team, related_name="won_matches", blank=True) # usually 1 but could be more (e.g. time trials)
-    time = models.DateTimeField() # that it's scheduled for
+    time = models.DateTimeField(blank=True, null=True) # that it's scheduled for
+
+    _cached_str = models.TextField(blank=True, null=True) # for caching the string representation
+
     str_recursive_level: ClassVar[int] = 0
 
+    def _generate_str_recursive(self, force: bool=False) -> str:
+        """Recursive algorithm for generating the string representation of this match.
+        This is called whenever casted, and the result is saved to a variable to avoid recalculating it.
+        It can be forced to recalculate by setting the force parameter to True, or passing in other kwargs"""
+        if force or not self._cached_str:
+            self.__class__.str_recursive_level += 1
+            competitors = []
+            if self.starting_teams.exists():
+                competitors.extend((f"[{team.name}]" if team in self.advancers.all() else team.name) for team in self.starting_teams.all())
+            if self.prev_matches.exists():
+                for prev_match in self.prev_matches.all():
+                    if prev_match.advancers.exists():
+                        competitors.extend((f"[{team.name}]" if team in self.advancers.all() else team.name) for team in prev_match.advancers.all())
+                    else:
+                        competitors.append(f"Winner of ({prev_match})")
+            self.__class__.str_recursive_level -= 1
+            res = str(_(" vs ")).join(competitors) # Battlebots vs Byters
+            if self.__class__.str_recursive_level == 0:
+                self._cached_str =  res + _(" in ") + str(self.tournament) # Battlebots vs Byters in SumoBot tournament @ RoboMed 2023
+            else: 
+                self._cached_str =  res # if part of another match we don't want to repeat the tournament
+        return str(self._cached_str)
+
     def __str__(self) -> str:
-        self.__class__.str_recursive_level += 1
-        competitors = []
-        if self.starting_teams.exists():
-            competitors.extend((f"[{team.name}]" if team in self.advancers.all() else team.name) for team in self.starting_teams.all())
-        if self.prev_matches.exists():
-            for prev_match in self.prev_matches.all():
-                if prev_match.advancers.exists():
-                    competitors.extend((f"[{team.name}]" if team in self.advancers.all() else team.name) for team in prev_match.advancers.all())
-                else:
-                    competitors.append(f"Winner of ({prev_match})")
-        self.__class__.str_recursive_level -= 1
-        res = str(_(" vs ")).join(competitors) # Battlebots vs Byters
-        if self.__class__.str_recursive_level == 0:
-            return res + _(" in ") + str(self.tournament) # Battlebots vs Byters in SumoBot tournament @ RoboMed 2023
-        else: 
-            return res # if part of another match we don't want to repeat the tournament
+        if self._cached_str == None:
+            self._generate_str_recursive()
+            self.save()
+        return self._cached_str
 
     class Meta:
         ordering = ['tournament']
         verbose_name_plural = _('Matches')
+
+@receiver(post_save, sender=Match)
+def update_str_match(sender, instance, **kwargs):
+    instance._generate_str_recursive(force=True) # because kwargs are different, cache will not be used and we force it to recalculate

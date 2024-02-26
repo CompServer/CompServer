@@ -15,7 +15,6 @@ from django.urls import reverse
 from django.utils import timezone
 import random
 import zoneinfo
-from .models import *
 from .forms import *
 
 def is_overflowed(list1, num):
@@ -30,14 +29,21 @@ def sort_list(list1, list2):
 
 def generate_single_elimination_matches(request, tournament_id):
     #sort the list by ranking, then use a two-pointer alogrithm to make the starting matches
-    tournament = get_object_or_404(AbstractTournament, pk=tournament_id)
+    tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
+    
+    if not tournament.ranking_set.all():
+        teams = tournament.teams.all()
+        for i, team in enumerate(teams, start=1):
+            rank = Ranking.objects.create(tournament=tournament,team=team,rank=i)
+            rank.save()
+
     team_ranks = []
     for rank in tournament.ranking_set.all():
         team_ranks.append((rank.team, rank.rank))
     team_ranks.sort(key=lambda x: x[1])
-    #sort_list(teams, ranks)
+    #sort_list(teams, ranks)        
     rank_teams = {}
-    for i in range(len(rank_teams)):
+    for i in range(len(team)):
         rank_teams[i+1] = team_ranks[i][0]
     num_teams = len(rank_teams)
     num_matches = 1
@@ -115,7 +121,7 @@ def generate_single_elimination_matches(request, tournament_id):
         for match in new_matches:
             matches.append(match)
         num_matches = len(matches)
-    return HttpResponseRedirect(reverse("competitions:single_elim_tournament", args=tournament_id))
+    return HttpResponseRedirect(reverse("competitions:single_elimination_tournament", args=(tournament_id,)))
 
 def generate_round_robin_matches(request, tournament_id):
     some_num_matches = 4
@@ -175,10 +181,11 @@ def single_elimination_tournament(request: HttpRequest, tournament_id):
 
     note: steps 1 and 2 could probably be combined
     '''
-
+    if not tournament.match_set.all().exists():
+        return HttpResponseRedirect(reverse("competitions:generate_single_elimination_matches", args=(tournament_id,)))
     # where all the matches get stored, only used in this function, not passed to template
     bracket_array = []
-
+    
     # recursive
     def read_tree_from_node(curr_match, curr_round, base_index):
         # add space for new matches if it doesnt exist

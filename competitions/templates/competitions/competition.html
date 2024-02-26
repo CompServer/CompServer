@@ -35,7 +35,7 @@
                         {% endif %}  
                         ({{ tournament.points|floatformat:"0" }} {% translate "points" %}) 
                         {% if user.is_staff %}
-                            <form class="form-inline my-2 my-md-0 justify-content-end" action="/competition/{{ competition.id }}/?next=competition&id={{ competition.id }}" method="POST" id="status">
+                            <form class="form-inline my-2 my-md-0 justify-content-end" action="/tournament/{{ tournament.id }}/?next=competition&id={{ competition.id }}" method="POST" id="status">
                                 {% csrf_token %}
                                 <div class="input-group">
                                     <select name="status" onchange="this.form.submit();">
