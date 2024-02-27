@@ -280,13 +280,13 @@ def single_elimination_tournament(request: HttpRequest, tournament_id):
             center_height = (team_height) * num_teams
             center_top_margin = (match_height - center_height) / 2
 
-                match_data.append({
-                    "team_data": team_data,
-                    "match_height": match_height,
-                    "match_width": matchWidth,
-                    "center_height": center_height,
-                    "center_top_margin": center_top_margin,
-                })
+            match_data.append({
+                "team_data": team_data,
+                "match_height": match_height,
+                "match_width": matchWidth,
+                "center_height": center_height,
+                "center_top_margin": center_top_margin,
+            })
 
             round_data.append({
                 "match_data": match_data,
