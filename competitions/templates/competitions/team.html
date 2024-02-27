@@ -26,10 +26,10 @@
     -->
     {% if upcoming_matches.exists %}
         <div class="match-schedule">
-            <h3>{% trans "Upcoming Matches" %}</h3>
+            <h3>{% translate "Upcoming Matches" %}</h3>
             <ul>
                 {% for match in upcoming_matches %}
-                    <li>{{ match.time }} {% trans "between" %} {{ match }}</li>
+                    <li>{{ match.time }} {% translate "between" %} {{ match }}</li>
                 {% endfor %}
             </ul>
         </div>
