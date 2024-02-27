@@ -15,38 +15,40 @@
     {{ tournament.competition.name }} {{ tournament.event.name }} {% translate "Tournament" %}
     ({{ tournament.points|floatformat:"0" }} {% translate "points" %})
 </h1>
-
-<div class="bracket" style="height: {{ bracket_dict.bracketHeight }}px; width: {{ bracket_dict.bracketWidth }}px;">
-    {% for round_data in bracket_dict.round_data %}
-    <div class="round" style="height: {{ bracket_dict.roundHeight }}px; width: {{ bracket_dict.roundWidth }}px;">
-        {% for match_data in round_data.match_data %}
-        <div class="match" style="height: {{ match_data.match_height }}px; width: {{ match_data.match_width }}px;">
-            <div class="center"
-                style="height: {{ match_data.center_height }}px; margin-top: {{ match_data.center_top_margin }}px; ">
-            {% for team_data in match_data.team_data %}
-                {% if team_data.prev %} 
-                    {% if forloop.counter <= match_data.team_data|length|divisibleby:2 %}
-                    <div class="connector-back-none" style=""></div>
-                    {% else %}
-                    <div class="connector-back-none" style=""></div>
+{% if tournament.match_set.all %}
+    <div class="bracket" style="height: {{ bracket_dict.bracketHeight }}px; width: {{ bracket_dict.bracketWidth }}px;">
+        {% for round_data in bracket_dict.round_data %}
+        <div class="round" style="height: {{ bracket_dict.roundHeight }}px; width: {{ bracket_dict.roundWidth }}px;">
+            {% for match_data in round_data.match_data %}
+            <div class="match" style="height: {{ match_data.match_height }}px; width: {{ match_data.match_width }}px;">
+                <div class="center"
+                    style="height: {{ match_data.center_height }}px; margin-top: {{ match_data.center_top_margin }}px; ">
+                {% for team_data in match_data.team_data %}
+                    {% if team_data.prev %} 
+                        {% if forloop.counter <= match_data.team_data|length|divisibleby:2 %}
+                        <div class="connector-back-none" style=""></div>
+                        {% else %}
+                        <div class="connector-back-none" style=""></div>
+                        {% endif %}
                     {% endif %}
-                {% endif %}
-                {% if team_data.won%}<div class="connector-front-none" style=""></div>{%endif%}
-            <div class="team"
-                style="width: {{ match_data.match_width }}px; {%if team_data.won %}background-color: #fff5a8;{%endif%} cursor: pointer;"
-                onclick="location.href='{% url 'competitions:judge_match' team_data.match_id %}';">
-                {{ team_data.name }}
-            </div>
+                    {% if team_data.won %}<div class="connector-front-none" style=""></div>{%endif%}
+                <div class="team"
+                    style="width: {{ match_data.match_width }}px; {%if team_data.won %}background-color: #fff5a8;{%endif%} cursor: pointer;"
+                    onclick="location.href='{% url 'competitions:judge_match' team_data.match_id %}';">
+                    {{ team_data.name }}
+                </div>
 
-            {% endfor %}
+                {% endfor %}
+            </div>
         </div>
+        {% endfor %}
     </div>
     {% endfor %}
-</div>
-{% endfor %}
-</div>
+    </div>
+{% else %}
 <form class="form-inline my-2 my-md-0 justify-content-end" action="/tournament/{{ tournament.id }}/generate/" method="POST" id="status">
     {% csrf_token %}
-    <input type="submit">
+    <input type="submit" value="Generate Matches">
 </form>
+{% endif %}
 {% endblock %}
