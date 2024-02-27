@@ -11,13 +11,13 @@
             {% endfor %}
         </ul>
     </header>
-    {% if ranked_tournaments.exists %}
+    {% if completed_tournaments.exists %}
         <div section="body">
             <div class="row">
                 <div class="column">
                     <p></p>
                 </div>
-                {% for tournament in ranked_tournaments %}
+                {% for tournament in completed_tournaments %}
                     <div class="column">
                         <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</s>
                     </div>
@@ -26,13 +26,13 @@
                     <p>Total Score</p>
                 </div>
             </div>
-            {% for team in ranked_teams %}
+            {% for item in sorted_total_scores_dictionary %}
                 <div class="row">
                     <div class="column">
-                        {{ team.name }}
+                        {{ item[0] }}
                     </div>
-                    {% for tournament in selected_competition.tournaments.all %}
-                        {% if team.id == tournament.advancers.id%}
+                    {% for tournament in competition.tournaments.all %}
+                        {% if Team.objects.get(name = item.key()) in tournament.advancers %}
                             <div class="column">
                                 <p>{{ tournament.points }}</p>
                             </div>
@@ -43,7 +43,7 @@
                         {% endif %}
                     {% endfor %}
                     <div class="column">
-                        {{ total_scores_for_each_team.get(team.name) }}
+                        {{ item[1] }}
                     </div>
                 </div>
             {% endfor %}

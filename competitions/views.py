@@ -371,34 +371,28 @@ def set_timezone_view(request: HttpRequest):
     return render(request, "timezones.html", {"timezones": timezones})
 
 def competition_score_page(request, competition_id):
-    selected_competition = Competition.objects.filter(id = competition_id)
-    ranked_tournaments = selected_competition.single_elimination_tournament_set.order_by("points")
-    total_team_rankings_dictionary = dict()
+    selected_competition = Competition.objects.get(id = competition_id)
+    ranked_tournaments = selected_competition.tournament_set.order_by("points")
+    completed_tournaments = ranked_tournaments.filter(status = Status.COMPLETE)
+    unsorted_total_scores_dictionary = dict()
+    list_of_team_names = list()
+    ranked_teams = list()
     for team in selected_competition.teams.all():
-        val = 0
-        for tournament in ranked_tournaments.all():
-            val = val + Ranking.objects.get(tournament__id = tournament.id, team__id = team.id)
         team_name = team.name
-        total_team_rankings_dictionary[team.name] = val
-    sorted_total_team_rankings_dictionary = sorted(total_team_rankings_dictionary.items(), key=lambda x:x[1])
-    list_of_team_names = list(sorted_total_team_rankings_dictionary.keys())[0]
-    list_of_team_objects = list()
-    for team_name in list_of_team_names:
-        list_of_team_objects.append(Team.objects.get(mame = team_name))
-    total_scores_for_each_team_dictionary = dict()
+        list_of_team_names.append(team_name)
     for team in selected_competition.teams.all():
         val = 0
         for completed_tournament in completed_tournaments.all():
-            if completed_tournament.advancers__id == team.id():
+            last_match = Match.objects.filter(tournament__id = completed_tournament.id, next_matches__isnull = True).first()
+            if team in last_match.advancers.all():
                 val = val + completed_tournament.points
-        team_name = team.name
-        total_score = val
-        total_scores_for_each_team_dictionary[team_name] = total_score
+        unsorted_total_scores_dictionary[team.name] = val
+    sorted_total_scores_dictionary = sorted(unsorted_total_scores_dictionary.items(), key=lambda item: item[1])
+    #get name and total score
     context = {
         'competition': selected_competition,
-        'ranked_teams': list_of_team_objects, 
-        'ranked_tournaments': ranked_tournaments,
-        'total_scores_for_each_team_dictionary': total_scores_for_each_team_dictionary,
+        'completed_tournaments': completed_tournaments,
+        'sorted_total_scores_dictionary': sorted_total_scores_dictionary,
     }
     return render(request, "competitions/comp_scoring.html", context)
 
