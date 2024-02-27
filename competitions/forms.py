@@ -13,7 +13,7 @@ class JudgeForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if possible_advancers:
             self.fields['advancers'].queryset = possible_advancers
-        
+
         self.possible_advancers = possible_advancers
 
     def is_valid(self):
@@ -41,3 +41,5 @@ class SETournamentStatusForm(forms.ModelForm):
     class Meta:
         model = SingleEliminationTournament
         fields = ['status']
+
+# class CreateCompetitionsForm(forms.):
