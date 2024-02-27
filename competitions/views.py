@@ -116,14 +116,14 @@ def generate_single_elimination_matches(request, tournament_id):
     return HttpResponseRedirect(reverse("competitions:single_elimination_tournament", args=(tournament_id,)))
 
 def generate_round_robin_matches(request, tournament_id):
-    some_num_matches = 4
-    tournament = get_object_or_404(AbstractTournament, pk=tournament_id)
+    tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
+    some_num_matches = tournament.num_matches
     teams = []
     num_participated = []
     for team in tournament.teams.all():
         teams.append(team)
         num_participated.append(0)
-    for i in range(len(teams)):
+    for i in range(len(teams)-1):
         for k in range(some_num_matches):
             if num_participated[i] < some_num_matches and not is_overflowed(num_participated, some_num_matches):
                 j = random.randint(0, len(teams)-1)
@@ -134,6 +134,7 @@ def generate_round_robin_matches(request, tournament_id):
                 match.save()
                 num_participated[i] += 1
                 num_participated[j] += 1
+
     #also, this could run infinitely, or at least for very long.
     #will do ordering of matches once the bracket is fully understood.
     
@@ -262,53 +263,58 @@ def single_elimination_tournament(request: HttpRequest, tournament_id):
                 team_height = 25
                 center_height = (team_height) * num_teams
                 center_top_margin = (match_height - center_height) / 2
-    for i in range(numRounds):
-        num_matches = len(bracket_array[numRounds-i-1])
-        match_height = bracketHeight / num_matches
-        match_data = []
-        for j in range(num_matches):
-            team_data = []
-            #this is where we convert from bracket_array (made above) to bracket_dict (used in template)
-            num_teams = 0
-            if j in bracket_array[numRounds-i-1] and bracket_array[numRounds-i-1][j] is not None:
-                num_teams = len(bracket_array[numRounds-i-1][j])
-                for k in range(num_teams):
-                    team_data.append(bracket_array[numRounds-i-1][j][k])
+        for i in range(numRounds):
+            num_matches = len(bracket_array[numRounds-i-1])
+            match_height = bracketHeight / num_matches
+            match_data = []
+            for j in range(num_matches):
+                team_data = []
+                #this is where we convert from bracket_array (made above) to bracket_dict (used in template)
+                num_teams = 0
+                if j in bracket_array[numRounds-i-1] and bracket_array[numRounds-i-1][j] is not None:
+                    num_teams = len(bracket_array[numRounds-i-1][j])
+                    for k in range(num_teams):
+                        team_data.append(bracket_array[numRounds-i-1][j][k])
+                    
                 
+                team_height = 25
+                center_height = (team_height) * num_teams
+                center_top_margin = (match_height - center_height) / 2
+
+                match_data.append({
+                    "team_data": team_data,
+                    "match_height": match_height,
+                    "match_width": matchWidth,
+                    "center_height": center_height,
+                    "center_top_margin": center_top_margin,
+                })
+
+                round_data.append({
+                    "match_data": match_data,
+                })
+
+            bracket_dict = {
+                "bracketWidth": bracketWidth,
+                "bracketHeight": bracketHeight,
+                "roundWidth": roundWidth+connectorWidth,
+                "roundHeight": bracketHeight,
+                "round_data": round_data
+            }
             
-            team_height = 25
-            center_height = (team_height) * num_teams
-            center_top_margin = (match_height - center_height) / 2
-
-            match_data.append({
-                "team_data": team_data,
-                "match_height": match_height,
-                "match_width": matchWidth,
-                "center_height": center_height,
-                "center_top_margin": center_top_margin,
-            })
-
-            round_data.append({
-                "match_data": match_data,
-            })
-
-        bracket_dict = {
-            "bracketWidth": bracketWidth,
-            "bracketHeight": bracketHeight,
-            "roundWidth": roundWidth+connectorWidth,
-            "roundHeight": bracketHeight,
-            "round_data": round_data
-        }
-        
-        tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
-        context = {
-            "tournament": tournament, 
-            "bracket_dict": bracket_dict,
-        }
+            tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
+            context = {
+                "tournament": tournament, 
+                "bracket_dict": bracket_dict,
+            }
     else:
         context = {
             "tournament": tournament,
         }
+    return render(request, "competitions/bracket.html", context)
+
+def round_robin_tournament(request, tournament_id):
+    tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
+    context = {"tournament": tournament,}
     return render(request, "competitions/bracket.html", context)
 
 

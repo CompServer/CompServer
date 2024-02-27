@@ -1,0 +1,35 @@
+{% extends 'skeleton.html' %}
+{% load i18n %}
+
+{% block content %}
+    <h1>{% if tournament.is_judgable %}
+            <i class="bi-activity" title="{{ competition.status }}"></i>
+        {% elif tournament.is_complete %}
+            <i class="bi-check2-circle" title="{{ competition.status }}"></i>
+        {% elif tournament.is_closed %}
+            <i class="bi-x-circle" title="{{ competition.status }}"></i>
+        {% elif tournament.is_in_setup %}
+            <i class="bi-gear" title="{{ competition.status }}"></i>
+        {% endif %}
+        {{ tournament.event.name }} {% translate "from" %} {{ tournament.competition.name }}      
+    </h1>
+    <hr>
+    {% if tournament.match_set.all %}
+    {% else %}
+        <form class="form-inline my-2 my-md-0 justify-content-end" action="/tournament/{{ tournament.id }}/generate/" method="POST" id="status">
+            {% csrf_token %}
+            <input type="submit">
+        </form>
+    {% endif %}
+    {% if tournament.teams.all %}
+        <h3>{% translate "Teams" %}</h3>
+        {% for team in tournament.teams.all %}
+            <div class="row d-flex">
+                <div class = "col-12">
+                    <p><a href="{% url 'competitions:team' team.id %}">{{ team }}</a></p>
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
+    {% comment %} <h3>{% translate "Matches" %}</h3> {% endcomment %}
+{% endblock %}

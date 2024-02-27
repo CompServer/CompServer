@@ -1,6 +1,6 @@
 from typing import Any, ClassVar
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, SmallIntegerField
 from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User
@@ -353,7 +353,8 @@ class SingleEliminationTournament(AbstractTournament):
 #     # interpolated: full rankings (sequence of wins / losses)
 
 
-# class RoundRobinTournament(AbstractTournament):
+class RoundRobinTournament(AbstractTournament):
+    num_matches = models.PositiveSmallIntegerField()
 #     ''' Everyone plays everyone else (most points / wins, wins) 
 #         Can be used to establish rankings for an Elimination
 #         This is often used for league play (not necessarily a tournament)
