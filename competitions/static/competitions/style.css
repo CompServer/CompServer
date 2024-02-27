@@ -33,24 +33,17 @@
     border-top: 2px black solid;
     position: absolute;
     height: 0px;
-    width: 25px;
-    left: -25px;
-    top: 12.5px
 }
 
 .connector-front {
     border-right: 2px black solid;
     position: absolute;
-    width: 28px;
-    right: -28px;
 }
 
 .connector-up {
     border-bottom: 2px black solid;
-    bottom: 12.5px;
 }
 
 .connector-down {
     border-top: 2px black solid;
-    top: 12.5px;
 }

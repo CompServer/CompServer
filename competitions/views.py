@@ -137,66 +137,55 @@ def home(request):
 
 
 def single_elimination_tournament(request: HttpRequest, tournament_id):
-    '''
-    This view is responsible for drawing the tournament bracket, it does this by:
-    1) Recursively get all matches and put them in a 4d array
-        a) Start at championship
-        b) Get particpants and add them to the array
-        c) Go to each prev match
-        d) repeat
-    2) Loop through array and convert it to dictionaries, packaging styling along side
-    3) Pass new dictionary to the templete for rendering
-
-    note: steps 1 and 2 could probably be combined
-    '''
-
-    # where all the matches get stored, only used in this function, not passed to template
     bracket_array = []
+        
+    def generate_competitor_data(team, prev, match):
+        is_next = match.next_matches.exists()
+        if is_next:
+            queryset = match.next_matches.all()[0].prev_matches.all()
+            midpoint = (queryset.count()-1)/2
+            index = list(queryset).index(match)
+            connector = "connector-down" if index < midpoint else ("connector-straight" if index == midpoint else "connector-up")
 
-    def get_competitor_data(team, prev, match):
         return {"name": team.name if team else "TBD",
                 "won": team in match.advancers.all(),
+                "next": is_next,
                 "prev": prev,
-                "match_id": match.id}
-
-    # recursive
+                "match_id": match.id,
+                "connector": connector,
+                }
+    
     def read_tree_from_node(curr_match, curr_round, base_index):
-        # add space for new matches if it doesnt exist
         if len(bracket_array) <= curr_round:
             bracket_array.append({})
 
-        # get the names of the teams competing
         competitors = [
-            get_competitor_data(team, False, curr_match)
+            generate_competitor_data(team, False, curr_match)
             for team in curr_match.starting_teams.all()
         ] + [
-            get_competitor_data(team, True, curr_match)
+            generate_competitor_data(team, True, curr_match)
             for prev_match in curr_match.prev_matches.all()
             for team in (prev_match.advancers.all() if prev_match.advancers.exists() else [None])
         ]
 
-        # place the team names in the right box
-        # i.e. bracket_array[2][3] = top 8, 4th match from the top
         bracket_array[curr_round][base_index] = competitors 
         
         prevs = curr_match.prev_matches.all()
-        # checks if there are any previous matches
         if prevs:
-            # if TRUE: recurse
-            # if FALSE: base case
             for i, prev in enumerate(prevs):
+
                 read_tree_from_node(prev, curr_round+1, 2*base_index+i)
-                                                      # ^^^^^^^^^^^^^^
-                                                      # i dont know why this works, it might not 
         else:
-            # this fixes one off preliminary matches, but also creates a weird empty round which gets adressed later
             if len(bracket_array) <= curr_round+1:
                 bracket_array.append({})
             bracket_array[curr_round+1][base_index] = None
 
     read_tree_from_node(Match.objects.filter(tournament=tournament_id).filter(next_matches__isnull=True)[0], 0, 0)
+
     bracket_array.pop()
+
     numRounds = len(bracket_array)
+
     mostTeamsInRound = max(sum((len(teams) if teams else 0) for teams in round.values()) for round in bracket_array)
 
     # _data means it contains the actual stuff to be displayed
