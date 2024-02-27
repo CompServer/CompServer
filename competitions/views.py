@@ -372,7 +372,7 @@ def set_timezone_view(request: HttpRequest):
 
 def competition_score_page(request, competition_id):
     selected_competition = Competition.objects.filter(id = competition_id)
-    ranked_tournaments = selected_competition.tournament_set.order_by("points")
+    ranked_tournaments = selected_competition.single_elimination_tournament_set.order_by("points")
     total_team_rankings_dictionary = dict()
     for team in selected_competition.teams.all():
         val = 0

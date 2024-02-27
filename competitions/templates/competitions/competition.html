@@ -17,6 +17,9 @@
             {{ competition }}
         </h1>
     </header>
+    <div class="row d-flex">
+        <a href="{% url 'competitions:competition_score_page' competition.id %}">See Results</a>
+    </div>
     <hr>
     {% if competition.tournament_set.all %}
         <h3>{% translate "Tournaments" %}</h3>
@@ -63,9 +66,6 @@
             </div>
         {% endfor %}
     {% endif %}
-    <div class="row d-flex">
-        <a href="{% url 'competitions:competition_score_page' competition_id %}">See Results</a>
-    </div>
     {% if user.is_staff %}
         {% comment %} <hr>
         <h3>Change Status</h3>
