@@ -3,6 +3,7 @@ from io import SEEK_CUR
 import math
 
 from django.contrib import messages
+from django.core.exceptions import BadRequest
 from django.shortcuts import render, get_object_or_404
 import math, random
 from .models import *
@@ -17,15 +18,11 @@ import random
 import zoneinfo
 from .forms import *
 
-def is_overflowed(list1, num):
+def is_overflowed(list1: list, num: int):
     for item in list1:
         if item < num:
             return False
     return True
-
-def sort_list(list1, list2):
-    z = [x for _, x in sorted(zip(list2, list1))]
-    return z
 
 def generate_single_elimination_matches(request, tournament_id):
     #sort the list by ranking, then use a two-pointer alogrithm to make the starting matches
@@ -46,11 +43,10 @@ def generate_single_elimination_matches(request, tournament_id):
     for i in range(len(team_ranks)):
         rank_teams[i+1] = team_ranks[i][0]
     num_teams = len(rank_teams)
-    num_matches = 1
+    num_matches, i = 1, 1
     extra_matches = []
     while num_matches * 2 < num_teams:
         num_matches *= 2
-    i = 1
     while i <= num_matches - (num_teams - num_matches):
         extra_matches.append(i)
         i += 1
@@ -266,6 +262,23 @@ def single_elimination_tournament(request: HttpRequest, tournament_id):
                 team_height = 25
                 center_height = (team_height) * num_teams
                 center_top_margin = (match_height - center_height) / 2
+    for i in range(numRounds):
+        num_matches = len(bracket_array[numRounds-i-1])
+        match_height = bracketHeight / num_matches
+        match_data = []
+        for j in range(num_matches):
+            team_data = []
+            #this is where we convert from bracket_array (made above) to bracket_dict (used in template)
+            num_teams = 0
+            if j in bracket_array[numRounds-i-1] and bracket_array[numRounds-i-1][j] is not None:
+                num_teams = len(bracket_array[numRounds-i-1][j])
+                for k in range(num_teams):
+                    team_data.append(bracket_array[numRounds-i-1][j][k])
+                
+            
+            team_height = 25
+            center_height = (team_height) * num_teams
+            center_top_margin = (match_height - center_height) / 2
 
                 match_data.append({
                     "team_data": team_data,
@@ -300,17 +313,15 @@ def single_elimination_tournament(request: HttpRequest, tournament_id):
 
 
 def tournaments(request):
-    context = {"user": request.user}
-    return render(request, "competitions/tournaments.html", context)
-
+    return render(request, "competitions/tournaments.html")
 
 def competitions(request):
-    competition_list = Competition.objects.all()
-    context = {"competition_list": competition_list, "user": request.user, "form": CompetitionStatusForm()}
+    competition_list = Competition.objects.all().order_by("-status", "start_date")
+    context = {"competition_list": competition_list, "form": CompetitionStatusForm()}
     return render(request, "competitions/competitions.html", context)
 
 
-def competition(request, competition_id):
+def competition(request, competition_id: int):
     redirect_to = request.GET.get('next', '')
     redirect_id = request.GET.get('id', None)
     if redirect_id:
@@ -328,14 +339,11 @@ def competition(request, competition_id):
                 return HttpResponseRedirect(reverse(f"competitions:{redirect_to}",args=redirect_id))
     if competition.is_archived:
         return HttpResponseRedirect(reverse("competitions:competitions"))
-    context = {"competition": competition, "user": request.user, "form": SETournamentStatusForm()}
+    context = {"competition": competition, "form": SETournamentStatusForm()}
     return render(request, "competitions/competition.html", context)
 
-
 def credits(request):
-    context = {"user": request.user}
-    return render(request, "competitions/credits.html", context)
-
+    return render(request, "competitions/credits.html")
 
 def not_implemented(request: HttpRequest, *args, **kwargs):
     """
@@ -359,6 +367,7 @@ def judge_match(request, match_id: int):
     
     if not competetion.is_judgable or not tournament.is_judgable:
         messages.error(request, "This match is not judgable.")
+        #print("This match is not judgable.")
         raise PermissionDenied("This match is not judgable.")
     # if the user is a judge for the tournament, or a plenary judge for the competition, or a superuser
     if  not (user in tournament.judges.all() \
@@ -366,26 +375,38 @@ def judge_match(request, match_id: int):
     or user.is_superuser):# \
     #or user.is_superuser:
         messages.error(request, "You are not authorized to judge this match.")
+        #print("You are not authorized to judge this match.")
         raise PermissionDenied("You are not authorized to judge this match.")
         #return HttpResponseRedirect(reverse('competitions:competition', args=[competetion.id]))
-
-    if request.method == 'POST':
-        form = JudgeForm(request.POST, instance=instance, possible_advancers=None)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Match judged successfully.")
 
     winner_choices = []
     if instance.prev_matches.exists():
         winner_choice_ids = []
         for match in instance.prev_matches.all():
-            winner_choice_ids.extend([x.id for x in match.advancers.all()])
+            if match.advancers.exists():
+                winner_choice_ids.extend([x.id for x in match.advancers.all()])
+            else:
+                messages.error(request, "One or more previous matches have not been judged.")
+                #print("One or more previous matches have not been judged.")
+                raise BadRequest("One or more previous matches have not been judged.")
         winner_choices = Team.objects.filter(id__in=winner_choice_ids)
     elif instance.starting_teams.exists():
         winner_choices = instance.starting_teams.all()
+    else:
+        messages.error(request, "This match has no starting teams or previous matches.")
+        #print("This match has no starting teams or previous matches.")
+        raise PermissionDenied("This match has no starting teams or previous matches.")
+
+    if request.method == 'POST':
+        form = JudgeForm(request.POST, instance=instance, possible_advancers=winner_choices)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Match judged successfully.")
+            #print("Match judged successfully.")
+            return HttpResponseRedirect(reverse('competitions:judge_match', args=[instance.id]))
+
     form = JudgeForm(instance=instance, possible_advancers=winner_choices)
     return render(request, 'competitions/match_judge.html', {'form': form})
-
 
 def set_timezone_view(request: HttpRequest):
     if request.method == "POST":
@@ -398,14 +419,43 @@ def set_timezone_view(request: HttpRequest):
     timezones = sorted(zoneinfo.available_timezones())
     return render(request, "timezones.html", {"timezones": timezones})
 
-
 def team(request, team_id):
     today = timezone.now().date()
-    upcoming_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), tournament__competition__start_date__lte=today, tournament__competition__end_date__gte=today, advancers=None).order_by("time")
+    upcoming_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), tournament__competition__start_date__lte=today, tournament__competition__end_date__gte=today, advancers=None).order_by("-time")
+    past_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id)).exclude(advancers=None).order_by("-time")
+    unchecked_won_matches = past_matches.filter(advancers__id = team_id)
+    official_won_matches = []
+    for match in unchecked_won_matches:
+        if match.advancers.count() == 1:
+            official_won_matches.append(match)
+    #need to order the time
+    #can someone figure out how to annotate the query set and count the advancers?
+    unchecked_draw_matches = past_matches.filter(advancers__id = team_id)
+    official_draw_matches = []
+    for match in unchecked_draw_matches:
+        if match.advancers.count() > 1:
+            official_draw_matches.append(match)
+    lost_matches = past_matches.exclude(advancers__id = team_id).order_by("-time")
+    past_tournaments = SingleEliminationTournament.objects.filter(teams__id = team_id, status = Status.COMPLETE)
+    #how do you use properties in query sets?
+    won_tournaments = []
+    if past_tournaments.exists():
+        for tournament in past_tournaments:
+            matches = Match.objects.filter(tournament__id = tournament.id)
+            for match in matches:
+                if team in match.advancers.all():
+                    won_tournaments.append(tournament)
+    past_competitions = Competition.objects.filter(teams__id = team_id, status = Status.COMPLETE).order_by("end_date")
     context = {
         'team': Team.objects.get(pk=team_id),
-        'wins_list': [],
-        'draws_list': [],
-        'losses_list': [],
+        'upcoming_matches': upcoming_matches,
+        'won_matches': official_won_matches,
+        'past_matches': past_matches,
+        'draw_matches': official_draw_matches,
+        'lost_matches': lost_matches,
+        'won_tournaments': won_tournaments,
+        #how do you order tournaments by time?
+        'past_tournaments': past_tournaments,
+        'past_competitions': past_competitions,
     }
     return render(request, "competitions/team.html", context)

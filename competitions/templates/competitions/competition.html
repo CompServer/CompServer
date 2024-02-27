@@ -5,15 +5,18 @@
 {% block content %}
     <header>
         <h1>
+            <i class=
             {% if competition.is_judgable %}
-                <i class="bi-activity" title="{{ competition.status }}"></i>
+                "bi-activity"
             {% elif competition.is_complete %}
-                <i class="bi-check2-circle" title="{{ competition.status }}"></i>
+                "bi-check2-circle"
             {% elif competition.is_closed %}
-                <i class="bi-x-circle" title="{{ competition.status }}"></i>
+                "bi-x-circle"
             {% elif competition.is_in_setup %}
-                <i class="bi-gear" title="{{ competition.status }}"></i>
+                "bi-gear"
             {% endif %}
+            title="{{ competition.status }}"></i>
+
             {{ competition }}
         </h1>
     </header>
@@ -22,7 +25,7 @@
         <h3>{% translate "Tournaments" %}</h3>
         {% for tournament in competition.tournament_set.all %}
             <div class="row d-flex">
-                {% if not tournament.is_archived %}
+                {% if not tournament.is_archived or user.is_staff %}
                     <div class = "col-12 tournament">
                         {% if tournament.is_judgable %} 
                             <i class="bi-activity" title="{{ competition.status }}"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
@@ -32,18 +35,18 @@
                             <i class="bi-x-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
                         {% elif tournament.is_in_setup %}
                             <i class="bi-gear" title="{{ competition.status }}"></i> {{ tournament.event.name }}
-                        {% endif %}  
+                        {% elif competition.is_archived %}
+                            <i class="bi-archive" title="{{ competition.status }}"></i> {{ tournament }} <small>You can see this archived item because you are signed in as a superuser.</small>
+                        {% endif %}
                         ({{ tournament.points|floatformat:"0" }} {% translate "points" %}) 
                         {% if user.is_staff %}
                             <form class="form-inline my-2 my-md-0 justify-content-end" action="/tournament/{{ tournament.id }}/?next=competition&id={{ competition.id }}" method="POST" id="status">
                                 {% csrf_token %}
-                                <div class="input-group">
+                                <div class="input-group d-inline">
                                     <select name="status" onchange="this.form.submit();">
-                                        <option value="SETUP" {% if tournament.is_in_setup %}selected{% endif %}>{% translate "SETUP" %}</option>
-                                        <option value="OPEN" {% if tournament.is_judgable %}selected{% endif %}>{% translate "OPEN" %}</option>
-                                        <option value="COMPLETE" {% if tournament.is_complete %}selected{% endif %}>{% translate "COMPLETE" %}</option>
-                                        <option value="CLOSED" {% if tournament.is_closed %}selected{% endif %}>{% translate "CLOSED" %}</option>
-                                        <option value="ARCHIVED" {% if tournaments.is_archived %}selected{% endif %}>{% translate "ARCHIVED" %}</option>
+                                        {% for value, translated_value in form.status.field.choices %}
+                                            <option value="{{ value }}" {% if tournament.status == value %}selected{% endif %}>{{ translated_value }}</option>
+                                        {% endfor %}
                                     </select>
                                 </div>
                             </form>
@@ -66,9 +69,9 @@
     {% if user.is_staff %}
         {% comment %} <hr>
         <h3>Change Status</h3>
-        <form class="form-inline my-2 my-md-0 justify-content-end" action="" method="POST">
+        <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="" method="POST">
             {% csrf_token %}
-            <div class="input-group">
+            <div class="input-group d-inline">
                 <select class="form-select" name="status" onchange="this.form.submit();">
                     <option value="SETUP" {% if competition.is_in_setup %}selected{% endif %}>SETUP</option>
                     <option value="OPEN" {% if competition.is_judgable %}selected{% endif %}>OPEN</option>

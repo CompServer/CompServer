@@ -4,51 +4,48 @@
 {% block content %}
 <h1>
     {% if tournament.is_judgable %}
-    <i class="bi-activity"></i>
+        <i class="bi-activity"></i>
     {% elif tournament.is_complete %}
-    <i class="bi-check2-circle"></i>
+        <i class="bi-check2-circle"></i>
     {% elif tournament.is_closed %}
-    <i class="bi-x-circle"></i>
+        <i class="bi-x-circle"></i>
     {% elif tournament.is_in_setup %}
-    <i class="bi-gear"></i>
+        <i class="bi-gear"></i>
     {% endif %}
     {{ tournament.competition.name }} {{ tournament.event.name }} {% translate "Tournament" %}
     ({{ tournament.points|floatformat:"0" }} {% translate "points" %})
 </h1>
-{% if tournament.match_set.all %}
-    <div class="bracket" style="height: {{ bracket_dict.bracketHeight }}px; width: {{ bracket_dict.bracketWidth }}px;">
-        {% for round_data in bracket_dict.round_data %}
-        <div class="round" style="height: {{ bracket_dict.roundHeight }}px; width: {{ bracket_dict.roundWidth }}px;">
-            {% for match_data in round_data.match_data %}
-            <div class="match" style="height: {{ match_data.match_height }}px; width: {{ match_data.match_width }}px;">
-                <div class="center"
-                    style="height: {{ match_data.center_height }}px; margin-top: {{ match_data.center_top_margin }}px; ">
-                {% for team_data in match_data.team_data %}
-                    {% if team_data.prev %} 
-                        {% if forloop.counter <= match_data.team_data|length|divisibleby:2 %}
-                        <div class="connector-back-none" style=""></div>
-                        {% else %}
-                        <div class="connector-back-none" style=""></div>
-                        {% endif %}
-                    {% endif %}
-                    {% if team_data.won %}<div class="connector-front-none" style=""></div>{%endif%}
-                <div class="team"
-                    style="width: {{ match_data.match_width }}px; {%if team_data.won %}background-color: #fff5a8;{%endif%} cursor: pointer;"
-                    onclick="location.href='{% url 'competitions:judge_match' team_data.match_id %}';">
-                    {{ team_data.name }}
-                </div>
 
+<div class="bracket" style="height: {{ bracket_dict.bracketHeight }}px; width: {{ bracket_dict.bracketWidth }}px;">
+    {% for round_data in bracket_dict.round_data %}
+    <div class="round" style="height: {{ bracket_dict.roundHeight }}px; width: {{ bracket_dict.roundWidth }}px;">
+        {% for match_data in round_data.match_data %}
+        <div class="match" style="height: {{ match_data.match_height }}px; width: {{ match_data.match_width }}px;">
+            <div class="center"
+                style="height: {{ match_data.center_height }}px; margin-top: {{ match_data.center_top_margin }}px; ">
+                {% for team_data in match_data.team_data %}
+                    <div class="team"
+                        style="width: {{ match_data.match_width }}px; {%if team_data.won %}background-color: #fff5a8;{%endif%} cursor: pointer;"
+                        onclick="location.href='{% url 'competitions:judge_match' team_data.match_id %}';">
+                        {{ team_data.name }}
+                        {% if team_data.prev %}
+                            <div class="connector-back" style=""></div>
+                        {% endif %}
+                        {% if team_data.won%}
+                            {% with A=forloop.parentloop.counter|divisibleby:2 B=forloop.counter|divisibleby:2%}                          
+                            {% widthratio match_data.match_height 2 1 as connector_height%}
+                            <div class="connector-front {{ A|yesno:'connector-up,connector-down'}}" 
+                            style="height: {% if A and not B or B and not A %}{{connector_height|add:-25}}{%else%}{{connector_height}}{%endif%}px;">
+                            {%endwith %}
+                            </div>
+                        {%endif%}
+                    </div>
                 {% endfor %}
             </div>
         </div>
         {% endfor %}
     </div>
     {% endfor %}
-    </div>
-{% else %}
-<form class="form-inline my-2 my-md-0 justify-content-end" action="/tournament/{{ tournament.id }}/generate/" method="POST" id="status">
-    {% csrf_token %}
-    <input type="submit" value="Generate Matches">
-</form>
-{% endif %}
+</div>
+
 {% endblock %}
