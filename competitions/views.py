@@ -26,19 +26,28 @@ def is_overflowed(list1: list, num: int):
 
 def generate_single_elimination_matches(request, tournament_id):
     #sort the list by ranking, then use a two-pointer alogrithm to make the starting matches
-    tournament = get_object_or_404(AbstractTournament, pk=tournament_id)
-    # sort the teams by rank
-    team_ranks = sorted([(rank.team, rank.rank) for rank in tournament.ranking_set.all()],key=lambda x: x[1])
-    #sort_list(teams, ranks)
+    tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
+    
+    if not tournament.ranking_set.all():
+        teams = tournament.teams.all()
+        for i, team in enumerate(teams, start=1):
+            rank = Ranking.objects.create(tournament=tournament,team=team,rank=i)
+            rank.save()
+
+    team_ranks = []
+    for rank in tournament.ranking_set.all():
+        team_ranks.append((rank.team, rank.rank))
+    team_ranks.sort(key=lambda x: x[1])
+    #sort_list(teams, ranks)        
     rank_teams = {}
-    for i in range(len(rank_teams)):
+    for i in range(len(team_ranks)):
         rank_teams[i+1] = team_ranks[i][0]
     num_teams = len(rank_teams)
     num_matches, i = 1, 1
     extra_matches = []
     while num_matches * 2 < num_teams:
         num_matches *= 2
-    while i < num_matches - (num_teams - num_matches):
+    while i <= num_matches - (num_teams - num_matches):
         extra_matches.append(i)
         i += 1
     j = num_teams
@@ -52,16 +61,16 @@ def generate_single_elimination_matches(request, tournament_id):
 
     #regular starting matches
     i = 0
-    j = num_matches - 1
+    j = len(extra_matches) - 1
     matches = []
     while i < j:
         match = Match.objects.create(tournament=tournament)
         if(isinstance(extra_matches[i], int)):
-            match.starting_teams.add(extra_matches[i])
+            match.starting_teams.add(rank_teams[extra_matches[i]])
         else:
-             match.prev_matches.add(extra_matches[i])
+            match.prev_matches.add(extra_matches[i])
         if(isinstance(extra_matches[j], int)):
-            match.starting_teams.add(extra_matches[j])
+            match.starting_teams.add(rank_teams[extra_matches[j]])
         else:
             match.prev_matches.add(extra_matches[j])
         match.save()
@@ -90,7 +99,7 @@ def generate_single_elimination_matches(request, tournament_id):
         new_matches.append(match)
         i += 2
         j -= 2
-    matches.extend(new_matches)
+    matches = new_matches.copy()
     num_matches = len(matches)
 
     #rest of the matches
@@ -99,14 +108,12 @@ def generate_single_elimination_matches(request, tournament_id):
         for i in range(0, num_matches, 2):
             match = Match.objects.create(tournament=tournament)
             match.prev_matches.add(matches[i], matches[i+1])
-            if i + 2 == num_matches - 1:
-                match.prev_matches.add(matches[i+2])
             match.save()
             new_matches.append(match)
         matches = []
-        for match in new_matches:
-            matches.append(match)
+        matches.extend(new_matches)
         num_matches = len(matches)
+    return HttpResponseRedirect(reverse("competitions:single_elimination_tournament", args=(tournament_id,)))
 
 def generate_round_robin_matches(request, tournament_id):
     some_num_matches = 4
@@ -137,6 +144,23 @@ def home(request):
 
 
 def single_elimination_tournament(request: HttpRequest, tournament_id):
+    redirect_to = request.GET.get('next', '')
+    redirect_id = request.GET.get('id', None)
+    if redirect_id:
+        redirect_id = [redirect_id]
+    tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
+    if request.method == 'POST':
+        form = SETournamentStatusForm(request.POST)
+        if form.is_valid():
+            status = form.cleaned_data.get('status')
+            tournament.status = status
+            tournament.save()
+            if redirect_id == None:
+                return HttpResponseRedirect(reverse(f"competitions:{redirect_to}"))
+            else:
+                return HttpResponseRedirect(reverse(f"competitions:{redirect_to}",args=redirect_id))
+    if tournament.is_archived:
+        return HttpResponseRedirect(reverse("competitions:competitions"))
     '''
     This view is responsible for drawing the tournament bracket, it does this by:
     1) Recursively get all matches and put them in a 4d array
@@ -149,122 +173,143 @@ def single_elimination_tournament(request: HttpRequest, tournament_id):
 
     note: steps 1 and 2 could probably be combined
     '''
-
+    # if not tournament.match_set.all().exists():
+    #     return HttpResponseRedirect(reverse("competitions:generate_single_elimination_matches", args=(tournament_id,)))
     # where all the matches get stored, only used in this function, not passed to template
-    bracket_array = []
 
-    # recursive
-    def read_tree_from_node(curr_match, curr_round, base_index):
-        # add space for new matches if it doesnt exist
-        if len(bracket_array) <= curr_round:
-            bracket_array.append({})
-
-        # get the names of the teams competing, stolen to the toString
-        competitors = []
-        if curr_match.starting_teams.exists():
-            for team in curr_match.starting_teams.all():
-                competitors.append({"name": team.name, "won": team in curr_match.advancers.all(), "prev":False, "match_id": curr_match.id}) 
-        if curr_match.prev_matches.exists():
-            for prev_match in curr_match.prev_matches.all():
-                if prev_match.advancers.exists():
-                    for team in prev_match.advancers.all():
-                        competitors.append({"name": team.name, "won": team in curr_match.advancers.all(), "prev": True, "match_id": curr_match.id}) 
-                else:
-                    competitors.append({"name": "TBD", "won": False, "prev": False, "match_id": curr_match.id}) 
-
-        # place the team names in the right box
-        # i.e. bracket_array[2][3] = top 8, 4th match from the top
-        bracket_array[curr_round][base_index] = competitors 
+    if tournament.match_set.all().exists():
+        bracket_array = []
         
-        prevs = curr_match.prev_matches.all()
-        # checks if there are any previous matches
-        if prevs:
-            # if TRUE: recurse
-            # if FALSE: base case
-            for i, prev in enumerate(prevs):
-                read_tree_from_node(prev, curr_round+1, 2*base_index+i)
-                                                      # ^^^^^^^^^^^^^^
-                                                      # i dont know why this works, it might not 
-        else:
-            # this fixes one off preliminary matches, but also creates a weird empty round which gets adressed later
-            if len(bracket_array) <= curr_round+1:
+        # recursive
+        def read_tree_from_node(curr_match, curr_round, base_index):
+            # add space for new matches if it doesnt exist
+            if len(bracket_array) <= curr_round:
                 bracket_array.append({})
-            bracket_array[curr_round+1][base_index] = None
 
-    #mutates bracket_array
-    read_tree_from_node(Match.objects.filter(tournament=tournament_id).filter(next_matches__isnull=True)[0], 0, 0)
+            # get the names of the teams competing, stolen to the toString
+            competitors = []
+            if curr_match.starting_teams.exists():
+                for team in curr_match.starting_teams.all():
+                    competitors.append({"name": team.name, "won": team in curr_match.advancers.all(), "prev":False, "match_id": curr_match.id}) 
+            if curr_match.prev_matches.exists():
+                for prev_match in curr_match.prev_matches.all():
+                    if prev_match.advancers.exists():
+                        for team in prev_match.advancers.all():
+                            competitors.append({"name": team.name, "won": team in curr_match.advancers.all(), "prev": True, "match_id": curr_match.id}) 
+                    else:
+                        competitors.append({"name": "TBD", "won": False, "prev": False, "match_id": curr_match.id}) 
 
-    #this gets weird of the weird empty round caused by the previous section
-    bracket_array.pop()
-
-    bracket_array
-
-    #the number of rounds in the tournament: top 8, semi-finals, championship, etc
-    numRounds = len(bracket_array)
-
-    #find the most number of teams in a single round, used for setting the height
-    mostTeamsInRound = 0
-    for round in bracket_array:
-        teams_count = sum((len(teams) if teams is not None else 0) for teams in round.values())
-        if teams_count > mostTeamsInRound:
-            mostTeamsInRound = teams_count
-
-    # _data means it contains the actual stuff to be displayed
-    # everything else is just css styling or not passed
-    # most variables are exactly what they sound like
-    # you can also look at bracket.html to see how its used
-    round_data = []
-    matchWidth = 200
-    connectorWidth = 25
-    bracketWidth = (matchWidth+(connectorWidth*2))*numRounds
-    bracketHeight = mostTeamsInRound*50
-    roundWidth = matchWidth+connectorWidth
-
-    for i in range(numRounds):
-        num_matches = len(bracket_array[numRounds-i-1])
-        match_height = bracketHeight / num_matches
-        match_data = []
-        for j in range(num_matches):
-            team_data = []
-            #this is where we convert from bracket_array (made above) to bracket_dict (used in template)
-            num_teams = 0
-            if j in bracket_array[numRounds-i-1] and bracket_array[numRounds-i-1][j] is not None:
-                num_teams = len(bracket_array[numRounds-i-1][j])
-                for k in range(num_teams):
-                    team_data.append(bracket_array[numRounds-i-1][j][k])
-                
+            # place the team names in the right box
+            # i.e. bracket_array[2][3] = top 8, 4th match from the top
+            bracket_array[curr_round][base_index] = competitors 
             
-            team_height = 25
-            center_height = (team_height) * num_teams
-            center_top_margin = (match_height - center_height) / 2
+            prevs = curr_match.prev_matches.all()
+            # checks if there are any previous matches
+            if prevs:
+                # if TRUE: recurse
+                # if FALSE: base case
+                for i, prev in enumerate(prevs):
+                    read_tree_from_node(prev, curr_round+1, 2*base_index+i)
+                                                        # ^^^^^^^^^^^^^^
+                                                        # i dont know why this works, it might not 
+            else:
+                # this fixes one off preliminary matches, but also creates a weird empty round which gets adressed later
+                if len(bracket_array) <= curr_round+1:
+                    bracket_array.append({})
+                bracket_array[curr_round+1][base_index] = None
 
-            match_data.append({
-                "team_data": team_data,
-                "match_height": match_height,
-                "match_width": matchWidth,
-                "center_height": center_height,
-                "center_top_margin": center_top_margin,
-            })
+        #mutates bracket_array
+        read_tree_from_node(Match.objects.filter(tournament=tournament_id, next_matches=None)[0], 0, 0)
 
-        round_data.append({
-            "match_data": match_data,
-        })
+        #this gets weird of the weird empty round caused by the previous section
+        bracket_array.pop()
 
-    bracket_dict = {
-        "bracketWidth": bracketWidth,
-        "bracketHeight": bracketHeight,
-        "roundWidth": roundWidth+connectorWidth,
-        "roundHeight": bracketHeight,
-        "round_data": round_data
-    }
-    
-    tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
-    context = {
-        "tournament": tournament, 
-        "bracket_dict": bracket_dict,
-    }
+        #the number of rounds in the tournament: top 8, semi-finals, championship, etc
+        numRounds = len(bracket_array)
+
+        #find the most number of teams in a single round, used for setting the height
+        mostTeamsInRound = 0
+        for round in bracket_array:
+            teams_count = sum((len(teams) if teams is not None else 0) for teams in round.values())
+            if teams_count > mostTeamsInRound:
+                mostTeamsInRound = teams_count
+
+        # _data means it contains the actual stuff to be displayed
+        # everything else is just css styling or not passed
+        # most variables are exactly what they sound like
+        # you can also look at bracket.html to see how its used
+        round_data = []
+        matchWidth = 200
+        connectorWidth = 25
+        bracketWidth = (matchWidth+(connectorWidth*2))*numRounds
+        bracketHeight = mostTeamsInRound*50
+        roundWidth = matchWidth+connectorWidth
+
+        for i in range(numRounds):
+            num_matches = len(bracket_array[numRounds-i-1])
+            match_height = bracketHeight / num_matches
+            match_data = []
+            for j in range(num_matches):
+                team_data = []
+                #this is where we convert from bracket_array (made above) to bracket_dict (used in template)
+                num_teams = 0
+                if j in bracket_array[numRounds-i-1] and bracket_array[numRounds-i-1][j] is not None:
+                    num_teams = len(bracket_array[numRounds-i-1][j])
+                    team_data = [
+                        bracket_array[numRounds-i-1][j][k] for k in range(num_teams)
+                    ]
+                
+                team_height = 25
+                center_height = (team_height) * num_teams
+                center_top_margin = (match_height - center_height) / 2
+        for i in range(numRounds):
+            num_matches = len(bracket_array[numRounds-i-1])
+            match_height = bracketHeight / num_matches
+            match_data = []
+            for j in range(num_matches):
+                team_data = []
+                #this is where we convert from bracket_array (made above) to bracket_dict (used in template)
+                num_teams = 0
+                if j in bracket_array[numRounds-i-1] and bracket_array[numRounds-i-1][j] is not None:
+                    num_teams = len(bracket_array[numRounds-i-1][j])
+                    for k in range(num_teams):
+                        team_data.append(bracket_array[numRounds-i-1][j][k])
+                    
+                
+                team_height = 25
+                center_height = (team_height) * num_teams
+                center_top_margin = (match_height - center_height) / 2
+
+                match_data.append({
+                    "team_data": team_data,
+                    "match_height": match_height,
+                    "match_width": matchWidth,
+                    "center_height": center_height,
+                    "center_top_margin": center_top_margin,
+                })
+
+                round_data.append({
+                    "match_data": match_data,
+                })
+
+            bracket_dict = {
+                "bracketWidth": bracketWidth,
+                "bracketHeight": bracketHeight,
+                "roundWidth": roundWidth+connectorWidth,
+                "roundHeight": bracketHeight,
+                "round_data": round_data
+            }
+            
+            tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
+            context = {
+                "tournament": tournament, 
+                "bracket_dict": bracket_dict,
+            }
+    else:
+        context = {
+            "tournament": tournament,
+        }
     return render(request, "competitions/bracket.html", context)
-
 
 def tournaments(request):
     return render(request, "competitions/tournaments.html")
@@ -410,3 +455,17 @@ def team(request, team_id):
         'past_competitions': past_competitions,
     }
     return render(request, "competitions/team.html", context)
+
+@login_required
+def create_tournament_view(request: HttpRequest):
+    if request.method == "POST":
+        form = CreateTournamentForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Tournament created successfully.")
+            # if form.generate_matches:
+            #     return HttpResponseRedirect(reverse('competitions:generate_single_elimination_matches', args=[form.instance.id]))
+            #print("Tournament created successfully.")
+            return HttpResponseRedirect(reverse('competitions:single_elimination_tournament', args=[form.instance.id])) # will error if there are no matches
+    form = CreateTournamentForm()
+    return render(request, "competitions/create_tournament.html", {"form": form})
