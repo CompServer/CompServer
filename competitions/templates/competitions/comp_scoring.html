@@ -12,43 +12,34 @@
         </ul>
     </header>
     {% if completed_tournaments.exists %}
-        <div section="body">
-            <div class="row">
-                <div class="column">
-                    <p></p>
-                </div>
-                {% for tournament in completed_tournaments %}
-                    <div class="column">
-                        <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</s>
-                    </div>
-                {% endfor %}
-                <div class="column">
-                    <p>Total Score</p>
-                </div>
-            </div>
-            {% for item in sorted_total_scores_dictionary %}
-                <div class="row">
-                    <div class="column">
-                        {{ item[0] }}
-                    </div>
-                    {% for tournament in competition.tournaments.all %}
-                        {% if Team.objects.get(name = item.key()) in tournament.advancers %}
-                            <div class="column">
-                                <p>{{ tournament.points }}</p>
-                            </div>
-                        {% elif %}
-                            <div class="column">
-                                <p>0</p>
-                            </div>
-                        {% endif %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">Name</th>
+                    {% for tournament in completed_tournaments.all %}
+                        <th scope="col">{{ tournament.event.name }}</th>
                     {% endfor %}
-                    <div class="column">
-                        {{ item[1] }}
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
-    {% elif %}
+                    <th scope="col">Total Points</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for k, v in sorted_team_tuples %}
+                    <tr>
+                        <th scope="row">{{ k.name }}</th>
+                            {% for tournament in completed_tournaments.all %}
+                                {% if k in tournaments.advancers.all %}
+                                    <td>{{ tournament.points }}</td>
+                                {% else %}
+                                    <td>0</td>
+                                {% endif %}
+                            {% endfor %}
+                            <td>{{ v }}</td>
+                        </th>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
         <p>All of the tournaments are currently ongoing and haven't finished yet.</p>
     {% endif %} 
 {% endblock %}

@@ -375,24 +375,24 @@ def competition_score_page(request, competition_id):
     ranked_tournaments = selected_competition.tournament_set.order_by("points")
     completed_tournaments = ranked_tournaments.filter(status = Status.COMPLETE)
     unsorted_total_scores_dictionary = dict()
-    list_of_team_names = list()
-    ranked_teams = list()
-    for team in selected_competition.teams.all():
-        team_name = team.name
-        list_of_team_names.append(team_name)
     for team in selected_competition.teams.all():
         val = 0
         for completed_tournament in completed_tournaments.all():
             last_match = Match.objects.filter(tournament__id = completed_tournament.id, next_matches__isnull = True).first()
             if team in last_match.advancers.all():
                 val = val + completed_tournament.points
-        unsorted_total_scores_dictionary[team.name] = val
-    sorted_total_scores_dictionary = sorted(unsorted_total_scores_dictionary.items(), key=lambda item: item[1])
-    #get name and total score
+        unsorted_total_scores_dictionary[team] = val
+    list_of_sorted_team_tuples = [(k, v) for k, v in sorted(unsorted_total_scores_dictionary.items(), key=lambda item: item[1])]
+    #last matches in tournamnets
+    last_tournament_matches = list()
+    for tournament in completed_tournaments.all():
+        #add .all()#
+        #last_match = Match.objects
+        last_tournament_matches.append()
     context = {
         'competition': selected_competition,
         'completed_tournaments': completed_tournaments,
-        'sorted_total_scores_dictionary': sorted_total_scores_dictionary,
+        'sorted_team_tuples': list_of_sorted_team_tuples,
     }
     return render(request, "competitions/comp_scoring.html", context)
 
