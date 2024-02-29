@@ -10,16 +10,16 @@
             <div class="row d-flex">
                 {% if not competition.is_archived or user.is_staff %}
                     <div class = "col-12 competition">
-                        {% if competition.is_judgable %}
-                            <i class="bi-activity" title="{{ competition.status }}"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
-                        {% elif competition.is_complete %}
-                            <i class="bi-check2-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
-                        {% elif competition.is_closed %}
-                            <i class="bi-x-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
+                        {% if competition.is_judgable %} 
+                            <i class="bi-activity" title={% translate "OPEN" %}></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
+                        {% elif competition.is_complete %} 
+                            <i class="bi-check2-circle" title={% translate "COMPLETE" %}></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
+                        {% elif competition.is_closed %} 
+                            <i class="bi-x-circle" title={% translate "CLOSED" %}></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
                         {% elif competition.is_in_setup %}
-                            <i class="bi-gear" title="{{ competition.status }}"></i> {{ competition }}
+                            <i class="bi-gear" title={% translate "SETUP" %}></i> {{ competition }}
                         {% elif competition.is_archived %}
-                            <i class="bi-archive" title="{{ competition.status }}"></i> {{ competition }} <small>You can see this archived item because you are signed in as a superuser.</small>
+                            <i class="bi-archive" title={% translate "ARCHIVED" %}></i> {{ competition }} <small>You can see this archived item because you are signed in as a superuser.</small>
                         {% endif %}
                         {% if user.is_staff %}
                             <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/competition/{{ competition.id }}/?next=competitions" method="POST" id="status">

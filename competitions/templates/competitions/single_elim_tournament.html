@@ -2,16 +2,17 @@
 {% load i18n %}
 
 {% block content %}
-    <h1>{% if tournament.is_judgable %}
-            <i class="bi-activity" title="{{ competition.status }}"></i>
-        {% elif tournament.is_complete %}
-            <i class="bi-check2-circle" title="{{ competition.status }}"></i>
-        {% elif tournament.is_closed %}
-            <i class="bi-x-circle" title="{{ competition.status }}"></i>
+    <h1>{% if tournament.is_judgable %} 
+            <i class="bi-activity" title={% translate "OPEN" %}></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
+        {% elif tournament.is_complete %} 
+            <i class="bi-check2-circle" title={% translate "COMPLETE" %}></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
+        {% elif tournament.is_closed %} 
+            <i class="bi-x-circle" title={% translate "CLOSED" %}></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
         {% elif tournament.is_in_setup %}
-            <i class="bi-gear" title="{{ competition.status }}"></i>
+            <i class="bi-gear" title={% translate "SETUP" %}></i> {{ tournament.event.name }}
+        {% elif competition.is_archived %}
+            <i class="bi-archive" title={% translate "ARCHIVED" %}></i> {{ tournament }} <small>You can see this archived item because you are signed in as a superuser.</small>
         {% endif %}
-        {{ tournament.event.name }} {% translate "from" %} {{ tournament.competition.name }}      
     </h1>
     <hr>
     {% if tournament.match_set.all %}
