@@ -60,7 +60,7 @@
                         {% if team_data.prev %}
                             <div class="connector-back" style=""></div>
                         {% endif %}
-                        {% if team_data.is_next%}
+                        {% if team_data.is_next and team_data.won%}
                             {% with A=forloop.parentloop.counter|divisibleby:2 B=forloop.counter|divisibleby:2%}                          
                             {% widthratio match_data.match_height 2 1 as connector_height%}
                             <div class="connector-front {{ team_data.connector }}" 

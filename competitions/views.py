@@ -150,14 +150,17 @@ def single_elimination_tournament(request: HttpRequest, tournament_id):
                 connector = "connector-down" 
             elif index > midpoint:
                 connector = "connector-up"
+            else:
+                connector = "idk??"
 
-        return {"name": team.name if team else "TBD",
-                "won": team in match.advancers.all(),
-                "next": is_next,
-                "prev": prev,
-                "match_id": match.id,
-                "connector": connector,
-                }
+        return {
+            "name": team.name if team else "TBD",
+            "won": team in match.advancers.all(),
+            "is_next": is_next,
+            "prev": prev,
+            "match_id": match.id,
+            "connector": connector,
+        }
     
     def read_tree_from_node(curr_match, curr_round, base_index):
         if len(bracket_array) <= curr_round:
@@ -192,7 +195,7 @@ def single_elimination_tournament(request: HttpRequest, tournament_id):
 
     numRounds = len(bracket_array)
 
-    mostTeamsInRound = max(sum((len(teams) if teams else 0) for teams in round.values()) for round in bracket_array)
+    mostTeamsInRound = max(sum(len(teams) if teams else 0 for teams in round.values()) for round in bracket_array)
 
     round_data = []
     matchWidth, connectorWidth, teamHeight = 200, 25, 25
