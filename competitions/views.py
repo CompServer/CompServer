@@ -141,11 +141,15 @@ def single_elimination_tournament(request: HttpRequest, tournament_id):
         
     def generate_competitor_data(team, prev, match):
         is_next = match.next_matches.exists()
+        connector = None
         if is_next:
             queryset = match.next_matches.all()[0].prev_matches.all()
             midpoint = (queryset.count()-1)/2
             index = list(queryset).index(match)
-            connector = "connector-down" if index < midpoint else ("connector-straight" if index == midpoint else "connector-up")
+            if index < midpoint:
+                connector = "connector-down" 
+            elif index > midpoint:
+                connector = "connector-up"
 
         return {"name": team.name if team else "TBD",
                 "won": team in match.advancers.all(),
@@ -184,14 +188,12 @@ def single_elimination_tournament(request: HttpRequest, tournament_id):
 
     bracket_array.pop()
 
+    #======================================#
+
     numRounds = len(bracket_array)
 
     mostTeamsInRound = max(sum((len(teams) if teams else 0) for teams in round.values()) for round in bracket_array)
 
-    # _data means it contains the actual stuff to be displayed
-    # everything else is just css styling or not passed
-    # most variables are exactly what they sound like
-    # you can also look at bracket.html to see how its used
     round_data = []
     matchWidth, connectorWidth, teamHeight = 200, 25, 25
     bracketWidth = (matchWidth + (connectorWidth * 2)) * numRounds
