@@ -26,9 +26,9 @@
                 {% for k, v in sorted_team_tuples %}
                     <tr>
                         <th scope="row">{{ k.name }}</th>
-                            {% for tournament in completed_tournaments.all %}
-                                {% if k in tournaments.advancers.all %}
-                                    <td>{{ tournament.points }}</td>
+                            {% for l, m in last_matches %}
+                                {% if team in l.advancers %}
+                                    <td>{{ l.tournament.points }}</td>
                                 {% else %}
                                     <td>0</td>
                                 {% endif %}
