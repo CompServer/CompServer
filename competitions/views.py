@@ -25,7 +25,7 @@ def generate_single_elimination_matches(request, tournament_id):
     #sort the list by ranking, then use a two-pointer alogrithm to make the starting matches
     tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
     
-    if not tournament.prev_tournament.ranking_set.all():
+    if not tournament.prev_tournament or tournament.prev_tournament.ranking_set.all():
         teams = tournament.teams.all()
         for i, team in enumerate(teams, start=1):
             rank = Ranking.objects.create(tournament=tournament,team=team,rank=i)
@@ -172,105 +172,77 @@ def single_elimination_tournament(request: HttpRequest, tournament_id):
                 return HttpResponseRedirect(reverse(f"competitions:{redirect_to}",args=redirect_id))
     if tournament.is_archived:
         return HttpResponseRedirect(reverse("competitions:competitions"))
-    '''
-    This view is responsible for drawing the tournament bracket, it does this by:
-    1) Recursively get all matches and put them in a 4d array
-        a) Start at championship
-        b) Get particpants and add them to the array
-        c) Go to each prev match
-        d) repeat
-    2) Loop through array and convert it to dictionaries, packaging styling along side
-    3) Pass new dictionary to the templete for rendering
-
-    note: steps 1 and 2 could probably be combined
-    '''
 
     # where all the matches get stored, only used in this function, not passed to template
     bracket_array = []
+        
+    def generate_competitor_data(team, prev, match):
+        is_next = match.next_matches.exists()
+        connector = None
+        if is_next:
+            queryset = match.next_matches.all()[0].prev_matches.all()
+            midpoint = (queryset.count() - 1) / 2
+            index = list(queryset).index(match)
+            connector = "connector-down" if index < midpoint else "connector-up" if index > midpoint else "idk??"
 
-    # recursive
+        return {
+            "name": team.name if team else "TBD",
+            "won": team in match.advancers.all(),
+            "is_next": is_next,
+            "prev": prev,
+            "match_id": match.id,
+            "connector": connector,
+        }
+    
     def read_tree_from_node(curr_match, curr_round, base_index):
-        # add space for new matches if it doesnt exist
         if len(bracket_array) <= curr_round:
             bracket_array.append({})
 
-        # get the names of the teams competing, stolen to the toString
-        competitors = []
-        if curr_match.starting_teams.exists():
-            for team in curr_match.starting_teams.all():
-                competitors.append({"name": team.name, "won": team in curr_match.advancers.all(), "prev":False, "match_id": curr_match.id}) 
-        if curr_match.prev_matches.exists():
-            for prev_match in curr_match.prev_matches.all():
-                if prev_match.advancers.exists():
-                    for team in prev_match.advancers.all():
-                        competitors.append({"name": team.name, "won": team in curr_match.advancers.all(), "prev": True, "match_id": curr_match.id}) 
-                else:
-                    competitors.append({"name": "TBD", "won": False, "prev": False, "match_id": curr_match.id}) 
+        competitors = [
+            generate_competitor_data(team, False, curr_match)
+            for team in curr_match.starting_teams.all()
+        ] + [
+            generate_competitor_data(team, True, curr_match)
+            for prev_match in curr_match.prev_matches.all()
+            for team in (prev_match.advancers.all() if prev_match.advancers.exists() else [None])
+        ]
 
-        # place the team names in the right box
-        # i.e. bracket_array[2][3] = top 8, 4th match from the top
         bracket_array[curr_round][base_index] = competitors 
         
         prevs = curr_match.prev_matches.all()
-        # checks if there are any previous matches
         if prevs:
-            # if TRUE: recurse
-            # if FALSE: base case
             for i, prev in enumerate(prevs):
+
                 read_tree_from_node(prev, curr_round+1, 2*base_index+i)
-                                                      # ^^^^^^^^^^^^^^
-                                                      # i dont know why this works, it might not 
         else:
-            # this fixes one off preliminary matches, but also creates a weird empty round which gets adressed later
             if len(bracket_array) <= curr_round+1:
                 bracket_array.append({})
             bracket_array[curr_round+1][base_index] = None
 
-    #mutates bracket_array
-    read_tree_from_node(Match.objects.filter(tournament=tournament_id).filter(next_matches__isnull=True)[0], 0, 0)
+    read_tree_from_node(Match.objects.filter(tournament=tournament_id).filter(next_matches__isnull=True).first(), 0, 0)
 
-    #this gets weird of the weird empty round caused by the previous section
     bracket_array.pop()
 
-    bracket_array
+    #======================================#
 
-    #the number of rounds in the tournament: top 8, semi-finals, championship, etc
     numRounds = len(bracket_array)
 
-    #find the most number of teams in a single round, used for setting the height
-    mostTeamsInRound = 0
-    for round in bracket_array:
-        teams_count = sum((len(teams) if teams is not None else 0) for teams in round.values())
-        if teams_count > mostTeamsInRound:
-            mostTeamsInRound = teams_count
+    mostTeamsInRound = max(sum(len(teams) if teams else 0 for teams in round.values()) for round in bracket_array)
 
-    # _data means it contains the actual stuff to be displayed
-    # everything else is just css styling or not passed
-    # most variables are exactly what they sound like
-    # you can also look at bracket.html to see how its used
     round_data = []
-    matchWidth = 200
-    connectorWidth = 25
-    bracketWidth = (matchWidth+(connectorWidth*2))*numRounds
-    bracketHeight = mostTeamsInRound*50
-    roundWidth = matchWidth+connectorWidth
+    matchWidth, connectorWidth, teamHeight = 200, 25, 25
+    bracketWidth = (matchWidth + (connectorWidth * 2)) * numRounds
+    bracketHeight = mostTeamsInRound * 50
+    roundWidth = matchWidth + connectorWidth
 
-    for i in range(numRounds):
-        num_matches = len(bracket_array[numRounds-i-1])
+    for round_matches in reversed(bracket_array):
+        num_matches = len(round_matches)
         match_height = bracketHeight / num_matches
         match_data = []
-        for j in range(num_matches):
-            team_data = []
-            #this is where we convert from bracket_array (made above) to bracket_dict (used in template)
-            num_teams = 0
-            if j in bracket_array[numRounds-i-1] and bracket_array[numRounds-i-1][j] is not None:
-                num_teams = len(bracket_array[numRounds-i-1][j])
-                for k in range(num_teams):
-                    team_data.append(bracket_array[numRounds-i-1][j][k])
-                
-            
-            team_height = 25
-            center_height = (team_height) * num_teams
+
+        for team_data in round_matches.values():
+            num_teams = len(team_data) if team_data else 0
+            center_height = teamHeight * num_teams
             center_top_margin = (match_height - center_height) / 2
 
             match_data.append({
@@ -281,23 +253,21 @@ def single_elimination_tournament(request: HttpRequest, tournament_id):
                 "center_top_margin": center_top_margin,
             })
 
-        round_data.append({
-            "match_data": match_data,
-        })
+        round_data.append({"match_data": match_data})
+
 
     bracket_dict = {
-        "bracketWidth": bracketWidth,
-        "bracketHeight": bracketHeight,
-        "roundWidth": roundWidth+connectorWidth,
+        "bracketWidth": bracketWidth, 
+        "bracketHeight": bracketHeight, 
+        "roundWidth": roundWidth+connectorWidth, 
         "roundHeight": bracketHeight,
-        "round_data": round_data
+        "teamHeight": teamHeight,
+        "connectorWidth": connectorWidth,
+        "round_data": round_data,
     }
     
     tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
-    context = {
-        "tournament": tournament, 
-        "bracket_dict": bracket_dict,
-    }
+    context = {"tournament": tournament, "bracket_dict": bracket_dict}
     return render(request, "competitions/bracket.html", context)
 
 

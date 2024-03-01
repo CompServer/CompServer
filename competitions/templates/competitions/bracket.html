@@ -1,6 +1,35 @@
 {% extends "skeleton.html" %}
 {% load i18n %}
 
+{% block head %}
+
+<style>
+  .team {
+    margin: 0px {{bracket_dict.connectorWidth}}px 0px {{bracket_dict.connectorWidth}}px;
+  }
+
+.connector-back {
+    width: {{bracket_dict.connectorWidth}}px;
+    left: -{{bracket_dict.connectorWidth}}px;
+    top: {% widthratio bracket_dict.teamHeight 2 1%}px
+}
+
+.connector-front {
+    width: {{bracket_dict.connectorWidth|add:3}}px;
+    right: -{{bracket_dict.connectorWidth|add:3}}px;
+}
+
+.connector-up {
+    bottom: {% widthratio bracket_dict.teamHeight 2 1%}px;
+}
+
+.connector-down {
+    top: {% widthratio bracket_dict.teamHeight 2 1%}px;
+}
+</style>
+
+{% endblock%}
+
 {% block content %}
 <h1>
     {% if tournament.is_judgable %}
@@ -15,38 +44,39 @@
     {{ tournament.competition.name }} {{ tournament.event.name }} {% translate "Tournament" %}
     ({{ tournament.points|floatformat:"0" }} {% translate "points" %})
 </h1>
+
 {% if tournament.match_set.all %}
-    <div class="bracket" style="height: {{ bracket_dict.bracketHeight }}px; width: {{ bracket_dict.bracketWidth }}px;">
-        {% for round_data in bracket_dict.round_data %}
-        <div class="round" style="height: {{ bracket_dict.roundHeight }}px; width: {{ bracket_dict.roundWidth }}px;">
-            {% for match_data in round_data.match_data %}
-            <div class="match" style="height: {{ match_data.match_height }}px; width: {{ match_data.match_width }}px;">
-                <div class="center"
-                    style="height: {{ match_data.center_height }}px; margin-top: {{ match_data.center_top_margin }}px; ">
-                    {% for team_data in match_data.team_data %}
-                        <div class="team"
-                            style="width: {{ match_data.match_width }}px; {%if team_data.won %}background-color: #fff5a8;{%endif%} cursor: pointer;"
-                            onclick="location.href='{% url 'competitions:judge_match' team_data.match_id %}';">
-                            {{ team_data.name }}
-                            {% if team_data.prev %}
-                                <div class="connector-back" style=""></div>
-                            {% endif %}
-                            {% if team_data.won %}
-                                {% with A=forloop.parentloop.counter|divisibleby:2 B=forloop.counter|divisibleby:2%}                          
-                                {% widthratio match_data.match_height 2 1 as connector_height%}
-                                <div class="connector-front {{ A|yesno:'connector-up,connector-down'}}" 
-                                style="height: {% if A and not B or B and not A %}{{connector_height|add:-25}}{%else%}{{connector_height}}{%endif%}px;">
-                                {% endwith %}
-                                </div>
-                            {% endif %}
-                        </div>
-                    {% endfor %}
-                </div>
+<div class="bracket" style="height:{{bracket_dict.bracketHeight}}px; width:{{bracket_dict.bracketWidth}}px;">
+    {% for round_data in bracket_dict.round_data %}
+    <div class="round" style="height: {{ bracket_dict.roundHeight }}px; width: {{ bracket_dict.roundWidth }}px;">
+        {% for match_data in round_data.match_data %}
+        <div class="match" style="height: {{ match_data.match_height }}px; width: {{ match_data.match_width }}px;">
+            <div class="center"
+                style="height: {{ match_data.center_height }}px; margin-top: {{ match_data.center_top_margin }}px; ">
+                {% for team_data in match_data.team_data %}
+                    <div class="team"
+                        style="width: {{ match_data.match_width }}px; {%if team_data.won %}background-color: #fff5a8;{%endif%} cursor: pointer;"
+                        onclick="location.href='{% url 'competitions:judge_match' team_data.match_id %}';">
+                        {{ team_data.name }}
+                        {% if team_data.prev %}
+                            <div class="connector-back"></div>
+                        {% endif %}
+                        {% if team_data.is_next and team_data.won%}
+                            {% with A=forloop.parentloop.counter|divisibleby:2 B=forloop.counter|divisibleby:2%}                          
+                            {% widthratio match_data.match_height 2 1 as connector_height%}
+                            <div class="connector-front {{ team_data.connector }}" 
+                            style="height: {% if A and not B or B and not A %}{{connector_height|add:-24}}{%else%}{{connector_height|add:2}}{%endif%}px;">
+                            {%endwith %}
+                            </div>
+                        {%endif%}
+                    </div>
+                {% endfor %}
             </div>
-            {% endfor %}
         </div>
         {% endfor %}
     </div>
+    {% endfor %}
+</div>
 {% else %}
     <form class="form-inline my-2 my-md-0 justify-content-end" action="/tournament/{{ tournament.id }}/generate/" method="POST" id="status">
         {% csrf_token %}
