@@ -107,7 +107,7 @@ def generate_single_elimination_matches(request: HttpRequest, tournament_id: int
         num_matches = len(matches)
     return HttpResponseRedirect(reverse("competitions:single_elimination_tournament", args=(tournament_id,)))
 
-def generate_round_robin_matches(request: HttpRequest, tournament_id):
+def generate_round_robin_matches(request: HttpRequest, tournament_id: int):
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
     some_num_matches = tournament.num_matches
     some_num_teams = 4
@@ -293,7 +293,7 @@ def competition(request: HttpRequest, competition_id: int):
             status = form.cleaned_data.get('status')
             competition.status = status
             competition.save()
-            if redirect_id == None:
+            if redirect_id is None:
                 return HttpResponseRedirect(reverse(f"competitions:{redirect_to}"))
             else:
                 return HttpResponseRedirect(reverse(f"competitions:{redirect_to}",args=redirect_id))
