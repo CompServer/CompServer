@@ -25,13 +25,13 @@ def generate_single_elimination_matches(request, tournament_id):
     #sort the list by ranking, then use a two-pointer alogrithm to make the starting matches
     tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
     
-    if not tournament.ranking_set.all():
+    if not tournament.prev_tournament.ranking_set.all():
         teams = tournament.teams.all()
         for i, team in enumerate(teams, start=1):
             rank = Ranking.objects.create(tournament=tournament,team=team,rank=i)
             rank.save()
 
-    team_ranks = sorted([(rank.team, rank.rank) for rank in tournament.ranking_set.all()], key=lambda x: x[1])
+    team_ranks = sorted([(rank.team, rank.rank) for rank in tournament.prev_tournament.ranking_set.all()], key=lambda x: x[1])
     #sort_list(teams, ranks)        
     rank_teams = {i+1: team_ranks[i][0] for i in range(len(team_ranks))}
     num_teams = len(rank_teams)
@@ -302,12 +302,13 @@ def single_elimination_tournament(request: HttpRequest, tournament_id):
         context = {
             "tournament": tournament,
         }
+    #return render(request, "competitions/single_elim_tournament.html", context)
     return render(request, "competitions/bracket.html", context)
 
 def round_robin_tournament(request, tournament_id):
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
     context = {"tournament": tournament,}
-    return render(request, "competitions/bracket.html", context)
+    return render(request, "competitions/round_robin_tournament.html", context)
 
 
 def tournaments(request):

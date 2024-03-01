@@ -9,6 +9,7 @@ urlpatterns = [
     path("competition/<int:competition_id>/", views.competition, name="competition"),
     path("team/<int:team_id>/", views.team, name="team"),
     path("tournament/", views.tournaments, name="tournaments"),
+    path("tournament/<int:tournament_id>/rr", views.round_robin_tournament, name="round_robin_tournament"),
     path("tournament/<int:tournament_id>/", views.single_elimination_tournament, name="single_elimination_tournament"),
     path("tournament/<int:tournament_id>/generate/", views.generate_single_elimination_matches, name="generate_single_elimination_matches"),
     # path("coach/<int:coach_id>/", views.coach, name="coach-page"),

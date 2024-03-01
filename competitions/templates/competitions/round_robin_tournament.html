@@ -3,11 +3,11 @@
 
 {% block content %}
     <h1>{% if tournament.is_judgable %} 
-            <i class="bi-activity" title={% translate "OPEN" %}></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
+            <i class="bi-activity" title={% translate "OPEN" %}></i> {{ tournament.event.name }}
         {% elif tournament.is_complete %} 
-            <i class="bi-check2-circle" title={% translate "COMPLETE" %}></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
+            <i class="bi-check2-circle" title={% translate "COMPLETE" %}></i> {{ tournament.event.name }}
         {% elif tournament.is_closed %} 
-            <i class="bi-x-circle" title={% translate "CLOSED" %}></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
+            <i class="bi-x-circle" title={% translate "CLOSED" %}></i> {{ tournament.event.name }}
         {% elif tournament.is_in_setup %}
             <i class="bi-gear" title={% translate "SETUP" %}></i> {{ tournament.event.name }}
         {% elif competition.is_archived %}
