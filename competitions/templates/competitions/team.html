@@ -41,18 +41,18 @@
                 <div class="row d-flex">
                     <div class="col-12 competition">
                         {% if competition.is_judgable %} 
-                            <i class="bi-activity" title="{{ competition.status }}"></i> {{ competition }}
+                            <i class="bi-activity" title="{{ competition.status }}"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
                         {% elif competition.is_complete %} 
-                            <i class="bi-check2-circle" title="{{ competition.status }}"></i> {{ competition }}
+                            <i class="bi-check2-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
                         {% elif competition.is_closed %} 
-                            <i class="bi-x-circle" title="{{ competition.status }}"></i> {{ competition }}
+                            <i class="bi-x-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
                         {% elif competition.is_in_setup %}
                             <i class="bi-gear" title="{{ competition.status }}"></i> {{ competition }}
                         {% elif competition.is_archived %}
                             <i class="bi-archive" title="{{ competition.status }}"></i> {{ competition }} <small>You can see this archived item because you are signed in as a superuser.</small>
                         {% endif %}
                         {% if user.is_staff %}
-                            <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/competition/{{ competition.id }}/?next=competitions" method="POST" id="status">
+                            <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/competition/{{ competition.id }}/?next=team&id={{ team.id }}" method="POST" id="status">
                                 {% csrf_token %}
                                 <div class="input-group d-inline">
                                     <select name="status" onchange="this.form.submit();">
@@ -74,34 +74,20 @@
             {% for tournament in won_tournaments %}
                 <div class="row d-flex">
                     <div class = "col-12 tournament">
-                        {% if tournament.get_type == "RoundRobinTournament" %}
-                            {% if tournament.is_judgable %} 
-                                <i class="bi-activity" title="{{ competition.status }}"></i> <a href="{% url 'competitions:round_robin_tournament' tournament.id %}">{{ tournament }}</a>
-                            {% elif tournament.is_complete %} 
-                                <i class="bi-check2-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:round_robin_tournament' tournament.id %}">{{ tournament }}</a>
-                            {% elif tournament.is_closed %} 
-                                <i class="bi-x-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:round_robin_tournament' tournament.id %}">{{ tournament }}</a>
-                            {% elif tournament.is_in_setup %}
-                                <i class="bi-gear" title="{{ competition.status }}"></i> {{ tournament }}
-                            {% elif competition.is_archived %}
-                                <i class="bi-archive" title="{{ competition.status }}"></i> {{ tournament }} <small>You can see this archived item because you are signed in as a superuser.</small>
-                            {% endif %}
-                        {% elif tournament.get_type == "SingleEliminationTournament" or tournament.get_type == "AbstractTournament" %}
-                            {% if tournament.is_judgable %} 
-                                <i class="bi-activity" title="{{ competition.status }}"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament }}</a>
-                            {% elif tournament.is_complete %} 
-                                <i class="bi-check2-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament }}</a>
-                            {% elif tournament.is_closed %} 
-                                <i class="bi-x-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament }}</a>
-                            {% elif tournament.is_in_setup %}
-                                <i class="bi-gear" title="{{ competition.status }}"></i> {{ tournament }}
-                            {% elif competition.is_archived %}
-                                <i class="bi-archive" title="{{ competition.status }}"></i> {{ tournament }} <small>You can see this archived item because you are signed in as a superuser.</small>
-                            {% endif %}
+                        {% if tournament.is_judgable %} 
+                            <i class="bi-activity" title="{{ competition.status }}"></i> <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a>
+                        {% elif tournament.is_complete %} 
+                            <i class="bi-check2-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a>
+                        {% elif tournament.is_closed %} 
+                            <i class="bi-x-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a>
+                        {% elif tournament.is_in_setup %}
+                            <i class="bi-gear" title="{{ competition.status }}"></i> {{ tournament }}
+                        {% elif competition.is_archived %}
+                            <i class="bi-archive" title="{{ competition.status }}"></i> {{ tournament }} <small>You can see this archived item because you are signed in as a superuser.</small>
                         {% endif %}
                         ({{ tournament.points|floatformat:"0" }} {% translate "points" %}) 
                         {% if user.is_staff %}
-                            <form class="form-inline my-2 my-md-0 justify-content-end" action="/tournament/{{ tournament.id }}/?next=competition&id={{ competition.id }}" method="POST" id="status">
+                            <form class="form-inline my-2 my-md-0 justify-content-end" action="/tournament/{{ tournament.id }}/?next=team&id={{ team.id }}" method="POST" id="status">
                                 {% csrf_token %}
                                 <div class="input-group d-inline">
                                     <select name="status" onchange="this.form.submit();">

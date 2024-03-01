@@ -138,21 +138,23 @@ def generate_round_robin_rankings(request, tournament_id):
     #don't have time right now, but here's what you gotta do
     #put all teams in a list, sort list based on how many wins they had
     #create rankings from there, done
+    tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
+    team_wins = {team: 0 for team in tournament.teams.all()}
+    matches = tournament.match_set.all()
+    for match in matches:
+        for team in match.advancers.all():
+            team_wins[team] += 1
+    sorted_team_wins = dict(sorted(team_wins.items(), key=lambda x:x[1]))
+    i = len(sorted_team_wins)
+    for i, kv in zip(range(len(sorted_team_wins), 1), sorted_team_wins.items()):
+        key = kv[0]
+        rank = Ranking.objects.create(tournament=tournament, team=key, rank=i)
+        rank.save()
     pass
 
 
 def home(request):
     return render(request, "competitions/home.html")
-
-
-def tournament(request, tournament_id):
-    set = SingleEliminationTournament.objects.filter(abstracttournament_ptr_id=tournament_id)
-    if set.exists():
-        return single_elimination_tournament(request, tournament_id)
-    rr = RoundRobinTournament.objects.filter(abstracttournament_ptr_id=tournament_id)
-    if rr.exists():
-        return round_robin_tournament(request, tournament_id)
-    raise Http404
 
 def single_elimination_tournament(request: HttpRequest, tournament_id):
     redirect_to = request.GET.get('next', '')
@@ -306,6 +308,14 @@ def round_robin_tournament(request, tournament_id):
     context = {"tournament": tournament,}
     return render(request, "competitions/round_robin_tournament.html", context)
 
+def tournament(request, tournament_id):
+    se = SingleEliminationTournament.objects.filter(abstracttournament_ptr_id=tournament_id)
+    if se.exists():
+        return single_elimination_tournament(request, tournament_id)
+    rr = RoundRobinTournament.objects.filter(abstracttournament_ptr_id=tournament_id)
+    if rr.exists():
+        return round_robin_tournament(request, tournament_id)
+    raise Http404
 
 def tournaments(request):
     return render(request, "competitions/tournaments.html")
