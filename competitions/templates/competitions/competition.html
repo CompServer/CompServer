@@ -24,16 +24,30 @@
             <div class="row d-flex">
                 {% if not tournament.is_archived or user.is_staff %}
                     <div class = "col-12 tournament">
-                        {% if tournament.is_judgable %} 
-                            <i class="bi-activity" title="{{ competition.status }}"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
-                        {% elif tournament.is_complete %} 
-                            <i class="bi-check2-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
-                        {% elif tournament.is_closed %} 
-                            <i class="bi-x-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
-                        {% elif tournament.is_in_setup %}
-                            <i class="bi-gear" title="{{ competition.status }}"></i> {{ tournament.event.name }}
-                        {% elif competition.is_archived %}
-                            <i class="bi-archive" title="{{ competition.status }}"></i> {{ tournament }} <small>You can see this archived item because you are signed in as a superuser.</small>
+                        {% if tournament.get_type == "RoundRobinTournament" %}
+                            {% if tournament.is_judgable %} 
+                                <i class="bi-activity" title="{{ competition.status }}"></i> <a href="{% url 'competitions:round_robin_tournament' tournament.id %}">{{ tournament.event.name }}</a>
+                            {% elif tournament.is_complete %} 
+                                <i class="bi-check2-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:round_robin_tournament' tournament.id %}">{{ tournament.event.name }}</a>
+                            {% elif tournament.is_closed %} 
+                                <i class="bi-x-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:round_robin_tournament' tournament.id %}">{{ tournament.event.name }}</a>
+                            {% elif tournament.is_in_setup %}
+                                <i class="bi-gear" title="{{ competition.status }}"></i> {{ tournament.event.name }}
+                            {% elif competition.is_archived %}
+                                <i class="bi-archive" title="{{ competition.status }}"></i> {{ tournament }} <small>You can see this archived item because you are signed in as a superuser.</small>
+                            {% endif %}
+                        {% elif tournament.get_type == "SingleEliminationTournament" or tournament.get_type == "AbstractTournament" %}
+                            {% if tournament.is_judgable %} 
+                                <i class="bi-activity" title="{{ competition.status }}"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
+                            {% elif tournament.is_complete %} 
+                                <i class="bi-check2-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
+                            {% elif tournament.is_closed %} 
+                                <i class="bi-x-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
+                            {% elif tournament.is_in_setup %}
+                                <i class="bi-gear" title="{{ competition.status }}"></i> {{ tournament.event.name }}
+                            {% elif competition.is_archived %}
+                                <i class="bi-archive" title="{{ competition.status }}"></i> {{ tournament }} <small>You can see this archived item because you are signed in as a superuser.</small>
+                            {% endif %}
                         {% endif %}
                         ({{ tournament.points|floatformat:"0" }} {% translate "points" %}) 
                         {% if user.is_staff %}

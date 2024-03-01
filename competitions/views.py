@@ -10,7 +10,7 @@ from .models import *
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth.views import login_required
 from django.db.models import Q
-from django.http import HttpRequest, HttpResponseRedirect
+from django.http import HttpRequest, HttpResponseRedirect, Http404
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
@@ -19,29 +19,21 @@ import zoneinfo
 from .forms import *
 
 def is_overflowed(list1: list, num: int):
-    for item in list1:
-        if item < num:
-            return False
-    return True
+  return all(x >= num for x in list1)
 
 def generate_single_elimination_matches(request, tournament_id):
     #sort the list by ranking, then use a two-pointer alogrithm to make the starting matches
     tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
     
-    if not tournament.ranking_set.all():
+    if not tournament.prev_tournament.ranking_set.all():
         teams = tournament.teams.all()
         for i, team in enumerate(teams, start=1):
             rank = Ranking.objects.create(tournament=tournament,team=team,rank=i)
             rank.save()
 
-    team_ranks = []
-    for rank in tournament.ranking_set.all():
-        team_ranks.append((rank.team, rank.rank))
-    team_ranks.sort(key=lambda x: x[1])
+    team_ranks = sorted([(rank.team, rank.rank) for rank in tournament.prev_tournament.ranking_set.all()], key=lambda x: x[1])
     #sort_list(teams, ranks)        
-    rank_teams = {}
-    for i in range(len(team_ranks)):
-        rank_teams[i+1] = team_ranks[i][0]
+    rank_teams = {i+1: team_ranks[i][0] for i in range(len(team_ranks))}
     num_teams = len(rank_teams)
     num_matches, i = 1, 1
     extra_matches = []
@@ -118,31 +110,49 @@ def generate_single_elimination_matches(request, tournament_id):
 def generate_round_robin_matches(request, tournament_id):
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
     some_num_matches = tournament.num_matches
-    teams = []
-    num_participated = []
-    for team in tournament.teams.all():
-        teams.append(team)
-        num_participated.append(0)
-    for i in range(len(teams)-1):
+    some_num_teams = 4
+    teams = [team for team in tournament.teams.all()]
+    num_participated = [0 for _ in range(some_num_matches)]
+    for i in range(len(teams)):
         for k in range(some_num_matches):
             if num_participated[i] < some_num_matches and not is_overflowed(num_participated, some_num_matches):
-                j = random.randint(0, len(teams)-1)
-                while(num_participated[j] >= some_num_matches):
-                    j = random.randint(0, len(teams)-1)
                 match = Match.objects.create(tournament=tournament)
-                match.starting_teams.add(teams[i], teams[j])
+                match.starting_teams.add(teams[i])
+                match_teams = set(teams[i])
+                while(len(match_teams) < some_num_teams):
+                    j = random.randint(0, len(teams)-1)
+                    while(num_participated[j] >= some_num_matches):
+                        j = random.randint(0, len(teams)-1)    
+                    temp = len(match_teams)        
+                    match_teams.add(teams[j])
+                    if temp < len(match_teams):
+                        num_participated[j] += 1
                 match.save()
                 num_participated[i] += 1
-                num_participated[j] += 1
-
+    return HttpResponseRedirect(reverse("competitions:round_robin_tournament", args=(tournament_id,)))
     #also, this could run infinitely, or at least for very long.
-    #will do ordering of matches once the bracket is fully understood.
-    
+    #will do ordering of matches once the bracket is fully understood. 
+
+
+def generate_round_robin_rankings(request, tournament_id):
+    #don't have time right now, but here's what you gotta do
+    #put all teams in a list, sort list based on how many wins they had
+    #create rankings from there, done
+    pass
 
 
 def home(request):
     return render(request, "competitions/home.html")
 
+
+def tournament(request, tournament_id):
+    set = SingleEliminationTournament.objects.filter(abstracttournament_ptr_id=tournament_id)
+    if set.exists():
+        return single_elimination_tournament(request, tournament_id)
+    rr = RoundRobinTournament.objects.filter(abstracttournament_ptr_id=tournament_id)
+    if rr.exists():
+        return round_robin_tournament(request, tournament_id)
+    raise Http404
 
 def single_elimination_tournament(request: HttpRequest, tournament_id):
     redirect_to = request.GET.get('next', '')
@@ -294,7 +304,7 @@ def single_elimination_tournament(request: HttpRequest, tournament_id):
 def round_robin_tournament(request, tournament_id):
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
     context = {"tournament": tournament,}
-    return render(request, "competitions/bracket.html", context)
+    return render(request, "competitions/round_robin_tournament.html", context)
 
 
 def tournaments(request):
