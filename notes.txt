@@ -42,7 +42,7 @@ Run a tournament:
     Visually show the bracket (with jQuery Bracket-like visualization)
     Judge (only) clicking on a match -> score entering page (could be admin for the Match initially)
     Judge (only) enters who advanced for the Match
-    Viewers refresh bracket (manually) to show who advanced
+    Viewers refresh  (manually) to show who advanced
     
 Version 2
 

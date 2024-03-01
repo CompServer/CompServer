@@ -1,4 +1,5 @@
 from datetime import datetime
+from io import SEEK_CUR
 import math
 
 from django.contrib import messages
@@ -15,7 +16,6 @@ from django.urls import reverse
 from django.utils import timezone
 import random
 import zoneinfo
-from .models import *
 from .forms import *
 
 def is_overflowed(list1: list, num: int):
@@ -26,19 +26,28 @@ def is_overflowed(list1: list, num: int):
 
 def generate_single_elimination_matches(request, tournament_id):
     #sort the list by ranking, then use a two-pointer alogrithm to make the starting matches
-    tournament = get_object_or_404(AbstractTournament, pk=tournament_id)
-    # sort the teams by rank
-    team_ranks = sorted([(rank.team, rank.rank) for rank in tournament.ranking_set.all()],key=lambda x: x[1])
-    #sort_list(teams, ranks)
+    tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
+    
+    if not tournament.ranking_set.all():
+        teams = tournament.teams.all()
+        for i, team in enumerate(teams, start=1):
+            rank = Ranking.objects.create(tournament=tournament,team=team,rank=i)
+            rank.save()
+
+    team_ranks = []
+    for rank in tournament.ranking_set.all():
+        team_ranks.append((rank.team, rank.rank))
+    team_ranks.sort(key=lambda x: x[1])
+    #sort_list(teams, ranks)        
     rank_teams = {}
-    for i in range(len(rank_teams)):
+    for i in range(len(team_ranks)):
         rank_teams[i+1] = team_ranks[i][0]
     num_teams = len(rank_teams)
     num_matches, i = 1, 1
     extra_matches = []
     while num_matches * 2 < num_teams:
         num_matches *= 2
-    while i < num_matches - (num_teams - num_matches):
+    while i <= num_matches - (num_teams - num_matches):
         extra_matches.append(i)
         i += 1
     j = num_teams
@@ -52,16 +61,16 @@ def generate_single_elimination_matches(request, tournament_id):
 
     #regular starting matches
     i = 0
-    j = num_matches - 1
+    j = len(extra_matches) - 1
     matches = []
     while i < j:
         match = Match.objects.create(tournament=tournament)
         if(isinstance(extra_matches[i], int)):
-            match.starting_teams.add(extra_matches[i])
+            match.starting_teams.add(rank_teams[extra_matches[i]])
         else:
-             match.prev_matches.add(extra_matches[i])
+            match.prev_matches.add(extra_matches[i])
         if(isinstance(extra_matches[j], int)):
-            match.starting_teams.add(extra_matches[j])
+            match.starting_teams.add(rank_teams[extra_matches[j]])
         else:
             match.prev_matches.add(extra_matches[j])
         match.save()
@@ -90,7 +99,7 @@ def generate_single_elimination_matches(request, tournament_id):
         new_matches.append(match)
         i += 2
         j -= 2
-    matches.extend(new_matches)
+    matches = new_matches.copy()
     num_matches = len(matches)
 
     #rest of the matches
@@ -99,24 +108,22 @@ def generate_single_elimination_matches(request, tournament_id):
         for i in range(0, num_matches, 2):
             match = Match.objects.create(tournament=tournament)
             match.prev_matches.add(matches[i], matches[i+1])
-            if i + 2 == num_matches - 1:
-                match.prev_matches.add(matches[i+2])
             match.save()
             new_matches.append(match)
         matches = []
-        for match in new_matches:
-            matches.append(match)
+        matches.extend(new_matches)
         num_matches = len(matches)
+    return HttpResponseRedirect(reverse("competitions:single_elimination_tournament", args=(tournament_id,)))
 
 def generate_round_robin_matches(request, tournament_id):
-    some_num_matches = 4
-    tournament = get_object_or_404(AbstractTournament, pk=tournament_id)
+    tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
+    some_num_matches = tournament.num_matches
     teams = []
     num_participated = []
     for team in tournament.teams.all():
         teams.append(team)
         num_participated.append(0)
-    for i in range(len(teams)):
+    for i in range(len(teams)-1):
         for k in range(some_num_matches):
             if num_participated[i] < some_num_matches and not is_overflowed(num_participated, some_num_matches):
                 j = random.randint(0, len(teams)-1)
@@ -127,9 +134,10 @@ def generate_round_robin_matches(request, tournament_id):
                 match.save()
                 num_participated[i] += 1
                 num_participated[j] += 1
+
     #also, this could run infinitely, or at least for very long.
     #will do ordering of matches once the bracket is fully understood.
-    return render(request, 'skeleton.html')
+    
 
 
 def home(request):
@@ -137,6 +145,23 @@ def home(request):
 
 
 def single_elimination_tournament(request: HttpRequest, tournament_id):
+    redirect_to = request.GET.get('next', '')
+    redirect_id = request.GET.get('id', None)
+    if redirect_id:
+        redirect_id = [redirect_id]
+    tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
+    if request.method == 'POST':
+        form = SETournamentStatusForm(request.POST)
+        if form.is_valid():
+            status = form.cleaned_data.get('status')
+            tournament.status = status
+            tournament.save()
+            if redirect_id == None:
+                return HttpResponseRedirect(reverse(f"competitions:{redirect_to}"))
+            else:
+                return HttpResponseRedirect(reverse(f"competitions:{redirect_to}",args=redirect_id))
+    if tournament.is_archived:
+        return HttpResponseRedirect(reverse("competitions:competitions"))
     '''
     This view is responsible for drawing the tournament bracket, it does this by:
     1) Recursively get all matches and put them in a 4d array
@@ -266,6 +291,12 @@ def single_elimination_tournament(request: HttpRequest, tournament_id):
     return render(request, "competitions/bracket.html", context)
 
 
+def round_robin_tournament(request, tournament_id):
+    tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
+    context = {"tournament": tournament,}
+    return render(request, "competitions/bracket.html", context)
+
+
 def tournaments(request):
     return render(request, "competitions/tournaments.html")
 
@@ -287,7 +318,10 @@ def competition(request, competition_id: int):
             status = form.cleaned_data.get('status')
             competition.status = status
             competition.save()
-            return HttpResponseRedirect(reverse(f"competitions:{redirect_to}",args=redirect_id))
+            if redirect_id == None:
+                return HttpResponseRedirect(reverse(f"competitions:{redirect_to}"))
+            else:
+                return HttpResponseRedirect(reverse(f"competitions:{redirect_to}",args=redirect_id))
     if competition.is_archived:
         return HttpResponseRedirect(reverse("competitions:competitions"))
     context = {"competition": competition, "form": SETournamentStatusForm()}

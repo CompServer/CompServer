@@ -1,6 +1,6 @@
 from typing import Any, ClassVar
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, SmallIntegerField
 from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User
@@ -353,7 +353,8 @@ class SingleEliminationTournament(AbstractTournament):
 #     # interpolated: full rankings (sequence of wins / losses)
 
 
-# class RoundRobinTournament(AbstractTournament):
+class RoundRobinTournament(AbstractTournament):
+    num_matches = models.PositiveSmallIntegerField()
 #     ''' Everyone plays everyone else (most points / wins, wins) 
 #         Can be used to establish rankings for an Elimination
 #         This is often used for league play (not necessarily a tournament)
@@ -367,7 +368,7 @@ class SingleEliminationTournament(AbstractTournament):
 
 class Match(models.Model):
     ''' Could be a one-off preliminary match or part of a larger tournament'''
-    tournament = models.ForeignKey(AbstractTournament, models.CASCADE, blank=True, null=True)
+    tournament = models.ForeignKey(AbstractTournament, models.CASCADE, blank=True, null=True, related_name="match_set")
     # Note: admin doesn't enforce the starting teams to be registered for this tournament
     starting_teams = models.ManyToManyField(Team, related_name="round1_matches", blank=True) # Only used for round1 matches, all others use the previous matches. Usually just 2 but could be more (speed race)
     # Note: admin doesn't restrict to previous matches from this tournament
