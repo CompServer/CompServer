@@ -58,13 +58,13 @@
                         onclick="location.href='{% url 'competitions:judge_match' team_data.match_id %}';">
                         {{ team_data.name }}
                         {% if team_data.prev %}
-                            <div class="connector-back" style=""></div>
+                            <div class="connector-back"></div>
                         {% endif %}
                         {% if team_data.is_next and team_data.won%}
                             {% with A=forloop.parentloop.counter|divisibleby:2 B=forloop.counter|divisibleby:2%}                          
                             {% widthratio match_data.match_height 2 1 as connector_height%}
                             <div class="connector-front {{ team_data.connector }}" 
-                            style="height: {% if A and not B or B and not A %}{{connector_height|add:-25}}{%else%}{{connector_height}}{%endif%}px;">
+                            style="height: {% if A and not B or B and not A %}{{connector_height|add:-24}}{%else%}{{connector_height|add:2}}{%endif%}px;">
                             {%endwith %}
                             </div>
                         {%endif%}

@@ -144,14 +144,9 @@ def single_elimination_tournament(request: HttpRequest, tournament_id):
         connector = None
         if is_next:
             queryset = match.next_matches.all()[0].prev_matches.all()
-            midpoint = (queryset.count()-1)/2
+            midpoint = (queryset.count() - 1) / 2
             index = list(queryset).index(match)
-            if index < midpoint:
-                connector = "connector-down" 
-            elif index > midpoint:
-                connector = "connector-up"
-            else:
-                connector = "idk??"
+            connector = "connector-down" if index < midpoint else "connector-up" if index > midpoint else "idk??"
 
         return {
             "name": team.name if team else "TBD",
@@ -187,7 +182,7 @@ def single_elimination_tournament(request: HttpRequest, tournament_id):
                 bracket_array.append({})
             bracket_array[curr_round+1][base_index] = None
 
-    read_tree_from_node(Match.objects.filter(tournament=tournament_id).filter(next_matches__isnull=True)[0], 0, 0)
+    read_tree_from_node(Match.objects.filter(tournament=tournament_id).filter(next_matches__isnull=True).first(), 0, 0)
 
     bracket_array.pop()
 
@@ -203,19 +198,14 @@ def single_elimination_tournament(request: HttpRequest, tournament_id):
     bracketHeight = mostTeamsInRound * 50
     roundWidth = matchWidth + connectorWidth
 
-    for i in range(numRounds):
-        num_matches = len(bracket_array[numRounds-i-1])
+    for round_matches in reversed(bracket_array):
+        num_matches = len(round_matches)
         match_height = bracketHeight / num_matches
         match_data = []
-        for j in range(num_matches):
-            team_data = []
-            num_teams = 0
-            if j in bracket_array[numRounds-i-1] and bracket_array[numRounds-i-1][j]:
-                num_teams = len(bracket_array[numRounds-i-1][j])
-                team_data = bracket_array[numRounds-i-1][j]
-            
-            
-            center_height = (teamHeight) * num_teams
+
+        for team_data in round_matches.values():
+            num_teams = len(team_data) if team_data else 0
+            center_height = teamHeight * num_teams
             center_top_margin = (match_height - center_height) / 2
 
             match_data.append({
@@ -227,6 +217,7 @@ def single_elimination_tournament(request: HttpRequest, tournament_id):
             })
 
         round_data.append({"match_data": match_data})
+
 
     bracket_dict = {
         "bracketWidth": bracketWidth, 
