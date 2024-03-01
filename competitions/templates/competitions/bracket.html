@@ -53,10 +53,4 @@
         <input type="submit" value="Generate Matches">
     </form>
 {% endif %}
-{% else %}
-    <form class="form-inline my-2 my-md-0 justify-content-end" action="/tournament/{{ tournament.id }}/generate/" method="POST" id="status">
-        {% csrf_token %}
-        <input type="submit" value="Generate Matches">
-    </form>
-{% endif %}
 {% endblock %}

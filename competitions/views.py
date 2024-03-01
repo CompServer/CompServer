@@ -24,8 +24,8 @@ def is_overflowed(list1: list, num: int):
 def generate_single_elimination_matches(request: HttpRequest, tournament_id: int):
     #sort the list by ranking, then use a two-pointer alogrithm to make the starting matches
     tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
-    
-    if not tournament.prev_tournament.ranking_set.all():
+    assert tournament is not None
+    if not tournament.prev_tournament or not tournament.prev_tournament.ranking_set.exists():
         teams = tournament.teams.all()
         for i, team in enumerate(teams, start=1):
             rank = Ranking.objects.create(tournament=tournament,team=team,rank=i)
