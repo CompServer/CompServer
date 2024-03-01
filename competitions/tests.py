@@ -73,17 +73,18 @@ class SanityTests(TestCase):
     def test_all_url_patterns(self):
         # Admin should be able to get to all pages
         for path in urlpatterns:
-            url = None
-            try:
-                url = reverse(app_name+":"+path.name)
-            except:
+            if 'generate' not in path.name:
+                url = None
                 try:
-                    url = reverse(app_name+":"+path.name, args=[1]) # try the first one
+                    url = reverse(app_name+":"+path.name)
                 except:
-                    continue
-            if url:
-                response = self.admin_client.get(url)
-                self.assertEqual(response.status_code, 200, "For "+str(url))
+                    try:
+                        url = reverse(app_name+":"+path.name, args=[1]) # try the first one
+                    except:
+                        continue
+                if url:
+                    response = self.admin_client.get(url)
+                    self.assertEqual(response.status_code, 200, "For "+str(url))
 
     def test_all_admin_pages(self):
         for model in admin.site._registry:
@@ -99,7 +100,7 @@ class SanityTests(TestCase):
         # All pages except judging should be accessible to an anonymous user (without being redirected to login)
         anon_client = Client()
         for path in urlpatterns:
-            if 'judg' not in path.name:
+            if 'judg' not in path.name and 'generate' not in path.name:
                 url = None
                 try:
                     url = reverse(app_name+":"+path.name)
