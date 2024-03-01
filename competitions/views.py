@@ -133,6 +133,11 @@ def generate_round_robin_matches(request, tournament_id):
     #also, this could run infinitely, or at least for very long.
     #will do ordering of matches once the bracket is fully understood. 
 
+def generate_round_robin_rankings(request, tournament_id):
+    #don't have time right now, but here's what you gotta do
+    #put all teams in a list, sort list based on how many wins they had
+    #create rankings from there, done
+
 def home(request):
     return render(request, "competitions/home.html")
 
