@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.utils import timezone
 from . import models
 from .models import *
+from .views import *
 from .urls import *
 
 
@@ -382,3 +383,126 @@ class JudgingTests(TestCase):
         response = self.admin_client.post(url, {"advancers": self.__class__.team2_in_competition_and_tournament_and_match.id})
         self.assertIn(response.status_code, range(300,400), "Should been able to advance the second team in the match")
 
+
+class AutogenTests(TestCase):
+    ''' Assumes the judge is valid; Check the content of the judging page '''
+    @classmethod
+    def setUpTestData(cls):
+        cls.today = date.today()
+        cls.yesterday = cls.today - timedelta(days=1)
+        cls.tomorrow = cls.today + timedelta(days=1)
+        cls.organization = Organization.objects.create(name="University of Chicago Laboratory Schools")
+        cls.sport = Sport.objects.create(name="Robotics")
+        cls.event = Event.objects.create(name="Sumo", sport=cls.sport)
+        cls.admin = User.objects.create(username="albert")
+        cls.admin.set_password("adminPass")
+        cls.admin.is_superuser = True
+        cls.admin.is_staff = True
+        cls.admin.save()
+        cls.competition_being_setup = Competition.objects.create(name='competition_being_setup', status=Status.SETUP, start_date=cls.tomorrow, end_date=cls.tomorrow)
+        cls.tournament4 = SingleEliminationTournament.objects.create(status=Status.SETUP, event=cls.event, competition=cls.competition_being_setup)
+        cls.tournament5 = SingleEliminationTournament.objects.create(status=Status.SETUP, event=cls.event, competition=cls.competition_being_setup)
+        cls.tournament6 = SingleEliminationTournament.objects.create(status=Status.SETUP, event=cls.event, competition=cls.competition_being_setup)
+        cls.tournament7 = SingleEliminationTournament.objects.create(status=Status.SETUP, event=cls.event, competition=cls.competition_being_setup)
+        cls.tournament8 = SingleEliminationTournament.objects.create(status=Status.SETUP, event=cls.event, competition=cls.competition_being_setup)
+        cls.team1 = Team.objects.create(name="Maroons1")
+        cls.team2 = Team.objects.create(name="Maroons2")
+        cls.team3 = Team.objects.create(name="Maroons3")
+        cls.team4 = Team.objects.create(name="Maroons4")
+        cls.team5 = Team.objects.create(name="Maroons5")
+        cls.team6 = Team.objects.create(name="Maroons6")
+        cls.team7 = Team.objects.create(name="Maroons7")
+        cls.team8 = Team.objects.create(name="Maroons8")
+        cls.tournament4.teams.add(cls.team1)
+        cls.tournament4.teams.add(cls.team2)
+        cls.tournament4.teams.add(cls.team3)
+        cls.tournament4.teams.add(cls.team4)
+        cls.tournament5.teams.add(cls.team1)
+        cls.tournament5.teams.add(cls.team2)
+        cls.tournament5.teams.add(cls.team3)
+        cls.tournament5.teams.add(cls.team4)
+        cls.tournament5.teams.add(cls.team5)
+        cls.tournament6.teams.add(cls.team1)
+        cls.tournament6.teams.add(cls.team2)
+        cls.tournament6.teams.add(cls.team3)
+        cls.tournament6.teams.add(cls.team4)
+        cls.tournament6.teams.add(cls.team5)
+        cls.tournament6.teams.add(cls.team6)
+        cls.tournament7.teams.add(cls.team1)
+        cls.tournament7.teams.add(cls.team2)
+        cls.tournament7.teams.add(cls.team3)
+        cls.tournament7.teams.add(cls.team4)
+        cls.tournament7.teams.add(cls.team5)
+        cls.tournament7.teams.add(cls.team6)
+        cls.tournament7.teams.add(cls.team7)
+        cls.tournament8.teams.add(cls.team1)
+        cls.tournament8.teams.add(cls.team2)
+        cls.tournament8.teams.add(cls.team3)
+        cls.tournament8.teams.add(cls.team4)
+        cls.tournament8.teams.add(cls.team5)
+        cls.tournament8.teams.add(cls.team6)
+        cls.tournament8.teams.add(cls.team7)
+        cls.tournament8.teams.add(cls.team8)
+        cls.team1_tournament4_rank = Ranking.objects.create(tournament=cls.tournament4, team=cls.team1, rank=1)
+        cls.team1_tournament5_rank = Ranking.objects.create(tournament=cls.tournament5, team=cls.team1, rank=1)
+        cls.team1_tournament6_rank = Ranking.objects.create(tournament=cls.tournament6, team=cls.team1, rank=1)
+        cls.team1_tournament7_rank = Ranking.objects.create(tournament=cls.tournament7, team=cls.team1, rank=1)
+        cls.team1_tournament8_rank = Ranking.objects.create(tournament=cls.tournament8, team=cls.team1, rank=1)
+        cls.team2_tournament4_rank = Ranking.objects.create(tournament=cls.tournament4, team=cls.team2, rank=2)
+        cls.team2_tournament5_rank = Ranking.objects.create(tournament=cls.tournament5, team=cls.team2, rank=2)
+        cls.team2_tournament6_rank = Ranking.objects.create(tournament=cls.tournament6, team=cls.team2, rank=2)
+        cls.team2_tournament7_rank = Ranking.objects.create(tournament=cls.tournament7, team=cls.team2, rank=2)
+        cls.team2_tournament8_rank = Ranking.objects.create(tournament=cls.tournament8, team=cls.team2, rank=2)
+        cls.team3_tournament4_rank = Ranking.objects.create(tournament=cls.tournament4, team=cls.team3, rank=3)
+        cls.team3_tournament5_rank = Ranking.objects.create(tournament=cls.tournament5, team=cls.team3, rank=3)
+        cls.team3_tournament6_rank = Ranking.objects.create(tournament=cls.tournament6, team=cls.team3, rank=3)
+        cls.team3_tournament7_rank = Ranking.objects.create(tournament=cls.tournament7, team=cls.team3, rank=3)
+        cls.team3_tournament8_rank = Ranking.objects.create(tournament=cls.tournament8, team=cls.team3, rank=3)
+        cls.team4_tournament4_rank = Ranking.objects.create(tournament=cls.tournament4, team=cls.team4, rank=4)
+        cls.team4_tournament5_rank = Ranking.objects.create(tournament=cls.tournament5, team=cls.team4, rank=4)
+        cls.team4_tournament6_rank = Ranking.objects.create(tournament=cls.tournament6, team=cls.team4, rank=4)
+        cls.team4_tournament7_rank = Ranking.objects.create(tournament=cls.tournament7, team=cls.team4, rank=4)
+        cls.team4_tournament8_rank = Ranking.objects.create(tournament=cls.tournament8, team=cls.team4, rank=4)
+        cls.team5_tournament5_rank = Ranking.objects.create(tournament=cls.tournament5, team=cls.team5, rank=5)
+        cls.team5_tournament6_rank = Ranking.objects.create(tournament=cls.tournament6, team=cls.team5, rank=5)
+        cls.team5_tournament7_rank = Ranking.objects.create(tournament=cls.tournament7, team=cls.team5, rank=5)
+        cls.team5_tournament8_rank = Ranking.objects.create(tournament=cls.tournament8, team=cls.team5, rank=5)
+        cls.team6_tournament6_rank = Ranking.objects.create(tournament=cls.tournament6, team=cls.team6, rank=6)
+        cls.team6_tournament7_rank = Ranking.objects.create(tournament=cls.tournament7, team=cls.team6, rank=6)
+        cls.team6_tournament8_rank = Ranking.objects.create(tournament=cls.tournament8, team=cls.team6, rank=6)
+        cls.team7_tournament7_rank = Ranking.objects.create(tournament=cls.tournament7, team=cls.team7, rank=7)
+        cls.team7_tournament8_rank = Ranking.objects.create(tournament=cls.tournament8, team=cls.team7, rank=7)
+        cls.team8_tournament8_rank = Ranking.objects.create(tournament=cls.tournament8, team=cls.team8, rank=8)
+
+
+    def setUp(self):
+        self.admin_client = Client()
+        success = self.admin_client.login(username="albert", password="adminPass")
+        self.assertTrue(success, "Failed to login admin")
+ 
+    def test_autogen_4teams(self):
+        generate_single_elimination_matches(None, self.__class__.tournament4.id)
+        # checks to make sure the appropriate matches have been generated and no more
+        # self.assertTrue(Match.objects.filter(tournament=self.__class__.tournament4).count() == 3)
+        # team1_matches = Match.objects.filter(tournament=self.__class__.tournament4, starting_teams__contains=self.__class__.team1)
+        # self.assertTrue(team1_matches.count() == 1)
+        # team1_match = team1_matches.first()
+        # self.assertTrue(self.__class__.team4 in team1_match.starting_teams.all())
+        # team2_matches = Match.objects.filter(tournament=self.__class__.tournament4, starting_teams__contains=self.__class__.team2)
+        # self.assertTrue(team2_matches.count() == 1)
+        # team2_match = team2_matches.first()
+        # self.assertTrue(self.__class__.team3 in team2_match.starting_teams.all())
+        # self.assertTrue(Match.objects.filter(tournament=self.__class__.tournament4, starting_teams__contains=self.__class__.team4).count() == 1)
+        # self.assertTrue(Match.objects.filter(tournament=self.__class__.tournament4, starting_teams__contains=self.__class__.team3).count() == 1)
+
+    def test_autogen_5teams(self):
+        pass
+
+    def test_autogen_6teams(self):
+        pass
+
+    def test_autogen_7teams(self):
+        pass
+
+    def test_autogen_8teams(self):
+        pass
