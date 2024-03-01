@@ -283,7 +283,6 @@ class AbstractTournament(models.Model):
         return self.__class__.__name__
 
     class Meta:
-        abstract = True
         ordering = ['competition', 'event']
 
 class Ranking(models.Model):
