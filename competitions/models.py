@@ -1,6 +1,6 @@
 from typing import Any, ClassVar
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, SmallIntegerField
 from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User
@@ -276,9 +276,12 @@ class AbstractTournament(models.Model):
     
     @property
     def is_in_setup(self) -> bool:
-        return self.status == Status.SETUP
+        return self.status == Status.SETUP 
 
-        
+    @property
+    def get_type(self) ->  str:
+        return self.__class__.__name__
+
     class Meta:
         abstract = True
         ordering = ['competition', 'event']
@@ -297,8 +300,20 @@ class Ranking(models.Model):
         unique_together = [['tournament', 'team']] 
         # unique_together += ['tournament', 'rank'] # NCAA has 4 teams with a #1 seed
 
+class RoundRobinTournament(AbstractTournament):
+    num_matches = models.PositiveSmallIntegerField()
+#     ''' Everyone plays everyone else (most points / wins, wins) 
+#         Can be used to establish rankings for an Elimination
+#         This is often used for league play (not necessarily a tournament)
+#     '''
+#     # points_per_win: 3 for World Cup group round
+#     # points_per_tie: 1 for World Cup group round
+#     # points_per_loss: probably always 0
+#     # accumulation: sum of all points (e.g. goals), sum of match points (e.g. 2 for win, 1 for tie, 0 for loss)
+#     # interpolated: rull rankings (order of points)
 
 class SingleEliminationTournament(AbstractTournament):
+    prev_tournament = models.ForeignKey(RoundRobinTournament, on_delete=models.DO_NOTHING, blank=True, null=True)
     ''' Elimination style with brackets (last man standing) 
         Requires seedings determined by prior RoundRobin or expert input
         Seeding (ranking) is important because you want the last match to be close, not a total blowout
@@ -352,19 +367,6 @@ class SingleEliminationTournament(AbstractTournament):
 #         3/6
 #     '''
 #     # interpolated: full rankings (sequence of wins / losses)
-
-
-# class RoundRobinTournament(AbstractTournament):
-#     ''' Everyone plays everyone else (most points / wins, wins) 
-#         Can be used to establish rankings for an Elimination
-#         This is often used for league play (not necessarily a tournament)
-#     '''
-#     # points_per_win: 3 for World Cup group round
-#     # points_per_tie: 1 for World Cup group round
-#     # points_per_loss: probably always 0
-#     # accumulation: sum of all points (e.g. goals), sum of match points (e.g. 2 for win, 1 for tie, 0 for loss)
-#     # interpolated: rull rankings (order of points)
-
 
 class Match(models.Model):
     ''' Could be a one-off preliminary match or part of a larger tournament'''

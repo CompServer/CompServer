@@ -5,18 +5,15 @@
 {% block content %}
     <header>
         <h1>
-            <i class=
             {% if competition.is_judgable %}
-                "bi-activity"
+            <i class="bi-activity" title="{{ competition.status }}"></i>
             {% elif competition.is_complete %}
-                "bi-check2-circle"
+            <i class="bi-check2-circle" title="{{ competition.status }}"></i>
             {% elif competition.is_closed %}
-                "bi-x-circle"
+            <i class="bi-x-circle" title="{{ competition.status }}"></i>
             {% elif competition.is_in_setup %}
-                "bi-gear"
+            <i class="bi-gear" title="{{ competition.status }}"></i>
             {% endif %}
-            title="{{ competition.status }}"></i>
-
             {{ competition }}
         </h1>
     </header>
@@ -27,20 +24,34 @@
             <div class="row d-flex">
                 {% if not tournament.is_archived or user.is_staff %}
                     <div class = "col-12 tournament">
-                        {% if tournament.is_judgable %} 
-                            <i class="bi-activity" title="{{ competition.status }}"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
-                        {% elif tournament.is_complete %} 
-                            <i class="bi-check2-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
-                        {% elif tournament.is_closed %} 
-                            <i class="bi-x-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
-                        {% elif tournament.is_in_setup %}
-                            <i class="bi-gear" title="{{ competition.status }}"></i> {{ tournament.event.name }}
-                        {% elif competition.is_archived %}
-                            <i class="bi-archive" title="{{ competition.status }}"></i> {{ tournament }} <small>You can see this archived item because you are signed in as a superuser.</small>
+                        {% if tournament.get_type == "RoundRobinTournament" %}
+                            {% if tournament.is_judgable %} 
+                                <i class="bi-activity" title="{{ competition.status }}"></i> <a href="{% url 'competitions:round_robin_tournament' tournament.id %}">{{ tournament.event.name }}</a>
+                            {% elif tournament.is_complete %} 
+                                <i class="bi-check2-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:round_robin_tournament' tournament.id %}">{{ tournament.event.name }}</a>
+                            {% elif tournament.is_closed %} 
+                                <i class="bi-x-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:round_robin_tournament' tournament.id %}">{{ tournament.event.name }}</a>
+                            {% elif tournament.is_in_setup %}
+                                <i class="bi-gear" title="{{ competition.status }}"></i> {{ tournament.event.name }}
+                            {% elif competition.is_archived %}
+                                <i class="bi-archive" title="{{ competition.status }}"></i> {{ tournament }} <small>You can see this archived item because you are signed in as a superuser.</small>
+                            {% endif %}
+                        {% elif tournament.get_type == "SingleEliminationTournament" or tournament.get_type == "AbstractTournament" %}
+                            {% if tournament.is_judgable %} 
+                                <i class="bi-activity" title="{{ competition.status }}"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
+                            {% elif tournament.is_complete %} 
+                                <i class="bi-check2-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
+                            {% elif tournament.is_closed %} 
+                                <i class="bi-x-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }}</a>
+                            {% elif tournament.is_in_setup %}
+                                <i class="bi-gear" title="{{ competition.status }}"></i> {{ tournament.event.name }}
+                            {% elif competition.is_archived %}
+                                <i class="bi-archive" title="{{ competition.status }}"></i> {{ tournament }} <small>You can see this archived item because you are signed in as a superuser.</small>
+                            {% endif %}
                         {% endif %}
                         ({{ tournament.points|floatformat:"0" }} {% translate "points" %}) 
                         {% if user.is_staff %}
-                            <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/tournament/{{ tournament.id }}//?next=tournament&id={{ tournament.id }}" method="POST" id="status">
+                            <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/tournament/{{ tournament.id }}/?next=competition&id={{ competition.id }}" method="POST" id="status">
                                 {% csrf_token %}
                                 <div class="input-group d-inline">
                                     <select name="status" onchange="this.form.submit();">
@@ -73,11 +84,11 @@
             {% csrf_token %}
             <div class="input-group d-inline">
                 <select class="form-select" name="status" onchange="this.form.submit();">
-                    <option value="SETUP" {% if competition.is_in_setup %}selected{% endif %}>SETUP</option>
-                    <option value="OPEN" {% if competition.is_judgable %}selected{% endif %}>OPEN</option>
-                    <option value="COMPLETE" {% if competition.is_complete %}selected{% endif %}>COMPLETE</option>
-                    <option value="CLOSED" {% if competition.is_closed %}selected{% endif %}>CLOSED</option>
-                    <option value="ARCHIVED" {% if competition.is_archived %}selected{% endif %}>ARCHIVED</option>
+                    <option value="SETUP" {% if competition.is_in_setup %}selected{% endif %}>{% translate "SETUP" %}</option>
+                    <option value="OPEN" {% if competition.is_judgable %}selected{% endif %}>{% translate "OPEN" %}</option>
+                    <option value="COMPLETE" {% if competition.is_complete %}selected{% endif %}>{% translate "COMPLETE" %}</option>
+                    <option value="CLOSED" {% if competition.is_closed %}selected{% endif %}>{% translate "CLOSED" %}</option>
+                    <option value="ARCHIVED" {% if competition.is_archived %}selected{% endif %}>{% translate "ARCHIVED" %}</option>
                 </select>
             </div>
         </form> {% endcomment %}

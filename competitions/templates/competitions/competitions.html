@@ -10,11 +10,11 @@
             <div class="row d-flex">
                 {% if not competition.is_archived or user.is_staff %}
                     <div class = "col-12 competition">
-                        {% if competition.is_judgable %}
+                        {% if competition.is_judgable %} 
                             <i class="bi-activity" title="{{ competition.status }}"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
-                        {% elif competition.is_complete %}
+                        {% elif competition.is_complete %} 
                             <i class="bi-check2-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
-                        {% elif competition.is_closed %}
+                        {% elif competition.is_closed %} 
                             <i class="bi-x-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
                         {% elif competition.is_in_setup %}
                             <i class="bi-gear" title="{{ competition.status }}"></i> {{ competition }}
