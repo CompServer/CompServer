@@ -6,15 +6,17 @@
         <h1>{% translate "Team:" %} {{ team }}</h1>
         {% if team.coach %}
             <p>{% translate "Coached by" %} 
-            {% if team.coach.last_name and team.coach.first_name %}
-                {{ team.coach.first_name }} {{ team.coach.last_name }}
-            {% elif team.coach.last_name %}
-                {{ team.coach.last_name }}
-            {% elif team.coach.first_name %}
-                {{ team.coach.first_name }}
-            {% else %}
-                {{ team.coach.username }}
-            {% endif %}
+                <a href="{% url 'competitions:user_profile' team.coach.id %}">
+                    {% if team.coach.last_name and team.coach.first_name %}
+                        {{ team.coach.first_name }} {{ team.coach.last_name }}
+                    {% elif team.coach.last_name %}
+                        {{ team.coach.last_name }}
+                    {% elif team.coach.first_name %}
+                        {{ team.coach.first_name }}
+                    {% else %}
+                        {{ team.coach.username }}
+                    {% endif %}
+                </a>
             </p>
         {% endif %}
     </header>

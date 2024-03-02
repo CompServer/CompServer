@@ -27,12 +27,16 @@
                     <tr>
                         <th scope="row">{{ k.name }}</th>
                             {% for l, m in last_matches %}
-                                {% if team in l.advancers %}
-                                    <td>{{ l.tournament.points }}</td>
+                                {% if k.id == l.id %}
+                                    {% for j, k in list_of_tournament_points %}
+                                        {% if j == m %}
+                                            <td>{{ k }}</td>
+                                        {% endif %}
+                                    {% endfor %}
                                 {% else %}
                                     <td>0</td>
                                 {% endif %}
-                            {% endfor %}
+                            {% endfor %}    
                             <td>{{ v }}</td>
                         </th>
                     </tr>
