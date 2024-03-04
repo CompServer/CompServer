@@ -4,7 +4,7 @@
 {% block head %}
 
 <style>
-  .team {
+.team {
     margin: 0px {{bracket_dict.connectorWidth}}px 0px {{bracket_dict.connectorWidth}}px;
   }
 
@@ -26,6 +26,16 @@
 .connector-down {
     top: {% widthratio bracket_dict.teamHeight 2 1%}px;
 }
+
+.bracket {
+    height:{{bracket_dict.bracketHeight}}px; 
+    width:{{bracket_dict.bracketWidth}}px;
+}
+
+.round {
+    height: {{ bracket_dict.roundHeight }}px; 
+    width: {{ bracket_dict.roundWidth }}px;
+}
 </style>
 
 {% endblock%}
@@ -46,9 +56,9 @@
 </h1>
 
 {% if tournament.match_set.all %}
-<div class="bracket" style="height:{{bracket_dict.bracketHeight}}px; width:{{bracket_dict.bracketWidth}}px;">
+<div class="bracket">
     {% for round_data in bracket_dict.round_data %}
-    <div class="round" style="height: {{ bracket_dict.roundHeight }}px; width: {{ bracket_dict.roundWidth }}px;">
+    <div class="round">
         {% for match_data in round_data.match_data %}
         <div class="match" style="height: {{ match_data.match_height }}px; width: {{ match_data.match_width }}px;">
             <div class="center"
