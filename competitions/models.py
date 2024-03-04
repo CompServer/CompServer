@@ -313,12 +313,12 @@ class RoundRobinTournament(AbstractTournament):
     # interpolated: rull rankings (order of points)
 
 class SingleEliminationTournament(AbstractTournament):
-    prev_tournament = models.ForeignKey(RoundRobinTournament, on_delete=models.DO_NOTHING, blank=True, null=True)
     ''' Elimination style with brackets (last man standing) 
         Requires seedings determined by prior RoundRobin or expert input
         Seeding (ranking) is important because you want the last match to be close, not a total blowout
         Winner take all situation (1st place is really the only position that's established)
     '''
+    prev_tournament = models.ForeignKey(RoundRobinTournament, on_delete=models.DO_NOTHING, blank=True, null=True)
     # interpolated: winner (of the top-level match)
 
 
