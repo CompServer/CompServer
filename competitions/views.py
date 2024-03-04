@@ -195,7 +195,7 @@ def generate_round_robin_matches(request, tournament: Union[RoundRobinTournament
                         num_participated[j] += 1
                 match.save()
                 num_participated[i] += 1
-    return HttpResponseRedirect(reverse("competitions:round_robin_tournament", args=(tournament.id,)))
+    return HttpResponseRedirect(reverse("competitions:tournament", args=(tournament.id,)))
     #also, this could run infinitely, or at least for very long.
     #will do ordering of matches once the bracket is fully understood. 
 
