@@ -1,11 +1,13 @@
 from datetime import datetime
 from io import SEEK_CUR
-import math
+import math, datetime
 
 from django.contrib import messages
 from django.core.exceptions import BadRequest
 from django.shortcuts import render, get_object_or_404
 import math, random
+
+from django.utils.autoreload import start_django
 from .models import *
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth.views import login_required
@@ -23,6 +25,8 @@ def is_overflowed(list1: list, num: int):
 
 def generate_single_elimination_matches(request: HttpRequest, tournament_id: int):
     #sort the list by ranking, then use a two-pointer alogrithm to make the starting matches
+    num_matches_per_time = 3
+    nmpt_iterator = 0
     tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
     assert tournament is not None
     if not tournament.prev_tournament or not tournament.prev_tournament.ranking_set.exists():
@@ -46,12 +50,20 @@ def generate_single_elimination_matches(request: HttpRequest, tournament_id: int
     while i < j:
         match = Match.objects.create(tournament=tournament)
         match.starting_teams.add(rank_teams[i], rank_teams[j])
+        match.time = starting_time
+        nmpt_iterator += 1
+        if nmpt_iterator == num_matches_per_time:
+            nmpt_iterator = 0
+            starting_time += datetime.timedelta(minutes=10) #10 is arbitrary value
         match.save()
         extra_matches.append(match)
         i += 1
         j -= 1
 
     #regular starting matches
+    if nmpt_iterator > 0:
+        nmpt_iterator = 0
+        starting_time += datetime.timedelta(minutes=10)
     i = 0
     j = len(extra_matches) - 1
     matches = []
@@ -65,6 +77,11 @@ def generate_single_elimination_matches(request: HttpRequest, tournament_id: int
             match.starting_teams.add(rank_teams[extra_matches[j]])
         else:
             match.prev_matches.add(extra_matches[j])
+        match.time = starting_time
+        nmpt_iterator += 1
+        if nmpt_iterator == num_matches_per_time:
+            nmpt_iterator = 0
+            starting_time += datetime.timedelta(minutes=10) #10 is arbitrary value
         match.save()
         matches.append(match)
         i += 1
@@ -72,12 +89,20 @@ def generate_single_elimination_matches(request: HttpRequest, tournament_id: int
     num_matches = len(matches)
 
     #2nd round
+    if nmpt_iterator > 0:
+        nmpt_iterator = 0
+        starting_time += datetime.timedelta(minutes=10)
     i = 0
     j = num_matches - 1
     new_matches = []
     while i < j:
         match = Match.objects.create(tournament=tournament)
         match.prev_matches.add(matches[i], matches[j])
+        match.time = starting_time
+        nmpt_iterator += 1
+        if nmpt_iterator == num_matches_per_time:
+            nmpt_iterator = 0
+            starting_time += datetime.timedelta(minutes=10) #10 is arbitrary value
         match.save()
         new_matches.append(match)
         i += 2
@@ -87,6 +112,11 @@ def generate_single_elimination_matches(request: HttpRequest, tournament_id: int
     while i < j:
         match = Match.objects.create(tournament=tournament)
         match.prev_matches.add(matches[i], matches[j])
+        match.time = starting_time
+        nmpt_iterator += 1
+        if nmpt_iterator == num_matches_per_time:
+            nmpt_iterator = 0
+            starting_time += datetime.timedelta(minutes=10) #10 is arbitrary value
         match.save()
         new_matches.append(match)
         i += 2
@@ -96,10 +126,18 @@ def generate_single_elimination_matches(request: HttpRequest, tournament_id: int
 
     #rest of the matches
     while num_matches > 1:
+        if nmpt_iterator > 0:
+            nmpt_iterator = 0
+            starting_time += datetime.timedelta(minutes=10)
         new_matches = []
         for i in range(0, num_matches, 2):
             match = Match.objects.create(tournament=tournament)
             match.prev_matches.add(matches[i], matches[i+1])
+            match.time = starting_time
+            nmpt_iterator += 1
+            if nmpt_iterator == num_matches_per_time:
+                nmpt_iterator = 0
+                starting_time += datetime.timedelta(minutes=10) #10 is arbitrary value
             match.save()
             new_matches.append(match)
         matches = []
@@ -138,6 +176,18 @@ def generate_round_robin_rankings(request: HttpRequest, tournament_id: int):
     #don't have time right now, but here's what you gotta do
     #put all teams in a list, sort list based on how many wins they had
     #create rankings from there, done
+    tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
+    team_wins = {team: 0 for team in tournament.teams.all()}
+    matches = tournament.match_set.all()
+    for match in matches:
+        for team in match.advancers.all():
+            team_wins[team] += 1
+    sorted_team_wins = dict(sorted(team_wins.items(), key=lambda x:x[1]))
+    i = len(sorted_team_wins)
+    for i, kv in zip(range(len(sorted_team_wins), 1), sorted_team_wins.items()):
+        key = kv[0]
+        rank = Ranking.objects.create(tournament=tournament, team=key, rank=i)
+        rank.save()
     pass
 
 

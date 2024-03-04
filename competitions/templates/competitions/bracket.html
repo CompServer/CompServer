@@ -44,7 +44,7 @@
     {{ tournament.competition.name }} {{ tournament.event.name }} {% translate "Tournament" %}
     ({{ tournament.points|floatformat:"0" }} {% translate "points" %})
 </h1>
-
+{% comment %} not sure how to show match times here, bc I need to know exactly how they work {% endcomment %}
 {% if tournament.match_set.all %}
 <div class="bracket" style="height:{{bracket_dict.bracketHeight}}px; width:{{bracket_dict.bracketWidth}}px;">
     {% for round_data in bracket_dict.round_data %}
