@@ -210,7 +210,6 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
         prevs = curr_match.prev_matches.all()
         if prevs:
             for i, prev in enumerate(prevs):
-
                 read_tree_from_node(prev, curr_round+1, 2*base_index+i)
         else:
             if len(bracket_array) <= curr_round+1:
