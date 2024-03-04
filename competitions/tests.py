@@ -101,7 +101,7 @@ class SanityTests(TestCase):
                         break
                     except:
                         if i == 4:
-                            self.assertTrue(False)
+                            self.assertTrue(False, "Tried 4 different id's and all of them failed")
 
     
     def test_public_pages(self):
