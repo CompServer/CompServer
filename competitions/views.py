@@ -1,14 +1,8 @@
 from datetime import datetime
-from io import SEEK_CUR
-import math, datetime
-
 from django.contrib import messages
 from django.core.exceptions import BadRequest
 from django.shortcuts import render, get_object_or_404
-import math, random
-
 from django.utils.autoreload import start_django
-from .models import *
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth.views import login_required
 from django.db.models import Q
@@ -16,19 +10,51 @@ from django.http import HttpRequest, HttpResponseRedirect, Http404
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
+from io import SEEK_CUR
+import math
 import random
+from typing import Union
 import zoneinfo
 from .forms import *
+from .models import *
 
 def is_overflowed(list1: list, num: int):
   return all(x >= num for x in list1)
 
-def generate_single_elimination_matches(request: HttpRequest, tournament_id: int):
+def get_tournament(request, tournament_id: int) -> Union[SingleEliminationTournament, RoundRobinTournament]:
+    """Get a tournament by it's id, regardless of it's type.
+
+    Args:
+        tournament_id (int): The ID of the tournament.
+
+    Raises:
+        Http404: If the tournament does not exist or is not found.
+
+    Returns:
+        Union[SingleEliminationTournament, RoundRobinTournament]: The found tournament.
+    """    
+    if SingleEliminationTournament.objects.filter(abstracttournament_ptr_id=tournament_id).exists():
+        return get_object_or_404(SingleEliminationTournament, pk=tournament_id)
+    elif RoundRobinTournament.objects.filter(abstracttournament_ptr_id=tournament_id).exists():
+        return get_object_or_404(RoundRobinTournament, pk=tournament_id)
+    raise Http404
+
+def generate_tournament_matches(request: HttpRequest, tournament_id: int):
+    """View that calls the corresponding generate method for the tournament type."""
+    tournament = get_tournament(request, tournament_id)
+    if isinstance(tournament, SingleEliminationTournament):
+        return generate_single_elimination_matches(request, tournament)
+    elif isinstance(tournament, RoundRobinTournament):
+        return generate_round_robin_matches(request, tournament)
+    raise Http404
+
+def generate_single_elimination_matches(request, tournament: Union[SingleEliminationTournament, int]):
     #sort the list by ranking, then use a two-pointer alogrithm to make the starting matches
+    if isinstance(tournament, int):
+        tournament = get_object_or_404(SingleEliminationTournament, pk=tournament)
+    assert isinstance(tournament, SingleEliminationTournament) and tournament is not None
     num_matches_per_time = 3
     nmpt_iterator = 0
-    tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
-    assert tournament is not None
     if not tournament.prev_tournament or not tournament.prev_tournament.ranking_set.exists():
         teams = tournament.teams.all()
         for i, team in enumerate(teams, start=1):
@@ -143,10 +169,12 @@ def generate_single_elimination_matches(request: HttpRequest, tournament_id: int
         matches = []
         matches.extend(new_matches)
         num_matches = len(matches)
-    return HttpResponseRedirect(reverse("competitions:single_elimination_tournament", args=(tournament_id,)))
+    return HttpResponseRedirect(reverse("competitions:single_elimination_tournament", args=(tournament.id)))
 
-def generate_round_robin_matches(request: HttpRequest, tournament_id):
-    tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
+def generate_round_robin_matches(request, tournament: Union[RoundRobinTournament, int]):
+    if isinstance(tournament, int):
+        tournament = get_object_or_404(RoundRobinTournament, pk=tournament)
+    assert isinstance(tournament, RoundRobinTournament) and tournament is not None
     some_num_matches = tournament.num_matches
     some_num_teams = 4
     teams = [team for team in tournament.teams.all()]
@@ -167,12 +195,11 @@ def generate_round_robin_matches(request: HttpRequest, tournament_id):
                         num_participated[j] += 1
                 match.save()
                 num_participated[i] += 1
-    return HttpResponseRedirect(reverse("competitions:round_robin_tournament", args=(tournament_id,)))
+    return HttpResponseRedirect(reverse("competitions:round_robin_tournament", args=(tournament.id,)))
     #also, this could run infinitely, or at least for very long.
     #will do ordering of matches once the bracket is fully understood. 
 
-
-def generate_round_robin_rankings(request: HttpRequest, tournament_id: int):
+def generate_round_robin_rankings(tournament_id: int):
     #don't have time right now, but here's what you gotta do
     #put all teams in a list, sort list based on how many wins they had
     #create rankings from there, done
@@ -190,16 +217,16 @@ def generate_round_robin_rankings(request: HttpRequest, tournament_id: int):
         rank.save()
     pass
 
-
 def home(request: HttpRequest):
     return render(request, "competitions/home.html")
 
 
 def tournament(request: HttpRequest, tournament_id: int):
-    if SingleEliminationTournament.objects.filter(abstracttournament_ptr_id=tournament_id).exists():
-        return single_elimination_tournament(request, tournament_id)
-    elif RoundRobinTournament.objects.filter(abstracttournament_ptr_id=tournament_id).exists():
-        return round_robin_tournament(request, tournament_id)
+    tournament = get_tournament(request, tournament_id)
+    if isinstance(tournament, SingleEliminationTournament):
+        return single_elimination_tournament(request, tournament)
+    elif isinstance(tournament, RoundRobinTournament):
+        return round_robin_tournament(request, tournament)
     raise Http404
 
 def single_elimination_tournament(request: HttpRequest, tournament_id: int):
@@ -317,7 +344,6 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
     context = {"tournament": tournament, "bracket_dict": bracket_dict}
     return render(request, "competitions/bracket.html", context)
 
-
 def round_robin_tournament(request: HttpRequest, tournament_id: int):
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
     context = {"tournament": tournament,}
@@ -343,10 +369,13 @@ def competition(request: HttpRequest, competition_id: int):
             status = form.cleaned_data.get('status')
             competition.status = status
             competition.save()
-            if redirect_id == None:
+            if redirect_id:
+                return HttpResponseRedirect(reverse(f"competitions:{redirect_to}",args=redirect_id))
+            elif redirect_to:
                 return HttpResponseRedirect(reverse(f"competitions:{redirect_to}"))
             else:
-                return HttpResponseRedirect(reverse(f"competitions:{redirect_to}",args=redirect_id))
+                # if we don't know where they came from, just send them to the competition page
+                return HttpResponseRedirect(reverse(f"competitions:competition", args=[competition_id]))
     if competition.is_archived:
         return HttpResponseRedirect(reverse("competitions:competitions"))
     context = {"competition": competition, "form": SETournamentStatusForm()}
@@ -418,17 +447,6 @@ def judge_match(request: HttpRequest, match_id: int):
     form = JudgeForm(instance=instance, possible_advancers=winner_choices)
     return render(request, 'competitions/match_judge.html', {'form': form})
 
-def set_timezone_view(request: HttpRequest):
-    if request.method == "POST":
-        if request.POST["timezone"]:
-            request.session["timezone"] = request.POST["timezone"]
-            messages.success(request, f"Timezone set successfully to {request.POST['timezone']}.")
-            return redirect("/")
-        else:   
-            messages.error(request, "Invalid timezone.")
-    timezones = sorted(zoneinfo.available_timezones())
-    return render(request, "timezones.html", {"timezones": timezones})
-
 def team(request: HttpRequest, team_id: int):
     today = timezone.now().date()
     upcoming_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), tournament__competition__start_date__lte=today, tournament__competition__end_date__gte=today, advancers=None).order_by("-time")
@@ -469,3 +487,16 @@ def team(request: HttpRequest, team_id: int):
         'past_competitions': past_competitions,
     }
     return render(request, "competitions/team.html", context)
+
+
+def set_timezone_view(request: HttpRequest):
+    """Please leave this view at the bottom. Create any new views you need above this one"""
+    if request.method == "POST":
+        if request.POST["timezone"]:
+            request.session["timezone"] = request.POST["timezone"]
+            messages.success(request, f"Timezone set successfully to {request.POST['timezone']}.")
+            return redirect("/")
+        else:   
+            messages.error(request, "Invalid timezone.")
+    timezones = sorted(zoneinfo.available_timezones())
+    return render(request, "timezones.html", {"timezones": timezones})
