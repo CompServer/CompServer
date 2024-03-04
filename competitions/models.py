@@ -128,6 +128,12 @@ class Team(models.Model):
         ordering = ['sport', 'organization', 'name']
         unique_together = ['organization', 'name']
 
+class Arena(models.Model):
+    name = models.CharField(max_length=100, blank=True)
+    capacity = models.SmallIntegerField()
+    is_available = models.BooleanField(default=True)
+    def __str__(self) -> str:
+        return self.name
 
 class Competition(models.Model):
     name = models.CharField(max_length=255, blank=True)
@@ -143,6 +149,7 @@ class Competition(models.Model):
     plenary_judges = models.ManyToManyField(User, blank=True)  # people entrusted to judge this competition as a whole: won't restrict them to a specific event
     access_key = models.CharField(max_length=ACCESS_KEY_LENGTH, default=get_random_access_key, blank=True, null=True)
     # For scheduling purposes, we need to be able to specify for this competition how many different (Event-specific) arenas are available and their capacity
+    arenas = models.ManyToManyField(Arena, blank=True)
     # related: tournament_set
 
     def check_date(self):
@@ -220,6 +227,7 @@ class Competition(models.Model):
 
 class Event(models.Model):
     name = models.CharField(max_length=255, unique=True)  # sumo bots, speed race, etc.
+    match_time = models.DurationField()
     sport = models.ForeignKey(Sport, blank=True, null=True, on_delete=models.SET_NULL)
     # score_units = ScoreUnitsField() # initially just assume scores are place values (1st, 2nd, 3rd, etc.)
     # high_score_advances = models.BooleanField(default=True) # with seconds, low scores will usually advance (unless it's a "how long can you last" situation)
@@ -243,6 +251,7 @@ class AbstractTournament(models.Model):
     # interpolate_points = models.BooleanField(default=False) # otherwise winner takes all: RoboMed doesn't need this but it could be generally useful
     teams = models.ManyToManyField(Team, related_name="tournament_set")
     judges = models.ManyToManyField(User, blank=True, related_name="tournament_set")  # people entrusted to judge this tournament alone (as opposed to plenary judges)
+    start_time = models.DateTimeField()
     # These Event-related things might depend on the competition: speed race with 1 v 1 at this competition but speed race with 4 v 4 at another (both are the same event)
     # max_teams_per_match = models.SmallIntegerField(default=2)
     # max_teams_to_advance = models.SmallIntegerField(default=1)
@@ -379,7 +388,7 @@ class Match(models.Model):
     # Note: admin doesn't restrict advancers to be competitors for this match
     advancers = models.ManyToManyField(Team, related_name="won_matches", blank=True) # usually 1 but could be more (e.g. time trials)
     time = models.DateTimeField(blank=True, null=True) # that it's scheduled for
-
+    arena = models.ForeignKey(Arena, related_name="match_set", on_delete=models.DO_NOTHING)
     _cached_str = models.TextField(blank=True, null=True) # for caching the string representation
 
     str_recursive_level: ClassVar[int] = 0

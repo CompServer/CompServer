@@ -25,10 +25,11 @@ def is_overflowed(list1: list, num: int):
 
 def generate_single_elimination_matches(request, tournament_id):
     #sort the list by ranking, then use a two-pointer alogrithm to make the starting matches
-    num_matches_per_time = 3
+    arena_iterator = 0
     nmpt_iterator = 0
     tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
-    starting_time = datetime.datetime.now() #temporary value
+    arenas = [i for i in tournament.competition.arenas.filter(is_available=True)]
+    starting_time = tournament.start_time 
     if not tournament.prev_tournament.ranking_set.all():
         teams = tournament.teams.all()
         for i, team in enumerate(teams, start=1):
@@ -52,17 +53,21 @@ def generate_single_elimination_matches(request, tournament_id):
         match.starting_teams.add(rank_teams[i], rank_teams[j])
         match.time = starting_time
         nmpt_iterator += 1
-        if nmpt_iterator == num_matches_per_time:
+        if nmpt_iterator == arenas[arena_iterator].capacity:
+            arena_iterator += 1
             nmpt_iterator = 0
-            starting_time += datetime.timedelta(minutes=10) #10 is arbitrary value
+            if arena_iterator >= len(arenas):
+                arena_iterator = 0
+                starting_time += tournament.event.match_time() 
         match.save()
         extra_matches.append(match)
         i += 1
         j -= 1
 
     #regular starting matches
-    if nmpt_iterator > 0:
-        nmpt_iterator = 0
+    nmpt_iterator = 0
+    if arena_iterator > 0:
+        arena_iterator = 0
         starting_time += datetime.timedelta(minutes=10)
     i = 0
     j = len(extra_matches) - 1
@@ -79,9 +84,12 @@ def generate_single_elimination_matches(request, tournament_id):
             match.prev_matches.add(extra_matches[j])
         match.time = starting_time
         nmpt_iterator += 1
-        if nmpt_iterator == num_matches_per_time:
+        if nmpt_iterator == arenas[arena_iterator].capacity:
+            arena_iterator += 1
             nmpt_iterator = 0
-            starting_time += datetime.timedelta(minutes=10) #10 is arbitrary value
+            if arena_iterator >= len(arenas):
+                arena_iterator = 0
+                starting_time += tournament.event.match_time 
         match.save()
         matches.append(match)
         i += 1
@@ -89,9 +97,10 @@ def generate_single_elimination_matches(request, tournament_id):
     num_matches = len(matches)
 
     #2nd round
-    if nmpt_iterator > 0:
-        nmpt_iterator = 0
-        starting_time += datetime.timedelta(minutes=10)
+    nmpt_iterator = 0
+    if arena_iterator > 0:
+        arena_iterator = 0
+        starting_time += tournament.event.match_time
     i = 0
     j = num_matches - 1
     new_matches = []
@@ -100,9 +109,12 @@ def generate_single_elimination_matches(request, tournament_id):
         match.prev_matches.add(matches[i], matches[j])
         match.time = starting_time
         nmpt_iterator += 1
-        if nmpt_iterator == num_matches_per_time:
+        if nmpt_iterator == arenas[arena_iterator].capacity:
+            arena_iterator += 1
             nmpt_iterator = 0
-            starting_time += datetime.timedelta(minutes=10) #10 is arbitrary value
+            if arena_iterator >= len(arenas):
+                arena_iterator = 0
+                starting_time += tournament.event.match_time 
         match.save()
         new_matches.append(match)
         i += 2
@@ -114,9 +126,12 @@ def generate_single_elimination_matches(request, tournament_id):
         match.prev_matches.add(matches[i], matches[j])
         match.time = starting_time
         nmpt_iterator += 1
-        if nmpt_iterator == num_matches_per_time:
+        if nmpt_iterator == arenas[arena_iterator].capacity:
+            arena_iterator += 1
             nmpt_iterator = 0
-            starting_time += datetime.timedelta(minutes=10) #10 is arbitrary value
+            if arena_iterator >= len(arenas):
+                arena_iterator = 0
+                starting_time += tournament.event.match_time
         match.save()
         new_matches.append(match)
         i += 2
@@ -126,18 +141,22 @@ def generate_single_elimination_matches(request, tournament_id):
 
     #rest of the matches
     while num_matches > 1:
-        if nmpt_iterator > 0:
-            nmpt_iterator = 0
-            starting_time += datetime.timedelta(minutes=10)
+        nmpt_iterator = 0
+        if arena_iterator > 0:
+            arena_iterator = 0
+            starting_time += tournament.event.match_time
         new_matches = []
         for i in range(0, num_matches, 2):
             match = Match.objects.create(tournament=tournament)
             match.prev_matches.add(matches[i], matches[i+1])
             match.time = starting_time
             nmpt_iterator += 1
-            if nmpt_iterator == num_matches_per_time:
+            if nmpt_iterator == arenas[arena_iterator].capacity:
+                arena_iterator += 1
                 nmpt_iterator = 0
-                starting_time += datetime.timedelta(minutes=10) #10 is arbitrary value
+                if arena_iterator >= len(arenas):
+                    arena_iterator = 0
+                    starting_time += tournament.event.match_time 
             match.save()
             new_matches.append(match)
         matches = []
