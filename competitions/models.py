@@ -234,6 +234,8 @@ class Event(models.Model):
 
 # dwheadon: can we force this to be abstract (non-instantiable)?
 class AbstractTournament(models.Model):
+    #for times to work, we need to be add time-specific stuff in this model
+    #tournament_starting_time, match_duration, and how many matches can occur per time period to name a few.
     status = StatusField()
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="tournament_set") # besides helpfing to identify this tournament this will change how teams advance (high or low score)
     competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name="tournament_set")
