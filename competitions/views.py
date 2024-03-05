@@ -447,7 +447,7 @@ def judge_match(request: HttpRequest, match_id: int):
     return render(request, 'competitions/match_judge.html', {'form': form})
 
 
-def user_profile_page(request, profile_id):
+def user_profile(request, profile_id):
     context = {
         'user': User.objects.filter(profile__id = profile_id).first(),
         'profile': Profile.objects.filter(id = profile_id).first(),
