@@ -6,8 +6,7 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.utils import timezone
-import random
-import string
+import random, string, datetime
 from functools import lru_cache
 
 
@@ -130,7 +129,7 @@ class Team(models.Model):
 
 class Arena(models.Model):
     name = models.CharField(max_length=100, blank=True)
-    capacity = models.SmallIntegerField()
+    capacity = models.PositiveSmallIntegerField()
     is_available = models.BooleanField(default=True)
     def __str__(self) -> str:
         return self.name
@@ -251,7 +250,7 @@ class AbstractTournament(models.Model):
     # interpolate_points = models.BooleanField(default=False) # otherwise winner takes all: RoboMed doesn't need this but it could be generally useful
     teams = models.ManyToManyField(Team, related_name="tournament_set")
     judges = models.ManyToManyField(User, blank=True, related_name="tournament_set")  # people entrusted to judge this tournament alone (as opposed to plenary judges)
-    start_time = models.DateTimeField()
+    start_time = models.DateTimeField(default=datetime.datetime.now())
     # These Event-related things might depend on the competition: speed race with 1 v 1 at this competition but speed race with 4 v 4 at another (both are the same event)
     # max_teams_per_match = models.SmallIntegerField(default=2)
     # max_teams_to_advance = models.SmallIntegerField(default=1)
@@ -311,7 +310,9 @@ class Ranking(models.Model):
         # unique_together += ['tournament', 'rank'] # NCAA has 4 teams with a #1 seed
 
 class RoundRobinTournament(AbstractTournament):
-    num_matches = models.PositiveSmallIntegerField()
+    num_rounds = models.PositiveSmallIntegerField()
+    teams_per_match = models.PositiveSmallIntegerField(default=2)
+
 #     ''' Everyone plays everyone else (most points / wins, wins) 
 #         Can be used to establish rankings for an Elimination
 #         This is often used for league play (not necessarily a tournament)
@@ -388,7 +389,7 @@ class Match(models.Model):
     # Note: admin doesn't restrict advancers to be competitors for this match
     advancers = models.ManyToManyField(Team, related_name="won_matches", blank=True) # usually 1 but could be more (e.g. time trials)
     time = models.DateTimeField(blank=True, null=True) # that it's scheduled for
-    arena = models.ForeignKey(Arena, related_name="match_set", on_delete=models.DO_NOTHING)
+    arena = models.ForeignKey(Arena, related_name="match_set", on_delete=models.DO_NOTHING, blank=True, null=True)
     _cached_str = models.TextField(blank=True, null=True) # for caching the string representation
 
     str_recursive_level: ClassVar[int] = 0

@@ -20,14 +20,11 @@ import random
 import zoneinfo
 from .forms import *
 
-def is_overflowed(list1: list, num: int):
-  return all(x >= num for x in list1)
-
 def generate_single_elimination_matches(request, tournament_id):
     #sort the list by ranking, then use a two-pointer alogrithm to make the starting matches
+    tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
     arena_iterator = 0
     nmpt_iterator = 0
-    tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
     arenas = [i for i in tournament.competition.arenas.filter(is_available=True)]
     starting_time = tournament.start_time 
     if not tournament.prev_tournament.ranking_set.all():
@@ -166,35 +163,41 @@ def generate_single_elimination_matches(request, tournament_id):
 
 def generate_round_robin_matches(request, tournament_id):
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
-    some_num_matches = tournament.num_matches
-    some_num_teams = 4
+    arena_iterator = 0
+    nmpt_iterator = 0
+    arenas = [i for i in tournament.competition.arenas.filter(is_available=True)]
+    starting_time = tournament.start_time 
     teams = [team for team in tournament.teams.all()]
-    num_participated = [0 for _ in range(some_num_matches)]
-    for i in range(len(teams)):
-        for k in range(some_num_matches):
-            if num_participated[i] < some_num_matches and not is_overflowed(num_participated, some_num_matches):
-                match = Match.objects.create(tournament=tournament)
-                match.starting_teams.add(teams[i])
-                match_teams = set(teams[i])
-                while(len(match_teams) < some_num_teams):
-                    j = random.randint(0, len(teams)-1)
-                    while(num_participated[j] >= some_num_matches):
-                        j = random.randint(0, len(teams)-1)    
-                    temp = len(match_teams)        
-                    match_teams.add(teams[j])
-                    if temp < len(match_teams):
-                        num_participated[j] += 1
-                match.save()
-                num_participated[i] += 1
+    for k in range(tournament.num_rounds):
+        nmpt_iterator = 0
+        if arena_iterator > 0:
+            arena_iterator = 0
+            starting_time += tournament.event.match_time
+        num_participated = [0 for _ in range(len(teams))]
+        while num_participated != [1 for _ in range(len(teams))]:
+            match = Match.objects.create(tournament=tournament)
+            for i in range(tournament.teams_per_match):
+                j = random.randint(0, len(teams)-1)
+                while(num_participated[j] > 0 and teams[j] not in match.starting_teams.all()):
+                    j = random.randint(0, len(teams)-1)          
+                match.starting_teams.add(teams[j])
+                num_participated[j] += 1 
+                if num_participated == [1 for _ in range(len(teams))]:
+                    break
+            match.time = starting_time
+            nmpt_iterator += 1
+            if nmpt_iterator == arenas[arena_iterator].capacity:
+                arena_iterator += 1
+                nmpt_iterator = 0
+                if arena_iterator >= len(arenas):
+                    arena_iterator = 0
+                    starting_time += tournament.event.match_time 
+            match.save()
     return HttpResponseRedirect(reverse("competitions:round_robin_tournament", args=(tournament_id,)))
-    #also, this could run infinitely, or at least for very long.
-    #will do ordering of matches once the bracket is fully understood. 
+    #still have a little bit of confusion with the ordering of matches.
 
 
 def generate_round_robin_rankings(request, tournament_id):
-    #don't have time right now, but here's what you gotta do
-    #put all teams in a list, sort list based on how many wins they had
-    #create rankings from there, done
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
     team_wins = {team: 0 for team in tournament.teams.all()}
     matches = tournament.match_set.all()
