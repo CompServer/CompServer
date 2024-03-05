@@ -1,0 +1,43 @@
+{% extends 'skeleton.html' %}
+{% load i18n %}
+{% block title %}{% translate "User:" %} {{ user.username }}{% endblock %} 
+{% block content %}
+special case for coaches
+    <header>
+        <h1>{% translate "User Profile" %}</h1>  
+    </header>
+    <body>
+        <div class="row">
+            {% if user.first_name %}
+                {% if user.last_name %}
+                    <h2>{{ user.first_name }} {{ user.last_name }}</h2>
+                {% endif %}
+            {% else %}
+                <h2>{{ user.username }}</h2>
+            {% endif %}
+        </div>
+        {% if profile.photo.exists %}
+            <div class="row">
+                {{ profile.photo }}
+            </div>
+        {% endif %}
+        <div class="row">
+            {% if profile.bio.exists %}
+                <h3>User Bio</h3>
+                <p>{{ profile.bio }}</p>
+            {% else %}
+                <h3>User Bio</h3>
+                <p>Add your bio.</p>
+            {% endif %}
+        </div>
+        <div class="row">
+            teams
+        </div>
+        <div class="row">
+            organization
+        </div>
+        <div class="row">
+            trophies and badges
+        </div>
+    </body>
+{% endblock %}

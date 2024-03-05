@@ -447,43 +447,82 @@ def judge_match(request: HttpRequest, match_id: int):
     form = JudgeForm(instance=instance, possible_advancers=winner_choices)
     return render(request, 'competitions/match_judge.html', {'form': form})
 
+
+def user_profile_page(request, profile_id):
+    context = {
+        'user': User.objects.filter(profile__id = profile_id).first(),
+        'profile': Profile.objects.filter(id = profile_id).first(),
+    }
+    return render(request, 'competitions/user_profile.html', context)
+
+
+def competition_score_page(request, competition_id):
+    selected_competition = Competition.objects.get(id = competition_id)
+    ranked_tournaments = selected_competition.tournament_set.order_by("points")
+    completed_tournaments = ranked_tournaments.filter(status = Status.COMPLETE)
+    unsorted_total_scores_dictionary = dict()
+    last_tournament_matches = dict()
+    list_of_tournament_points = list()
+    for team in selected_competition.teams.all():
+        val = 0
+        for completed_tournament in completed_tournaments.all():
+            last_match = Match.objects.filter(tournament__id = completed_tournament.id, next_matches__isnull = True).first()
+            if team in last_match.advancers.all():
+                val = val + completed_tournament.points
+        unsorted_total_scores_dictionary[team] = val
+    for completed_tournament in completed_tournaments.all():
+        last_match = Match.objects.filter(tournament__id = completed_tournament.id, next_matches__isnull = True).first()
+        last_tournament_matches[last_match.advancers.first()] = completed_tournament.id
+    list_of_sorted_team_tuples = [(k, v) for k, v in sorted(unsorted_total_scores_dictionary.items(), key=lambda item: item[1])]
+    list_of_sorted_last_matches = [(k, v) for k, v in sorted(last_tournament_matches.items(), key=lambda item: item[1])]
+    for k, v in list_of_sorted_last_matches:
+        list_of_tournament_points.append((v, SingleEliminationTournament.objects.filter(id = v).first().points))
+    context = {
+        'competition': selected_competition,
+        'completed_tournaments': completed_tournaments,
+        'sorted_team_tuples': list_of_sorted_team_tuples,
+        'last_matches': list_of_sorted_last_matches,
+        'list_of_tournament_points': list_of_tournament_points,
+    }
+    return render(request, "competitions/comp_scoring.html", context)
+
 def team(request: HttpRequest, team_id: int):
     today = timezone.now().date()
     upcoming_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), tournament__competition__start_date__lte=today, tournament__competition__end_date__gte=today, advancers=None).order_by("-time")
     past_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id)).exclude(advancers=None).order_by("-time")
-    unchecked_won_matches = past_matches.filter(advancers__id = team_id)
-    official_won_matches = []
-    for match in unchecked_won_matches:
-        if match.advancers.count() == 1:
-            official_won_matches.append(match)
-    #need to order the time
-    #can someone figure out how to annotate the query set and count the advancers?
-    unchecked_draw_matches = past_matches.filter(advancers__id = team_id)
-    official_draw_matches = []
-    for match in unchecked_draw_matches:
-        if match.advancers.count() > 1:
-            official_draw_matches.append(match)
+    list_of_won_matches_dictionary = dict()
+    list_of_draw_matches = list()
+    list_of_won_matches = list()
+    list_of_lost_matches = list()
+    sorted_won_tournaments = list()
+    for match in past_matches:
+        list_of_won_matches_dictionary[match.id] = match.advancers.count()
+    for l, m in list_of_won_matches_dictionary.items():
+        if m > 1:
+            list_of_draw_matches.append(Match.objects.get(id = l))
+        elif m == 1:
+            list_of_won_matches.append(Match.objects.get(id = l))
     lost_matches = past_matches.exclude(advancers__id = team_id).order_by("-time")
-    past_tournaments = SingleEliminationTournament.objects.filter(teams__id = team_id, status = Status.COMPLETE)
-    #how do you use properties in query sets?
-    won_tournaments = []
-    if past_tournaments.exists():
-        for tournament in past_tournaments:
-            matches = Match.objects.filter(tournament__id = tournament.id)
-            for match in matches:
-                if team in match.advancers.all():
-                    won_tournaments.append(tournament)
+    past_tournaments_dict = dict()
+    sorted_past_tournaments = list()
+    won_tournaments_dict = dict()
+    for set in SingleEliminationTournament.objects.filter(teams__id = team_id, status = Status.COMPLETE):
+        past_tournaments_dict[set] = set.competition.end_date
+        for match in Match.objects.filter(tournament__id = set.id):
+            if team in match.advancers.all():
+                won_tournaments_dict[set] = set.competition.end_date
+    sorted_past_tournaments = list(sorted(past_tournaments_dict.items(), key=lambda item: item[1]))
+    sorted_won_tournmanets = list(sorted(won_tournaments_dict.items(), key=lambda item: item[1]))
     past_competitions = Competition.objects.filter(teams__id = team_id, status = Status.COMPLETE).order_by("end_date")
     context = {
         'team': Team.objects.get(pk=team_id),
         'upcoming_matches': upcoming_matches,
-        'won_matches': official_won_matches,
+        'won_matches': list_of_won_matches,
         'past_matches': past_matches,
-        'draw_matches': official_draw_matches,
+        'draw_matches': list_of_draw_matches,
         'lost_matches': lost_matches,
-        'won_tournaments': won_tournaments,
-        #how do you order tournaments by time?
-        'past_tournaments': past_tournaments,
+        'won_tournaments': sorted_won_tournaments,
+        'past_tournaments': sorted_past_tournaments,
         'past_competitions': past_competitions,
     }
     return render(request, "competitions/team.html", context)

@@ -128,7 +128,6 @@ class Team(models.Model):
         ordering = ['sport', 'organization', 'name']
         unique_together = ['organization', 'name']
 
-
 class Competition(models.Model):
     name = models.CharField(max_length=255, blank=True)
     sport = models.ForeignKey(Sport, blank=True, null=True, on_delete=models.SET_NULL)
@@ -145,6 +144,7 @@ class Competition(models.Model):
     # For scheduling purposes, we need to be able to specify for this competition how many different (Event-specific) arenas are available and their capacity
     # related: tournament_set
 
+    #may not need the bottom function
     def check_date(self):
         today = timezone.now().date()
         return self.end_date < today
@@ -192,7 +192,7 @@ class Competition(models.Model):
     @property
     def is_in_setup(self) -> bool:
         return self.status == Status.SETUP
-    
+
     class Meta:
         ordering = ['-start_date', 'name']
         unique_together = ['start_date', 'name'] # probably won't have 2 in the same year but you could have a quarterly / monthly / even weekly competition
@@ -253,7 +253,7 @@ class AbstractTournament(models.Model):
 
     def __str__(self) -> str:
         return self.event.name + _(" tournament @ ") + str(self.competition) # SumoBot tournament at RoboMed 2023
-    
+
     @property
     def is_viewable(self) -> bool:
         """Whether the object should show up on the website."""
