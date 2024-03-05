@@ -193,7 +193,7 @@ def generate_single_elimination_matches(request, tournament_id):
         matches = []
         matches.extend(new_matches)
         num_matches = len(matches)
-    return HttpResponseRedirect(reverse("competitions:single_elimination_tournament", args=(tournament.id)))
+    return HttpResponseRedirect(reverse("competitions:single_elimination_tournament", args=(tournament.id,)))
 
 def generate_round_robin_matches(request, tournament_id):
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
