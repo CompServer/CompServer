@@ -100,8 +100,7 @@ class SanityTests(TestCase):
                         self.assertEqual(response.status_code, 200, "Could not view admin change page for model " + model.__name__)
                         break
                     except:
-                        if i == 4:
-                            self.assertTrue(False, "Tried 4 different id's and all of them failed")
+                        self.assertTrue(i != 4, "Tried 4 different id's for " + model.__name__ + " and none of them existed.")
 
     
     def test_public_pages(self):
