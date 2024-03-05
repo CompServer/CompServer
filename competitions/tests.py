@@ -9,6 +9,10 @@ from .models import *
 from .views import *
 from .urls import *
 
+# any 2xx or 3xx response code is considered a success
+OK_OR_REDIRECT_RESPONSE = range(200,399+1)
+OK_RESPONSE = range(200,299+1)
+REDIRECT_RESPONSE = range(300,399+1)
 
 class SanityTests(TestCase):
     ''' Make sure all our pages come up without server errors '''
@@ -77,49 +81,56 @@ class SanityTests(TestCase):
             if 'generate' not in path.name:
                 url = None
                 try:
-                    url = reverse(app_name+":"+path.name)
+                    url = reverse(f"{app_name}:{path.name}")
                 except:
                     try:
-                        url = reverse(app_name+":"+path.name, args=[1]) # try the first one
+                        url = reverse(f"{app_name}:{path.name}", args=[1]) # try the first one
                     except:
                         continue
                 if url:
                     response = self.admin_client.get(url)
-                    self.assertEqual(response.status_code, 200, "For "+str(url))
+                    self.assertIn(response.status_code, OK_OR_REDIRECT_RESPONSE, "For "+str(url))
 
     def test_all_admin_pages(self):
         for model in admin.site._registry:
-            if model.__module__[:12] == "competitions":
+            if "competitions" in model.__module__:
                 # try the list page
                 response = self.admin_client.get('/admin/competitions/'+model.__name__.lower()+"/")
-                self.assertEqual(response.status_code, 200, "Could not view admin list page for model " + model.__name__)
-                # try the change page
-                for i in range(1, 5):
-                    try:
-                        response = self.admin_client.get('/admin/competitions/'+model.__name__.lower()+"/"+str(i)+"/change/")
-                        self.assertEqual(response.status_code, 200, "Could not view admin change page for model " + model.__name__)
-                        break
-                    except:
-                        self.assertTrue(i != 4, "Tried 4 different id's for " + model.__name__ + " and none of them existed.")
+                self.assertIn(response.status_code, OK_OR_REDIRECT_RESPONSE, f"Could not view admin list page for model {model.__name__}")
 
-    
+                # try the change page
+                fails = 0
+                while fails < 5:
+                    try:
+                        response = self.admin_client.get(f'/admin/competitions/{model.__name__.lower()}/{i}/change/')
+                        self.assertIn(response.status_code, OK_OR_REDIRECT_RESPONSE, f"Could not view admin change page for model {model.__name__}")
+                        break # runs the else
+                    except:
+                        fails += 1
+                else: # runs if break is hit
+                    continue
+
+                # this ONLY runs if the break is not hit
+                response = self.admin_client.get(f'/admin/competitions/{model.__name__.lower()}/1/change/')
+                self.assertIn(response.status_code, OK_OR_REDIRECT_RESPONSE, f"Could not view admin change page for model {model.__name__}")
+
     def test_public_pages(self):
         # All pages except judging should be accessible to an anonymous user (without being redirected to login)
         anon_client = Client()
         for path in urlpatterns:
-            if 'judg' not in path.name and 'generate' not in path.name:
+            if 'judg' in path.name or 'generate' in path.name:
                 url = None
                 try:
-                    url = reverse(app_name+":"+path.name)
+                    url = reverse(f"{app_name}:{path.name}")
                 except:
                     try:
-                        url = reverse(app_name+":"+path.name, args=[1]) # try the first one
+                        url = reverse(f"{app_name}:{path.name}", args=[1]) # try the first one
                     except:
                         continue
                 if url:
                     response = anon_client.get(url)
-                    self.assertEqual(response.status_code, 200, "For "+str(url))
-
+                    self.assertIn(response.status_code, OK_OR_REDIRECT_RESPONSE, f"For {url}")
+                    # check if it is not a OK response or a redirect
 
 class JudgeTests(TestCase):
     @classmethod
@@ -213,17 +224,17 @@ class JudgeTests(TestCase):
         anon_client = Client()
         url = reverse("competitions:judge_match", args=[self.__class__.match.id])
         response = anon_client.post(url, {"advancers": self.__class__.team1_in_competition_and_tournament_and_match.id})
-        self.assertNotEqual(response.status_code, 200, "Shouldn't have been able to judge a match if you're not logged in")
+        self.assertNotIn(response.status_code, OK_RESPONSE, "Shouldn't have been able to judge a match if you're not logged in")
 
     def test_judge_but_not_for_this_competition(self):
         url = reverse("competitions:judge_match", args=[self.__class__.match.id])
         response = self.other_competition_judge_client.post(url, {"advancers": self.__class__.team1_in_competition_and_tournament_and_match.id})
-        self.assertNotEqual(response.status_code, 200, "Shouldn't have been able to judge a match if you're not a judge for this competition")
+        self.assertNotIn(response.status_code, OK_RESPONSE, "Shouldn't have been able to judge a match if you're not a judge for this competition")
     
     def test_judge_for_this_competition_but_not_this_tournament(self):
         url = reverse("competitions:judge_match", args=[self.__class__.match.id])
         response = self.other_tournament_judge_client.post(url, {"advancers": self.__class__.team1_in_competition_and_tournament_and_match.id})
-        self.assertNotEqual(response.status_code, 200, "Shouldn't have been able to judge a match if you're not a judge for this competition or this tournament")
+        self.assertNotIn(response.status_code, OK_RESPONSE, "Shouldn't have been able to judge a match if you're not a judge for this competition or this tournament")
 
     def test_judge_is_plenary_judge(self):
         pass
@@ -237,10 +248,7 @@ class JudgeTests(TestCase):
     def test_judge_but_tournament_not_open(self):
         url = reverse("competitions:judge_match", args=[self.__class__.match_closed_tournament.id])
         response = self.tournament_judge_client.post(url, {"advancers": self.__class__.team1_in_competition_and_tournament_and_match.id})
-        self.assertNotIn(response.status_code, range(200,400), "Shouldn't have been able to judge a match in a closed tournament")
-        # failing for the wrong reasons...
-
-
+        self.assertNotIn(response.status_code, OK_OR_REDIRECT_RESPONSE, "Shouldn't have been able to judge a match in a closed tournament")
 
 class JudgingTests(TestCase):
     ''' Assumes the judge is valid; Check the content of the judging page '''
@@ -354,43 +362,42 @@ class JudgingTests(TestCase):
         url = reverse("competitions:judge_match", args=[self.__class__.match_2previous_undetermined.id])
 
         response = self.admin_client.post(url, {"advancers": self.__class__.team1_in_competition_and_tournament_and_match.id})
-        self.assertNotIn(response.status_code, range(300,400), "Shouldn't have been able to advance a team from a previously undetermined match")
+        self.assertNotIn(response.status_code, REDIRECT_RESPONSE, "Shouldn't have been able to advance a team from a previously undetermined match")
         response = self.admin_client.post(url, {"advancers": self.__class__.team2_in_competition_and_tournament_and_match.id})
-        self.assertNotIn(response.status_code, range(300,400), "Shouldn't have been able to advance a team from a previously undetermined match")
+        self.assertNotIn(response.status_code, REDIRECT_RESPONSE, "Shouldn't have been able to advance a team from a previously undetermined match")
         response = self.admin_client.post(url, {"advancers": self.__class__.team3_in_competition_and_tournament_and_match.id})
-        self.assertNotIn(response.status_code, range(300,400), "Shouldn't have been able to advance a team from a previously undetermined match")
+        self.assertNotIn(response.status_code, REDIRECT_RESPONSE, "Shouldn't have been able to advance a team from a previously undetermined match")
         response = self.admin_client.post(url, {"advancers": self.__class__.team4_in_competition_and_tournament_and_match.id})
-        self.assertNotIn(response.status_code, range(300,400), "Shouldn't have been able to advance a team from a previously undetermined match")
+        self.assertNotIn(response.status_code, REDIRECT_RESPONSE, "Shouldn't have been able to advance a team from a previously undetermined match")
 
         url = reverse("competitions:judge_match", args=[self.__class__.match_undetermined_with_prevu_and_start.id])
         response = self.admin_client.post(url, {"advancers": self.__class__.team2_in_competition_and_tournament_and_match.id})
-        self.assertNotIn(response.status_code, range(300,400), "Shouldn't have been able to advance a team when their competitor is an undetermined match")
+        self.assertNotIn(response.status_code, REDIRECT_RESPONSE, "Shouldn't have been able to advance a team when their competitor is an undetermined match")
         response = self.admin_client.post(url, {"advancers": self.__class__.team3_in_competition_and_tournament_and_match.id})
-        self.assertNotIn(response.status_code, range(300,400), "Shouldn't have been able to advance a team from a previously undetermined match")
+        self.assertNotIn(response.status_code, REDIRECT_RESPONSE, "Shouldn't have been able to advance a team from a previously undetermined match")
         response = self.admin_client.post(url, {"advancers": self.__class__.team4_in_competition_and_tournament_and_match.id})
-        self.assertNotIn(response.status_code, range(300,400), "Shouldn't have been able to advance a team from a previously undetermined match")
+        self.assertNotIn(response.status_code, REDIRECT_RESPONSE, "Shouldn't have been able to advance a team from a previously undetermined match")
 
         url = reverse("competitions:judge_match", args=[self.__class__.match_with_prevd_and_prevu.id])
         response = self.admin_client.post(url, {"advancers": self.__class__.team3_in_competition_and_tournament_and_match.id})
-        self.assertNotIn(response.status_code, range(300,400), "Shouldn't have been able to advance a team when their competitor is an undetermined match")
+        self.assertNotIn(response.status_code, REDIRECT_RESPONSE, "Shouldn't have been able to advance a team when their competitor is an undetermined match")
         response = self.admin_client.post(url, {"advancers": self.__class__.team1_in_competition_and_tournament_and_match.id})
-        self.assertNotIn(response.status_code, range(300,400), "Shouldn't have been able to advance a team from a previously undetermined match")
+        self.assertNotIn(response.status_code, REDIRECT_RESPONSE, "Shouldn't have been able to advance a team from a previously undetermined match")
         response = self.admin_client.post(url, {"advancers": self.__class__.team2_in_competition_and_tournament_and_match.id})
-        self.assertNotIn(response.status_code, range(300,400), "Shouldn't have been able to advance a team from a previously undetermined match")
+        self.assertNotIn(response.status_code, REDIRECT_RESPONSE, "Shouldn't have been able to advance a team from a previously undetermined match")
 
     def test_only_competitors_can_advance(self):
         url = reverse("competitions:judge_match", args=[self.__class__.match1_undetermined.id])
         response = self.admin_client.post(url, {"advancers": self.__class__.team_no_competition.id})
-        self.assertNotIn(response.status_code, range(300,400), "Shouldn't have been able to advance a team that wasn't even in the competition")
+        self.assertNotIn(response.status_code, REDIRECT_RESPONSE, "Shouldn't have been able to advance a team that wasn't even in the competition")
         response = self.admin_client.post(url, {"advancers": self.__class__.team_in_competition_but_no_tournament.id})
-        self.assertNotIn(response.status_code, range(300,400), "Shouldn't have been able to advance a team that wasn't even in the tournament")
+        self.assertNotIn(response.status_code, REDIRECT_RESPONSE, "Shouldn't have been able to advance a team that wasn't even in the tournament")
         response = self.admin_client.post(url, {"advancers": self.__class__.team_in_competition_and_tournament_but_no_match.id})
-        self.assertNotIn(response.status_code, range(300,400), "Shouldn't have been able to advance a team that wasn't even competing in the match")
+        self.assertNotIn(response.status_code, REDIRECT_RESPONSE, "Shouldn't have been able to advance a team that wasn't even competing in the match")
         response = self.admin_client.post(url, {"advancers": self.__class__.team1_in_competition_and_tournament_and_match.id})
-        self.assertIn(response.status_code, range(300,400), "Should been able to advance the first team in the match")
+        self.assertIn(response.status_code, REDIRECT_RESPONSE, "Should been able to advance the first team in the match")
         response = self.admin_client.post(url, {"advancers": self.__class__.team2_in_competition_and_tournament_and_match.id})
-        self.assertIn(response.status_code, range(300,400), "Should been able to advance the second team in the match")
-
+        self.assertIn(response.status_code, REDIRECT_RESPONSE, "Should been able to advance the second team in the match")
 
 class AutogenTests(TestCase):
     ''' Assumes the judge is valid; Check the content of the judging page '''

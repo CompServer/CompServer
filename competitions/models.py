@@ -421,7 +421,7 @@ class Match(models.Model):
         return str(self._cached_str)
 
     def __str__(self) -> str:
-        if self._cached_str == None:
+        if self._cached_str is None:
             self._generate_str_recursive()
             self.save()
         return self._cached_str
