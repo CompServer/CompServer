@@ -6,8 +6,7 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.utils import timezone
-import random
-import string
+import random, string, datetime
 from functools import lru_cache
 
 
@@ -129,6 +128,14 @@ class Team(models.Model):
         unique_together = ['organization', 'name']
 
 
+class Arena(models.Model):
+    name = models.CharField(max_length=100, blank=True)
+    capacity = models.PositiveSmallIntegerField()
+    is_available = models.BooleanField(default=True)
+    def __str__(self) -> str:
+        return self.name
+
+
 class Competition(models.Model):
     name = models.CharField(max_length=255, blank=True)
     sport = models.ForeignKey(Sport, blank=True, null=True, on_delete=models.SET_NULL)
@@ -143,8 +150,10 @@ class Competition(models.Model):
     plenary_judges = models.ManyToManyField(User, blank=True)  # people entrusted to judge this competition as a whole: won't restrict them to a specific event
     access_key = models.CharField(max_length=ACCESS_KEY_LENGTH, default=get_random_access_key, blank=True, null=True)
     # For scheduling purposes, we need to be able to specify for this competition how many different (Event-specific) arenas are available and their capacity
+    arenas = models.ManyToManyField(Arena, blank=True)
     # related: tournament_set
 
+    #may not need the bottom function
     def check_date(self):
         today = timezone.now().date()
         return self.end_date < today
@@ -192,7 +201,7 @@ class Competition(models.Model):
     @property
     def is_in_setup(self) -> bool:
         return self.status == Status.SETUP
-    
+
     class Meta:
         ordering = ['-start_date', 'name']
         unique_together = ['start_date', 'name'] # probably won't have 2 in the same year but you could have a quarterly / monthly / even weekly competition
@@ -220,6 +229,7 @@ class Competition(models.Model):
 
 class Event(models.Model):
     name = models.CharField(max_length=255, unique=True)  # sumo bots, speed race, etc.
+    match_time = models.DurationField(blank=True, null=True)
     sport = models.ForeignKey(Sport, blank=True, null=True, on_delete=models.SET_NULL)
     # score_units = ScoreUnitsField() # initially just assume scores are place values (1st, 2nd, 3rd, etc.)
     # high_score_advances = models.BooleanField(default=True) # with seconds, low scores will usually advance (unless it's a "how long can you last" situation)
@@ -243,6 +253,7 @@ class AbstractTournament(models.Model):
     # interpolate_points = models.BooleanField(default=False) # otherwise winner takes all: RoboMed doesn't need this but it could be generally useful
     teams = models.ManyToManyField(Team, related_name="tournament_set")
     judges = models.ManyToManyField(User, blank=True, related_name="tournament_set")  # people entrusted to judge this tournament alone (as opposed to plenary judges)
+    start_time = models.DateTimeField(default=timezone.now)
     # These Event-related things might depend on the competition: speed race with 1 v 1 at this competition but speed race with 4 v 4 at another (both are the same event)
     # max_teams_per_match = models.SmallIntegerField(default=2)
     # max_teams_to_advance = models.SmallIntegerField(default=1)
@@ -253,7 +264,7 @@ class AbstractTournament(models.Model):
 
     def __str__(self) -> str:
         return self.event.name + _(" tournament @ ") + str(self.competition) # SumoBot tournament at RoboMed 2023
-    
+
     @property
     def is_viewable(self) -> bool:
         """Whether the object should show up on the website."""
@@ -302,17 +313,18 @@ class Ranking(models.Model):
         # unique_together += ['tournament', 'rank'] # NCAA has 4 teams with a #1 seed
 
 class RoundRobinTournament(AbstractTournament):
-    '''
-    Everyone plays everyone else (most points / wins, wins) 
-    Can be used to establish rankings for an Elimination
-    This is often used for league play (not necessarily a tournament)
-    '''
-    num_matches = models.PositiveSmallIntegerField()
-    # points_per_win: 3 for World Cup group round
-    # points_per_tie: 1 for World Cup group round
-    # points_per_loss: probably always 0
-    # accumulation: sum of all points (e.g. goals), sum of match points (e.g. 2 for win, 1 for tie, 0 for loss)
-    # interpolated: rull rankings (order of points)
+    num_rounds = models.PositiveSmallIntegerField()
+    teams_per_match = models.PositiveSmallIntegerField(default=2)
+
+#     ''' Everyone plays everyone else (most points / wins, wins) 
+#         Can be used to establish rankings for an Elimination
+#         This is often used for league play (not necessarily a tournament)
+#     '''
+#     # points_per_win: 3 for World Cup group round
+#     # points_per_tie: 1 for World Cup group round
+#     # points_per_loss: probably always 0
+#     # accumulation: sum of all points (e.g. goals), sum of match points (e.g. 2 for win, 1 for tie, 0 for loss)
+#     # interpolated: rull rankings (order of points)
 
 class SingleEliminationTournament(AbstractTournament):
     ''' Elimination style with brackets (last man standing) 
@@ -380,7 +392,7 @@ class Match(models.Model):
     # Note: admin doesn't restrict advancers to be competitors for this match
     advancers = models.ManyToManyField(Team, related_name="won_matches", blank=True) # usually 1 but could be more (e.g. time trials)
     time = models.DateTimeField(blank=True, null=True) # that it's scheduled for
-
+    arena = models.ForeignKey(Arena, related_name="match_set", on_delete=models.DO_NOTHING, blank=True, null=True)
     _cached_str = models.TextField(blank=True, null=True) # for caching the string representation
 
     str_recursive_level: ClassVar[int] = 0

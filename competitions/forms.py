@@ -53,4 +53,4 @@ class CreateRRTournamentFor(forms.ModelForm):
     generate_matches = forms.CheckboxInput()
     class Meta:
         model = RoundRobinTournament
-        fields = ['event', 'status', 'competition', 'points', 'teams', 'judges', 'num_matches']
+        fields = ['event', 'status', 'competition', 'points', 'teams', 'judges', 'num_rounds']

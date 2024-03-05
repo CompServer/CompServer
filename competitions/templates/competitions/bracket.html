@@ -4,7 +4,7 @@
 {% block head %}
 
 <style>
-  .team {
+.team {
     margin: 0px {{bracket_dict.connectorWidth}}px 0px {{bracket_dict.connectorWidth}}px;
   }
 
@@ -26,6 +26,16 @@
 .connector-down {
     top: {% widthratio bracket_dict.teamHeight 2 1%}px;
 }
+
+.bracket {
+    height:{{bracket_dict.bracketHeight}}px; 
+    width:{{bracket_dict.bracketWidth}}px;
+}
+
+.round {
+    height: {{ bracket_dict.roundHeight }}px; 
+    width: {{ bracket_dict.roundWidth }}px;
+}
 </style>
 
 {% endblock%}
@@ -46,9 +56,9 @@
 </h1>
 {% comment %} not sure how to show match times here, bc I need to know exactly how they work {% endcomment %}
 {% if tournament.match_set.all %}
-<div class="bracket" style="height:{{bracket_dict.bracketHeight}}px; width:{{bracket_dict.bracketWidth}}px;">
+<div class="bracket">
     {% for round_data in bracket_dict.round_data %}
-    <div class="round" style="height: {{ bracket_dict.roundHeight }}px; width: {{ bracket_dict.roundWidth }}px;">
+    <div class="round">
         {% for match_data in round_data.match_data %}
         <div class="match" style="height: {{ match_data.match_height }}px; width: {{ match_data.match_width }}px;">
             <div class="center"
@@ -65,7 +75,19 @@
                             {% with A=forloop.parentloop.counter|divisibleby:2 B=forloop.counter|divisibleby:2%}                          
                             {% widthratio match_data.match_height 2 1 as connector_height%}
                             <div class="connector-front {{ team_data.connector }}" 
-                            style="height: {% if A and not B or B and not A %}{{connector_height|add:-24}}{%else%}{{connector_height|add:2}}{%endif%}px;">
+                            style="{% if A and not B or B and not A %}
+                                    {% if team_data.connector == 'connector-down'%}
+                                        height:{{connector_height|add:-24}}px;
+                                    {% else %}
+                                        height:{{connector_height|add:-26}}px;
+                                    {%endif%}
+                                {%else%}
+                                    {% if team_data.connector == 'connector-down'%}
+                                        height:{{connector_height|add:2}}px;
+                                    {% else %}
+                                        height:{{connector_height}}px;
+                                    {%endif%}
+                                {%endif%}">
                             {%endwith %}
                             </div>
                         {%endif%}
@@ -84,3 +106,6 @@
     </form>
 {% endif %}
 {% endblock %}
+
+
+
