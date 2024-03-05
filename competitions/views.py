@@ -65,7 +65,7 @@ def generate_single_elimination_matches(request, tournament_id):
         for i, team in enumerate(teams, start=1):
             rank = Ranking.objects.create(tournament=tournament,team=team,rank=i)
             rank.save()
-            team_ranks.append(rank)
+            team_ranks.append((rank.team, rank.rank))
     else:
         team_ranks = sorted([(rank.team, rank.rank) for rank in tournament.prev_tournament.ranking_set.all()], key=lambda x: x[1])
     #sort_list(teams, ranks)        
