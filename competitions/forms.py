@@ -3,7 +3,7 @@
 from django import forms
 from django.contrib import messages
 
-from competitions.models import Competition, SingleEliminationTournament, Team, Match
+from competitions.models import Competition, SingleEliminationTournament, Team, Match, RoundRobinTournament
 
 
 class JudgeForm(forms.ModelForm):
@@ -43,3 +43,14 @@ class SETournamentStatusForm(forms.ModelForm):
         fields = ['status']
 
 # class CreateCompetitionsForm(forms.):
+class CreateSETournamentForm(forms.ModelForm):
+    generate_matches = forms.CheckboxInput()
+    class Meta:
+        model = SingleEliminationTournament
+        fields = ['event', 'status', 'competition', 'points', 'teams', 'judges']
+
+class CreateRRTournamentFor(forms.ModelForm):
+    generate_matches = forms.CheckboxInput()
+    class Meta:
+        model = RoundRobinTournament
+        fields = ['event', 'status', 'competition', 'points', 'teams', 'judges', 'num_rounds']

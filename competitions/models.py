@@ -127,12 +127,14 @@ class Team(models.Model):
         ordering = ['sport', 'organization', 'name']
         unique_together = ['organization', 'name']
 
+
 class Arena(models.Model):
     name = models.CharField(max_length=100, blank=True)
     capacity = models.PositiveSmallIntegerField()
     is_available = models.BooleanField(default=True)
     def __str__(self) -> str:
         return self.name
+
 
 class Competition(models.Model):
     name = models.CharField(max_length=255, blank=True)
@@ -151,6 +153,7 @@ class Competition(models.Model):
     arenas = models.ManyToManyField(Arena, blank=True)
     # related: tournament_set
 
+    #may not need the bottom function
     def check_date(self):
         today = timezone.now().date()
         return self.end_date < today
@@ -198,7 +201,7 @@ class Competition(models.Model):
     @property
     def is_in_setup(self) -> bool:
         return self.status == Status.SETUP
-    
+
     class Meta:
         ordering = ['-start_date', 'name']
         unique_together = ['start_date', 'name'] # probably won't have 2 in the same year but you could have a quarterly / monthly / even weekly competition
@@ -226,7 +229,7 @@ class Competition(models.Model):
 
 class Event(models.Model):
     name = models.CharField(max_length=255, unique=True)  # sumo bots, speed race, etc.
-    match_time = models.DurationField()
+    match_time = models.DurationField(blank=True, null=True)
     sport = models.ForeignKey(Sport, blank=True, null=True, on_delete=models.SET_NULL)
     # score_units = ScoreUnitsField() # initially just assume scores are place values (1st, 2nd, 3rd, etc.)
     # high_score_advances = models.BooleanField(default=True) # with seconds, low scores will usually advance (unless it's a "how long can you last" situation)
@@ -250,7 +253,7 @@ class AbstractTournament(models.Model):
     # interpolate_points = models.BooleanField(default=False) # otherwise winner takes all: RoboMed doesn't need this but it could be generally useful
     teams = models.ManyToManyField(Team, related_name="tournament_set")
     judges = models.ManyToManyField(User, blank=True, related_name="tournament_set")  # people entrusted to judge this tournament alone (as opposed to plenary judges)
-    start_time = models.DateTimeField(default=datetime.datetime.now())
+    start_time = models.DateTimeField(default=timezone.now)
     # These Event-related things might depend on the competition: speed race with 1 v 1 at this competition but speed race with 4 v 4 at another (both are the same event)
     # max_teams_per_match = models.SmallIntegerField(default=2)
     # max_teams_to_advance = models.SmallIntegerField(default=1)
@@ -261,7 +264,7 @@ class AbstractTournament(models.Model):
 
     def __str__(self) -> str:
         return self.event.name + _(" tournament @ ") + str(self.competition) # SumoBot tournament at RoboMed 2023
-    
+
     @property
     def is_viewable(self) -> bool:
         """Whether the object should show up on the website."""
@@ -324,12 +327,12 @@ class RoundRobinTournament(AbstractTournament):
 #     # interpolated: rull rankings (order of points)
 
 class SingleEliminationTournament(AbstractTournament):
-    prev_tournament = models.ForeignKey(RoundRobinTournament, on_delete=models.DO_NOTHING, blank=True, null=True)
     ''' Elimination style with brackets (last man standing) 
         Requires seedings determined by prior RoundRobin or expert input
         Seeding (ranking) is important because you want the last match to be close, not a total blowout
         Winner take all situation (1st place is really the only position that's established)
     '''
+    prev_tournament = models.ForeignKey(RoundRobinTournament, on_delete=models.DO_NOTHING, blank=True, null=True)
     # interpolated: winner (of the top-level match)
 
 

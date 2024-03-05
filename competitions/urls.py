@@ -10,10 +10,12 @@ urlpatterns = [
     path("team/<int:team_id>/", views.team, name="team"),
     path("tournament/", views.tournaments, name="tournaments"),
     path("tournament/<int:tournament_id>/", views.tournament, name="tournament"),
-    path("tournament/<int:tournament_id>/generate/", views.generate_single_elimination_matches, name="generate_single_elimination_matches"),
+    path("tournament/<int:tournament_id>/generate/", views.generate_tournament_matches, name="generate_single_elimination_matches"),
+    path("competition/<int:competition_id>/scoring/", views.competition_score_page, name="competition_score_page"),
     # path("coach/<int:coach_id>/", views.coach, name="coach-page"),
     # path("match/<int:match_id>/", views.match, name="match"),
     path("match/<int:match_id>/judge/", views.judge_match, name="judge_match"),
+    path("competition/profile/<int:profile_id>/", views.user_profile, name="user_profile"),
     path('credits/', views.credits, name="credits"),
     path('settings/timezone/',views.set_timezone_view, name='set_timezone'),
 ]
