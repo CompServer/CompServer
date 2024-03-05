@@ -187,7 +187,7 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
             "name": team.name if team else "TBD",
             "won": team in match.advancers.all(),
             "is_next": is_next,
-            "prev": prev,
+            "prev": match.prev_matches.exists(),
             "match_id": match.id,
             "connector": connector,
         }
