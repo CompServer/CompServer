@@ -29,7 +29,7 @@ class SanityTests(TestCase):
         cls.open_old_competition = Competition.objects.create(name='open_old_competition', status=Status.OPEN, start_date=cls.yesterday, end_date=cls.yesterday)
         cls.open_current_competition = Competition.objects.create(name='open_current_competition', status=Status.OPEN, start_date=cls.yesterday, end_date=cls.tomorrow)
         cls.open_future_competition = Competition.objects.create(name='open_future_competition', status=Status.OPEN, start_date=cls.tomorrow, end_date=cls.tomorrow)
-        cls.round_robin = RoundRobinTournament.objects.create(status=Status.SETUP, event=cls.event, competition=cls.open_current_competition, num_matches=3)
+        cls.round_robin = RoundRobinTournament.objects.create(status=Status.SETUP, event=cls.event, competition=cls.open_current_competition, num_rounds=3)
         cls.open_tournament = SingleEliminationTournament.objects.create(status=Status.OPEN, event=cls.event, competition=cls.open_current_competition)
         cls.closed_tournament = SingleEliminationTournament.objects.create(status=Status.CLOSED, event=cls.event, competition=cls.open_current_competition)
         cls.tournament_judge = User.objects.create(username="terry")
