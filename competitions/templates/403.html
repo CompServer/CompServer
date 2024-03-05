@@ -1,19 +1,20 @@
 {% extends "skeleton.html" %}
 {% load static %}
+{% load i18n %}
 
-{% block title %}403 Forbidden{% endblock %}
+{% block title %}{% translate "403 Forbidden" %}{% endblock %}
 
 {% block content %}
     <div class="container">
         <div class="row">
             <div class="col-md-12">
-                <h1>403 Forbidden</h1>
+                <h1>{% translate "403 Forbidden" %}</h1>
             </div>
         </div>
         <div class="row">
             <div class="col-md-8">
-                <h2>You are not allowed to access this page</h2>
-                <p>Sorry, you are not allowed to access this page. Please contact the administrator if you think this is a mistake.</p>
+                <h2>{% translate "You are not allowed to access this page" %}</h2>
+                <p>{% translate "Sorry, you are not allowed to access this page. Please contact the administrator if you think this is a mistake." %}</p>
                 {% if message %}
                     <p>{{ message }}</p>
                 {% endif %}
