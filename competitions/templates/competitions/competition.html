@@ -21,7 +21,7 @@
         <a href="{% url 'competitions:competition_score_page' competition.id %}">See Results</a>
     </div>
     <hr>
-    {% if competition.tournament_set.all %}
+    {% if competition.single_elimination_tournament_set.all %}
         <h3>{% translate "Tournaments" %}</h3>
         {% for tournament in competition.tournament_set.all %}
             <div class="row d-flex">

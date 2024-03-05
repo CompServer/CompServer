@@ -516,39 +516,26 @@ def team(request: HttpRequest, team_id: int):
     today = timezone.now().date()
     upcoming_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), tournament__competition__start_date__lte=today, tournament__competition__end_date__gte=today, advancers=None).order_by("-time")
     past_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id)).exclude(advancers=None).order_by("-time")
-    list_of_won_matches_dictionary = dict()
-    list_of_draw_matches = list()
-    list_of_won_matches = list()
-    list_of_lost_matches = list()
-    sorted_won_tournaments = list()
-    for match in past_matches:
-        list_of_won_matches_dictionary[match.id] = match.advancers.count()
-    for l, m in list_of_won_matches_dictionary.items():
-        if m > 1:
-            list_of_draw_matches.append(Match.objects.get(id = l))
-        elif m == 1:
-            list_of_won_matches.append(Match.objects.get(id = l))
-    lost_matches = past_matches.exclude(advancers__id = team_id).order_by("-time")
-    past_tournaments_dict = dict()
-    sorted_past_tournaments = list()
-    won_tournaments_dict = dict()
-    for set in SingleEliminationTournament.objects.filter(teams__id = team_id, status = Status.COMPLETE):
-        past_tournaments_dict[set] = set.competition.end_date
-        for match in Match.objects.filter(tournament__id = set.id):
-            if team in match.advancers.all():
-                won_tournaments_dict[set] = set.competition.end_date
-    sorted_past_tournaments = list(sorted(past_tournaments_dict.items(), key=lambda item: item[1]))
-    sorted_won_tournmanets = list(sorted(won_tournaments_dict.items(), key=lambda item: item[1]))
+    draw_matches = list()
+    past_matches_won = past_matches.filter(starting_teams__id = team_id, advancers__id = team_id)
+    for past_match_won in past_matches_won:
+        if past_match_won.advancers.count() > 1:
+            past_match_won.exclude(past_match_won)
+            list_of_draw_matches.append(past_match_won)
+    past_matches_lost = past_matches.exclude(advancers__id = team_id)
+    past_tournaments = SingleEliminationTournament.objects.filter(teams__id = team_id, status = Status.COMPLETE).order_by("competition_set_latest__end_date")
+    past_tournaments_won = past_tournaments.filter(competition_set__latest.match_set_latest.advancers__id == team_id)
     past_competitions = Competition.objects.filter(teams__id = team_id, status = Status.COMPLETE).order_by("end_date")
+    #need to debug
     context = {
         'team': Team.objects.get(pk=team_id),
         'upcoming_matches': upcoming_matches,
-        'won_matches': list_of_won_matches,
+        'won_matches': past_matches_won,
         'past_matches': past_matches,
-        'draw_matches': list_of_draw_matches,
-        'lost_matches': lost_matches,
-        'won_tournaments': sorted_won_tournaments,
-        'past_tournaments': sorted_past_tournaments,
+        'draw_matches': draw_matches,
+        'lost_matches': past_matches_lost,
+        'won_tournaments': past_tournaments_won,
+        'past_tournaments': past_tournaments,
         'past_competitions': past_competitions,
     }
     return render(request, "competitions/team.html", context)
