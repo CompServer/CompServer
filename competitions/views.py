@@ -60,7 +60,7 @@ def generate_single_elimination_matches(request, tournament_id):
     arenas = [i for i in tournament.competition.arenas.filter(is_available=True)]
     starting_time = tournament.start_time 
     team_ranks = []
-    if tournament.prev_tournament == None or not tournament.prev_tournament.ranking_set.all():
+    if tournament.prev_tournament == None or not tournament.prev_tournament.ranking_set.exists():
         teams = tournament.teams.all()
         for i, team in enumerate(teams, start=1):
             rank = Ranking.objects.create(tournament=tournament,team=team,rank=i)
@@ -193,7 +193,7 @@ def generate_single_elimination_matches(request, tournament_id):
         matches = []
         matches.extend(new_matches)
         num_matches = len(matches)
-    return HttpResponseRedirect(reverse("competitions:single_elimination_tournament", args=(tournament.id)))
+    return HttpResponseRedirect(reverse("competitions:single_elimination_tournament", args=(tournament.id,)))
 
 def generate_round_robin_matches(request, tournament_id):
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
