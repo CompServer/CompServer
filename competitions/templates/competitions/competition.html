@@ -49,4 +49,24 @@
             </div>
         {% endfor %}
     {% endif %}
+    {% if winner %}
+    <h3>Winners:</h3>
+    {% for team in winner %}
+    <div class="row d-flex">
+        <div class = "col-12">
+            <a href="{% url 'competitions:team' team.id %}">{{ team }}</a>
+        </div>
+    </div>
+    {% endfor %}
+
+    {% endif %}
+    <ul>
+        {% for link in links %}
+          <li>{{ link }}</li>
+        {% endfor %} 
+      </ul>
+
 {% endblock %}
+
+
+<!-- pass in urls for the results page in competitions/ -->

@@ -258,12 +258,24 @@ def competition(request: HttpRequest, competition_id):
     competition = get_object_or_404(Competition, pk=competition_id)
     if competition.is_archived:
         return HttpResponseRedirect(reverse("competitions:competitions"))
-    context = {"competition": competition, "Status": Status}
+    winner = Match.obects.filter(next_matches__isnull=True).filter(tournament__competition=competition_id).first().advancers.all()
+    context = {"competition": competition, "Status": Status, "winner": winner}
     return render(request, "competitions/competition.html", context)
 
 # tourmaent query set annotate with the winners of the tournament have something called iwnner add as an annotaton to query set in template go through tournaments passing through context
 # four point awarded too blah blah 
 # look up tutorial on annotation firgure out which tema won
+
+# comp_id = 1
+# tourneys_with_winner = []
+# for tourney in SingleEliminationTournament.objects.filter(competition__id=comp_id):
+#   final_match = Match.objects.filter(tournament=tourney, next_matches__isnull=True, advancers__isnull=False).first()
+#   if final_match and final_match.advancers.first(): # there should only be one
+#     tourneys_with_winner.append((tourney, final_match.advancers.first()))
+#   else:
+#     tourneys_with_winner.append((tourney, None))
+
+# ask about sport_id error - sport should have Id 
 
 
 def team(request: HttpRequest, team_id):
