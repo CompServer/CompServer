@@ -20,5 +20,7 @@ urlpatterns = [
     path("match/<int:match_id>/judge/", views.judge_match, name="judge_match"),
     path("competition/profile/<int:profile_id>/", views.user_profile, name="user_profile"),
     path('credits/', views.credits, name="credits"),
+
+    path('_error/', views._raise_error_code, name="_error"), # for testing error pages
     path('settings/timezone/',views.set_timezone_view, name='set_timezone'),
 ]

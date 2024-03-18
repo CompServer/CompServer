@@ -1,4 +1,5 @@
 from datetime import datetime
+from http.client import HTTPResponse
 from django.contrib import messages
 from django.core.exceptions import BadRequest
 from django.shortcuts import render, get_object_or_404
@@ -6,7 +7,7 @@ from django.utils.autoreload import start_django
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth.views import login_required
 from django.db.models import Q
-from django.http import HttpRequest, HttpResponseRedirect, Http404
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
@@ -555,6 +556,18 @@ def team(request: HttpRequest, team_id: int):
     }
     return render(request, "competitions/team.html", context)
 
+
+def _raise_error_code(request: HttpRequest):
+    error_code = int(request.GET.get('code', 0))
+
+    if error_code == 403:
+        raise PermissionDenied
+    elif error_code == 404:
+        raise Http404
+    elif error_code == 500:
+        raise Exception("This is a test 500 error.")
+    else:
+        return HttpResponse(status=error_code)
 
 def set_timezone_view(request: HttpRequest):
     """Please leave this view at the bottom. Create any new views you need above this one"""
