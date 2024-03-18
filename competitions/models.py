@@ -229,7 +229,7 @@ class Competition(models.Model):
 
 class Event(models.Model):
     name = models.CharField(max_length=255, unique=True)  # sumo bots, speed race, etc.
-    match_time = models.DurationField(blank=True, null=True)
+    match_time = models.DurationField()
     sport = models.ForeignKey(Sport, blank=True, null=True, on_delete=models.SET_NULL)
     # score_units = ScoreUnitsField() # initially just assume scores are place values (1st, 2nd, 3rd, etc.)
     # high_score_advances = models.BooleanField(default=True) # with seconds, low scores will usually advance (unless it's a "how long can you last" situation)

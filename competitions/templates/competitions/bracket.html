@@ -74,8 +74,8 @@
                         {% if team_data.is_next and team_data.won%}
                             {% with A=forloop.parentloop.counter|divisibleby:2 B=forloop.counter|divisibleby:2%}                          
                             {% widthratio match_data.match_height 2 1 as connector_height%}
-                            <div class="connector-front {{ team_data.connector }}" 
-                            style="{% if A and not B or B and not A %}
+                            <div class="connector-front {{ team_data.connector }}" onclick=""
+                            style=" cursor: default; {% if A and not B or B and not A %}
                                     {% if team_data.connector == 'connector-down'%}
                                         height:{{connector_height|add:-24}}px;
                                     {% else %}
