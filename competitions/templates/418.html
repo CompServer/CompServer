@@ -1,22 +1,4 @@
-{% extends "skeleton.html" %}
-
-{% block title %}{% translate "418 I'm A Teapot" %}{% endblock%}
-
-{% block content %}
-    <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-                <h1><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/418">{% translate "418 I'm A Teapot" %}</a></h1>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-8">
-                <h2>{% translate "418 I'm A Teapot" %}</h2>
-                <p>{% translate "Sorry, you attempted to use coffepot technology and got rejected, raising this error page. Please be careful about brewing an awfully hot coffee pot in the future." %}</p>
-                {% if message %}
-                    <p>{{ message }}</p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-{% endblock %}
+{% include "ERROR_BASE.html" with 
+error_code="418" 
+error="418 I'm A Teapot", 
+error_description="Sorry, you attempted to use coffeepot technology and got rejected, raising this error page. Please be careful about brewing an awfully hot coffee pot in the future."  %}
