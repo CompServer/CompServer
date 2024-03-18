@@ -516,8 +516,36 @@ def competition_score_page(request, competition_id):
     return render(request, "competitions/comp_scoring.html", context)
 
 def team(request: HttpRequest, team_id: int):
+    #match history for every round
+    #get every single match and then filter that aosr was a starting team
+
     today = timezone.now().date()
     upcoming_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), tournament__competition__start_date__lte=today, tournament__competition__end_date__gte=today, advancers=None).order_by("-time")
+    #getting the rounds
+    #list out all the matches that happened for the team, because they'll stop somewhere
+    #count everytime the team has advanced past a starting team up until the current match (round number)
+    #make sure to list each previous match leading up to their win
+    non_loss_matches = Match.objects.filter(advancers__id=team_id).order_by("-time")
+    for non_loss_match in non_loss_matches:
+        i = 0
+    
+    match_history = list()
+    for pt in past_tournaments:
+        v = 1
+        ref_winner = pt.match_set.last().advancers.first()
+        num_rounds = Match.objects.filter(advancers__id=ref_winner.id).count()
+        for match in Team.objects.filter(team_id).match_set.all():
+            match_history.append((v, match.id, match.tournament.id))
+            v = v + 1
+    #from here, filter if the match was won or lost or drawn and correct the string that's outputted to leave out team name
+    #Won against "opponents" @ "tournament" in Round ""
+    # Lost against "" in Round ""
+    # Drew with "" in Round ""
+    
+    
+    
+    
+    all_won_matches = Match.objects.filter(advancers__id=team_id)
     past_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id)).exclude(advancers=None).order_by("-time")
     past_matches_drawn = list()
     past_tournaments_won = list()
