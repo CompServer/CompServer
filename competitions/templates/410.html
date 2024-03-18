@@ -1,23 +1,4 @@
-{% extends "skeleton.html" %}
-{% load static %}
-
-{% block title %}{% translate "410 Gone" %}{% endblock %}
-
-{% block content %}
-    <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-                <h1>{% translate "410 Gone" %}</h1>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-8">
-                <p>{% translate "The page you are looking for does not exist anymore." %}</p>
-                <p>{% translate "Click" %} <a href="{% url 'competitions:home' %}">{% translate "here" %}</a> {% translate "to go back to the home page." %}</p>
-                {% if message %}
-                    <p>{{ message }}</p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-{% endblock %}
+{% include "ERROR_BASE.html" with 
+error_code="410" 
+error="410 Gone", 
+error_description="The page you are looking for does not exist anymore."  %}

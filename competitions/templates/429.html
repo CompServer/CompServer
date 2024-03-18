@@ -1,23 +1,4 @@
-{% extends "skeleton.html" %}
-{% load static %}
-
-{% block title %}{% translate "429 Too Many Requests" %}{% endblock %}
-
-{% block content %}
-    <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-                <h1>{% translate "429 Too Many Requests" %}</h1>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-8">
-               <p>{% translate "Sorry, you have made too many requests to the server. Please try again later." %}</p>
-               {% if message %}
-                    <p>{{ message }}</p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-
-{% endblock %}
+{% include "ERROR_BASE.html" with 
+error_code="429" 
+error="429 Too Many Requests", 
+error_description="Sorry, you have made too many requests to the server. Please try again later."  %}
