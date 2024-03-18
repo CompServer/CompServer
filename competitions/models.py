@@ -429,6 +429,8 @@ class Match(models.Model):
         ordering = ['tournament']
         verbose_name_plural = _('Matches')
 
+
 @receiver(post_save, sender=Match)
 def update_str_match(sender, instance, **kwargs):
     instance._generate_str_recursive(force=True) # because kwargs are different, cache will not be used and we force it to recalculate
+

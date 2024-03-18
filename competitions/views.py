@@ -407,8 +407,17 @@ def competition(request: HttpRequest, competition_id: int):
                 return HttpResponseRedirect(reverse(f"competitions:competition", args=[competition_id]))
     if competition.is_archived:
         return HttpResponseRedirect(reverse("competitions:competitions"))
-    context = {"competition": competition, "form": SETournamentStatusForm()}
+    if Match.objects.filter(next_matches__isnull=True).filter(tournament__competition=competition_id).exists():
+        winner = Match.objects.filter(next_matches__isnull=True).filter(tournament__competition=competition_id).first().advancers.all()
+    else:
+        winner = None
+    context = {
+        "competition": competition, 
+        "form": SETournamentStatusForm(), 
+        "winner": winner,
+    }
     return render(request, "competitions/competition.html", context)
+
 
 def credits(request: HttpRequest):
     return render(request, "competitions/credits.html")

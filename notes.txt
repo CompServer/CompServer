@@ -79,6 +79,7 @@ Product Owner (jschwartz) Presentation Notes
 - Speed race could be 1 v 1
 - 20 sportsmanship points that get taken away (penalties)
 
+Shared document with everyone on how roundrobin works
 
 jmulligan:
 Did some research on HTMX using this turorial: https://www.mattlayman.com/blog/2021/how-to-htmx-django/
@@ -180,14 +181,9 @@ Translation Notes
 - We have to download gettext tools system library (https://stackoverflow.com/questions/53852961/installing-gettext-in-windows-cant-find-msguniq-make-sure-you-have-gnu-gettex)
 - use{% translate %} tag for built-in html text, and gettext python library function for not built-in html text
 - use {% load i18n %} at beginning of html doc to allow Translation
-- there's no way to translate the items of models, and if there is, it's way too complicated.
-
 
 To anyone reading this, if you want to include a link to the navbar shown only on your specific
 html page, you can use the block links to do so.
-
-
-
 
 JM + HF
 TIMEZONE STUFF

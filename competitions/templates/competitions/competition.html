@@ -66,6 +66,7 @@
             </div>
         {% endfor %}
     {% endif %}
+
     {% if user.is_staff %}
         {% comment %} <hr>
         <h3>Change Status</h3>
@@ -82,4 +83,17 @@
             </div>
         </form> {% endcomment %}
     {% endif %}
+
+    {% if winner %}
+        <h3>Winners:</h3>
+        {% for team in winner %}
+        <div class="row d-flex">
+            <div class = "col-12">
+                <a href="{% url 'competitions:team' team.id %}">{{ team }}</a>
+            </div>
+        </div>
+        {% endfor %}
+    {% endif %}
+
 {% endblock %}
+<!-- pass in urls for the results page in competitions/ -->
