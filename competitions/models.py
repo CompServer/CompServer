@@ -1,6 +1,6 @@
 from typing import Any, ClassVar
 from django.db import models
-from django.db.models import Q, SmallIntegerField
+from django.db.models import Count, Q, SmallIntegerField
 from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User
@@ -8,7 +8,6 @@ from django.dispatch import receiver
 from django.utils import timezone
 import random, string, datetime
 from functools import lru_cache
-
 
 ACCESS_KEY_LENGTH = 10
 # ^ should be in settings?
