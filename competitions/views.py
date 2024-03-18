@@ -258,7 +258,7 @@ def competition(request: HttpRequest, competition_id):
     competition = get_object_or_404(Competition, pk=competition_id)
     if competition.is_archived:
         return HttpResponseRedirect(reverse("competitions:competitions"))
-    winner = Match.obects.filter(next_matches__isnull=True).filter(tournament__competition=competition_id).first().advancers.all()
+    winner = Match.objects.filter(next_matches__isnull=True).filter(tournament__competition=competition_id).first().advancers.all()
     context = {"competition": competition, "Status": Status, "winner": winner}
     return render(request, "competitions/competition.html", context)
 
