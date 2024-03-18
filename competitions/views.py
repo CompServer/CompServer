@@ -286,7 +286,7 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
             queryset = match.next_matches.all()[0].prev_matches.all()
             midpoint = (queryset.count() - 1) / 2
             index = list(queryset).index(match)
-            connector = "connector-down" if index < midpoint else "connector-up" if index > midpoint else "idk??"
+            connector = "connector-down" if index < midpoint else "connector-up" if index > midpoint else "connector-straight"
 
         return {
             "name": team.name if team else "TBD",
@@ -320,9 +320,7 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
         else:
             if len(bracket_array) <= curr_round+1:
                 bracket_array.append({})
-            bracket_array[curr_round+1][2*base_index] = None
-            bracket_array[curr_round+1][2*base_index+1] = None
-            #adding two cause binary tournament
+            bracket_array[curr_round+1][base_index] = None
 
     read_tree_from_node(Match.objects.filter(tournament=tournament_id).filter(next_matches__isnull=True).first(), 0, 0)
 
