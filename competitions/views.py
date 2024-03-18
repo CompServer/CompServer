@@ -559,7 +559,10 @@ def team(request: HttpRequest, team_id: int):
 
 
 def _raise_error_code(request: HttpRequest):
-    error_code = int(request.GET.get('code', 0))
+    try:
+        error_code = int(request.GET.get('code', 0)) # type: ignore
+    except:
+        raise BadRequest
 
     if error_code == 403:
         raise PermissionDenied
