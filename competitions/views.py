@@ -48,7 +48,7 @@ def generate_tournament_matches(request: HttpRequest, tournament_id: int):
     if isinstance(tournament, SingleEliminationTournament):
         return generate_single_elimination_matches(request, tournament)
     elif isinstance(tournament, RoundRobinTournament):
-        return generate_round_robin_matches(request, tournament)
+        return generate_round_robin_matches(request, tournament_id)
     raise Http404
 
 
