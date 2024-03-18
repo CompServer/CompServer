@@ -205,68 +205,6 @@ In a template we can present TZ aware times like this
 ```
 where value is a datetime object
 
-
 Turns out the ^^^ doesn't work as easy as you might think. Found a different post where there is a lib that handles this for you.
 It has context processors, and converts any datetime objects it sees to the user's timezone.
 pip install django-tz-detect
-
-
-Structure of the bracket
-
-bracket
-    round 1
-        match 1
-            team 1
-            team 2
-        match 2
-            team 1
-            team 2
-        match 3
-            team 1
-            team 2
-        match 4
-            team 1
-            team 2
-    round 2
-        match 1
-            team 1
-            team 2
-        match 2
-            team 1
-            team 2
-    round 3
-        match 1
-            team 1
-            team 2
-
-New structure ?
-
-bracket
-    round 1
-        group 1
-            match 1 
-                team 1
-                team 2
-            match 2
-                team 1
-                team 2
-        group 2
-            match 3
-                team 1
-                team 2
-            match 4
-                team 1
-                team 2
-    round 2
-        group 1
-            match 1
-                team 1
-                team 2
-            match 2
-                team 1
-                team 2
-    round 3
-        group 1
-            match 1
-                team 1
-                team 2

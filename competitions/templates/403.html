@@ -1,24 +1,4 @@
-{% extends "skeleton.html" %}
-{% load static %}
-
-{% block title %}403 Forbidden{% endblock %}
-
-{% block content %}
-    <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-                <h1>403 Forbidden</h1>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-8">
-                <h2>You are not allowed to access this page</h2>
-                <p>Sorry, you are not allowed to access this page. Please contact the administrator if you think this is a mistake.</p>
-                {% if message %}
-                    <p>{{ message }}</p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-
-{% endblock %}
+{% include "ERROR_BASE.html" with 
+error_code="403" 
+error="403 Forbidden", 
+error_description="You are not allowed to access this page."  %}

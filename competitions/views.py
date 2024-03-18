@@ -48,7 +48,7 @@ def generate_tournament_matches(request: HttpRequest, tournament_id: int):
     if isinstance(tournament, SingleEliminationTournament):
         return generate_single_elimination_matches(request, tournament)
     elif isinstance(tournament, RoundRobinTournament):
-        return generate_round_robin_matches(request, tournament)
+        return generate_round_robin_matches(request, tournament_id)
     raise Http404
 
 
@@ -277,7 +277,6 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
     if tournament.is_archived:
         return HttpResponseRedirect(reverse("competitions:competitions"))
 
-    # where all the matches get stored, only used in this function, not passed to template
     bracket_array = []
         
     def generate_competitor_data(team, prev, match):
@@ -293,7 +292,7 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
             "name": team.name if team else "TBD",
             "won": team in match.advancers.all(),
             "is_next": is_next,
-            "prev": prev,
+            "prev": prev and team,
             "match_id": match.id,
             "connector": connector,
         }
@@ -317,16 +316,18 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
         if prevs:
             for i, prev in enumerate(prevs):
                 read_tree_from_node(prev, curr_round+1, 2*base_index+i)
+                #if i = 1, add another dummy match above/below?
         else:
             if len(bracket_array) <= curr_round+1:
                 bracket_array.append({})
-            bracket_array[curr_round+1][base_index] = None
+            bracket_array[curr_round+1][2*base_index] = None
+            bracket_array[curr_round+1][2*base_index+1] = None
+            #adding two cause binary tournament
 
     read_tree_from_node(Match.objects.filter(tournament=tournament_id).filter(next_matches__isnull=True).first(), 0, 0)
 
     bracket_array.pop()
 
-    #the number of rounds in the tournament: top 8, semi-finals, championship, etc
     numRounds = len(bracket_array)
 
     mostTeamsInRound = max(sum(len(teams) if teams else 0 for teams in round.values()) for round in bracket_array)
