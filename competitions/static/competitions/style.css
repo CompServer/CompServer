@@ -47,3 +47,17 @@
 .connector-down {
     border-top: 2px black solid;
 }
+
+div.img {
+    position: relative;
+    height:150px;
+    width: 100%;
+    overflow: hidden;
+    padding-bottom: 10px;
+}
+
+img.error {
+    width: 100%;
+    height: auto;
+    overflow: hidden;
+}
