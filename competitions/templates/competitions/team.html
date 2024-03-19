@@ -112,26 +112,26 @@
     {% if past_matches.exists %}
         <div class="match-records">
             <h3>{% translate "Match History" %}</h3>
-            {% if won_matches %}
+            {% if wins %}
                 <h4>{% translate "Wins" %}</h4>
                 <ul>
-                    {% for match in won_matches %}  
+                    {% for match in wins %}  
                         <li>{{ match }}</li>
                     {% endfor %}
                 </ul>
             {% endif %}
-            {% if lost_matches %}
+            {% if losses %}
                 <h4>{% translate "Losses" %}</h4>
                 <ul>
-                    {% for match in lost_matches %}
+                    {% for match in losses %}
                         <li>{{ match }}</li>
                     {% endfor %}
                 </ul>
             {% endif %}
-            {% if draw_matches %}
+            {% if draws %}
                 <h4>{% translate "Draws" %}</h4>
                 <ul>
-                    {% for match in draw_matches %}
+                    {% for match in draws %}
                         <li>{{ match }}</li>
                     {% endfor %}
                 </ul>

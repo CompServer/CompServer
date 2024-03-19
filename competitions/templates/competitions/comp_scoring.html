@@ -1,7 +1,27 @@
 {% extends 'skeleton.html' %}
 {% load i18n %}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.0.1/dist/chart.umd.min.js"></script>
 {% block title %}{% trans "Competition:" %} {{ competition.name }}{% endblock %} 
 {% block content %}
+<body>
+    <h1>{{ competition.name }}</h1>
+    <h3>{% Results %}</h3>
+    <div>
+        <canvas id="stackedChartID"></canvas>
+    </div>
+    <script>
+        var context = document.getElementById("stackedChartID").getContext("2d");
+        var chart = new Chart(context, {
+            type: 'bar',
+        }
+        )
+    </script>
+</body>
+
+
+
+
     <header>
         <h1>{% trans "Results For " %} {{ competition.name }} {{ competition.start_date }} - {{competition.end_date }}</h1>
         <h2>{% trans "Judged by " %}</h2>
@@ -11,6 +31,18 @@
             {% endfor %}
         </ul>
     </header>
+    <p>Working on graphics for bar chart</p>
+    <div class="theme-default-content content__default">
+        <h1 id="stacked-bar-chart">
+            <a href="#stacked-bar-chart" class="header-anchor">{{ competition.name }}</a>
+        </h1>
+        <div class="chart-view">
+            <canvas style="display: block; box-sizing: border-box;">
+        </div>
+    </div>
+
+
+
     {% if completed_tournaments.exists %}
         <script defer type="text" src="stacked_bar_chart.js">
             
