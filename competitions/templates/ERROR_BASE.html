@@ -21,6 +21,11 @@
                     <p>{{ message }}</p>
                 {% endif %}
             </div>
+            {% if not debug %}
+                <div class='img'>
+                    <img class='error' src="https://http.cat/images/{{ error_code }}.jpg" style="object-fit: cover" >
+                </div>
+            {% endif %}
         </div>
     </div>
 {% endblock %}
