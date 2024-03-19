@@ -200,6 +200,8 @@ def generate_round_robin_matches(request, tournament_id):
     arenas = [i for i in tournament.competition.arenas.filter(is_available=True)]
     starting_time = tournament.start_time 
     teams = [team for team in tournament.teams.all()]
+    prev_matches = []
+    curr_prev = []
     for k in range(tournament.num_rounds):
         nmpt_iterator = 0
         if arena_iterator > 0:
@@ -224,6 +226,7 @@ def generate_round_robin_matches(request, tournament_id):
                 if arena_iterator >= len(arenas):
                     arena_iterator = 0
                     starting_time += tournament.event.match_time 
+            match.round = k+1
             match.save()
     return HttpResponseRedirect(reverse("competitions:round_robin_tournament", args=(tournament_id,)))
     #still have a little bit of confusion with the ordering of matches.
@@ -384,73 +387,76 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
     if redirect_id:
         redirect_id = [redirect_id]
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
-    if request.method == 'POST':
-        form = SETournamentStatusForm(request.POST)
-        if form.is_valid():
-            status = form.cleaned_data.get('status')
-            tournament.status = status
-            tournament.save()
-            if redirect_id == None:
-                return HttpResponseRedirect(reverse(f"competitions:{redirect_to}"))
-            else:
-                return HttpResponseRedirect(reverse(f"competitions:{redirect_to}",args=redirect_id))
-    if tournament.is_archived:
-        return HttpResponseRedirect(reverse("competitions:competitions"))
+    # if request.method == 'POST':
+    #     form = RRTournamentStatusForm(request.POST)
+    #     if form.is_valid():
+    #         status = form.cleaned_data.get('status')
+    #         tournament.status = status
+    #         tournament.save()
+    #         if redirect_id == None:
+    #             return HttpResponseRedirect(reverse(f"competitions:{redirect_to}"))
+    #         else:
+    #             return HttpResponseRedirect(reverse(f"competitions:{redirect_to}",args=redirect_id))
+    # if tournament.is_archived:
+    #     return HttpResponseRedirect(reverse("competitions:competitions"))
 
-    bracket_array = []
-        
-    def generate_competitor_data(team, prev, match):
-        is_next = match.next_matches.exists()
-        connector = None
-        if is_next:
-            queryset = match.next_matches.all()[0].prev_matches.all()
-            midpoint = (queryset.count() - 1) / 2
-            index = list(queryset).index(match)
-            connector = "connector-down" if index < midpoint else "connector-up" if index > midpoint else "idk??"
+    # bracket_array = []
+    # #got no idea what's happening here so I probably need to discuss that w/ matt 
+    # def generate_competitor_data(team, prev, match):
+    #     is_next = match.next_matches.exists()
+    #     connector = None
+    #     if is_next:
+    #         queryset = match.next_matches.all()[0].prev_matches.all()
+    #         midpoint = (queryset.count() - 1) / 2
+    #         index = list(queryset).index(match)
+    #         connector = "connector-down" if index < midpoint else "connector-up" if index > midpoint else "idk??"
 
-        return {
-            "name": team.name if team else "TBD",
-            "won": team in match.advancers.all(),
-            "is_next": is_next,
-            "prev": prev and team,
-            "match_id": match.id,
-            "connector": connector,
-        }
+    #     return {
+    #         "name": team.name if team else "TBD",
+    #         "won": team in match.advancers.all(),
+    #         "is_next": is_next,
+    #         "prev": prev and team,
+    #         "match_id": match.id,
+    #         "connector": connector,
+    #     }
     
-    def read_tree_from_node(curr_match, curr_round, base_index):
-        if len(bracket_array) <= curr_round:
-            bracket_array.append({})
+    # def read_tree_from_node(curr_match, curr_round, base_index):
+    #     if len(bracket_array) <= curr_round:
+    #         bracket_array.append({})
 
-        competitors = [
-            generate_competitor_data(team, False, curr_match)
-            for team in curr_match.starting_teams.all()
-        ] + [
-            generate_competitor_data(team, True, curr_match)
-            for prev_match in curr_match.prev_matches.all()
-            for team in (prev_match.advancers.all() if prev_match.advancers.exists() else [None])
-        ]
+    #     competitors = [
+    #         generate_competitor_data(team, False, curr_match)
+    #         for team in curr_match.starting_teams.all()
+    #     ] + [
+    #         generate_competitor_data(team, True, curr_match)
+    #         for prev_match in curr_match.prev_matches.all()
+    #         for team in (prev_match.advancers.all() if prev_match.advancers.exists() else [None])
+    #     ]
 
-        bracket_array[curr_round][base_index] = competitors 
+    #     bracket_array[curr_round][base_index] = competitors 
         
-        prevs = curr_match.prev_matches.all()
-        if prevs:
-            for i, prev in enumerate(prevs):
-                read_tree_from_node(prev, curr_round+1, 2*base_index+i)
-                #if i = 1, add another dummy match above/below?
-        else:
-            if len(bracket_array) <= curr_round+1:
-                bracket_array.append({})
-            bracket_array[curr_round+1][2*base_index] = None
-            bracket_array[curr_round+1][2*base_index+1] = None
-            #adding two cause binary tournament
+    #     prevs = curr_match.prev_matches.all()
+    #     if prevs:
+    #         for i, prev in enumerate(prevs):
+    #             read_tree_from_node(prev, curr_round+1, 2*base_index+i)
+    #             #if i = 1, add another dummy match above/below?
+    #     else:
+    #         if len(bracket_array) <= curr_round+1:
+    #             bracket_array.append({})
+    #         bracket_array[curr_round+1][2*base_index] = None
+    #         bracket_array[curr_round+1][2*base_index+1] = None
+    #         #adding two cause binary tournament
 
-    read_tree_from_node(Match.objects.filter(tournament=tournament_id).filter(next_matches__isnull=True).first(), 0, 0)
+    # read_tree_from_node(Match.objects.filter(tournament=tournament_id).filter(next_matches__isnull=True).first(), 0, 0)
 
-    bracket_array.pop()
+    # bracket_array.pop()
 
-    numRounds = len(bracket_array)
-
-    mostTeamsInRound = max(sum(len(teams) if teams else 0 for teams in round.values()) for round in bracket_array)
+    numRounds = tournament.num_rounds
+    bracket_array =  []
+    for i in range(numRounds):
+        bracket_array.append([match for match in Match.objects.filter(tournament=tournament_id, round=i+1)])
+    num_matches = len(bracket_array)/numRounds
+    mostTeamsInRound = tournament.teams_per_match
 
     round_data = []
     matchWidth, connectorWidth, teamHeight = 200, 25, 25
@@ -459,7 +465,6 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
     roundWidth = matchWidth + connectorWidth
 
     for round_matches in reversed(bracket_array):
-        num_matches = len(round_matches)
         match_height = bracketHeight / num_matches
         match_data = []
 
