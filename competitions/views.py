@@ -282,11 +282,12 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
     def generate_competitor_data(team, prev, match):
         is_next = match.next_matches.exists()
         connector = None
+        diff = 0
         if is_next:
             queryset = match.next_matches.all()[0].prev_matches.all()
             midpoint = (queryset.count() - 1) / 2
             index = list(queryset).index(match)
-            # diff = abs(index - midpoint)
+            diff = abs(index - midpoint) 
             connector = "connector-down" if index < midpoint else "connector-up" if index > midpoint else "connector-straight"
 
         return {
@@ -296,7 +297,7 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
             "prev": prev and team,
             "match_id": match.id,
             "connector": connector,
-            # "connector_multiplier": 0
+            "connector_multiplier": abs(diff) + 0.5
         }
     
     def read_tree_from_node(curr_match, curr_round, base_index):

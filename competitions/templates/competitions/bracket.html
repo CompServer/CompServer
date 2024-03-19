@@ -70,7 +70,7 @@
                 style="height: {{ match_data.center_height }}px; margin-top: {{ match_data.center_top_margin }}px; ">
                 {% for team_data in match_data.team_data %}
                     <div class="team"
-                        style="width: {{ match_data.match_width }}px; {%if team_data.won %}background-color: #fff5a8;{%endif%} cursor: pointer;"
+                        style="height: 25px; width: {{ match_data.match_width }}px; {%if team_data.won %}background-color: #fff5a8;{%endif%} cursor: pointer;"
                         onclick="location.href='{% url 'competitions:judge_match' team_data.match_id %}';">
                         {{ team_data.name }}
                         {% if team_data.prev %}
