@@ -1,4 +1,5 @@
 from datetime import datetime
+from http.client import HTTPResponse
 from django.contrib import messages
 from django.core.exceptions import BadRequest
 from django.shortcuts import render, get_object_or_404
@@ -6,12 +7,11 @@ from django.utils.autoreload import start_django
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth.views import login_required
 from django.db.models import Q
-from django.http import HttpRequest, HttpResponseRedirect, Http404
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
 from io import SEEK_CUR
-import math
 import random
 from typing import Union
 import zoneinfo
@@ -249,7 +249,6 @@ def generate_round_robin_rankings(request, tournament_id):
 def home(request: HttpRequest):
     return render(request, "competitions/home.html")
 
-
 def tournament(request: HttpRequest, tournament_id: int):
     tournament = get_tournament(request, tournament_id)
     if isinstance(tournament, SingleEliminationTournament):
@@ -257,6 +256,29 @@ def tournament(request: HttpRequest, tournament_id: int):
     elif isinstance(tournament, RoundRobinTournament):
         return round_robin_tournament(request, tournament)
     raise Http404
+
+@login_required
+def create_tournament(request: HttpRequest):
+    tournament_type = request.GET.get('tournament_type', None)
+    if not tournament_type:
+        return render(request, "competitions/create_tournament.html")
+    tournament_type = str(tournament_type).lower().strip()
+
+    if tournament_type == 'rr':
+        FORM_CLASS = CreateRRTournamentForm
+    elif tournament_type == 'se':
+        FORM_CLASS = CreateSETournamentForm
+    else:
+        raise BadRequest
+
+    if request.method == 'POST':
+        form = FORM_CLASS(request.POST)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect(reverse("competitions:tournament", args=(form.instance.id,)))
+
+    form = FORM_CLASS()
+    return render(request, "competitions/create_tournament_form.html", {"form": form, "tournament_type": tournament_type})
 
 def single_elimination_tournament(request: HttpRequest, tournament_id: int):
     redirect_to = request.GET.get('next', '')
@@ -557,6 +579,21 @@ def team(request: HttpRequest, team_id: int):
     }
     return render(request, "competitions/team.html", context)
 
+
+def _raise_error_code(request: HttpRequest):
+    try:
+        error_code = int(request.GET.get('code', 0)) # type: ignore
+    except:
+        raise BadRequest
+
+    if error_code == 403:
+        raise PermissionDenied
+    elif error_code == 404:
+        raise Http404
+    elif error_code == 500:
+        raise Exception("This is a test 500 error.")
+    else:
+        return HttpResponse(status=error_code)
 
 def set_timezone_view(request: HttpRequest):
     """Please leave this view at the bottom. Create any new views you need above this one"""

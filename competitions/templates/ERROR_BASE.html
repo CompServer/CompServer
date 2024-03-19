@@ -2,18 +2,19 @@
 {% load static %}
 {% load i18n %}
 
-{% block title%}{% translate "{{ error }}" %}{% endblock %}
+{% block title%} {{ error }} {% endblock %}
 
 {% block content %}
     <div class="container">
         <div class="row">
             <div class="col-md-12">
-                <h1>{% translate "{{ error }}" %}</h1>
+                <h1>{{ error }}</h1>
             </div>
         </div>
+        <!-- {{ error_code }} -->
         <div class="row">
             <div class="col-md-8">
-                <p>{% translate "Error {{ error_code }}: {{ error_description }}" %}</p>
+                <p>{{ error_description }}</p>
                 <p>{% translate "For more information, please contact the site administrator." %}</p>
                 <p>{% translate "Click" %} <a href="{% url 'competitions:home' %}">{% translate "here" %}</a> {% translate "to go back to the home page." %}</p>
                 {% if message %}

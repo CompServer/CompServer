@@ -1,10 +1,10 @@
 {% extends 'skeleton.html' %}
 {% load i18n %}
-{% block title %}{% trans "Competition:" %} {{ competition.name }}{% endblock %} 
+{% block title %}{% translate "Competition:" %} {{ competition.name }}{% endblock %} 
 {% block content %}
     <header>
-        <h1>{% trans "Results For " %} {{ competition.name }} {{ competition.start_date }} - {{competition.end_date }}</h1>
-        <h2>{% trans "Judged by " %}</h2>
+        <h1>{% translate "Results For " %} {{ competition.name }} {{ competition.start_date }} - {{competition.end_date }}</h1>
+        <h2>{% translate "Judged by " %}</h2>
         <ul>
             {% for judge in competition.planeary_judges.all %}
                 <li> {{ judge.first_name }} {{ judge.last_name }}</li>

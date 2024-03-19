@@ -78,7 +78,8 @@ class SanityTests(TestCase):
     def test_all_url_patterns(self):
         # Admin should be able to get to all pages
         for path in urlpatterns:
-            if 'generate' not in path.name:
+            # ignore views that shouldnt be tested (starts with _)
+            if not str(path.name).startswith('_'):
                 url = None
                 try:
                     url = reverse(f"{app_name}:{path.name}")
