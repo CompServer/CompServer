@@ -210,7 +210,7 @@ def generate_round_robin_matches(request, tournament_id):
             match = Match.objects.create(tournament=tournament)
             for i in range(tournament.teams_per_match):
                 j = random.randint(0, len(teams)-1)
-                while(num_participated[j] > 0 and teams[j] not in match.starting_teams.all()):
+                while(num_participated[j] > 0 or teams[j] in match.starting_teams.all()):
                     j = random.randint(0, len(teams)-1)          
                 match.starting_teams.add(teams[j])
                 num_participated[j] += 1 
@@ -234,8 +234,12 @@ def generate_round_robin_rankings(request, tournament_id):
     team_wins = {team: 0 for team in tournament.teams.all()}
     matches = tournament.match_set.all()
     for match in matches:
-        for team in match.advancers.all():
-            team_wins[team] += 1
+        if match.advancers.all().count > 1:
+            for team in match.advancers.all():
+                team_wins[team] += tournament.points_per_tie
+        else:
+            for team in match.advancers.all():
+                team_wins[team] += tournament.points_per_win
     sorted_team_wins = dict(sorted(team_wins.items(), key=lambda x:x[1]))
     i = len(sorted_team_wins)
     for i, kv in zip(range(len(sorted_team_wins), 1), sorted_team_wins.items()):

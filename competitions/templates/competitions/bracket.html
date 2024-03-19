@@ -59,17 +59,16 @@
 <div class="bracket">
     {% for round_data in bracket_dict.round_data %}
     <div class="round">
-        Round {{ forloop.counter }}
         {% for match_data in round_data.match_data %}
         <div class="match" style="height: {{ match_data.match_height }}px; width: {{ match_data.match_width }}px;">
             <div class="center"
                 style="height: {{ match_data.center_height }}px; margin-top: {{ match_data.center_top_margin }}px; ">
                 {% for team_data in match_data.team_data %}
                     <div class="team"
-                        style="width: {{ match_data.match_width }}px; {%if team_data.won %}background-color: #fff5a8;{%endif%} cursor: pointer;"
+                        style="width: {{ match_data.match_width }}px; {% if team_data.won %}background-color: #fff5a8;{%endif%} cursor: pointer;"
                         onclick="location.href='{% url 'competitions:judge_match' team_data.match_id %}';">
                         {{ team_data.name }}
-                        {% comment %} {% if team_data.prev %}
+                        {% if team_data.prev %}
                             <div class="connector-back"></div>
                         {% endif %}
                         {% if team_data.is_next and team_data.won %}
@@ -77,21 +76,21 @@
                             {% widthratio match_data.match_height 2 1 as connector_height%}
                             <div class="connector-front {{ team_data.connector }}" onclick=""
                             style=" cursor: default; {% if A and not B or B and not A %}
-                                    {% if team_data.connector == 'connector-down'%}
+                                    {% if team_data.connector == 'connector-down' %}
                                         height:{{connector_height|add:-24}}px;
                                     {% else %}
                                         height:{{connector_height|add:-26}}px;
-                                    {%endif%}
-                                {%else%}
+                                    {% endif %}
+                                {% else %}
                                     {% if team_data.connector == 'connector-down'%}
                                         height:{{connector_height|add:2}}px;
                                     {% else %}
                                         height:{{connector_height}}px;
-                                    {%endif%}
-                                {%endif%}">
-                            {%endwith %}
+                                    {% endif %}
+                                {% endif %}">
+                            {% endwith %}
                             </div>
-                        {%endif%} {% endcomment %}
+                        {% endif %}
                     </div>
                 {% endfor %}
             </div>

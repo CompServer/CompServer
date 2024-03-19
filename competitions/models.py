@@ -315,6 +315,9 @@ class Ranking(models.Model):
 class RoundRobinTournament(AbstractTournament):
     num_rounds = models.PositiveSmallIntegerField()
     teams_per_match = models.PositiveSmallIntegerField(default=2)
+    points_per_win = models.PositiveIntegerField(default=1)
+    points_per_tie = models.PositiveIntegerField(default=0)
+    points_per_loss = models.PositiveIntegerField(default=0)
 
 #     ''' Everyone plays everyone else (most points / wins, wins) 
 #         Can be used to establish rankings for an Elimination

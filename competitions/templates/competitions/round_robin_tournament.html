@@ -1,6 +1,39 @@
 {% extends 'skeleton.html' %}
 {% load i18n %}
-
+<style>
+    .team {
+        margin: 0px {{bracket_dict.connectorWidth}}px 0px {{bracket_dict.connectorWidth}}px;
+      }
+    
+    .connector-back {
+        width: {{bracket_dict.connectorWidth}}px;
+        left: -{{bracket_dict.connectorWidth}}px;
+        top: {% widthratio bracket_dict.teamHeight 2 1%}px
+    }
+    
+    .connector-front {
+        width: {{bracket_dict.connectorWidth|add:3}}px;
+        right: -{{bracket_dict.connectorWidth|add:3}}px;
+    }
+    
+    .connector-up {
+        bottom: {% widthratio bracket_dict.teamHeight 2 1%}px;
+    }
+    
+    .connector-down {
+        top: {% widthratio bracket_dict.teamHeight 2 1%}px;
+    }
+    
+    .bracket {
+        height:{{bracket_dict.bracketHeight}}px; 
+        width:{{bracket_dict.bracketWidth}}px;
+    }
+    
+    .round {
+        height: {{ bracket_dict.roundHeight }}px; 
+        width: {{ bracket_dict.roundWidth }}px;
+    }
+</style>
 {% block content %}
     <h1>{% if tournament.is_judgable %} 
             <i class="bi-activity" title="{{ competition.status }}"></i> {{ tournament.event.name }}
