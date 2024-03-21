@@ -11,11 +11,44 @@
         <canvas id="stackedChartID"></canvas>
     </div>
     <script>
+        const divElem = document.getElementById("divID");
+        function randomcolor() {
+            return Math.floor(Math.random() * 255);
+        }
+        divElem.addEventListener('click', () => {
+            divElem.style.backgroundColor = 'rgba('
+                + randomcolor() + ',' + randomcolor()
+                + ',' + randomcolor() + '\)'
+        })
         var context = document.getElementById("stackedChartID").getContext("2d");
         var chart = new Chart(context, {
             type: 'bar',
-        }
-        )
+            data: {  
+                labels: team_names,
+                datasets: [{
+                    for tournament in completed_tournaments:
+                        label: tournament.name,
+                        backgroundColor: randomcolor(),
+                        data: scores,
+                }]
+            },
+            options: {
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Stacked bar chart for total team scores'
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                        },
+                        y: {
+                            stacked: true,
+                        }
+                    }
+                }
+            }
+        });
     </script>
 </body>
 

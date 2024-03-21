@@ -486,19 +486,26 @@ def user_profile(request, profile_id):
 
 
 def competition_score_page(request, competition_id):
-    selected_competition = Competition.objects.get(id = competition_id)
-    ranked_tournaments = selected_competition.tournament_set.order_by("points")
-    completed_tournaments = ranked_tournaments.filter(status = Status.COMPLETE)
+    competition = Competition.objects.get(id = competition_id)
+    completed_tournaments = selected_competition.tournament_set.order_by("points").filter(status = Status.COMPLETE)
+    
+    
+    
     unsorted_total_scores_dictionary = dict()
     last_tournament_matches = dict()
     list_of_tournament_points = list()
-    for team in selected_competition.teams.all():
-        val = 0
-        for completed_tournament in completed_tournaments.all():
-            last_match = Match.objects.filter(tournament__id = completed_tournament.id, next_matches__isnull = True).first()
+    
+    
+    
+    for team in competition.teams.all():
+        score = 0
+        for tournament in completed_tournaments.all():
+            last_match = Match.objects.filter(tournament__id = tournament.id, next_matches__isnull = True).first()
             if team in last_match.advancers.all():
-                val = val + completed_tournament.points
-        unsorted_total_scores_dictionary[team] = val
+                score = score + tournament.points
+        team_and_tourney_score[team.name] = score
+    team_names = [(k) for k,v in sorted(team_and_tourney_score.items(), key=lambda item:item[1])]
+
     for completed_tournament in completed_tournaments.all():
         last_match = Match.objects.filter(tournament__id = completed_tournament.id, next_matches__isnull = True).first()
         last_tournament_matches[last_match.advancers.first()] = completed_tournament.id
@@ -507,7 +514,8 @@ def competition_score_page(request, competition_id):
     for k, v in list_of_sorted_last_matches:
         list_of_tournament_points.append((v, SingleEliminationTournament.objects.filter(id = v).first().points))
     context = {
-        'competition': selected_competition,
+        'competition': competition,
+        'teams': team_names,
         'completed_tournaments': completed_tournaments,
         'sorted_team_tuples': list_of_sorted_team_tuples,
         'last_matches': list_of_sorted_last_matches,
@@ -516,7 +524,7 @@ def competition_score_page(request, competition_id):
     return render(request, "competitions/comp_scoring.html", context)
 
 def team(request: HttpRequest, team_id: int):
-    #after a couple different tasks, i will do round counting
+    team = Team.objects.filter(id=team_id)
     today = timezone.now().date()
     upcoming_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), tournament__competition__start_date__lte=today, tournament__competition__end_date__gte=today, advancers=None).order_by("-time")
     losses = list()
@@ -541,44 +549,31 @@ def team(request: HttpRequest, team_id: int):
                     draws.append(match)
             else:
                 losses.append(match)
-    #match_history = list()
-    #losses = list()
-    #wins = list()
-    #draws = list()
-    #check if match historyy exists
-    #for pt in past_tournaments:
-    #    v = 1
-        #ref_winner = pt.match_set.last().advancers.first()
-        #num_rounds = Match.objects.filter(advancers__id=ref_winner.id).count()
-    #    for match in Team.objects.filter(team_id).match_set.all():
-    #        match_history.append((v, match, match.tournament.id))
-     #       v = v + 1
-    #for match in match_history:
-      #  if team_id in match.get(1).advancers.id and match.get(1).advancers.count() == 1:
-     #       wins.append(match)#then handle the triple  in the template
-    #    if team_id in match.get(1).advancers.id and match.get(1).advancers.count() > 1:
-     #       draws.append(match)
-     #   if team_id not in match.get(1).advancers.id:
-     #       losses.append(match)
-
-    #from here, filter if the match was won or lost or drawn and correct the string that's outputted to leave out team name
-    #Won against "opponents" @ "tournament" in Round ""
-    # Lost against "" in Round ""
-    # Drew with "" in Round ""
-    
+    # result_and_round_num = list()
+    # for match in matches:
+    #     tournament = Tournament.objects.filter(match__id=match.id)
+    #     the_winning_match = tournament.match_set.last()
+    #     rounds = 1
+    #     team_round_compared = 0
+    #     while the_winning_match.prev_matches.exists():
+    #         rounds = rounds + 1
+    #         if team in the_winning_match.prev_matches.starting_teams:
+    #             team_round_compared = team_round_compared + 1
+    #     team_round = rounds - team_round_compared
+    #     match_and_round_num.append((match, team_round))
+    # results = list()
+    # for item in result_and_round_num:
+    #     index = 0
+    #     if team in item[0].advancers.all():
+    #         if item[0].advancers.count() == 1:
+    #             results.add("Won against", item[0].starting_teams.exclude(team).name, item[0], item[1])
+    #             #String, opposing team, match, round num
+    #         else:
+    #             results.add("Drew with", item[0].advancers.exclude(team).name, item[0], item[1])
+    #     else:
+    #         results.add("Lost against", item[0].advancers.name, item[0], item[1])
     all_won_matches = Match.objects.filter(advancers__id=team_id)
     past_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id)).exclude(advancers=None).order_by("-time")
-    #might check this for accuracy
-    
-    #past_matches_won_singly = list()
-    #past_matches_won = past_matches.filter(starting_teams__id = team_id, advancers__id = team_id).annotate(num_advancers = Count("advancers"))
-    #for past_match_won in past_matches_won:
-    #    if past_match_won.advancers.count() == 1:
-    #        past_matches_won_singly.append(past_match_won)
-    #    else:
-     #       past_matches_drawn.append(past_match_won)
-    #past_matches_lost = past_matches.exclude(advancers__id = team_id)
-    #add a way to find other teams in a match
     context = {
         'team': Team.objects.get(pk=team_id),
         'upcoming_matches': upcoming_matches,
