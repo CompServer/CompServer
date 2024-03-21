@@ -396,9 +396,11 @@ class Match(models.Model):
     time = models.DateTimeField(blank=True, null=True) # that it's scheduled for
     arena = models.ForeignKey(Arena, related_name="match_set", on_delete=models.DO_NOTHING, blank=True, null=True)
     _cached_str = models.TextField(blank=True, null=True) # for caching the string representation
+    round_num = models.PositiveIntegerField(default=1) # don't name it round, it overrides a built-in method (bad)
+    """The round of the tournament that this match is in. 1 for the first round, 2 for the second, etc."""
 
     str_recursive_level: ClassVar[int] = 0
-    round = models.PositiveIntegerField(default=1)
+    
     def _generate_str_recursive(self, force: bool=False) -> str:
         """Recursive algorithm for generating the string representation of this match.
         This is called whenever casted, and the result is saved to a variable to avoid recalculating it.
