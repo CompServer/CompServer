@@ -2,6 +2,9 @@ from pathlib import Path
 from django.utils import timezone
 import os
 from django.contrib.messages import constants as messages
+import logging, copy
+from django.utils.log import DEFAULT_LOGGING
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -167,3 +170,18 @@ SHOW_TOOLBAR_CALLBACK = show_toolbar
 LOGIN_REDIRECT_URL = '/'
 
 LOGIN_URL = '/accounts/login/'
+
+LOGGING = copy.deepcopy(DEFAULT_LOGGING)
+LOGGING['filters']['suppress_errors'] = {
+    '()': 'mysite.settings.SuppressDeprecated'  
+}
+LOGGING['handlers']['console']['filters'].append('suppress_errors')
+
+class SuppressDeprecated(logging.Filter):
+    def filter(self, record):
+        WARNINGS_TO_SUPPRESS = [
+            'PermissionDenied',
+            'Http404'
+        ]
+        # Return false to suppress message.
+        return not any([warn in record.getMessage() for warn in WARNINGS_TO_SUPPRESS])
