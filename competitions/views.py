@@ -44,7 +44,7 @@ def generate_tournament_matches(request: HttpRequest, tournament_id: int):
     """View that calls the corresponding generate method for the tournament type."""
     tournament = get_tournament(request, tournament_id)
     if isinstance(tournament, SingleEliminationTournament):
-        return generate_single_elimination_matches(request, tournament)
+        return generate_single_elimination_matches(request, tournament_id)
     elif isinstance(tournament, RoundRobinTournament):
         return generate_round_robin_matches(request, tournament_id)
     raise Http404
@@ -452,9 +452,21 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
     # bracket_array.pop()
 
     numRounds = tournament.num_rounds
-    bracket_array =  []
+    bracket_array =  [{i:[]} for i in range(numRounds)]
     for i in range(numRounds):
-        bracket_array.append([match for match in Match.objects.filter(tournament=tournament_id, round=i+1)])
+        rounds = [match for match in Match.objects.filter(tournament=tournament).filter(round=i+1)]
+        for j in range(len(rounds)):
+            team_data = []
+            won = False
+            is_next = True
+            prev = False
+            connector = None
+            for team in rounds[j].starting_teams.all():
+                if team in rounds[j].advancers.all():
+                    won = True
+                team_data.append({'name': team.name, 'won': won, 'is_next': is_next, 'prev': prev, 'connector': connector})
+            bracket_array[i][j] = team_data
+    
     num_matches = len(bracket_array)/numRounds
     mostTeamsInRound = tournament.teams_per_match
 
@@ -469,7 +481,7 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
         match_data = []
 
         for team_data in round_matches.values():
-            num_teams = len(team_data) if team_data else 0
+            num_teams = mostTeamsInRound if team_data else 0
             center_height = teamHeight * num_teams
             center_top_margin = (match_height - center_height) / 2
 

@@ -399,7 +399,7 @@ class Match(models.Model):
     _cached_str = models.TextField(blank=True, null=True) # for caching the string representation
 
     str_recursive_level: ClassVar[int] = 0
-    round = models.PositiveIntegerField(null=True)
+    round = models.PositiveIntegerField(default=1)
     def _generate_str_recursive(self, force: bool=False) -> str:
         """Recursive algorithm for generating the string representation of this match.
         This is called whenever casted, and the result is saved to a variable to avoid recalculating it.
