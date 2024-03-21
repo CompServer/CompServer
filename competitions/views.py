@@ -11,7 +11,7 @@ from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
-from io import SEEK_CUR
+from django.core.exceptions import SuspiciousOperation
 import random
 import zoneinfo
 from typing import Union
@@ -21,7 +21,6 @@ from .models import *
 
 def is_overflowed(list1: list, num: int):
   return all(x >= num for x in list1)
-
 
 def get_tournament(request, tournament_id: int) -> Union[SingleEliminationTournament, RoundRobinTournament]:
     """Get a tournament by it's id, regardless of it's type.
@@ -34,7 +33,7 @@ def get_tournament(request, tournament_id: int) -> Union[SingleEliminationTourna
 
     Returns:
         Union[SingleEliminationTournament, RoundRobinTournament]: The found tournament.
-    """    
+    """ 
     if SingleEliminationTournament.objects.filter(abstracttournament_ptr_id=tournament_id).exists():
         return get_object_or_404(SingleEliminationTournament, pk=tournament_id)
     elif RoundRobinTournament.objects.filter(abstracttournament_ptr_id=tournament_id).exists():
@@ -280,7 +279,7 @@ def create_tournament(request: HttpRequest):
     elif tournament_type == 'se':
         FORM_CLASS = CreateSETournamentForm
     else:
-        raise BadRequest
+        raise SuspiciousOperation
 
     if request.method == 'POST':
         form = FORM_CLASS(request.POST)
@@ -602,7 +601,7 @@ def judge_match(request: HttpRequest, match_id: int):
         #print("This match is not judgable.")
         raise PermissionDenied("This match is not judgable.")
     # if the user is a judge for the tournament, or a plenary judge for the competition, or a superuser
-    if  not (user in tournament.judges.all() \
+    if not (user in tournament.judges.all() \
     or user in competetion.plenary_judges.all() \
     or user.is_superuser):# \
     #or user.is_superuser:
@@ -620,7 +619,8 @@ def judge_match(request: HttpRequest, match_id: int):
             else:
                 messages.error(request, "One or more previous matches have not been judged.")
                 #print("One or more previous matches have not been judged.")
-                raise BadRequest("One or more previous matches have not been judged.")
+                raise SuspiciousOperation("One or more previous matches have not been judged.")
+                #return HttpResponse(, reason="One or more previous matches have not been judged.")
         winner_choices = Team.objects.filter(id__in=winner_choice_ids)
     elif instance.starting_teams.exists():
         winner_choices = instance.starting_teams.all()
@@ -717,9 +717,11 @@ def _raise_error_code(request: HttpRequest):
     try:
         error_code = int(request.GET.get('code', 0)) # type: ignore
     except:
-        raise BadRequest
+        raise SuspiciousOperation
 
-    if error_code == 403:
+    if error_code == 400:
+        raise SuspiciousOperation('hehehehha')
+    elif error_code == 403:
         raise PermissionDenied
     elif error_code == 404:
         raise Http404

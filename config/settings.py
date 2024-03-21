@@ -2,6 +2,26 @@ from pathlib import Path
 from django.utils import timezone
 import os
 from django.contrib.messages import constants as messages
+import logging, copy
+from django.utils.log import DEFAULT_LOGGING
+
+# custom logging filter to suppress certain errors (such as Forbidden and Not Found)
+
+LOGGING = copy.deepcopy(DEFAULT_LOGGING)
+LOGGING['filters']['suppress_errors'] = {
+    '()': 'config.settings.SuppressErrors'  
+}
+LOGGING['handlers']['console']['filters'].append('suppress_errors')
+
+class SuppressErrors(logging.Filter):
+    def filter(self, record):
+        WARNINGS_TO_SUPPRESS = [
+            'Forbidden',
+            'Not Found'
+        ]
+        # Return false to suppress message.
+        return not any([warn in record.getMessage() for warn in WARNINGS_TO_SUPPRESS])
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -160,10 +180,7 @@ MESSAGE_TAGS = {
     messages.ERROR: 'danger',
 }
 
-def show_toolbar(request):
-    return True
-
-SHOW_TOOLBAR_CALLBACK = show_toolbar
+SHOW_TOOLBAR_CALLBACK = lambda request: True
 
 LOGIN_REDIRECT_URL = '/'
 
