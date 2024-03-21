@@ -3,19 +3,13 @@
 {% load i18n %}
 
 
-{% block title %} Create Tournament {% endblock%}
-
 {% block content %}
-    <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-                <h1 class="text-center">{% translate "Create Tournament" %}</h1>
-                <form method="POST" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    {{ form.as_p }}
-                    <button type="submit" class="btn btn-primary">{% translate "Create" %}</button>
-                </form>
-            </div>
-        </div>
-    </div>
+<h1>{% translate "Please select the tournament type that you would like to create."%}</h1>
+<ul>
+    <li>
+        <a href="{% url "competitions:create_tournament" %}?tournament_type=se">{% translate "Single Elimination" %}</a>
+    </li>
+    <li>
+        <a href="{% url "competitions:create_tournament" %}?tournament_type=rr">{% translate "Round Robin" %}</a>
+    </li>
 {% endblock %}

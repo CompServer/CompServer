@@ -1,5 +1,6 @@
 {% extends "skeleton.html" %}
 {% load i18n %}
+{% load mathfilters %}
 
 {% block head %}
 
@@ -11,7 +12,7 @@
 .connector-back {
     width: {{bracket_dict.connectorWidth}}px;
     left: -{{bracket_dict.connectorWidth}}px;
-    top: {% widthratio bracket_dict.teamHeight 2 1%}px
+    top: {{ bracket_dict.teamHeight|div:2 }}px
 }
 
 .connector-front {
@@ -20,11 +21,15 @@
 }
 
 .connector-up {
-    bottom: {% widthratio bracket_dict.teamHeight 2 1%}px;
+    bottom: {{bracket_dict.teamHeight|div:2}}px;
 }
 
 .connector-down {
-    top: {% widthratio bracket_dict.teamHeight 2 1%}px;
+    top: {{ bracket_dict.teamHeight|div:2 }}px;
+}
+
+.connector-straight {
+    top: {{ bracket_dict.teamHeight|div:2 }}px;
 }
 
 .bracket {
@@ -71,19 +76,22 @@
                         {% if team_data.prev %}
                             <div class="connector-back"></div>
                         {% endif %}
-                        {% if team_data.is_next and team_data.won %}
-                            {% with A=forloop.parentloop.counter|divisibleby:2 B=forloop.counter|divisibleby:2%}                          
-                            {% widthratio match_data.match_height 2 1 as connector_height%}
+                        {% if team_data.is_next and team_data.won%}
+                            {% with connector_height=match_data.match_height|div:2 straight_connector_height=match_data.match_height|div:4 A=forloop.parentloop.counter|divisibleby:2 B=forloop.counter|divisibleby:2%}                          
                             <div class="connector-front {{ team_data.connector }}" onclick=""
                             style=" cursor: default; {% if A and not B or B and not A %}
                                     {% if team_data.connector == 'connector-down' %}
                                         height:{{connector_height|add:-24}}px;
+                                    {% elif team_data.connector == 'connector-straight' %}
+                                        height:{{straight_connector_height}}px
                                     {% else %}
                                         height:{{connector_height|add:-26}}px;
                                     {% endif %}
                                 {% else %}
                                     {% if team_data.connector == 'connector-down'%}
                                         height:{{connector_height|add:2}}px;
+                                    {% elif team_data.connector == 'connector-straight' %}
+                                        height:{{straight_connector_height|add:3}}px
                                     {% else %}
                                         height:{{connector_height}}px;
                                     {% endif %}

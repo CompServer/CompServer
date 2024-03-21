@@ -49,7 +49,7 @@ class CreateSETournamentForm(forms.ModelForm):
         model = SingleEliminationTournament
         fields = ['event', 'status', 'competition', 'points', 'teams', 'judges']
 
-class CreateRRTournamentFor(forms.ModelForm):
+class CreateRRTournamentForm(forms.ModelForm):
     generate_matches = forms.CheckboxInput()
     class Meta:
         model = RoundRobinTournament
