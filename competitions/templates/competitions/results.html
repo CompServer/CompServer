@@ -1,13 +1,12 @@
 {% extends 'skeleton.html' %}
 {% load i18n %}
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.0.1/dist/chart.umd.min.js"></script>
-{% block title %}{% trans "Competition:" %} {{ competition.name }}{% endblock %} 
+{% block title %}{% trans "Results" %}{% endblock %} 
 {% block content %}
 <body>
-    <h1>{{ competition.name }}</h1>
-    <h3>{% Results %}</h3>
-    <div>
+    {{ tournament_names|json_script:"tournament_names" }}
+    {{ team_names|json_script:"team_names" }}
+    {{ team_and_scores|json_script:"team_and_scores" }}
+    <!-- <div>
         <canvas id="stackedChartID"></canvas>
     </div>
     <script>
@@ -49,13 +48,9 @@
                 }
             }
         });
-    </script>
+    </script> -->
 </body>
-
-
-
-
-    <header>
+    <!-- <header>
         <h1>{% trans "Results For " %} {{ competition.name }} {{ competition.start_date }} - {{competition.end_date }}</h1>
         <h2>{% trans "Judged by " %}</h2>
         <ul>
@@ -63,19 +58,8 @@
                 <li> {{ judge.first_name }} {{ judge.last_name }}</li>
             {% endfor %}
         </ul>
-    </header>
-    <p>Working on graphics for bar chart</p>
-    <div class="theme-default-content content__default">
-        <h1 id="stacked-bar-chart">
-            <a href="#stacked-bar-chart" class="header-anchor">{{ competition.name }}</a>
-        </h1>
-        <div class="chart-view">
-            <canvas style="display: block; box-sizing: border-box;">
-        </div>
-    </div>
-
-
-
+    </header> -->
+<!-- 
     {% if completed_tournaments.exists %}
         <script defer type="text" src="stacked_bar_chart.js">
             
@@ -113,5 +97,5 @@
         </table>
     {% else %}
         <p>All of the tournaments are currently ongoing and haven't finished yet.</p>
-    {% endif %} 
+    {% endif %}  -->
 {% endblock %}

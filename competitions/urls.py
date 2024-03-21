@@ -8,7 +8,7 @@ urlpatterns = [
     path("competition/", views.competitions, name="competitions"),
     path("competition/<int:competition_id>/", views.competition, name="competition"),
     path("competition/<int:competition_id>/", RedirectView.as_view(url='competition'), name="competition_score"), # legacy so they can be hyperlinked to
-    path("competition/<int:competition_id>/results", views.competition_score_page, name="competition_score_page"), # legacy so they can be hyperlinked to
+    path("competition/<int:competition_id>/results", views.results, name="results"), # legacy so they can be hyperlinked to
     path("team/<int:team_id>/", views.team, name="team"),
     path("tournament/", views.tournaments, name="tournaments"),
     path("tournament/<int:tournament_id>/", views.tournament, name="tournament"),

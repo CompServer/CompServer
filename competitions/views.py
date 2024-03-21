@@ -485,43 +485,46 @@ def user_profile(request, profile_id):
     return render(request, 'competitions/user_profile.html', context)
 
 
-def competition_score_page(request, competition_id):
+def results(request, competition_id):
     competition = Competition.objects.get(id = competition_id)
-    completed_tournaments = selected_competition.tournament_set.order_by("points").filter(status = Status.COMPLETE)
-    
-    
-    
+    tournaments = competition.tournament_set.order_by("points").filter(status = Status.COMPLETE)
+    tournament_names = []
+    tournament_names = [tournament.event.name for tournament in tournaments]
+    team_names = []
+    team_names = [team.name for team in competition.teams.order_by("name")]
+    #then you need the team and their scores
     unsorted_total_scores_dictionary = dict()
     last_tournament_matches = dict()
     list_of_tournament_points = list()
-    
-    
-    
+    team_and_tourney_score = dict()
     for team in competition.teams.all():
-        score = 0
-        for tournament in completed_tournaments.all():
+        #score = 0
+        tournament_scores = []
+        for tournament in tournaments.all():
             last_match = Match.objects.filter(tournament__id = tournament.id, next_matches__isnull = True).first()
             if team in last_match.advancers.all():
-                score = score + tournament.points
+                #tournament
         team_and_tourney_score[team.name] = score
     team_names = [(k) for k,v in sorted(team_and_tourney_score.items(), key=lambda item:item[1])]
 
-    for completed_tournament in completed_tournaments.all():
-        last_match = Match.objects.filter(tournament__id = completed_tournament.id, next_matches__isnull = True).first()
-        last_tournament_matches[last_match.advancers.first()] = completed_tournament.id
+    for tournament in tournaments.all():
+        last_match = Match.objects.filter(tournament__id = tournament.id, next_matches__isnull = True).first()
+        last_tournament_matches[last_match.advancers.first()] = tournament.id
     list_of_sorted_team_tuples = [(k, v) for k, v in sorted(unsorted_total_scores_dictionary.items(), key=lambda item: item[1])]
     list_of_sorted_last_matches = [(k, v) for k, v in sorted(last_tournament_matches.items(), key=lambda item: item[1])]
     for k, v in list_of_sorted_last_matches:
         list_of_tournament_points.append((v, SingleEliminationTournament.objects.filter(id = v).first().points))
     context = {
+        'tournament_names': tournament_names,
+        'team_names': team_names,
         'competition': competition,
         'teams': team_names,
-        'completed_tournaments': completed_tournaments,
+        'tournaments': tournaments,
         'sorted_team_tuples': list_of_sorted_team_tuples,
         'last_matches': list_of_sorted_last_matches,
         'list_of_tournament_points': list_of_tournament_points,
     }
-    return render(request, "competitions/comp_scoring.html", context)
+    return render(request, "competitions/results.html", context)
 
 def team(request: HttpRequest, team_id: int):
     team = Team.objects.filter(id=team_id)
