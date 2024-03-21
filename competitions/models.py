@@ -314,6 +314,9 @@ class Ranking(models.Model):
 class RoundRobinTournament(AbstractTournament):
     num_rounds = models.PositiveSmallIntegerField()
     teams_per_match = models.PositiveSmallIntegerField(default=2)
+    points_per_win = models.PositiveIntegerField(default=3)
+    points_per_tie = models.PositiveIntegerField(default=1)
+    points_per_loss = models.PositiveIntegerField(default=0)
 
 #     ''' Everyone plays everyone else (most points / wins, wins) 
 #         Can be used to establish rankings for an Elimination
@@ -395,7 +398,7 @@ class Match(models.Model):
     _cached_str = models.TextField(blank=True, null=True) # for caching the string representation
 
     str_recursive_level: ClassVar[int] = 0
-
+    round = models.PositiveIntegerField(default=1)
     def _generate_str_recursive(self, force: bool=False) -> str:
         """Recursive algorithm for generating the string representation of this match.
         This is called whenever casted, and the result is saved to a variable to avoid recalculating it.
