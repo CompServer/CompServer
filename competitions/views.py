@@ -83,6 +83,7 @@ def generate_single_elimination_matches(request, tournament_id):
         match = Match.objects.create(tournament=tournament)
         match.starting_teams.add(rank_teams[i], rank_teams[j])
         match.time = starting_time
+        match.arena = arenas[arena_iterator]
         nmpt_iterator += 1
         if nmpt_iterator == arenas[arena_iterator].capacity:
             arena_iterator += 1
@@ -114,6 +115,7 @@ def generate_single_elimination_matches(request, tournament_id):
         else:
             match.prev_matches.add(extra_matches[j])
         match.time = starting_time
+        match.arena = arenas[arena_iterator]
         nmpt_iterator += 1
         if nmpt_iterator == arenas[arena_iterator].capacity:
             arena_iterator += 1
@@ -139,6 +141,7 @@ def generate_single_elimination_matches(request, tournament_id):
         match = Match.objects.create(tournament=tournament)
         match.prev_matches.add(matches[i], matches[j])
         match.time = starting_time
+        match.arena = arenas[arena_iterator]
         nmpt_iterator += 1
         if nmpt_iterator == arenas[arena_iterator].capacity:
             arena_iterator += 1
@@ -156,6 +159,7 @@ def generate_single_elimination_matches(request, tournament_id):
         match = Match.objects.create(tournament=tournament)
         match.prev_matches.add(matches[i], matches[j])
         match.time = starting_time
+        match.arena = arenas[arena_iterator]
         nmpt_iterator += 1
         if nmpt_iterator == arenas[arena_iterator].capacity:
             arena_iterator += 1
@@ -181,6 +185,7 @@ def generate_single_elimination_matches(request, tournament_id):
             match = Match.objects.create(tournament=tournament)
             match.prev_matches.add(matches[i], matches[i+1])
             match.time = starting_time
+            match.arena = arenas[arena_iterator]
             nmpt_iterator += 1
             if nmpt_iterator == arenas[arena_iterator].capacity:
                 arena_iterator += 1
@@ -221,6 +226,7 @@ def generate_round_robin_matches(request, tournament_id):
                 if num_participated == [1 for _ in range(len(teams))]:
                     break
             match.time = starting_time
+            match.arena = arenas[arena_iterator]
             nmpt_iterator += 1
             if nmpt_iterator == arenas[arena_iterator].capacity:
                 arena_iterator += 1
@@ -423,72 +429,25 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
     #             return HttpResponseRedirect(reverse(f"competitions:{redirect_to}",args=redirect_id))
     # if tournament.is_archived:
     #     return HttpResponseRedirect(reverse("competitions:competitions"))
-
-    # bracket_array = []
-    # #got no idea what's happening here so I probably need to discuss that w/ matt 
-    # def generate_competitor_data(team, prev, match):
-    #     is_next = match.next_matches.exists()
-    #     connector = None
-    #     if is_next:
-    #         queryset = match.next_matches.all()[0].prev_matches.all()
-    #         midpoint = (queryset.count() - 1) / 2
-    #         index = list(queryset).index(match)
-    #         connector = "connector-down" if index < midpoint else "connector-up" if index > midpoint else "idk??"
-
-    #     return {
-    #         "name": team.name if team else "TBD",
-    #         "won": team in match.advancers.all(),
-    #         "is_next": is_next,
-    #         "prev": prev and team,
-    #         "match_id": match.id,
-    #         "connector": connector,
-    #     }
-    
-    # def read_tree_from_node(curr_match, curr_round, base_index):
-    #     if len(bracket_array) <= curr_round:
-    #         bracket_array.append({})
-
-    #     competitors = [
-    #         generate_competitor_data(team, False, curr_match)
-    #         for team in curr_match.starting_teams.all()
-    #     ] + [
-    #         generate_competitor_data(team, True, curr_match)
-    #         for prev_match in curr_match.prev_matches.all()
-    #         for team in (prev_match.advancers.all() if prev_match.advancers.exists() else [None])
-    #     ]
-
-    #     bracket_array[curr_round][base_index] = competitors 
-        
-    #     prevs = curr_match.prev_matches.all()
-    #     if prevs:
-    #         for i, prev in enumerate(prevs):
-    #             read_tree_from_node(prev, curr_round+1, 2*base_index+i)
-    #             #if i = 1, add another dummy match above/below?
-    #     else:
-    #         if len(bracket_array) <= curr_round+1:
-    #             bracket_array.append({})
-    #         bracket_array[curr_round+1][2*base_index] = None
-    #         bracket_array[curr_round+1][2*base_index+1] = None
-    #         #adding two cause binary tournament
-
-    # read_tree_from_node(Match.objects.filter(tournament=tournament_id).filter(next_matches__isnull=True).first(), 0, 0)
-
-    # bracket_array.pop()
-
     numRounds = tournament.num_rounds
     bracket_array =  [{i:[]} for i in range(numRounds)]
     for i in range(numRounds):
-        rounds = [match for match in Match.objects.filter(tournament=tournament).filter(round=i+1)]
+        rounds = sorted([match for match in Match.objects.filter(tournament=tournament, round=i+1)], key=lambda match : match.arena.id)
         for j in range(len(rounds)):
             team_data = []
             won = False
             is_next = True
             prev = False
             connector = None
+            k = 0
             for team in rounds[j].starting_teams.all():
                 if team in rounds[j].advancers.all():
                     won = True
-                team_data.append({'name': team.name, 'won': won, 'is_next': is_next, 'prev': prev, 'match_id': rounds[j].id, 'connector': connector})
+                team_data.append({'name': team.name, 'won': won, 'is_next': is_next, 'prev': prev, 'match': rounds[j], 'connector': connector})
+                won = False
+                k += 1
+            for q in range(k, tournament.teams_per_match):
+                team_data.append({'name': 'TBD', 'won': won, 'is_next': is_next, 'prev': prev, 'match': rounds[j], 'connector': connector})
             bracket_array[i][j] = team_data
     
     num_matches = len(bracket_array)/numRounds
@@ -515,7 +474,8 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
                 "match_width": matchWidth,
                 "center_height": center_height,
                 "center_top_margin": center_top_margin,
-            })
+                "arena": team_data[0].get('match').arena.name
+             })
 
         round_data.append({"match_data": match_data})
 
