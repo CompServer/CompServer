@@ -16,7 +16,6 @@ ACCESS_KEY_LENGTH = 10
 def get_random_access_key():
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=ACCESS_KEY_LENGTH))
 
-
 # Class User
     # related: team_set (coached)
     # related: competition_set (judged)
@@ -428,7 +427,7 @@ class Match(models.Model):
         if self._cached_str is None:
             self._generate_str_recursive()
             self.save()
-        return self._cached_str
+        return self._cached_str # type: ignore
 
     class Meta:
         ordering = ['tournament']
