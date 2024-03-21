@@ -48,6 +48,10 @@
     border-top: 2px black solid;
 }
 
+.connector-straight {
+    border-top: 2px black solid;
+}
+
 div.img {
     position: relative;
     height:150px;

@@ -28,15 +28,15 @@
                 {% if not tournament.is_archived or user.is_staff %}
                     <div class = "col-12 tournament">
                         {% if tournament.is_judgable %} 
-                            <i class="bi-activity" title="{{ competition.status }}"></i> <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.event.name }}</a>
+                            <i class="bi-activity" title="{{ tournament.status }}"></i> <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.event.name }}</a>
                         {% elif tournament.is_complete %} 
-                            <i class="bi-check2-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.event.name }}</a>
+                            <i class="bi-check2-circle" title="{{ tournament.status }}"></i> <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.event.name }}</a>
                         {% elif tournament.is_closed %} 
-                            <i class="bi-x-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.event.name }}</a>
+                            <i class="bi-x-circle" title="{{ tournament.status }}"></i> <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.event.name }}</a>
                         {% elif tournament.is_in_setup %}
-                            <i class="bi-gear" title="{{ competition.status }}"></i> {{ tournament.event.name }}
+                            <i class="bi-gear" title="{{ tournament.status }}"></i> {{ tournament.event.name }}
                         {% elif competition.is_archived %}
-                            <i class="bi-archive" title="{{ competition.status }}"></i> {{ tournament }} <small>You can see this archived item because you are signed in as a superuser.</small>
+                            <i class="bi-archive" title="{{ tournament.status }}"></i> {{ tournament }} <small>You can see this archived item because you are signed in as a superuser.</small>
                         {% endif %}
                         ({{ tournament.points|floatformat:"0" }} {% translate "points" %}) 
                         {% if user.is_staff %}
@@ -66,6 +66,7 @@
             </div>
         {% endfor %}
     {% endif %}
+
     {% if user.is_staff %}
         {% comment %} <hr>
         <h3>Change Status</h3>
@@ -82,4 +83,17 @@
             </div>
         </form> {% endcomment %}
     {% endif %}
+
+    {% if winner %}
+        <h3>Winners:</h3>
+        {% for team in winner %}
+        <div class="row d-flex">
+            <div class = "col-12">
+                <a href="{% url 'competitions:team' team.id %}">{{ team }}</a>
+            </div>
+        </div>
+        {% endfor %}
+    {% endif %}
+
 {% endblock %}
+<!-- pass in urls for the results page in competitions/ -->

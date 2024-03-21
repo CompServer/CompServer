@@ -1,6 +1,6 @@
 from typing import Any, ClassVar
 from django.db import models
-from django.db.models import Q, SmallIntegerField
+from django.db.models import Count, Q, SmallIntegerField
 from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User
@@ -8,7 +8,6 @@ from django.dispatch import receiver
 from django.utils import timezone
 import random, string, datetime
 from functools import lru_cache
-
 
 ACCESS_KEY_LENGTH = 10
 # ^ should be in settings?
@@ -315,6 +314,9 @@ class Ranking(models.Model):
 class RoundRobinTournament(AbstractTournament):
     num_rounds = models.PositiveSmallIntegerField()
     teams_per_match = models.PositiveSmallIntegerField(default=2)
+    points_per_win = models.PositiveIntegerField(default=3)
+    points_per_tie = models.PositiveIntegerField(default=1)
+    points_per_loss = models.PositiveIntegerField(default=0)
 
 #     ''' Everyone plays everyone else (most points / wins, wins) 
 #         Can be used to establish rankings for an Elimination
@@ -396,7 +398,7 @@ class Match(models.Model):
     _cached_str = models.TextField(blank=True, null=True) # for caching the string representation
 
     str_recursive_level: ClassVar[int] = 0
-
+    round = models.PositiveIntegerField(default=1)
     def _generate_str_recursive(self, force: bool=False) -> str:
         """Recursive algorithm for generating the string representation of this match.
         This is called whenever casted, and the result is saved to a variable to avoid recalculating it.
@@ -430,6 +432,8 @@ class Match(models.Model):
         ordering = ['tournament']
         verbose_name_plural = _('Matches')
 
+
 @receiver(post_save, sender=Match)
 def update_str_match(sender, instance, **kwargs):
     instance._generate_str_recursive(force=True) # because kwargs are different, cache will not be used and we force it to recalculate
+

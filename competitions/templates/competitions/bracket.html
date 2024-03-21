@@ -1,5 +1,6 @@
 {% extends "skeleton.html" %}
 {% load i18n %}
+{% load mathfilters %}
 
 {% block head %}
 
@@ -11,7 +12,7 @@
 .connector-back {
     width: {{bracket_dict.connectorWidth}}px;
     left: -{{bracket_dict.connectorWidth}}px;
-    top: {% widthratio bracket_dict.teamHeight 2 1%}px
+    top: {{ bracket_dict.teamHeight|div:2 }}px
 }
 
 .connector-front {
@@ -20,11 +21,15 @@
 }
 
 .connector-up {
-    bottom: {% widthratio bracket_dict.teamHeight 2 1%}px;
+    bottom: {{bracket_dict.teamHeight|div:2}}px;
 }
 
 .connector-down {
-    top: {% widthratio bracket_dict.teamHeight 2 1%}px;
+    top: {{ bracket_dict.teamHeight|div:2 }}px;
+}
+
+.connector-straight {
+    top: {{ bracket_dict.teamHeight|div:2 }}px;
 }
 
 .bracket {
@@ -65,32 +70,35 @@
                 style="height: {{ match_data.center_height }}px; margin-top: {{ match_data.center_top_margin }}px; ">
                 {% for team_data in match_data.team_data %}
                     <div class="team"
-                        style="width: {{ match_data.match_width }}px; {%if team_data.won %}background-color: #fff5a8;{%endif%} cursor: pointer;"
+                        style="width: {{ match_data.match_width }}px; {% if team_data.won %}background-color: #fff5a8;{%endif%} cursor: pointer;"
                         onclick="location.href='{% url 'competitions:judge_match' team_data.match_id %}';">
                         {{ team_data.name }}
                         {% if team_data.prev %}
                             <div class="connector-back"></div>
                         {% endif %}
                         {% if team_data.is_next and team_data.won%}
-                            {% with A=forloop.parentloop.counter|divisibleby:2 B=forloop.counter|divisibleby:2%}                          
-                            {% widthratio match_data.match_height 2 1 as connector_height%}
+                            {% with connector_height=match_data.match_height|div:2 straight_connector_height=match_data.match_height|div:4 A=forloop.parentloop.counter|divisibleby:2 B=forloop.counter|divisibleby:2%}                          
                             <div class="connector-front {{ team_data.connector }}" onclick=""
                             style=" cursor: default; {% if A and not B or B and not A %}
-                                    {% if team_data.connector == 'connector-down'%}
+                                    {% if team_data.connector == 'connector-down' %}
                                         height:{{connector_height|add:-24}}px;
+                                    {% elif team_data.connector == 'connector-straight' %}
+                                        height:{{straight_connector_height}}px
                                     {% else %}
                                         height:{{connector_height|add:-26}}px;
-                                    {%endif%}
-                                {%else%}
+                                    {% endif %}
+                                {% else %}
                                     {% if team_data.connector == 'connector-down'%}
                                         height:{{connector_height|add:2}}px;
+                                    {% elif team_data.connector == 'connector-straight' %}
+                                        height:{{straight_connector_height|add:3}}px
                                     {% else %}
                                         height:{{connector_height}}px;
-                                    {%endif%}
-                                {%endif%}">
-                            {%endwith %}
+                                    {% endif %}
+                                {% endif %}">
+                            {% endwith %}
                             </div>
-                        {%endif%}
+                        {% endif %}
                     </div>
                 {% endfor %}
             </div>
