@@ -279,48 +279,41 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
 
     bracket_array = []
         
-    def generate_competitor_data(team, prev, match):
-        is_next = match.next_matches.exists()
-        connector_mult = 0
-        if is_next:
-            queryset = match.next_matches.all().first().prev_matches.all()
-            midpoint = (queryset.count() - 1) / 2
-            index = list(queryset).index(match)
-
-            connector_mult = abs(index - midpoint) + 0.5
-
-            connector = "connector-down" if index < midpoint else "connector-up" if index > midpoint else "connector-straight"
-
-        return {
-            "name": team.name if team else "TBD",
-            "won": team in match.advancers.all(),
-            "is_next": is_next,
-            "prev": prev and team,
-            "match_id": match.id,
-            "connector": connector,
-            "connector_height": connector_mult,
-        }
+    def generate_competitor_data(match):
+        output = []
+        for team_index, team in enumerate(match.get_competing_teams()):
+            prev = team not in match.starting_teams.all()
+            is_next = match.next_matches.exists()
+            connector_mult = 0
+            connector = None
+            if is_next:
+                next_match = match.next_matches.all().first()
+                feed_matches = next_match.prev_matches.all()
+                midpoint = (feed_matches.count() - 1) / 2
+                from_index = list(feed_matches).index(match)
+                connector_mult = abs(from_index - midpoint) + 0.5
+                connector = "connector-down" if from_index < midpoint else "connector-up" if from_index > midpoint else "connector-straight"
+            output.append({
+                "name": team.name if team else "TBD",
+                "won": team in match.advancers.all(),
+                "is_next": is_next,
+                "prev": prev and team,
+                "match_id": match.id,
+                "connector": connector,
+                "connector_height": connector_mult,
+            })
+        return output
     
     def read_tree_from_node(curr_match, curr_round, base_index):
         if len(bracket_array) <= curr_round:
             bracket_array.append({})
 
-        competitors = [
-            generate_competitor_data(team, False, curr_match)
-            for team in curr_match.starting_teams.all()
-        ] + [
-            generate_competitor_data(team, True, curr_match)
-            for prev_match in curr_match.prev_matches.all()
-            for team in (prev_match.advancers.all() if prev_match.advancers.exists() else [None])
-        ]
-
-        bracket_array[curr_round][base_index] = competitors 
+        bracket_array[curr_round][base_index] = generate_competitor_data(curr_match) 
         
         prevs = curr_match.prev_matches.all()
         if prevs:
             for i, prev in enumerate(prevs):
                 read_tree_from_node(prev, curr_round+1, 2*base_index+i)
-                #if i = 1, add another dummy match above/below?
         else:
             if len(bracket_array) <= curr_round+1:
                 bracket_array.append({})
