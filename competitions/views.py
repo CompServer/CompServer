@@ -464,7 +464,7 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
             for team in rounds[j].starting_teams.all():
                 if team in rounds[j].advancers.all():
                     won = True
-                team_data.append({'name': team.name, 'won': won, 'is_next': is_next, 'prev': prev, 'connector': connector})
+                team_data.append({'name': team.name, 'won': won, 'is_next': is_next, 'prev': prev, 'match_id': rounds[j].id, 'connector': connector})
             bracket_array[i][j] = team_data
     
     num_matches = len(bracket_array)/numRounds
