@@ -1,6 +1,8 @@
 {% extends 'skeleton.html' %}
 {% load i18n %}
+
 {% block title %}{% translate "Competition:" %} {{ competition.name }}{% endblock %} 
+
 {% block content %}
     <header>
         <h1>{% translate "Results For " %} {{ competition.name }} {{ competition.start_date }} - {{competition.end_date }}</h1>
@@ -11,18 +13,17 @@
             {% endfor %}
         </ul>
     </header>
+
     {% if completed_tournaments.exists %}
-        <script defer type="text" src="stacked_bar_chart.js">
-            
-        </script>
+        <script defer type="text" src="stacked_bar_chart.js"> </script>
         <table class="table">
             <thead>
                 <tr>
-                    <th scope="col">Name</th>
+                    <th scope="col">{% translate "Name" %}</th>
                     {% for tournament in completed_tournaments.all %}
                         <th scope="col">{{ tournament.event.name }}</th>
                     {% endfor %}
-                    <th scope="col">Total Points</th>
+                    <th scope="col">{% translate "Total Points" %}</th>
                 </tr>
             </thead>
             <tbody>
@@ -47,6 +48,6 @@
             </tbody>
         </table>
     {% else %}
-        <p>All of the tournaments are currently ongoing and haven't finished yet.</p>
+        <p>{% translate "All of the tournaments are currently ongoing and haven't finished yet." %}</p>
     {% endif %} 
 {% endblock %}
