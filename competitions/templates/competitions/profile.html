@@ -1,0 +1,88 @@
+{% extends 'skeleton.html' %}
+{% load i18n %}
+{% block title %}{% translate "Profile" %}{% endblock %} 
+{% block content %}
+<body>
+    <h1>{% transalte "Your Profile" %}</h1>
+    <h2>{% translate "Status: " %}</h2>
+    dont forget user info
+    biography
+    account activity
+    {% if user.is_admin %}
+        <h2>{% translate "Admin "%}</h2>
+        changes they have made or mark their activity
+        collection of forms
+        manage live activities
+    {% endif%}
+    {% if user.is_coach %}
+        <h2>{% translate "Coach " %}</h2>
+        teams that you Coach
+        team records and history
+        collection of forms (attending competitions and such)
+        see current compeittions
+    {% endif%}
+    {% if user.owns_organization%}
+        <h2>{% translate "Organization Owner " %}</h2>
+        link to organization page 
+        details about organization founding and purpsoe as Owner
+        partners in the organization and board
+        teams under organization and their comparison of record
+    {% endif%}
+    {% if user.is_judge%}
+        <h2>{% translate "Judge " %}</h2>
+        competitions you've Judged (experience)
+        future events you will judge
+        collection of forms (submit forms for point removals for current judged competitions)
+    {% endif%}
+    {% if user.is_player %}
+        <h2>{% translate "Player " %}</h2>
+        similar to team page 
+        colletion of forms
+    {% endif%}
+    {% if user.is_spectator %}
+        <h2>{% translate "Spectator " %}</h2>
+        standard profile
+    {% endif%}
+</body>
+
+
+
+
+    <header>
+        <h1>{% translate "User Profile" %}</h1>  
+    </header>
+    <body>
+        <div class="row">
+            {% if user.first_name %}
+                {% if user.last_name %}
+                    <h2>{{ user.first_name }} {{ user.last_name }}</h2>
+                {% endif %}
+            {% else %}
+                <h2>{{ user.username }}</h2>
+            {% endif %}
+        </div>
+        {% if profile.photo.exists %}
+            <div class="row">
+                {{ profile.photo }}
+            </div>
+        {% endif %}
+        <div class="row">
+            {% if profile.bio.exists %}
+                <h3>User Bio</h3>
+                <p>{{ profile.bio }}</p>
+            {% else %}
+                <h3>User Bio</h3>
+                <p>Add your bio.</p>
+            {% endif %}
+        </div>
+        <div class="row">
+            teams
+        </div>
+        <div class="row">
+            organization
+        </div>
+        <div class="row">
+            trophies and badges
+        </div>
+    </body>
+{% endblock %}
