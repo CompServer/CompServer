@@ -56,12 +56,12 @@ div.img {
     position: relative;
     height:150px;
     width: 100%;
-    overflow: hidden;
+    /* overflow: hidden; */
     padding-bottom: 10px;
 }
 
 img.error {
     width: 100%;
     height: auto;
-    overflow: hidden;
+    /* overflow: hidden; */
 }
