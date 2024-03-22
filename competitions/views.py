@@ -259,6 +259,28 @@ def generate_round_robin_rankings(request, tournament_id):
         rank.save()
     pass
 
+def swap_matches(request: HttpRequest, tournament_id: int):
+    tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
+    if request.method == 'POST':
+        form = RRTournamentSwapForm(request.POST)
+        teams = []
+        if form.is_valid():
+            for team in form.cleaned_data.get('teams').all():
+                teams.append(team)
+            if len(teams) != 2: 
+                return HttpResponseRedirect(reverse("competitions:swap_matches", args=(tournament_id,)))
+            match1 = Match.objects.filter(tournament=tournament, starting_teams__id=teams[0]).first()
+            match2 = Match.objects.filter(tournament=tournament, starting_teams__id=teams[1]).first()
+            match1.starting_teams.remove(teams[0])
+            match2.starting_teams.remove(teams[1])
+            match1.starting_teams.add(teams[1])
+            match2.starting_teams.add(teams[0])
+            match1.save()
+            match2.save()
+            return HttpResponseRedirect(reverse("competitions:round_robin_tournament", args=(tournament_id,)))
+    form = RRTournamentSwapForm()
+    return render(request, "competitions/swap_matches.html", {"form": form})
+
 def home(request: HttpRequest):
     return render(request, "competitions/home.html")
 

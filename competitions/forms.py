@@ -47,6 +47,11 @@ class RRTournamentStatusForm(forms.ModelForm):
         model = RoundRobinTournament
         fields = ['status']
 
+class RRTournamentSwapForm(forms.ModelForm):
+    class Meta:
+        model = RoundRobinTournament
+        fields = ['teams']
+
 # class CreateCompetitionsForm(forms.):
 class CreateSETournamentForm(forms.ModelForm):
     generate_matches = forms.CheckboxInput()

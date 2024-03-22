@@ -71,11 +71,13 @@
         </div>
         {% endfor %}
     </div>
+    <a href="{% url 'competitions:swap_matches' tournament.id %}">Swap Matches</a>
     {% else %}
         <form class="form-inline my-2 my-md-0 justify-content-end" action="/tournament/{{ tournament.id }}/generate/" method="POST" id="status">
             {% csrf_token %}
             <input type="submit" value={% translate "Generate Matches" %}>
         </form>
     {% endif %}
+
     {% comment %} <h3>{% translate "Matches" %}</h3> {% endcomment %}
 {% endblock %}
