@@ -1,9 +1,7 @@
 from datetime import datetime
-from http.client import HTTPResponse
+from logging import error
 from django.contrib import messages
-from django.core.exceptions import BadRequest
 from django.shortcuts import render, get_object_or_404
-from django.utils.autoreload import start_django
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth.views import login_required
 from django.db.models import Q, Count
@@ -12,12 +10,13 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
 from django.core.exceptions import SuspiciousOperation
+from django.template.exceptions import TemplateDoesNotExist
 import random
 import zoneinfo
 from typing import Union
 from .forms import *
 from .models import *
-
+from .utils import *
 
 def is_overflowed(list1: list, num: int):
   return all(x >= num for x in list1)
@@ -634,7 +633,7 @@ def judge_match(request: HttpRequest, match_id: int):
             form.save()
             messages.success(request, "Match judged successfully.")
             #print("Match judged successfully.")
-            return HttpResponseRedirect(reverse('competitions:judge_match', args=[instance.id]))
+            return HttpResponseRedirect(reverse('competitions:tournament', args=[instance.tournament.id]))
 
     form = JudgeForm(instance=instance, possible_advancers=winner_choices)
     return render(request, 'competitions/match_judge.html', {'form': form, 'match': instance, "teams": winner_choices})
@@ -718,16 +717,18 @@ def _raise_error_code(request: HttpRequest):
     except:
         raise SuspiciousOperation
 
-    if error_code == 400:
-        raise SuspiciousOperation('hehehehha')
-    elif error_code == 403:
-        raise PermissionDenied
-    elif error_code == 404:
-        raise Http404
-    elif error_code == 500:
-        raise Exception("This is a test 500 error.")
-    else:
-        return HttpResponse(status=error_code)
+    # if error_code == 403:
+    #     raise PermissionDenied
+    # elif error_code == 404:
+    #     raise Http404
+    # else:
+    try:
+        return render(request, f'{error_code}.html', status=error_code)
+    except TemplateDoesNotExist:
+        try:
+            return render(request, 'ERROR_BASE.html', context={"error_code": error_code, "error": f"{error_code} {http_codes.get(error_code, 'Unknown')}"}, status=error_code)
+        except:
+            return HttpResponse(status=error_code)
 
 def set_timezone_view(request: HttpRequest):
     """Please leave this view at the bottom. Create any new views you need above this one"""
