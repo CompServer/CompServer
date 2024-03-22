@@ -281,18 +281,36 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
         
     def generate_competitor_data(match):
         output = []
+
+        # T/F the match has a next match (is not the final)
+        is_next = match.next_matches.exists()
+
+        # loop through all the team playing in a match
         for team_index, team in enumerate(match.get_competing_teams()):
+
+            # T/F the team advance from a previous match
             prev = team not in match.starting_teams.all()
-            is_next = match.next_matches.exists()
+            #set up variables
             connector_mult = 0
             connector = None
+
             if is_next:
+                # the match the immediately follows our current match
                 next_match = match.next_matches.all().first()
+                # the set of matches that feed into next_match, which must include the current match
                 feed_matches = next_match.prev_matches.all()
+                # to determine wether connectors should go up or down
                 midpoint = (feed_matches.count() - 1) / 2
-                from_index = list(feed_matches).index(match)
-                connector_mult = abs(from_index - midpoint) + 0.5
-                connector = "connector-down" if from_index < midpoint else "connector-up" if from_index > midpoint else "connector-straight"
+                # where our current match is in the set of next matches
+                match_index = list(feed_matches).index(match)
+                # how many match heights away the connector is, used to calculate the heught
+                connector_mult = abs(match_index - midpoint) + 0.5
+                #class for the direction of the connector
+                connector = "connector-down" if match_index < midpoint else "connector-up" if match_index > midpoint else "connector-straight"
+
+                
+
+
             output.append({
                 "name": team.name if team else "TBD",
                 "won": team in match.advancers.all(),
