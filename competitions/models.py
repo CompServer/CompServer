@@ -5,7 +5,9 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.utils import timezone
-import random, string
+import random, string, datetime
+from functools import lru_cache
+from colorfield.fields import ColorField
 
 ACCESS_KEY_LENGTH = 10
 # ^ should be in settings?
@@ -127,7 +129,7 @@ class Arena(models.Model):
     name = models.CharField(max_length=100, blank=True)
     capacity = models.PositiveSmallIntegerField()
     is_available = models.BooleanField(default=True)
-
+    color = ColorField(default="#CBCBCB")
     def __str__(self) -> str:
         return str(self.name)
 
