@@ -20,9 +20,9 @@
                     <p>{{ message }}</p>
                 {% endif %}
             </div>
-            {% if not debug %}
+            {% if debug %}
                 <div class='img'>
-                    <img class='error' src="https://http.cat/images/{{ error_code }}.jpg" style="object-fit: cover" >
+                    <img class='error' src="https://http.cat/images/{{ error_code }}.jpg" style="max-width: 500px; max-height: 500px" >
                 </div>
             {% endif %}
         </div>
