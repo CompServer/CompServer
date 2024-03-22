@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     'debug_toolbar',
     'crispy_forms',
     'mathfilters', #pip install django-mathfilters
-
+    'colorfield',
     #'easy_timezones', # pip install django-easy-timezones
 ]
 
@@ -142,6 +142,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 
 CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+STATIC_ROOT= os.path.join(BASE_DIR,'static_media/')
 
 STATIC_URL = f"/static/"
 

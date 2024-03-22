@@ -417,18 +417,18 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
     if redirect_id:
         redirect_id = [redirect_id]
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
-    # if request.method == 'POST':
-    #     form = RRTournamentStatusForm(request.POST)
-    #     if form.is_valid():
-    #         status = form.cleaned_data.get('status')
-    #         tournament.status = status
-    #         tournament.save()
-    #         if redirect_id == None:
-    #             return HttpResponseRedirect(reverse(f"competitions:{redirect_to}"))
-    #         else:
-    #             return HttpResponseRedirect(reverse(f"competitions:{redirect_to}",args=redirect_id))
-    # if tournament.is_archived:
-    #     return HttpResponseRedirect(reverse("competitions:competitions"))
+    if request.method == 'POST':
+        form = RRTournamentStatusForm(request.POST)
+        if form.is_valid():
+            status = form.cleaned_data.get('status')
+            tournament.status = status
+            tournament.save()
+            if redirect_id == None:
+                return HttpResponseRedirect(reverse(f"competitions:{redirect_to}"))
+            else:
+                return HttpResponseRedirect(reverse(f"competitions:{redirect_to}",args=redirect_id))
+    if tournament.is_archived:
+        return HttpResponseRedirect(reverse("competitions:competitions"))
     numRounds = tournament.num_rounds
     bracket_array =  [{i:[]} for i in range(numRounds)]
     for i in range(numRounds):
@@ -474,7 +474,7 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
                 "match_width": matchWidth,
                 "center_height": center_height,
                 "center_top_margin": center_top_margin,
-                "arena": team_data[0].get('match').arena.name
+                "arena": team_data[0].get('match').arena
              })
 
         round_data.append({"match_data": match_data})
