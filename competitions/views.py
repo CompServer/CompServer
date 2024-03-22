@@ -318,15 +318,14 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
         is_next = match.next_matches.exists()
 
         # loop through all the team playing in a match
-        for team_index, team in enumerate(match.get_competing_teams()):
+        for from_index, team in enumerate(match.get_competing_teams()):
 
             # T/F the team advance from a previous match
             prev = team not in match.starting_teams.all()
             #set up variables
-            connector_mult = 0
-            connector = None
+            team_index_offset, match_offset_mult, connector = [None]*3
 
-            if is_next:
+            if is_next and team in match.advancers.all():
                 # the match the immediately follows our current match
                 next_match = match.next_matches.all().first()
                 # the set of matches that feed into next_match, which must include the current match
@@ -340,8 +339,12 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
                 #class for the direction of the connector
                 connector = "connector-down" if match_index < midpoint else "connector-up" if match_index > midpoint else "connector-straight"
 
+                # index for the end of the connector
+                to_index = next_match.get_competing_teams().index(team)
                 
-
+                teamHeight = 25
+                # TODO: this only works if matches have the same number of teams
+                team_index_offset = (to_index - from_index if match_index < midpoint else from_index - to_index)*teamHeight
 
             output.append({
                 "name": team.name if team else "TBD",
@@ -350,7 +353,8 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
                 "prev": prev and team,
                 "match_id": match.id,
                 "connector": connector,
-                "connector_height": connector_mult,
+                "team_index_offset": team_index_offset,
+                "match_offset_mult": match_offset_mult,
             })
         return output
     

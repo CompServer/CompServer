@@ -82,23 +82,26 @@
 
                             {% with connector_height=match_data.match_height|div:2 straight_connector_height=match_data.match_height|div:4 A=forloop.parentloop.counter|divisibleby:2 B=forloop.counter|divisibleby:2%}                          
                             <div class="connector-front {{ team_data.connector }}" onclick=""
-                            style=" cursor: default; {% if A and not B or B and not A %}
-                                    {% if team_data.connector == 'connector-down'%}
-                                        height:{{connector_height|sub:24}}px;
-                                    {% elif team_data.connector == 'connector-straight' %}
-                                        height:{{straight_connector_height}}px
-                                    {% else %}
-                                        height:{{connector_height|sub:26}}px;
-                                    {%endif%}
-                                {%else%}
-                                    {% if team_data.connector == 'connector-down'%}
-                                        height:{{connector_height|add:2}}px;
-                                    {% elif team_data.connector == 'connector-straight' %}
-                                        height:{{straight_connector_height|add:3}}px
-                                    {% else %}
-                                        height:{{connector_height}}px;
-                                    {%endif%}
-                                {%endif%}">
+                            style=" cursor: default; 
+                            
+                            height: {{connector_height|add:team_data.team_index_offset}}px
+                            {% comment %} {% if A and not B or B and not A %}
+                                {% if team_data.connector == 'connector-down'%}
+                                    height:{{connector_height|add:}}px;
+                                {% elif team_data.connector == 'connector-straight' %}
+                                    height:{{straight_connector_height}}px
+                                {% else %}
+                                    height:{{connector_height|sub:26}}px;
+                                {%endif%}
+                            {%else%}
+                                {% if team_data.connector == 'connector-down'%}
+                                    height:{{connector_height|add:2}}px;
+                                {% elif team_data.connector == 'connector-straight' %}
+                                    height:{{straight_connector_height|add:3}}px
+                                {% else %}
+                                    height:{{connector_height}}px;
+                                {%endif%}
+                            {%endif%} {% endcomment %}">
                             </div>
                             {%endwith %}
 
