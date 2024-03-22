@@ -52,7 +52,7 @@
     <div class="bracket">
         {% for round_data in bracket_dict.round_data %}
         <div class="round">
-            {% translate Round %} {{ forloop.counter }}
+            {% translate "Round" %} {{ forloop.counter }}
             {% for match_data in round_data.match_data %}
             <div class="match" style="height: {{ match_data.match_height }}px; width: {{ match_data.match_width }}px;">
                 <div class="center"
@@ -62,7 +62,7 @@
                         <div class="team"
                             style="width: {{ match_data.match_width }}px; background-color:{% if team_data.won %} #fff5a8 {% else %} {{ match_data.arena.color }} {% endif %}; cursor: pointer;"
                             onclick="location.href='{% url 'competitions:judge_match' team_data.match.id %}';">
-                            {{ team_data.name }} {{ team_data.match.time }}
+                            {{ team_data.name }} 
                         </div>
                     {% endfor %}
                 </div>

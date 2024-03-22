@@ -269,8 +269,8 @@ def swap_matches(request: HttpRequest, tournament_id: int):
                 teams.append(team)
             if len(teams) != 2: 
                 return HttpResponseRedirect(reverse("competitions:swap_matches", args=(tournament_id,)))
-            match1 = Match.objects.filter(tournament=tournament, starting_teams__id=teams[0]).first()
-            match2 = Match.objects.filter(tournament=tournament, starting_teams__id=teams[1]).first()
+            match1 = Match.objects.filter(tournament=tournament, starting_teams__id=teams[0].id).first()
+            match2 = Match.objects.filter(tournament=tournament, starting_teams__id=teams[1].id).first()
             match1.starting_teams.remove(teams[0])
             match2.starting_teams.remove(teams[1])
             match1.starting_teams.add(teams[1])
