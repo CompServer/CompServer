@@ -399,6 +399,17 @@ class Match(models.Model):
 
     str_recursive_level: ClassVar[int] = 0
     round = models.PositiveIntegerField(default=1)
+
+    def get_competing_teams(self):
+        return [
+            team 
+            for team in self.starting_teams.all()
+        ] + [
+            team 
+            for prev_match in self.prev_matches.all() 
+            for team in (prev_match.advancers.all() if prev_match.advancers.exists() else [None])
+        ]
+
     def _generate_str_recursive(self, force: bool=False) -> str:
         """Recursive algorithm for generating the string representation of this match.
         This is called whenever casted, and the result is saved to a variable to avoid recalculating it.
