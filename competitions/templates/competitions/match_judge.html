@@ -5,6 +5,13 @@
 
 {% block content %}
     <h1>{% translate "Judge a Match" %}</h1>
+    <h2>{% translate "Matchup of " %}
+        {% for team in teams %}
+            {{ team }}
+            {% if not forloop.last %} {% translate "vs" %} {% endif %}
+        {% endfor%}
+        {% translate "for Tournament" %} {{ match.tournament }}
+    </h2>
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}

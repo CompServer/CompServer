@@ -1,13 +1,11 @@
 from typing import Any, ClassVar
 from django.db import models
-from django.db.models import Count, Q, SmallIntegerField
 from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.utils import timezone
-import random, string, datetime
-from functools import lru_cache
+import random, string
 
 ACCESS_KEY_LENGTH = 10
 # ^ should be in settings?
@@ -96,7 +94,6 @@ class Sport(models.Model):
     def __str__(self) -> str:
         return str(self.name)
     
-
 class Organization(models.Model): # probably mostly schools but could also be community organizations
     name = models.CharField(max_length=257) # not unique because there could be schools with the same name just in different cities
     # logo = models.ImageField()
@@ -119,7 +116,7 @@ class Team(models.Model):
     # related: competition_set, tournament_set, round1_matches, won_matches
 
     def __str__(self) -> str:
-        return self.name + (_(" from ") + str(self.organization) if self.organization else "")
+        return self.name + (_(" from ") + str(self.organization) if self.organization else "") # type: ignore
     
     class Meta:
         ordering = ['sport', 'organization', 'name']
@@ -130,8 +127,9 @@ class Arena(models.Model):
     name = models.CharField(max_length=100, blank=True)
     capacity = models.PositiveSmallIntegerField()
     is_available = models.BooleanField(default=True)
+
     def __str__(self) -> str:
-        return self.name
+        return str(self.name)
 
 
 class Competition(models.Model):
@@ -161,7 +159,7 @@ class Competition(models.Model):
 
     def __str__(self) -> str:
         # dwheadon: check if the name is unique for this year, otherwise add the month/day as well
-        s: str = self.name
+        s: str = self.name # type: ignore
         if (qs := (Competition.objects.filter(name=self.name))).count() > 1: # saves the queryset to a variable to avoid running the same query twice
             if (qs2 := (qs.filter(start_date__year=self.start_date.year))).count() > 1:
                 s += f" {self.start_date.month}"
@@ -290,8 +288,22 @@ class AbstractTournament(models.Model):
         return self.status == Status.SETUP 
 
     @property
-    def get_type(self) ->  str:
+    def tournament_type(self) ->  str:
         return self.__class__.__name__
+
+    def __check_tournament_type(self, tournament_type: str) -> bool:
+        """Private helper method for AbstractTournemnt to check if it is a certain type of tournament."""
+        if issubclass(self.__class__, __class__):
+            return self.tournament_type.lower().strip() == tournament_type.lower().strip()
+        raise TypeError("This property is only available on subclasses of AbstractTournament")
+
+    @property
+    def is_single_elimination(self) -> bool:
+        return self.__check_tournament_type("SingleEliminationTournament")
+
+    @property
+    def is_round_robin(self) -> bool:
+        return self.__check_tournament_type("RoundRobinTournament")
 
     class Meta:
         ordering = ['competition', 'event']
@@ -335,7 +347,6 @@ class SingleEliminationTournament(AbstractTournament):
     '''
     prev_tournament = models.ForeignKey(RoundRobinTournament, on_delete=models.DO_NOTHING, blank=True, null=True)
     # interpolated: winner (of the top-level match)
-
 
 # class DoubleEliminationTournament(AbstractTournament):
 #     ''' Has a "looser's" bracket
