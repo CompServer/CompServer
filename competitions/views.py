@@ -492,37 +492,29 @@ def results(request, competition_id):
     tournament_names = [tournament.event.name for tournament in tournaments]
     team_names = []
     team_names = [team.name for team in competition.teams.order_by("name")]
-    #then you need the team and their scores
-    unsorted_total_scores_dictionary = dict()
-    last_tournament_matches = dict()
-    list_of_tournament_points = list()
-    team_and_tourney_score = dict()
-    for team in competition.teams.all():
-        #score = 0
-        tournament_scores = []
-        for tournament in tournaments.all():
+    totals = []
+    team_scorings = []
+    for team_name in team_names:
+        team = Team.objects.filter(name=team_name).first()
+        scores = []
+        for tournament in tournaments:
             last_match = Match.objects.filter(tournament__id = tournament.id, next_matches__isnull = True).first()
             if team in last_match.advancers.all():
-                #tournament
-        team_and_tourney_score[team.name] = score
-    team_names = [(k) for k,v in sorted(team_and_tourney_score.items(), key=lambda item:item[1])]
-
-    for tournament in tournaments.all():
-        last_match = Match.objects.filter(tournament__id = tournament.id, next_matches__isnull = True).first()
-        last_tournament_matches[last_match.advancers.first()] = tournament.id
-    list_of_sorted_team_tuples = [(k, v) for k, v in sorted(unsorted_total_scores_dictionary.items(), key=lambda item: item[1])]
-    list_of_sorted_last_matches = [(k, v) for k, v in sorted(last_tournament_matches.items(), key=lambda item: item[1])]
-    for k, v in list_of_sorted_last_matches:
-        list_of_tournament_points.append((v, SingleEliminationTournament.objects.filter(id = v).first().points))
+                scores.append(tournament.points)
+            else:
+                scores.append(0)
+        score_total = sum(scores)
+        totals.append((team_name, score_total))
+        team_scorings.append((team_name, scores))
+    judge_names = [plenary_judge.first_name + " " + plenary_judge.last_name for plenary_judge in competition.plenary_judges.order_by("-username")]
     context = {
         'tournament_names': tournament_names,
         'team_names': team_names,
         'competition': competition,
-        'teams': team_names,
         'tournaments': tournaments,
-        'sorted_team_tuples': list_of_sorted_team_tuples,
-        'last_matches': list_of_sorted_last_matches,
-        'list_of_tournament_points': list_of_tournament_points,
+        'team_scorings': team_scorings,
+        'judge_names': judge_names,
+        'team_and_total': totals,
     }
     return render(request, "competitions/results.html", context)
 

@@ -3,13 +3,26 @@
 {% block title %}{% trans "Results" %}{% endblock %} 
 {% block content %}
 <body>
-    {{ tournament_names|json_script:"tournament_names" }}
-    {{ team_names|json_script:"team_names" }}
-    {{ team_and_scores|json_script:"team_and_scores" }}
-    <!-- <div>
+    <header>
+        <h1>{% trans "Results For " %} {{ competition.name }} {{ competition.start_date }} - {{competition.end_date }}</h1>
+        <h2>{% trans "Judged by " %}</h2>
+        <ul>
+            {% for judge_name in judge_names %}
+                <li> {{ judge_name }} </li>
+            {% endfor %}
+        </ul>
+    </header>
+    {% if tournaments.exists %}
+    {% else %}
+        <p>All of the tournaments are currently ongoing and haven't finished yet.</p>
+    {% endif %}
+    <div>
         <canvas id="stackedChartID"></canvas>
     </div>
     <script>
+        {{ tournament_names|json_script: "tournament_names" }}
+        {{ team_names|json_script: "team_names" }}
+        {{ team_and_scores|json_script: "team_and_scores" }}
         const divElem = document.getElementById("divID");
         function randomcolor() {
             return Math.floor(Math.random() * 255);
@@ -20,22 +33,21 @@
                 + ',' + randomcolor() + '\)'
         })
         var context = document.getElementById("stackedChartID").getContext("2d");
+        
         var chart = new Chart(context, {
             type: 'bar',
             data: {  
                 labels: team_names,
-                datasets: [{
-                    for tournament in completed_tournaments:
-                        label: tournament.name,
-                        backgroundColor: randomcolor(),
-                        data: scores,
-                }]
+                datasets: tournament_names.map((ts, i)) => ({
+                    label: tournament_names[i],
+                    backgroundColor: randomColor(),
+                    data: every_team_in_a_tournament[i][i]
+                }),
             },
             options: {
                 plugins: {
                     title: {
                         display: true,
-                        text: 'Stacked bar chart for total team scores'
                     },
                     scales: {
                         x: {
@@ -48,54 +60,6 @@
                 }
             }
         });
-    </script> -->
+    </script>
 </body>
-    <!-- <header>
-        <h1>{% trans "Results For " %} {{ competition.name }} {{ competition.start_date }} - {{competition.end_date }}</h1>
-        <h2>{% trans "Judged by " %}</h2>
-        <ul>
-            {% for judge in competition.planeary_judges.all %}
-                <li> {{ judge.first_name }} {{ judge.last_name }}</li>
-            {% endfor %}
-        </ul>
-    </header> -->
-<!-- 
-    {% if completed_tournaments.exists %}
-        <script defer type="text" src="stacked_bar_chart.js">
-            
-        </script>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th scope="col">Name</th>
-                    {% for tournament in completed_tournaments.all %}
-                        <th scope="col">{{ tournament.event.name }}</th>
-                    {% endfor %}
-                    <th scope="col">Total Points</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for k, v in sorted_team_tuples %}
-                    <tr>
-                        <th scope="row">{{ k.name }}</th>
-                            {% for l, m in last_matches %}
-                                {% if k.id == l.id %}
-                                    {% for j, k in list_of_tournament_points %}
-                                        {% if j == m %}
-                                            <td>{{ k }}</td>
-                                        {% endif %}
-                                    {% endfor %}
-                                {% else %}
-                                    <td>0</td>
-                                {% endif %}
-                            {% endfor %}    
-                            <td>{{ v }}</td>
-                        </th>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p>All of the tournaments are currently ongoing and haven't finished yet.</p>
-    {% endif %}  -->
 {% endblock %}
