@@ -1,23 +1,22 @@
 from datetime import datetime
-from http.client import HTTPResponse
+from logging import error
 from django.contrib import messages
-from django.core.exceptions import BadRequest
 from django.shortcuts import render, get_object_or_404
-from django.utils.autoreload import start_django
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth.views import login_required
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
 from django.core.exceptions import SuspiciousOperation
+from django.template.exceptions import TemplateDoesNotExist
 import random
 import zoneinfo
 from typing import Union
 from .forms import *
 from .models import *
-
+from .utils import *
 
 def is_overflowed(list1: list, num: int):
   return all(x >= num for x in list1)
@@ -617,8 +616,7 @@ def judge_match(request: HttpRequest, match_id: int):
     # if the user is a judge for the tournament, or a plenary judge for the competition, or a superuser
     if not (user in tournament.judges.all() \
     or user in competetion.plenary_judges.all() \
-    or user.is_superuser):# \
-    #or user.is_superuser:
+    or user.is_superuser):
         messages.error(request, "You are not authorized to judge this match.")
         #print("You are not authorized to judge this match.")
         raise PermissionDenied("You are not authorized to judge this match.")
@@ -641,7 +639,7 @@ def judge_match(request: HttpRequest, match_id: int):
     else:
         messages.error(request, "This match has no starting teams or previous matches.")
         #print("This match has no starting teams or previous matches.")
-        raise PermissionDenied("This match has no starting teams or previous matches.")
+        raise SuspiciousOperation("This match has no starting teams or previous matches.")
 
     if request.method == 'POST':
         form = JudgeForm(request.POST, instance=instance, possible_advancers=winner_choices)
@@ -649,10 +647,10 @@ def judge_match(request: HttpRequest, match_id: int):
             form.save()
             messages.success(request, "Match judged successfully.")
             #print("Match judged successfully.")
-            return HttpResponseRedirect(reverse('competitions:judge_match', args=[instance.id]))
+            return HttpResponseRedirect(reverse('competitions:tournament', args=[instance.tournament.id]))
 
     form = JudgeForm(instance=instance, possible_advancers=winner_choices)
-    return render(request, 'competitions/match_judge.html', {'form': form})
+    return render(request, 'competitions/match_judge.html', {'form': form, 'match': instance, "teams": winner_choices})
 
 
 def user_profile(request, profile_id):
@@ -663,13 +661,13 @@ def user_profile(request, profile_id):
     return render(request, 'competitions/user_profile.html', context)
 
 
-def competition_score_page(request, competition_id):
-    selected_competition = Competition.objects.get(id = competition_id)
+def competition_score_page(request: HttpRequest, competition_id: int):
+    selected_competition = get_object_or_404(Competition, pk=competition_id)
     ranked_tournaments = selected_competition.tournament_set.order_by("points")
     completed_tournaments = ranked_tournaments.filter(status = Status.COMPLETE)
-    unsorted_total_scores_dictionary = dict()
-    last_tournament_matches = dict()
-    list_of_tournament_points = list()
+    unsorted_total_scores_dictionary = {}
+    last_tournament_matches = {}
+    list_of_tournament_points = []
     for team in selected_competition.teams.all():
         val = 0
         for completed_tournament in completed_tournaments.all():
@@ -682,8 +680,8 @@ def competition_score_page(request, competition_id):
         last_tournament_matches[last_match.advancers.first()] = completed_tournament.id
     list_of_sorted_team_tuples = [(k, v) for k, v in sorted(unsorted_total_scores_dictionary.items(), key=lambda item: item[1])]
     list_of_sorted_last_matches = [(k, v) for k, v in sorted(last_tournament_matches.items(), key=lambda item: item[1])]
-    for k, v in list_of_sorted_last_matches:
-        list_of_tournament_points.append((v, SingleEliminationTournament.objects.filter(id = v).first().points))
+    for _, v in list_of_sorted_last_matches:
+        list_of_tournament_points.append((v, get_tournament(request, v).points))
     context = {
         'competition': selected_competition,
         'completed_tournaments': completed_tournaments,
@@ -733,16 +731,18 @@ def _raise_error_code(request: HttpRequest):
     except:
         raise SuspiciousOperation
 
-    if error_code == 400:
-        raise SuspiciousOperation('hehehehha')
-    elif error_code == 403:
-        raise PermissionDenied
-    elif error_code == 404:
-        raise Http404
-    elif error_code == 500:
-        raise Exception("This is a test 500 error.")
-    else:
-        return HttpResponse(status=error_code)
+    # if error_code == 403:
+    #     raise PermissionDenied
+    # elif error_code == 404:
+    #     raise Http404
+    # else:
+    try:
+        return render(request, f'{error_code}.html', status=error_code)
+    except TemplateDoesNotExist:
+        try:
+            return render(request, 'ERROR_BASE.html', context={"error_code": error_code, "error": f"{error_code} {http_codes.get(error_code, 'Unknown')}"}, status=error_code)
+        except:
+            return HttpResponse(status=error_code)
 
 def set_timezone_view(request: HttpRequest):
     """Please leave this view at the bottom. Create any new views you need above this one"""

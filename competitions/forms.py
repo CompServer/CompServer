@@ -20,11 +20,7 @@ class JudgeForm(forms.ModelForm):
         assert isinstance(self.instance, Match)
         # if hasattr(self, "possible_advancers"): return False
         # ^ above doesn't work, gotta use this try except -_-
-
-        for team in self.instance.advancers.all():
-            if team not in self.possible_advancers.all():
-                return False
-        return super().is_valid()
+        return all([team in self.possible_advancers.all() for team in self.instance.advancers.all()]) and super().is_valid()
 
     class Meta:
         model = Match
