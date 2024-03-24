@@ -20,6 +20,7 @@
     <link rel='icon' href="{% static 'favicon.png' %}">
     <link rel="stylesheet" href="{% static 'style.css' %}">
     <link rel="stylesheet" href="{% static 'competitions/style.css' %}">
+    {% block stylesheets %}{% endblock %}
     <title>
         {% block title %}Robocomp{% endblock %}
     </title>
