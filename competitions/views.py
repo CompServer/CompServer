@@ -205,8 +205,6 @@ def generate_round_robin_matches(request, tournament_id):
     arenas = [i for i in tournament.competition.arenas.filter(is_available=True)]
     starting_time = tournament.start_time 
     teams = [team for team in tournament.teams.all()]
-    prev_matches = []
-    curr_prev = []
     for k in range(tournament.num_rounds):
         nmpt_iterator = 0
         if arena_iterator > 0:
@@ -257,6 +255,36 @@ def generate_round_robin_rankings(request, tournament_id):
         rank.save()
     pass
 
+def swap_matches(request: HttpRequest, tournament_id: int):
+    tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
+    form = None
+    if request.method == 'POST':
+        form = TournamentSwapForm(request.POST, tournament=tournament)
+        if form.is_valid():
+            team1 = form.cleaned_data.get('team1')
+            team2 = form.cleaned_data.get('team2')
+            round_num = form.cleaned_data.get('round_num')
+            if round_num > tournament.num_rounds or round_num < 1:
+                #print("Invalid round")
+                return HttpResponseRedirect(reverse("competitions:swap_matches", args=(tournament_id,)))
+            match1 = Match.objects.filter(tournament=tournament, starting_teams__in=[team1.id], round_num=round_num).first()
+            match2 = Match.objects.filter(tournament=tournament, starting_teams__in=[team2.id], round_num=round_num).first()
+            #print(match1, match2)
+            match1.starting_teams.remove(team1)
+            match2.starting_teams.remove(team2)
+            match1.starting_teams.add(team2)
+            match2.starting_teams.add(team1)
+            match1.save()
+            match2.save()
+            #print(match1, match2)
+            return HttpResponseRedirect(reverse("competitions:tournament", args=(tournament_id,)))
+        else:
+            for error_field, error_desc in form.errors.items():
+                form.add_error(error_field, error_desc)
+    if not form:
+        form = TournamentSwapForm(tournament=tournament)
+    return render(request, "competitions/swap_matches.html", {"form": form})
+
 def home(request: HttpRequest):
     return render(request, "competitions/home.html")
 
@@ -280,7 +308,7 @@ def create_tournament(request: HttpRequest):
     tournament_type = str(tournament_type).lower().strip()
 
     if tournament_type == 'rr':
-        FORM_CLASS = CreateRRTournamentForm
+        FORM_CLASS = CreateTournamentForm
     elif tournament_type == 'se':
         FORM_CLASS = CreateSETournamentForm
     else:
@@ -430,7 +458,7 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
         redirect_id = [redirect_id]
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
     if request.method == 'POST':
-        form = RRTournamentStatusForm(request.POST)
+        form = TournamentStatusForm(request.POST)
         if form.is_valid():
             status = form.cleaned_data.get('status')
             tournament.status = status
@@ -471,7 +499,7 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
     bracketHeight = mostTeamsInRound * 50
     roundWidth = matchWidth + connectorWidth
 
-    for round_matches in reversed(bracket_array):
+    for round_matches in bracket_array:
         match_height = bracketHeight / num_matches
         match_data = []
 
