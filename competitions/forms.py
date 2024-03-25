@@ -42,6 +42,24 @@ class TournamentStatusForm(forms.ModelForm):
     class Meta:
         model = RoundRobinTournament
         fields = ['status']
+        
+class TournamentSwapForm(forms.Form):
+    round_num = forms.IntegerField(label="Round")
+    team1 = forms.ModelChoiceField(queryset=None, label="Team 1")
+    team2 = forms.ModelChoiceField(queryset=None, label="Team 2")
+
+    def __init__(self, *args, tournament: AbstractTournament, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.tournament = tournament
+        self.fields['team1'].queryset = tournament.teams.all()
+        self.fields['team2'].queryset = tournament.teams.all()
+    def is_valid(self):
+        self.full_clean()
+        if self.cleaned_data['team1'] == self.cleaned_data['team2']:
+            return False
+        if self.cleaned_data['team1'] not in self.tournament.teams.all() or self.cleaned_data['team2'] not in self.tournament.teams.all():
+            return False
+        return super().is_valid()
 
 class CreateCompetitionsForm(forms.ModelForm):
     sport = forms.ModelChoiceField(queryset=None) # just for display
@@ -63,10 +81,6 @@ class CreateCompetitionsForm(forms.ModelForm):
             'start_date': forms.DateInput(attrs={'format': 'yyyy-mm-dd','type':'date'}),
             'end_date': forms.DateInput(attrs={'format': 'yyyy-mm-dd','type':'date'}),
         }
-class RRTournamentSwapForm(forms.ModelForm):
-    class Meta:
-        model = RoundRobinTournament
-        fields = ['round', 'teams']
 
 # class CreateCompetitionsForm(forms.):
 class CreateSETournamentForm(forms.ModelForm):

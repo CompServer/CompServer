@@ -263,12 +263,12 @@ def swap_matches(request: HttpRequest, tournament_id: int):
         if form.is_valid():
             team1 = form.cleaned_data.get('team1')
             team2 = form.cleaned_data.get('team2')
-            round = form.cleaned_data.get('round_num')
-            if round > tournament.num_rounds or round < 1:
+            round_num = form.cleaned_data.get('round_num')
+            if round_num > tournament.num_rounds or round_num < 1:
                 #print("Invalid round")
                 return HttpResponseRedirect(reverse("competitions:swap_matches", args=(tournament_id,)))
-            match1 = Match.objects.filter(tournament=tournament, starting_teams__in=[team1.id], round=round).first()
-            match2 = Match.objects.filter(tournament=tournament, starting_teams__in=[team2.id], round=round).first()
+            match1 = Match.objects.filter(tournament=tournament, starting_teams__in=[team1.id], round_num=round_num).first()
+            match2 = Match.objects.filter(tournament=tournament, starting_teams__in=[team2.id], round_num=round_num).first()
             #print(match1, match2)
             match1.starting_teams.remove(team1)
             match2.starting_teams.remove(team2)
@@ -277,7 +277,7 @@ def swap_matches(request: HttpRequest, tournament_id: int):
             match1.save()
             match2.save()
             #print(match1, match2)
-            return HttpResponseRedirect(reverse("competitions:round_robin_tournament", args=(tournament_id,)))
+            return HttpResponseRedirect(reverse("competitions:tournament", args=(tournament_id,)))
         else:
             for error_field, error_desc in form.errors.items():
                 form.add_error(error_field, error_desc)
