@@ -63,6 +63,10 @@ class CreateCompetitionsForm(forms.ModelForm):
             'start_date': forms.DateInput(attrs={'format': 'yyyy-mm-dd','type':'date'}),
             'end_date': forms.DateInput(attrs={'format': 'yyyy-mm-dd','type':'date'}),
         }
+class RRTournamentSwapForm(forms.ModelForm):
+    class Meta:
+        model = RoundRobinTournament
+        fields = ['round', 'teams']
 
 # class CreateCompetitionsForm(forms.):
 class CreateSETournamentForm(forms.ModelForm):
