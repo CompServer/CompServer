@@ -38,15 +38,43 @@ class SETournamentStatusForm(forms.ModelForm):
         model = SingleEliminationTournament
         fields = ['status']
 
+
+class CreateCompetitionsForm(forms.ModelForm):
+    class Meta:
+        model = Competition
+        fields = ['name', 'status', 'description', 'teams', 'judges']
+
 # class CreateCompetitionsForm(forms.):
 class CreateSETournamentForm(forms.ModelForm):
+    events = forms.ModelMultipleChoiceField(queryset=None)
     generate_matches = forms.CheckboxInput()
+
+    def __init__(self, competition: Competition, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.competition = competition
+        self.events_queryset = competition.events
+        self.fields['events'].queryset = self.events_queryset
+        #self.events = competition.events
+        #self.fields['events'].queryset = Event.objects.filter(competition=competition)
+
     class Meta:
         model = SingleEliminationTournament
-        fields = ['event', 'status', 'competition', 'points', 'teams', 'judges']
+        fields = ['status', 'points', 'teams', 'judges']
 
 class CreateRRTournamentForm(forms.ModelForm):
+    
+    events = forms.ModelMultipleChoiceField(queryset=None)
     generate_matches = forms.CheckboxInput()
+
+    def __init__(self, competition: Competition, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.competition = competition
+        self.events_queryset = competition.events
+        self.fields['events'].queryset = self.events_queryset
+        #self.events = competition.events
+        #self.fields['events'].queryset = Event.objects.filter(competition=competition)
+
     class Meta:
         model = RoundRobinTournament
-        fields = ['event', 'status', 'competition', 'points', 'teams', 'judges', 'num_rounds']
+        fields = ['status', 'points', 'teams', 'judges', 'num_rounds']
+    
