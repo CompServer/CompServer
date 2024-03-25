@@ -9,12 +9,14 @@ def tz(request):
     return {"TIME_ZONE": tz}
 
 def user(request):
-    return {"user": request.user}
+    """
+    Passes in the request and request_user of the request as a variable "request" and "user" respectively.
+    """
+    return {"request": request, "user": request.user}
 
 def current_time(request):
     from django.utils import timezone
 
-    tz = request.session.get('timezone',None) or timezone.get_current_timezone_name()
     timezone.activate(timezone.get_current_timezone())
 
     return {

@@ -3,7 +3,7 @@
 from django import forms
 from django.contrib import messages
 
-from competitions.models import AbstractTournament, Competition, SingleEliminationTournament, Team, Match, RoundRobinTournament
+from competitions.models import AbstractTournament, Competition, SingleEliminationTournament, Sport, Team, Match, RoundRobinTournament
 
 
 class JudgeForm(forms.ModelForm):
@@ -20,11 +20,7 @@ class JudgeForm(forms.ModelForm):
         assert isinstance(self.instance, Match)
         # if hasattr(self, "possible_advancers"): return False
         # ^ above doesn't work, gotta use this try except -_-
-
-        for team in self.instance.advancers.all():
-            if team not in self.possible_advancers.all():
-                return False
-        return super().is_valid()
+        return all([team in self.possible_advancers.all() for team in self.instance.advancers.all()]) and super().is_valid()
 
     class Meta:
         model = Match
@@ -47,33 +43,62 @@ class TournamentStatusForm(forms.ModelForm):
         model = RoundRobinTournament
         fields = ['status']
 
-class TournamentSwapForm(forms.Form):
-    round_num = forms.IntegerField(label="Round")
-    team1 = forms.ModelChoiceField(queryset=None, label="Team 1")
-    team2 = forms.ModelChoiceField(queryset=None, label="Team 2")
+class CreateCompetitionsForm(forms.ModelForm):
+    sport = forms.ModelChoiceField(queryset=None) # just for display
+    teams = forms.ModelMultipleChoiceField(queryset=None)
 
-    def __init__(self, *args, tournament: AbstractTournament, **kwargs):
+    def __init__(self, *args, sport: Sport, **kwargs):
         super().__init__(*args, **kwargs)
-        self.tournament = tournament
-        self.fields['team1'].queryset = tournament.teams.all()
-        self.fields['team2'].queryset = tournament.teams.all()
-    def is_valid(self):
-        if self.cleaned_data['team1'] == self.cleaned_data['team2']:
-            return False
-        if self.cleaned_data['team1'] not in self.tournament.teams.all() or self.cleaned_data['team2'] not in self.tournament.teams.all():
-            return False
-        return super().is_valid()
-        
+        self._sport: Sport = sport
+        self.fields['teams'].queryset = Team.objects.filter(sport=sport)
+        sportfield: forms.ModelMultipleChoiceField = self.fields['sport']
+        sportfield.queryset = Sport.objects.filter(pk=sport.pk)
+        sportfield.initial = sport
+        sportfield.disabled = True
+
+    class Meta:
+        model = Competition
+        fields = ['name', 'status', 'plenary_judges', 'start_date', 'end_date', 'arenas']
+        widgets = {
+            'start_date': forms.DateInput(attrs={'format': 'yyyy-mm-dd','type':'date'}),
+            'end_date': forms.DateInput(attrs={'format': 'yyyy-mm-dd','type':'date'}),
+        }
+class RRTournamentSwapForm(forms.ModelForm):
+    class Meta:
+        model = RoundRobinTournament
+        fields = ['round', 'teams']
 
 # class CreateCompetitionsForm(forms.):
 class CreateSETournamentForm(forms.ModelForm):
+    events = forms.ModelMultipleChoiceField(queryset=None)
     generate_matches = forms.CheckboxInput()
+
+    def __init__(self, competition: Competition, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.competition = competition
+        self.events_queryset = competition.events
+        self.fields['events'].queryset = self.events_queryset
+        #self.events = competition.events
+        #self.fields['events'].queryset = Event.objects.filter(competition=competition)
+
     class Meta:
         model = SingleEliminationTournament
-        fields = ['event', 'status', 'competition', 'points', 'teams', 'judges']
+        fields = ['status', 'points', 'teams', 'judges']
 
-class CreateTournamentForm(forms.ModelForm):
+class CreateRRTournamentForm(forms.ModelForm):
+    
+    events = forms.ModelMultipleChoiceField(queryset=None)
     generate_matches = forms.CheckboxInput()
+
+    def __init__(self, competition: Competition, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.competition = competition
+        self.events_queryset = competition.events
+        self.fields['events'].queryset = self.events_queryset
+        #self.events = competition.events
+        #self.fields['events'].queryset = Event.objects.filter(competition=competition)
+
     class Meta:
         model = RoundRobinTournament
-        fields = ['event', 'status', 'competition', 'points', 'teams', 'judges', 'num_rounds']
+        fields = ['status', 'points', 'teams', 'judges', 'num_rounds']
+    

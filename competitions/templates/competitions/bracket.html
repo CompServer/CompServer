@@ -60,7 +60,7 @@
     ({{ tournament.points|floatformat:"0" }} {% translate "points" %})
 </h1>
 {% comment %} not sure how to show match times here, bc I need to know exactly how they work {% endcomment %}
-{% if tournament.match_set.all %}
+{% if tournament.match_set.exists %}
 <div class="bracket">
     {% for round_data in bracket_dict.round_data %}
     <div class="round">
@@ -70,35 +70,38 @@
                 style="height: {{ match_data.center_height }}px; margin-top: {{ match_data.center_top_margin }}px; ">
                 {% for team_data in match_data.team_data %}
                     <div class="team"
-                        style="width: {{ match_data.match_width }}px; {% if team_data.won %}background-color: #fff5a8;{%endif%} cursor: pointer;"
+                        style="height: 25px; width: {{ match_data.match_width }}px; {%if team_data.won %}background-color: #fff5a8;{%endif%} cursor: pointer;"
                         onclick="location.href='{% url 'competitions:judge_match' team_data.match_id %}';">
                         {{ team_data.name }}
                         {% if team_data.prev %}
                             <div class="connector-back"></div>
                         {% endif %}
                         {% if team_data.is_next and team_data.won%}
+
+                            {% comment %} reworking this {% endcomment %}
+
                             {% with connector_height=match_data.match_height|div:2 straight_connector_height=match_data.match_height|div:4 A=forloop.parentloop.counter|divisibleby:2 B=forloop.counter|divisibleby:2%}                          
                             <div class="connector-front {{ team_data.connector }}" onclick=""
                             style=" cursor: default; {% if A and not B or B and not A %}
-                                    {% if team_data.connector == 'connector-down' %}
-                                        height:{{connector_height|add:-24}}px;
+                                    {% if team_data.connector == 'connector-down'%}
+                                        height:{{connector_height|sub:24}}px;
                                     {% elif team_data.connector == 'connector-straight' %}
                                         height:{{straight_connector_height}}px
                                     {% else %}
-                                        height:{{connector_height|add:-26}}px;
-                                    {% endif %}
-                                {% else %}
+                                        height:{{connector_height|sub:26}}px;
+                                    {%endif%}
+                                {%else%}
                                     {% if team_data.connector == 'connector-down'%}
                                         height:{{connector_height|add:2}}px;
                                     {% elif team_data.connector == 'connector-straight' %}
                                         height:{{straight_connector_height|add:3}}px
                                     {% else %}
                                         height:{{connector_height}}px;
-                                    {% endif %}
-                                {% endif %}">
-                            {% endwith %}
+                                    {%endif%}
+                                {%endif%}">
                             </div>
-                        {% endif %}
+                            {%endwith %}
+                        {%endif%}
                     </div>
                 {% endfor %}
             </div>
@@ -108,10 +111,12 @@
     {% endfor %}
 </div>
 {% else %}
-    <form class="form-inline my-2 my-md-0 justify-content-end" action="/tournament/{{ tournament.id }}/generate/" method="POST" id="status">
-        {% csrf_token %}
-        <input type="submit" value="Generate Matches">
-    </form>
+    {% if user.is_superuser %}
+        <form class="form-inline my-2 my-md-0 justify-content-end" action="/tournament/{{ tournament.id }}/generate/" method="POST" id="status">
+            {% csrf_token %}
+            <input type="submit" value="Generate Matches">
+        </form>
+    {% endif %}
 {% endif %}
 {% endblock %}
 

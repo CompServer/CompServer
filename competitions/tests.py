@@ -23,7 +23,7 @@ class SanityTests(TestCase):
         cls.tomorrow = cls.today + timedelta(days=1)
         cls.organization = Organization.objects.create(name="University of Chicago Laboratory Schools")
         cls.sport = Sport.objects.create(name="Robotics")
-        cls.event = Event.objects.create(name="Sumo", sport=cls.sport, match_time=datetime.timedelta(seconds=600))
+        cls.event = Event.objects.create(name="Sumo", sport=cls.sport, match_time=timedelta(seconds=600))
         cls.non_judge = User.objects.create(username="norm")
         cls.admin = User.objects.create(username="albert")
         cls.admin.set_password("adminPass")
@@ -79,6 +79,7 @@ class SanityTests(TestCase):
         # Admin should be able to get to all pages
         for path in urlpatterns:
             # ignore views that shouldnt be tested (starts with _)
+            #if not str(path.name).startswith('_'):
             if not str(path.name).startswith('_'):
                 url = None
                 try:
@@ -96,14 +97,14 @@ class SanityTests(TestCase):
         for model in admin.site._registry:
             if "competitions" in model.__module__:
                 # try the list page
-                response = self.admin_client.get('/admin/competitions/'+model.__name__.lower()+"/")
+                response = self.admin_client.get(f'/admin/competitions/{model.__name__.lower()}/')
                 self.assertIn(response.status_code, OK_OR_REDIRECT_RESPONSE, f"Could not view admin list page for model {model.__name__}")
 
                 # try the change page
                 fails = 0
                 while fails < 5:
                     try:
-                        response = self.admin_client.get(f'/admin/competitions/{model.__name__.lower()}/{i}/change/')
+                        response = self.admin_client.get(f'/admin/competitions/{model.__name__.lower()}/{fails}/change/')
                         self.assertIn(response.status_code, OK_OR_REDIRECT_RESPONSE, f"Could not view admin change page for model {model.__name__}")
                         break # runs the else
                     except:
@@ -141,7 +142,7 @@ class JudgeTests(TestCase):
         cls.tomorrow = cls.today + timedelta(days=1)
         cls.organization = Organization.objects.create(name="University of Chicago Laboratory Schools")
         cls.sport = Sport.objects.create(name="Robotics")
-        cls.event = Event.objects.create(name="Sumo", sport=cls.sport, match_time=datetime.timedelta(seconds=600))
+        cls.event = Event.objects.create(name="Sumo", sport=cls.sport, match_time=timedelta(seconds=600))
         cls.non_judge = User.objects.create(username="norm")
         cls.admin = User.objects.create(username="albert")
         cls.admin.set_password("adminPass")
@@ -260,7 +261,7 @@ class JudgingTests(TestCase):
         cls.tomorrow = cls.today + timedelta(days=1)
         cls.organization = Organization.objects.create(name="University of Chicago Laboratory Schools")
         cls.sport = Sport.objects.create(name="Robotics")
-        cls.event = Event.objects.create(name="Sumo", sport=cls.sport, match_time=datetime.timedelta(seconds=600))
+        cls.event = Event.objects.create(name="Sumo", sport=cls.sport, match_time=timedelta(seconds=600))
         cls.non_judge = User.objects.create(username="norm")
         cls.admin = User.objects.create(username="albert")
         cls.admin.set_password("adminPass")
@@ -409,7 +410,7 @@ class AutogenTests(TestCase):
         cls.tomorrow = cls.today + timedelta(days=1)
         cls.organization = Organization.objects.create(name="University of Chicago Laboratory Schools")
         cls.sport = Sport.objects.create(name="Robotics")
-        cls.event = Event.objects.create(name="Sumo", sport=cls.sport, match_time=datetime.timedelta(seconds=600))
+        cls.event = Event.objects.create(name="Sumo", sport=cls.sport, match_time=timedelta(seconds=600))
         cls.admin = User.objects.create(username="albert")
         cls.admin.set_password("adminPass")
         cls.admin.is_superuser = True

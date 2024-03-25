@@ -1,6 +1,5 @@
 from typing import Any, ClassVar
 from django.db import models
-from django.db.models import Count, Q, SmallIntegerField
 from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User
@@ -9,6 +8,7 @@ from django.utils import timezone
 import random, string, datetime
 from functools import lru_cache
 from colorfield.fields import ColorField
+from .widgets import ColorPickerWidget
 
 ACCESS_KEY_LENGTH = 10
 # ^ should be in settings?
@@ -17,12 +17,27 @@ ACCESS_KEY_LENGTH = 10
 def get_random_access_key():
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=ACCESS_KEY_LENGTH))
 
-
 # Class User
     # related: team_set (coached)
     # related: competition_set (judged)
     # related: tournament_set (judged)
     # related: profile
+
+# https://github.com/h3/django-colorfield/blob/master/colorfield/fields.py
+
+class ColorField(models.CharField):
+    """
+    A text field made to accept hexadecimal color value (#FFFFFF)
+    with a color picker widget.
+    """
+    def __init__(self, *args, **kwargs):
+        kwargs['max_length'] = 7
+        super().__init__(*args, **kwargs)
+
+    def formfield(self, **kwargs):
+        kwargs['widget'] = ColorPickerWidget
+        return super().formfield(**kwargs)
+
 
 class SiteConfig(models.Model):
     name = models.CharField(max_length=255)
@@ -98,7 +113,6 @@ class Sport(models.Model):
     def __str__(self) -> str:
         return str(self.name)
     
-
 class Organization(models.Model): # probably mostly schools but could also be community organizations
     name = models.CharField(max_length=257) # not unique because there could be schools with the same name just in different cities
     # logo = models.ImageField()
@@ -121,7 +135,7 @@ class Team(models.Model):
     # related: competition_set, tournament_set, round1_matches, won_matches
 
     def __str__(self) -> str:
-        return self.name + (_(" from ") + str(self.organization) if self.organization else "")
+        return self.name + (_(" from ") + str(self.organization) if self.organization else "") # type: ignore
     
     class Meta:
         ordering = ['sport', 'organization', 'name']
@@ -134,7 +148,7 @@ class Arena(models.Model):
     is_available = models.BooleanField(default=True)
     color = ColorField(default="#CBCBCB")
     def __str__(self) -> str:
-        return self.name
+        return str(self.name)
 
 
 class Competition(models.Model):
@@ -162,9 +176,14 @@ class Competition(models.Model):
     #checks if the competition has ended (true)
     #checks if the competition hasn't ended (false)
 
+    @property
+    def events(self):
+        """Returns the events associated with this competition."""
+        return Event.objects.filter(sport=self.sport)
+
     def __str__(self) -> str:
         # dwheadon: check if the name is unique for this year, otherwise add the month/day as well
-        s: str = self.name
+        s: str = self.name # type: ignore
         if (qs := (Competition.objects.filter(name=self.name))).count() > 1: # saves the queryset to a variable to avoid running the same query twice
             if (qs2 := (qs.filter(start_date__year=self.start_date.year))).count() > 1:
                 s += f" {self.start_date.month}"
@@ -293,8 +312,22 @@ class AbstractTournament(models.Model):
         return self.status == Status.SETUP 
 
     @property
-    def get_type(self) ->  str:
+    def tournament_type(self) ->  str:
         return self.__class__.__name__
+
+    def __check_tournament_type(self, tournament_type: str) -> bool:
+        """Private helper method for AbstractTournemnt to check if it is a certain type of tournament."""
+        if issubclass(self.__class__, __class__):
+            return self.tournament_type.lower().strip() == tournament_type.lower().strip()
+        raise TypeError("This property is only available on subclasses of AbstractTournament")
+
+    @property
+    def is_single_elimination(self) -> bool:
+        return self.__check_tournament_type("SingleEliminationTournament")
+
+    @property
+    def is_round_robin(self) -> bool:
+        return self.__check_tournament_type("RoundRobinTournament")
 
     class Meta:
         ordering = ['competition', 'event']
@@ -341,7 +374,6 @@ class SingleEliminationTournament(AbstractTournament):
     '''
     prev_tournament = models.ForeignKey(RoundRobinTournament, on_delete=models.DO_NOTHING, blank=True, null=True)
     # interpolated: winner (of the top-level match)
-
 
 # class DoubleEliminationTournament(AbstractTournament):
 #     ''' Has a "looser's" bracket
@@ -401,9 +433,22 @@ class Match(models.Model):
     time = models.DateTimeField(blank=True, null=True) # that it's scheduled for
     arena = models.ForeignKey(Arena, related_name="match_set", on_delete=models.DO_NOTHING, blank=True, null=True)
     _cached_str = models.TextField(blank=True, null=True) # for caching the string representation
+    round_num = models.PositiveIntegerField(default=1) # don't name it round, it overrides a built-in method (bad)
+    """The round of the tournament that this match is in. 1 for the first round, 2 for the second, etc."""
 
     str_recursive_level: ClassVar[int] = 0
     round = models.PositiveIntegerField(default=1)
+
+    def get_competing_teams(self):
+        return [
+            team 
+            for team in self.starting_teams.all()
+        ] + [
+            team 
+            for prev_match in self.prev_matches.all() 
+            for team in (prev_match.advancers.all() if prev_match.advancers.exists() else [None])
+        ]
+
     def _generate_str_recursive(self, force: bool=False) -> str:
         """Recursive algorithm for generating the string representation of this match.
         This is called whenever casted, and the result is saved to a variable to avoid recalculating it.
@@ -431,7 +476,7 @@ class Match(models.Model):
         if self._cached_str is None:
             self._generate_str_recursive()
             self.save()
-        return self._cached_str
+        return self._cached_str # type: ignore
 
     class Meta:
         ordering = ['tournament']
@@ -442,3 +487,10 @@ class Match(models.Model):
 def update_str_match(sender, instance, **kwargs):
     instance._generate_str_recursive(force=True) # because kwargs are different, cache will not be used and we force it to recalculate
 
+# https://github.com/h3/django-colorfield/blob/master/colorfield/fields.py 
+
+# try:
+#     from south.modelsinspector import add_introspection_rules
+#     add_introspection_rules([], ["^colorfield\.fields\.ColorField"])
+# except ImportError:
+#     pass

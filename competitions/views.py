@@ -1,27 +1,25 @@
 from datetime import datetime
-from http.client import HTTPResponse
+from logging import error
 from django.contrib import messages
-from django.core.exceptions import BadRequest
 from django.shortcuts import render, get_object_or_404
-from django.utils.autoreload import start_django
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth.views import login_required
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
-from io import SEEK_CUR
+from django.core.exceptions import SuspiciousOperation
+from django.template.exceptions import TemplateDoesNotExist
 import random
 import zoneinfo
 from typing import Union
 from .forms import *
 from .models import *
-
+from .utils import *
 
 def is_overflowed(list1: list, num: int):
   return all(x >= num for x in list1)
-
 
 def get_tournament(request, tournament_id: int) -> Union[SingleEliminationTournament, RoundRobinTournament]:
     """Get a tournament by it's id, regardless of it's type.
@@ -34,7 +32,7 @@ def get_tournament(request, tournament_id: int) -> Union[SingleEliminationTourna
 
     Returns:
         Union[SingleEliminationTournament, RoundRobinTournament]: The found tournament.
-    """    
+    """ 
     if SingleEliminationTournament.objects.filter(abstracttournament_ptr_id=tournament_id).exists():
         return get_object_or_404(SingleEliminationTournament, pk=tournament_id)
     elif RoundRobinTournament.objects.filter(abstracttournament_ptr_id=tournament_id).exists():
@@ -314,7 +312,7 @@ def create_tournament(request: HttpRequest):
     elif tournament_type == 'se':
         FORM_CLASS = CreateSETournamentForm
     else:
-        raise BadRequest
+        raise SuspiciousOperation
 
     if request.method == 'POST':
         form = FORM_CLASS(request.POST)
@@ -345,46 +343,60 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
         return HttpResponseRedirect(reverse("competitions:competitions"))
 
     bracket_array = []
-    def generate_competitor_data(team, prev, match):
-        is_next = match.next_matches.exists()
-        connector = None
-        if is_next:
-            queryset = match.next_matches.all()[0].prev_matches.all()
-            midpoint = (queryset.count() - 1) / 2
-            index = list(queryset).index(match)
-            # diff = abs(index - midpoint)
-            connector = "connector-down" if index < midpoint else "connector-up" if index > midpoint else "connector-straight"
 
-        return {
-            "name": team.name if team else "TBD",
-            "won": team in match.advancers.all(),
-            "is_next": is_next,
-            "prev": prev and team,
-            "match_id": match.id,
-            "connector": connector,
-            # "connector_multiplier": 0
-        }
+    def generate_competitor_data(match):
+        output = []
+
+        # T/F the match has a next match (is not the final)
+        is_next = match.next_matches.exists()
+
+        # loop through all the team playing in a match
+        for team_index, team in enumerate(match.get_competing_teams()):
+
+            # T/F the team advance from a previous match
+            prev = team not in match.starting_teams.all()
+            #set up variables
+            connector_mult = 0
+            connector = None
+
+            if is_next:
+                # the match the immediately follows our current match
+                next_match = match.next_matches.all().first()
+                # the set of matches that feed into next_match, which must include the current match
+                feed_matches = next_match.prev_matches.all()
+                # to determine wether connectors should go up or down
+                midpoint = (feed_matches.count() - 1) / 2
+                # where our current match is in the set of next matches
+                match_index = list(feed_matches).index(match)
+                # how many match heights away the connector is, used to calculate the heught
+                connector_mult = abs(match_index - midpoint) + 0.5
+                #class for the direction of the connector
+                connector = "connector-down" if match_index < midpoint else "connector-up" if match_index > midpoint else "connector-straight"
+
+                
+
+
+            output.append({
+                "name": team.name if team else "TBD",
+                "won": team in match.advancers.all(),
+                "is_next": is_next,
+                "prev": prev and team,
+                "match_id": match.id,
+                "connector": connector,
+                "connector_height": connector_mult,
+            })
+        return output
     
     def read_tree_from_node(curr_match, curr_round, base_index):
         if len(bracket_array) <= curr_round:
             bracket_array.append({})
 
-        competitors = [
-            generate_competitor_data(team, False, curr_match)
-            for team in curr_match.starting_teams.all()
-        ] + [
-            generate_competitor_data(team, True, curr_match)
-            for prev_match in curr_match.prev_matches.all()
-            for team in (prev_match.advancers.all() if prev_match.advancers.exists() else [None])
-        ]
-
-        bracket_array[curr_round][base_index] = competitors 
+        bracket_array[curr_round][base_index] = generate_competitor_data(curr_match) 
         
         prevs = curr_match.prev_matches.all()
         if prevs:
             for i, prev in enumerate(prevs):
                 read_tree_from_node(prev, curr_round+1, 2*base_index+i)
-                #if i = 1, add another dummy match above/below?
         else:
             if len(bracket_array) <= curr_round+1:
                 bracket_array.append({})
@@ -561,19 +573,31 @@ def competition(request: HttpRequest, competition_id: int):
     }
     return render(request, "competitions/competition.html", context)
 
+def create_competition(request: HttpRequest):
+    sport_id = request.GET.get('sport', None)
+    if sport_id is None:
+        return render(request, "competitions/create_competition.html", {"sports": Sport.objects.all()})
+    try:
+        sport_id = int(sport_id)
+    except:
+        raise Http404("Not a valid sport.")
+    sport = get_object_or_404(Sport, pk=sport_id)
+
+    form = None
+    if request.method == 'POST':
+        form = CreateCompetitionsForm(request.POST, sport=sport)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect(reverse("competitions:competition", args=(form.instance.id,)))
+        else:
+            for error_field, error_desc in form.errors.items():
+                form.add_error(error_field, error_desc)
+    if not form:
+        form = CreateCompetitionsForm(sport=sport)
+    return render(request, "competitions/create_competition_form.html", {"form": form})
 
 def credits(request: HttpRequest):
     return render(request, "competitions/credits.html")
-
-def not_implemented(request: HttpRequest, *args, **kwargs):
-    """
-    Base view for not implemented features. You can  use this view to show a message to the user that the feature is not yet implemented,
-    or if you want to add a view for a URL to a page that doesn't exist yet.
-    """
-    messages.error(request, "This feature is not yet implemented.")
-    #raise NotImplementedError()
-    return render(request, 'skeleton.html')
-
 
 @login_required
 def judge_match(request: HttpRequest, match_id: int):
@@ -590,10 +614,9 @@ def judge_match(request: HttpRequest, match_id: int):
         #print("This match is not judgable.")
         raise PermissionDenied("This match is not judgable.")
     # if the user is a judge for the tournament, or a plenary judge for the competition, or a superuser
-    if  not (user in tournament.judges.all() \
+    if not (user in tournament.judges.all() \
     or user in competetion.plenary_judges.all() \
-    or user.is_superuser):# \
-    #or user.is_superuser:
+    or user.is_superuser):
         messages.error(request, "You are not authorized to judge this match.")
         #print("You are not authorized to judge this match.")
         raise PermissionDenied("You are not authorized to judge this match.")
@@ -608,14 +631,15 @@ def judge_match(request: HttpRequest, match_id: int):
             else:
                 messages.error(request, "One or more previous matches have not been judged.")
                 #print("One or more previous matches have not been judged.")
-                raise BadRequest("One or more previous matches have not been judged.")
+                raise SuspiciousOperation("One or more previous matches have not been judged.")
+                #return HttpResponse(, reason="One or more previous matches have not been judged.")
         winner_choices = Team.objects.filter(id__in=winner_choice_ids)
     elif instance.starting_teams.exists():
         winner_choices = instance.starting_teams.all()
     else:
         messages.error(request, "This match has no starting teams or previous matches.")
         #print("This match has no starting teams or previous matches.")
-        raise PermissionDenied("This match has no starting teams or previous matches.")
+        raise SuspiciousOperation("This match has no starting teams or previous matches.")
 
     if request.method == 'POST':
         form = JudgeForm(request.POST, instance=instance, possible_advancers=winner_choices)
@@ -623,10 +647,10 @@ def judge_match(request: HttpRequest, match_id: int):
             form.save()
             messages.success(request, "Match judged successfully.")
             #print("Match judged successfully.")
-            return HttpResponseRedirect(reverse('competitions:judge_match', args=[instance.id]))
+            return HttpResponseRedirect(reverse('competitions:tournament', args=[instance.tournament.id]))
 
     form = JudgeForm(instance=instance, possible_advancers=winner_choices)
-    return render(request, 'competitions/match_judge.html', {'form': form})
+    return render(request, 'competitions/match_judge.html', {'form': form, 'match': instance, "teams": winner_choices})
 
 
 def user_profile(request, profile_id):
@@ -637,13 +661,13 @@ def user_profile(request, profile_id):
     return render(request, 'competitions/user_profile.html', context)
 
 
-def competition_score_page(request, competition_id):
-    selected_competition = Competition.objects.get(id = competition_id)
+def competition_score_page(request: HttpRequest, competition_id: int):
+    selected_competition = get_object_or_404(Competition, pk=competition_id)
     ranked_tournaments = selected_competition.tournament_set.order_by("points")
     completed_tournaments = ranked_tournaments.filter(status = Status.COMPLETE)
-    unsorted_total_scores_dictionary = dict()
-    last_tournament_matches = dict()
-    list_of_tournament_points = list()
+    unsorted_total_scores_dictionary = {}
+    last_tournament_matches = {}
+    list_of_tournament_points = []
     for team in selected_competition.teams.all():
         val = 0
         for completed_tournament in completed_tournaments.all():
@@ -656,8 +680,8 @@ def competition_score_page(request, competition_id):
         last_tournament_matches[last_match.advancers.first()] = completed_tournament.id
     list_of_sorted_team_tuples = [(k, v) for k, v in sorted(unsorted_total_scores_dictionary.items(), key=lambda item: item[1])]
     list_of_sorted_last_matches = [(k, v) for k, v in sorted(last_tournament_matches.items(), key=lambda item: item[1])]
-    for k, v in list_of_sorted_last_matches:
-        list_of_tournament_points.append((v, SingleEliminationTournament.objects.filter(id = v).first().points))
+    for _, v in list_of_sorted_last_matches:
+        list_of_tournament_points.append((v, get_tournament(request, v).points))
     context = {
         'competition': selected_competition,
         'completed_tournaments': completed_tournaments,
@@ -705,16 +729,29 @@ def _raise_error_code(request: HttpRequest):
     try:
         error_code = int(request.GET.get('code', 0)) # type: ignore
     except:
-        raise BadRequest
+        raise SuspiciousOperation
 
-    if error_code == 403:
-        raise PermissionDenied
-    elif error_code == 404:
-        raise Http404
-    elif error_code == 500:
-        raise Exception("This is a test 500 error.")
-    else:
-        return HttpResponse(status=error_code)
+    # if error_code == 403:
+    #     raise PermissionDenied
+    # elif error_code == 404:
+    #     raise Http404
+    # else:
+    try:
+        return render(request, f'{error_code}.html', status=error_code)
+    except TemplateDoesNotExist:
+        try:
+            return render(request, 'ERROR_BASE.html', context={"error_code": error_code, "error": f"{error_code} {http_codes.get(error_code, 'Unknown')}"}, status=error_code)
+        except:
+            return HttpResponse(status=error_code)
+
+def not_implemented(request: HttpRequest, *args, **kwargs):
+    """
+    Base view for not implemented features. You can  use this view to show a message to the user that the feature is not yet implemented,
+    or if you want to add a view for a URL to a page that doesn't exist yet.
+    """
+    messages.error(request, "This feature is not yet implemented.")
+    #raise NotImplementedError()
+    return render(request, 'skeleton.html')
 
 def set_timezone_view(request: HttpRequest):
     """Please leave this view at the bottom. Create any new views you need above this one"""
