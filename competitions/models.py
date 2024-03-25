@@ -157,6 +157,11 @@ class Competition(models.Model):
     #checks if the competition has ended (true)
     #checks if the competition hasn't ended (false)
 
+    @property
+    def events(self):
+        """Returns the events associated with this competition."""
+        return Event.objects.filter(sport=self.sport)
+
     def __str__(self) -> str:
         # dwheadon: check if the name is unique for this year, otherwise add the month/day as well
         s: str = self.name # type: ignore
