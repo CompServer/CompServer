@@ -3,19 +3,13 @@
 {% load i18n %}
 
 
-{% block title %}{% translate "Create Competition" %}{% endblock%}
-
 {% block content %}
-    <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-                <h1 class="text-center">{% translate "Create Competition" %}</h1>
-                <form method="POST" enctype="multipart/form-data" action="">
-                    {% csrf_token %}
-                    {{ form.as_p }}
-                    <button type="submit" class="btn btn-primary">{% translate "Create" %}</button>
-                </form>
-            </div>
-        </div>
-    </div>
+<h1>{% translate "Please select the sport of the competition that you would like to create."%}</h1>
+    <ul>
+    {% for sport in sports %}
+        <li>
+            <a href="{% url "competitions:create_competition" %}?sport={{ sport.id }}">{{ sport }}</a>
+        </li>
+    {% endfor%}
+    </ul>
 {% endblock %}
