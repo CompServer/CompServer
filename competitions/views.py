@@ -259,31 +259,32 @@ def generate_round_robin_rankings(request, tournament_id):
 
 def swap_matches(request: HttpRequest, tournament_id: int):
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
+    form = None
     if request.method == 'POST':
-        form = RRTournamentSwapForm(request.POST)
-        teams = []
+        form = TournamentSwapForm(request.POST, tournament=tournament)
         if form.is_valid():
-            for team in form.cleaned_data.get('teams').all():
-                teams.append(team)
-            if len(teams) != 2: 
-                #print("Invalid number of teams")
-                return HttpResponseRedirect(reverse("competitions:swap_matches", args=(tournament_id,)))
-            round = form.cleaned_data.get('num_rounds')
+            team1 = form.cleaned_data.get('team1')
+            team2 = form.cleaned_data.get('team2')
+            round = form.cleaned_data.get('round_num')
             if round > tournament.num_rounds or round < 1:
                 #print("Invalid round")
                 return HttpResponseRedirect(reverse("competitions:swap_matches", args=(tournament_id,)))
-            match1 = Match.objects.filter(tournament=tournament, starting_teams__in=[teams[0].id], round=round).first()
-            match2 = Match.objects.filter(tournament=tournament, starting_teams__in=[teams[1].id], round=round).first()
+            match1 = Match.objects.filter(tournament=tournament, starting_teams__in=[team1.id], round=round).first()
+            match2 = Match.objects.filter(tournament=tournament, starting_teams__in=[team2.id], round=round).first()
             #print(match1, match2)
-            match1.starting_teams.remove(teams[0])
-            match2.starting_teams.remove(teams[1])
-            match1.starting_teams.add(teams[1])
-            match2.starting_teams.add(teams[0])
+            match1.starting_teams.remove(team1)
+            match2.starting_teams.remove(team2)
+            match1.starting_teams.add(team2)
+            match2.starting_teams.add(team1)
             match1.save()
             match2.save()
             #print(match1, match2)
             return HttpResponseRedirect(reverse("competitions:round_robin_tournament", args=(tournament_id,)))
-    form = RRTournamentSwapForm()
+        else:
+            for error_field, error_desc in form.errors.items():
+                form.add_error(error_field, error_desc)
+    if not form:
+        form = TournamentSwapForm(tournament=tournament)
     return render(request, "competitions/swap_matches.html", {"form": form})
 
 def home(request: HttpRequest):
@@ -309,7 +310,7 @@ def create_tournament(request: HttpRequest):
     tournament_type = str(tournament_type).lower().strip()
 
     if tournament_type == 'rr':
-        FORM_CLASS = CreateRRTournamentForm
+        FORM_CLASS = CreateTournamentForm
     elif tournament_type == 'se':
         FORM_CLASS = CreateSETournamentForm
     else:
@@ -445,7 +446,7 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
         redirect_id = [redirect_id]
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
     if request.method == 'POST':
-        form = RRTournamentStatusForm(request.POST)
+        form = TournamentStatusForm(request.POST)
         if form.is_valid():
             status = form.cleaned_data.get('status')
             tournament.status = status
