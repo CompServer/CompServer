@@ -335,7 +335,7 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
                 # where our current match is in the set of next matches
                 match_index = list(feed_matches).index(match)
                 # how many match heights away the connector is, used to calculate the heught
-                connector_mult = abs(match_index - midpoint) + 0.5
+                match_offset_mult = abs(match_index - midpoint) + 0.5
                 #class for the direction of the connector
                 connector = "connector-down" if match_index < midpoint else "connector-up" if match_index > midpoint else "connector-straight"
 
