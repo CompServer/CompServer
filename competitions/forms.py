@@ -57,6 +57,7 @@ class CreateCompetitionsForm(forms.ModelForm):
         sportfield.disabled = True
 
     def is_valid(self):
+        self.full_clean()
         if self.cleaned_data['start_date'] > self.cleaned_data['end_date']:
             self.add_error('start_date', 'Start date must be before end date')
             self.add_error('end_date', 'End date must be after start date')
