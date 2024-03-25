@@ -35,7 +35,8 @@
                 </div>
             {% endif %}
         </div>
-        {% if user.is_superuser %}
-            <a href="{% url "competitions:create_competition" %}" class="btn btn-primary">{% translate "Create Competition" %}</a>
     {% endfor %}
+    {% if user.is_superuser %}
+        <a href="{% url "competitions:create_competition" %}" class="btn btn-primary">{% translate "Create Competition" %}</a>
+    {% endif %}
 {% endblock %}
