@@ -2,11 +2,10 @@
 {% load i18n %}
 {% block title %}{% translate "User:" %} {{ user.username }}{% endblock %} 
 {% block content %}
-special case for coaches
+    {% comment %} special case for coaches {% endcomment %}
     <header>
         <h1>{% translate "User Profile" %}</h1>  
     </header>
-    <body>
         <div class="row">
             {% if user.first_name %}
                 {% if user.last_name %}
@@ -22,22 +21,16 @@ special case for coaches
             </div>
         {% endif %}
         <div class="row">
-            {% if profile.bio.exists %}
-                <h3>User Bio</h3>
-                <p>{{ profile.bio }}</p>
-            {% else %}
-                <h3>User Bio</h3>
-                <p>Add your bio.</p>
-            {% endif %}
+            <h3>{% translate "User Bio" %}</h3>
+             <p>{{ profile.bio|default_if_none:"This user doesn't have a bio." }}</p>
         </div>
         <div class="row">
-            teams
+            Teams
         </div>
         <div class="row">
-            organization
+            Origanization
         </div>
         <div class="row">
-            trophies and badges
+            Trophies and Badges
         </div>
-    </body>
 {% endblock %}

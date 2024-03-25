@@ -60,7 +60,7 @@
     ({{ tournament.points|floatformat:"0" }} {% translate "points" %})
 </h1>
 {% comment %} not sure how to show match times here, bc I need to know exactly how they work {% endcomment %}
-{% if tournament.match_set.all %}
+{% if tournament.match_set.exists %}
 <div class="bracket">
     {% for round_data in bracket_dict.round_data %}
     <div class="round">
@@ -101,10 +101,6 @@
                                 {%endif%}">
                             </div>
                             {%endwith %}
-
-
-
-
                         {%endif%}
                     </div>
                 {% endfor %}
@@ -115,10 +111,12 @@
     {% endfor %}
 </div>
 {% else %}
-    <form class="form-inline my-2 my-md-0 justify-content-end" action="/tournament/{{ tournament.id }}/generate/" method="POST" id="status">
-        {% csrf_token %}
-        <input type="submit" value="Generate Matches">
-    </form>
+    {% if user.is_superuser %}
+        <form class="form-inline my-2 my-md-0 justify-content-end" action="/tournament/{{ tournament.id }}/generate/" method="POST" id="status">
+            {% csrf_token %}
+            <input type="submit" value="Generate Matches">
+        </form>
+    {% endif %}
 {% endif %}
 {% endblock %}
 

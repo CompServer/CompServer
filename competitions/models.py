@@ -8,6 +8,7 @@ from django.utils import timezone
 import random, string, datetime
 from functools import lru_cache
 from colorfield.fields import ColorField
+from .widgets import ColorPickerWidget
 
 ACCESS_KEY_LENGTH = 10
 # ^ should be in settings?
@@ -21,6 +22,22 @@ def get_random_access_key():
     # related: competition_set (judged)
     # related: tournament_set (judged)
     # related: profile
+
+# https://github.com/h3/django-colorfield/blob/master/colorfield/fields.py
+
+class ColorField(models.CharField):
+    """
+    A text field made to accept hexadecimal color value (#FFFFFF)
+    with a color picker widget.
+    """
+    def __init__(self, *args, **kwargs):
+        kwargs['max_length'] = 7
+        super().__init__(*args, **kwargs)
+
+    def formfield(self, **kwargs):
+        kwargs['widget'] = ColorPickerWidget
+        return super().formfield(**kwargs)
+
 
 class SiteConfig(models.Model):
     name = models.CharField(max_length=255)
@@ -158,6 +175,11 @@ class Competition(models.Model):
 
     #checks if the competition has ended (true)
     #checks if the competition hasn't ended (false)
+
+    @property
+    def events(self):
+        """Returns the events associated with this competition."""
+        return Event.objects.filter(sport=self.sport)
 
     def __str__(self) -> str:
         # dwheadon: check if the name is unique for this year, otherwise add the month/day as well
@@ -462,3 +484,10 @@ class Match(models.Model):
 def update_str_match(sender, instance, **kwargs):
     instance._generate_str_recursive(force=True) # because kwargs are different, cache will not be used and we force it to recalculate
 
+# https://github.com/h3/django-colorfield/blob/master/colorfield/fields.py 
+
+# try:
+#     from south.modelsinspector import add_introspection_rules
+#     add_introspection_rules([], ["^colorfield\.fields\.ColorField"])
+# except ImportError:
+#     pass

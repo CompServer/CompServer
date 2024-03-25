@@ -6,12 +6,13 @@
 {% block content %}
     <header>
         <h1>{% translate "Results For " %} {{ competition.name }} {{ competition.start_date }} - {{competition.end_date }}</h1>
-        <h2>{% translate "Judged by " %}</h2>
-        <ul>
+        <h2>{% translate "Judged by " %}
             {% for judge in competition.planeary_judges.all %}
-                <li> {{ judge.first_name }} {{ judge.last_name }}</li>
+                 {{ judge.first_name }} {{ judge.last_name }}, 
+            {% empty %}
+                {% translate "No one" %}
             {% endfor %}
-        </ul>
+        </h2>
     </header>
 
     {% if completed_tournaments.exists %}

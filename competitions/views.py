@@ -545,19 +545,31 @@ def competition(request: HttpRequest, competition_id: int):
     }
     return render(request, "competitions/competition.html", context)
 
+def create_competition(request: HttpRequest):
+    sport_id = request.GET.get('sport', None)
+    if sport_id is None:
+        return render(request, "competitions/create_competition.html", {"sports": Sport.objects.all()})
+    try:
+        sport_id = int(sport_id)
+    except:
+        raise Http404("Not a valid sport.")
+    sport = get_object_or_404(Sport, pk=sport_id)
+
+    form = None
+    if request.method == 'POST':
+        form = CreateCompetitionsForm(request.POST, sport=sport)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect(reverse("competitions:competition", args=(form.instance.id,)))
+        else:
+            for error_field, error_desc in form.errors.items():
+                form.add_error(error_field, error_desc)
+    if not form:
+        form = CreateCompetitionsForm(sport=sport)
+    return render(request, "competitions/create_competition_form.html", {"form": form})
 
 def credits(request: HttpRequest):
     return render(request, "competitions/credits.html")
-
-def not_implemented(request: HttpRequest, *args, **kwargs):
-    """
-    Base view for not implemented features. You can  use this view to show a message to the user that the feature is not yet implemented,
-    or if you want to add a view for a URL to a page that doesn't exist yet.
-    """
-    messages.error(request, "This feature is not yet implemented.")
-    #raise NotImplementedError()
-    return render(request, 'skeleton.html')
-
 
 @login_required
 def judge_match(request: HttpRequest, match_id: int):
@@ -703,6 +715,15 @@ def _raise_error_code(request: HttpRequest):
             return render(request, 'ERROR_BASE.html', context={"error_code": error_code, "error": f"{error_code} {http_codes.get(error_code, 'Unknown')}"}, status=error_code)
         except:
             return HttpResponse(status=error_code)
+
+def not_implemented(request: HttpRequest, *args, **kwargs):
+    """
+    Base view for not implemented features. You can  use this view to show a message to the user that the feature is not yet implemented,
+    or if you want to add a view for a URL to a page that doesn't exist yet.
+    """
+    messages.error(request, "This feature is not yet implemented.")
+    #raise NotImplementedError()
+    return render(request, 'skeleton.html')
 
 def set_timezone_view(request: HttpRequest):
     """Please leave this view at the bottom. Create any new views you need above this one"""
