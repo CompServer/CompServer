@@ -50,7 +50,7 @@ class RRTournamentStatusForm(forms.ModelForm):
 class RRTournamentSwapForm(forms.ModelForm):
     class Meta:
         model = RoundRobinTournament
-        fields = ['teams']
+        fields = ['num_rounds', 'teams']
 
 # class CreateCompetitionsForm(forms.):
 class CreateSETournamentForm(forms.ModelForm):

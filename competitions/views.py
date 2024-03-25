@@ -207,8 +207,6 @@ def generate_round_robin_matches(request, tournament_id):
     arenas = [i for i in tournament.competition.arenas.filter(is_available=True)]
     starting_time = tournament.start_time 
     teams = [team for team in tournament.teams.all()]
-    prev_matches = []
-    curr_prev = []
     for k in range(tournament.num_rounds):
         nmpt_iterator = 0
         if arena_iterator > 0:
@@ -269,14 +267,17 @@ def swap_matches(request: HttpRequest, tournament_id: int):
                 teams.append(team)
             if len(teams) != 2: 
                 return HttpResponseRedirect(reverse("competitions:swap_matches", args=(tournament_id,)))
-            match1 = Match.objects.filter(tournament=tournament, starting_teams__id=teams[0].id).first()
-            match2 = Match.objects.filter(tournament=tournament, starting_teams__id=teams[1].id).first()
+            round = form.cleaned_data.get('num_rounds')
+            match1 = Match.objects.filter(tournament=tournament, starting_teams__in=[teams[0].id], round=round).first()
+            match2 = Match.objects.filter(tournament=tournament, starting_teams__in=[teams[1].id], round=round).first()
+            #print(match1, match2)
             match1.starting_teams.remove(teams[0])
             match2.starting_teams.remove(teams[1])
             match1.starting_teams.add(teams[1])
             match2.starting_teams.add(teams[0])
             match1.save()
             match2.save()
+            #print(match1, match2)
             return HttpResponseRedirect(reverse("competitions:round_robin_tournament", args=(tournament_id,)))
     form = RRTournamentSwapForm()
     return render(request, "competitions/swap_matches.html", {"form": form})
@@ -481,7 +482,7 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
     bracketHeight = mostTeamsInRound * 50
     roundWidth = matchWidth + connectorWidth
 
-    for round_matches in reversed(bracket_array):
+    for round_matches in bracket_array:
         match_height = bracketHeight / num_matches
         match_data = []
 
