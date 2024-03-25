@@ -18,16 +18,15 @@
     {% endif %}
     {{ tournament_names|json_script:"tournament_names" }}
     {{ team_names|json_script:"team_names" }}
-    {{ team_scorings|json_script:"team_and_scorings" }}
+    {{ team_scorings|json_script:"team_scorings" }}
     <div>
         <canvas id="stackedChartID" width="600" height="400"></canvas>
     </div>
     <script src="https:///cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        const team_names = document.getElementById("team_names")
-        const tournament_names = document.getElementById("tournament_names")
-        const team_scorings = document.getElementById("team_scorings")
-        const divElem = document.getElementById("divID");
+        const team_names = JSON.parse(document.getElementById("team_names").textContent)
+        const tournament_names = JSON.parse(document.getElementById("tournament_names").textContent)
+        const team_scorings = JSON.parse(document.getElementById("team_scorings").textContent)
         function randomcolor() {
             return Math.floor(Math.random() * 255);
         }
@@ -43,7 +42,7 @@
                 labels: team_names,
                 datasets: [{
                     label: "names",
-                    data: [9,0,0,0,5,8,10,16,20,3,10,13,14,15,16, 90],
+                    data: [9,0,0,0,5,8,10,16,20,3,10,13,14,15,16,9,10],
                 }],
             },
             options: {
