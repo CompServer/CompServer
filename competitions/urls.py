@@ -18,7 +18,7 @@ urlpatterns = [
     # path("coach/<int:coach_id>/", views.coach, name="coach-page"),
     # path("match/<int:match_id>/", views.match, name="match"),
     path("match/<int:match_id>/judge/", views.judge_match, name="judge_match"),
-    path("competition/profile/<int:profile_id>/", views.user_profile, name="user_profile"),
+    path("competition/profile/<int:profile_id>/", views.profile, name="user_profile"),
     path('credits/', views.credits, name="credits"),
     path('settings/timezone/',views.set_timezone_view, name='set_timezone'),
 ]

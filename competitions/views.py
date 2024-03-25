@@ -505,6 +505,7 @@ def results(request, competition_id):
         totals.append((team_name, score_total))
         team_scorings.append((team_name, scores))
     judge_names = [plenary_judge.first_name + " " + plenary_judge.last_name for plenary_judge in competition.plenary_judges.order_by("-username")]
+    
     context = {
         'tournament_names': tournament_names,
         'team_names': team_names,
@@ -520,6 +521,8 @@ def team(request: HttpRequest, team_id: int):
     team = Team.objects.filter(id=team_id)
     today = timezone.now().date()
     upcoming_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), tournament__competition__start_date__lte=today, tournament__competition__end_date__gte=today, advancers=None).order_by("-time")
+    past_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id)).exclude(advancers=None).order_by("-time")
+    past_competitions = Competition.objects.filter(teams__id = team_id, status = Status.COMPLETE).order_by("end_date")    
     losses = list()
     wins = list()
     draws = list()
@@ -529,48 +532,19 @@ def team(request: HttpRequest, team_id: int):
         last_match_advancers = past_tournament.match_set.last().advancers.all()
         if Team.objects.filter(id = team_id) in last_match_advancers:
             past_tournaments_won.append(past_tournament)
-    past_competitions = Competition.objects.filter(teams__id = team_id, status = Status.COMPLETE).order_by("end_date")    
-    # for pt in past_tournaments:
-    #     for match in Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), tournament__id = pt.id):
-    #         ids = list()
-    #         for advancer in match.advancers.all():
-    #             ids.append(advancer.id)
-    #         if team_id in ids:
-    #             if match.advancers.count() == 1:
-    #                 wins.append(match)
-    #             else:
-    #                 draws.append(match)
-    #         else:
-    #             losses.append(match)
-
-
-
-    
-    result_and_round_num = list()
-    for match in matches:
-        tournament = Tournament.objects.filter(match__id=match.id)
-        the_winning_match = tournament.match_set.last()
-        rounds = 1
-        team_round_compared = 0
-        while the_winning_match.prev_matches.exists():
-            rounds = rounds + 1
-            if team in the_winning_match.prev_matches.starting_teams:
-                team_round_compared = team_round_compared + 1
-        team_round = rounds - team_round_compared
-        match_and_round_num.append((match, team_round))
-    results = list()
-    for item in result_and_round_num:
-        index = 0
-        if team in item[0].advancers.all():
-            if item[0].advancers.count() == 1:
-                results.add("Won against", item[0].starting_teams.exclude(team).name, item[0], item[1])
-                #String, opposing team, match, round num
-            else:
-                results.add("Drew with", item[0].advancers.exclude(team).name, item[0], item[1])
-        else:
-            results.add("Lost against", item[0].advancers.name, item[0], item[1])
-    all_won_matches = Match.objects.filter(advancers__id=team_id)
-    past_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id)).exclude(advancers=None).order_by("-time")
+    for pm in past_matches:
+        for match in Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), tournament__id = pt.id):
+            ids = list()
+            for advancer in match.advancers.all():
+                ids.append(advancer.id)
+                if team_id in ids:
+                    if match.advancers.count() == 1:
+                        wins.append(match)
+                    else:
+                        draws.append(match)
+                else:
+                    losses.append(match)
+    #append round and who 
     context = {
         'team': Team.objects.get(pk=team_id),
         'upcoming_matches': upcoming_matches,
