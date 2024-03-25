@@ -56,6 +56,19 @@ class CreateCompetitionsForm(forms.ModelForm):
         sportfield.initial = sport
         sportfield.disabled = True
 
+    def is_valid(self):
+        if self.cleaned_data['start_date'] > self.cleaned_data['end_date']:
+            self.add_error('start_date', 'Start date must be before end date')
+            self.add_error('end_date', 'End date must be after start date')
+            return False
+        if self.cleaned_data['sport'] != self._sport:
+            self.add_error('sport', 'Sport must be the same as the one in the URL')
+            return False
+        # if self.cleaned_data['plenary_judges'].count() < 1:
+        #     self.add_error('plenary_judges', 'You must select at least one plenary judge')
+        #     return False
+        return super().is_valid()
+
     class Meta:
         model = Competition
         fields = ['name', 'status', 'plenary_judges', 'start_date', 'end_date', 'arenas']
@@ -82,7 +95,6 @@ class CreateSETournamentForm(forms.ModelForm):
         fields = ['status', 'points', 'teams', 'judges']
 
 class CreateRRTournamentForm(forms.ModelForm):
-    
     events = forms.ModelMultipleChoiceField(queryset=None)
     generate_matches = forms.CheckboxInput()
 
