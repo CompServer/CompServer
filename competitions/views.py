@@ -266,8 +266,12 @@ def swap_matches(request: HttpRequest, tournament_id: int):
             for team in form.cleaned_data.get('teams').all():
                 teams.append(team)
             if len(teams) != 2: 
+                #print("Invalid number of teams")
                 return HttpResponseRedirect(reverse("competitions:swap_matches", args=(tournament_id,)))
             round = form.cleaned_data.get('num_rounds')
+            if round > tournament.num_rounds or round < 1:
+                #print("Invalid round")
+                return HttpResponseRedirect(reverse("competitions:swap_matches", args=(tournament_id,)))
             match1 = Match.objects.filter(tournament=tournament, starting_teams__in=[teams[0].id], round=round).first()
             match2 = Match.objects.filter(tournament=tournament, starting_teams__in=[teams[1].id], round=round).first()
             #print(match1, match2)

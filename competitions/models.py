@@ -330,6 +330,9 @@ class RoundRobinTournament(AbstractTournament):
 #     # accumulation: sum of all points (e.g. goals), sum of match points (e.g. 2 for win, 1 for tie, 0 for loss)
 #     # interpolated: rull rankings (order of points)
 
+    #this part is for the modelForm to have the correct name, not to be actually used
+    round = models.PositiveIntegerField(default=0)
+
 class SingleEliminationTournament(AbstractTournament):
     ''' Elimination style with brackets (last man standing) 
         Requires seedings determined by prior RoundRobin or expert input

@@ -168,4 +168,11 @@
             {% endif %}
         </div>
     {% endif %}
+    {% if upcoming_matches.exists %}
+        {% for match in upcoming_matches %}
+            <div class="match-records">
+                {{ match }} {{ match.time }}
+            </div>
+        {% endfor %}
+    {% endif %}
 {% endblock %}
