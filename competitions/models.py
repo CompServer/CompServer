@@ -1,13 +1,17 @@
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Optional
 from django.db import models
 from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.utils import timezone
+from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured
+from django.db.models import CharField, signals
+from django.db.models.fields.files import ImageField
 import random, string, datetime
 from functools import lru_cache
-from .widgets import ColorPickerWidget
+#from colorfield.fields import ColorField
+from .widgets import ColorPickerWidget, ColorWidget
 
 ACCESS_KEY_LENGTH = 10
 # ^ should be in settings?
@@ -24,19 +28,131 @@ def get_random_access_key():
 
 # https://github.com/h3/django-colorfield/blob/master/colorfield/fields.py
 
-class ColorField(models.CharField):
-    """
-    A text field made to accept hexadecimal color value (#FFFFFF)
-    with a color picker widget.
-    """
+from .utils import get_image_file_background_color
+from .validators import (
+    color_hex_validator,
+    color_hexa_validator,
+    color_rgb_validator,
+    color_rgba_validator,
+)
+from .widgets import ColorWidget
+
+
+VALIDATORS_PER_FORMAT = {
+    "hex": color_hex_validator,
+    "hexa": color_hexa_validator,
+    "rgb": color_rgb_validator,
+    "rgba": color_rgba_validator,
+}
+
+DEFAULT_PER_FORMAT = {
+    "hex": "#FFFFFF",
+    "hexa": "#FFFFFFFF",
+    "rgb": "rgb(255, 255, 255)",
+    "rgba": "rgba(255, 255, 255, 1)",
+}
+
+
+class ColorField(CharField):
+    default_validators = []
+
     def __init__(self, *args, **kwargs):
-        kwargs['max_length'] = 7
+        # works like Django choices, but does not restrict input to the given choices
+        self.samples = kwargs.pop("samples", None)
+        self.format = kwargs.pop("format", "hex").lower()
+        if self.format not in ["hex", "hexa", "rgb", "rgba"]:
+            raise ValueError(f"Unsupported color format: {self.format}")
+        self.default_validators = [VALIDATORS_PER_FORMAT[self.format]]
+
+        self.image_field = kwargs.pop("image_field", None)
+        if self.image_field:
+            kwargs.setdefault("blank", True)
+
+        kwargs.setdefault("max_length", 25)
+        if kwargs.get("null"):
+            kwargs.setdefault("blank", True)
+            kwargs.setdefault("default", None)
+        elif kwargs.get("blank"):
+            kwargs.setdefault("default", "")
+        else:
+            kwargs.setdefault("default", DEFAULT_PER_FORMAT[self.format])
         super().__init__(*args, **kwargs)
 
+        if self.choices and self.samples:
+            raise ImproperlyConfigured(
+                "Invalid options: 'choices' and 'samples' are mutually exclusive, "
+                "you can set only one of the two for a ColorField instance."
+            )
+
     def formfield(self, **kwargs):
-        kwargs['widget'] = ColorPickerWidget
+        palette = []
+        if self.choices:
+            choices = self.get_choices(include_blank=False)
+            palette = [choice[0] for choice in choices]
+        elif self.samples:
+            palette = [choice[0] for choice in self.samples]
+        kwargs["widget"] = ColorWidget(
+            attrs={
+                "default": self.get_default(),
+                "format": self.format,
+                "palette": palette,
+                # # TODO: in case choices is defined,
+                # # this will be used to hide the widget color spectrum
+                # 'palette_choices_only': bool(self.choices),
+            }
+        )
         return super().formfield(**kwargs)
 
+    def contribute_to_class(self, cls, name, **kwargs):
+        super().contribute_to_class(cls, name, **kwargs)
+        if cls._meta.abstract:
+            return
+        if self.image_field:
+            signals.post_save.connect(self._update_from_image_field, sender=cls)
+
+    def deconstruct(self):
+        name, path, args, kwargs = super().deconstruct()
+        kwargs["samples"] = self.samples
+        kwargs["image_field"] = self.image_field
+        return name, path, args, kwargs
+
+    def _get_image_field_color(self, instance):
+        color = ""
+        image_file = getattr(instance, self.image_field)
+        if image_file:
+            with image_file.open() as _:
+                color = get_image_file_background_color(image_file, self.format)
+        return color
+
+    def _update_from_image_field(self, instance, created, *args, **kwargs):
+        if not instance or not instance.pk or not self.image_field:
+            return
+        # check if the field is a valid ImageField
+        try:
+            field_cls = instance._meta.get_field(self.image_field)
+            if not isinstance(field_cls, ImageField):
+                raise ImproperlyConfigured(
+                    "Invalid 'image_field' field type, "
+                    "expected an instance of 'models.ImageField'."
+                )
+        except FieldDoesNotExist as error:
+            raise ImproperlyConfigured(
+                "Invalid 'image_field' field name, "
+                f"{self.image_field!r} field not found."
+            ) from error
+        # update value from picking color from image field
+        color = self._get_image_field_color(instance)
+        color_field_name = self.attname
+        color_field_value = getattr(instance, color_field_name, None)
+        if color_field_value != color and color:
+            color_field_value = color or self.default
+            # update in-memory value
+            setattr(instance, color_field_name, color_field_value)
+            # update stored value
+            manager = instance.__class__.objects
+            manager.filter(pk=instance.pk).update(
+                **{color_field_name: color_field_value}
+            )
 
 class SiteConfig(models.Model):
     name = models.CharField(max_length=255)
@@ -185,15 +301,16 @@ class Competition(models.Model):
         s: str = self.name # type: ignore
         if (qs := (Competition.objects.filter(name=self.name))).count() > 1: # saves the queryset to a variable to avoid running the same query twice
             if (qs2 := (qs.filter(start_date__year=self.start_date.year))).count() > 1:
-                s += f" {self.start_date.month}"
                 if qs2.filter(start_date__month=self.start_date.month).exists():
                     # if you have two on the same day, good luck
-                    s += f"/{self.start_date.day}" # RoboMed June, 2023
-
-                s += f",  {self.start_date.year}" # RoboMed June, 2023
+                    s += f" {self.start_date.month}/{self.start_date.day}/{self.start_date.year}" # RoboMed June, 2023
+                else:
+                    s += f" {self.start_date.month}"
             else:
-                s += f" {self.start_date.year}" # RoboMed 2023
-        return s
+                s += f" {self.start_date.year}" # RoboMed June, 2023
+        else:
+            s += f" {self.start_date.year}" # RoboMed 2023
+        return str(s)
 
     @property
     def is_viewable(self) -> bool:
@@ -441,6 +558,11 @@ class Match(models.Model):
             for prev_match in self.prev_matches.all() 
             for team in (prev_match.advancers.all() if prev_match.advancers.exists() else [None])
         ]
+
+    # @property
+    # def next_match(self) -> Optional['Match']:
+    #     qs: models.QuerySet = self.prev_matches.all().union(self.__class__.objects.filter(id=self.id))
+    #     return self.__class__.objects.filter(prev_matches=qs).first()
 
     def _generate_str_recursive(self, force: bool=False) -> str:
         """Recursive algorithm for generating the string representation of this match.

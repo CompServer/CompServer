@@ -1,6 +1,7 @@
 {% extends 'skeleton.html' %}
 {% load static %}
 {% load i18n %}
+{% load crispy_forms_tags %}
 
 {% block title %}{{ form_title }}{% endblock%}
 
@@ -11,7 +12,7 @@
                 <h1 class="text-center">{{ form_title }}</h1>
                 <form method="POST" enctype="multipart/form-data" action={{ action }}>
                     {% csrf_token %}
-                    {{ form.as_p }}
+                    {{ form|crispy }}
                     <button type="submit" class="btn btn-primary">{% translate "Create" %}</button>
                 </form>
             </div>

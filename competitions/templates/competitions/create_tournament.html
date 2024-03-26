@@ -7,9 +7,9 @@
 <h1>{% translate "Please select the tournament type that you would like to create."%}</h1>
 <ul>
     <li>
-        <a href="{% url "competitions:create_tournament" %}?tournament_type=se">{% translate "Single Elimination" %}</a>
+        <a href="{% url "competitions:create_tournament" %}?tournament_type=se&competition_id={{ competition.id }}">{% translate "Single Elimination" %}</a>
     </li>
     <li>
-        <a href="{% url "competitions:create_tournament" %}?tournament_type=rr">{% translate "Round Robin" %}</a>
+        <a href="{% url "competitions:create_tournament" %}?tournament_type=rr&competition_id={{ competition.id }}">{% translate "Round Robin" %}</a>
     </li>
 {% endblock %}

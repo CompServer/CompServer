@@ -3,6 +3,9 @@
 from django import forms
 from django.conf import settings
 from django.utils.safestring import mark_safe
+from django.conf import settings
+from django.forms import TextInput
+from django.template.loader import render_to_string
 
 COLORFIELD_HTML_WIDGET = u"""
 <script type="text/javascript">(function($){
@@ -35,3 +38,38 @@ class ColorPickerWidget(forms.TextInput):
         rendered = super().render(name, value, attrs, renderer)
         return rendered + mark_safe(COLORFIELD_HTML_WIDGET % {
                             'color': value, 'name': name}) # type: ignore
+
+class ColorWidget(TextInput):
+    template_name = "colorfield/color.html"
+
+    class Media:
+        if settings.DEBUG:
+            js = [
+                "colorfield/jscolor/jscolor.js",
+                "colorfield/colorfield.js",
+            ]
+        else:
+            js = [
+                "colorfield/jscolor/jscolor.min.js",
+                "colorfield/colorfield.js",
+            ]
+
+    def get_context(self, name, value, attrs=None):
+        context = {}
+        context.update(self.attrs.copy() or {})
+        context.update(attrs or {})
+        context.update(
+            {
+                "widget": self,
+                "name": name,
+                "value": value,
+            }
+        )
+        if "format" not in context:
+            context.update({"format": "hex"})
+        return context
+
+    def render(self, name, value, attrs=None, renderer=None):
+        return render_to_string(
+            self.template_name, self.get_context(name, value, attrs)
+        )

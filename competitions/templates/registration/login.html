@@ -1,23 +1,25 @@
 {% extends "skeleton.html" %}
+{% load i18n %}
+{% load crispy_forms_tags %}
 
 {% block content %}
 
   {% if form.errors %}
-    <p>Your username and password didn't match. Please try again.</p>
+    <p>{% translate "Your username and password didn't match. Please try again." %}</p>
   {% endif %}
 
   {% if next %}
     {% if user.is_authenticated %}
-      <p>Your account doesn't have access to this page. To proceed,
-      please login with an account that has access.</p>
+      <p>{% translate "Your account doesn't have access to this page. To proceed,
+      please login with an account that has access." %}</p>
     {% else %}
-      <p>Please login to see this page.</p>
+      <p>{% translate "Please login using your credentials." %}</p>
     {% endif %}
   {% endif %}
 
   <form method="post" action="{% url 'login' %}">
     {% csrf_token %}
-    <table>
+    {% comment %} <table>
       <tr>
         <td>{{ form.username.label_tag }}</td>
         <td>{{ form.username }}</td>
@@ -26,12 +28,14 @@
         <td>{{ form.password.label_tag }}</td>
         <td>{{ form.password }}</td>
       </tr>
-    </table>
-    <input type="submit" value="login">
+    </table> {% endcomment %}
+    {{ form|crispy }}
+    {% comment %} <input type="submit" value="Login"> {% endcomment %}
     <input type="hidden" name="next" value="{{ next }}">
+    <button type="submit" class="btn btn-primary" value="login">{% translate "Login" %}</button>
   </form>
-
+  <br>
   {# Assumes you set up the password_reset view in your URLconf #}
-  <p><a href="{% url 'password_reset' %}">Lost password?</a></p>
+  <p><a class='btn btn-primary' href="{% url 'password_reset' %}">{% translate "Lost password?" %}</a></p>
 
 {% endblock %}

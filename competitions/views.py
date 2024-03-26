@@ -50,12 +50,14 @@ def generate_tournament_matches(request: HttpRequest, tournament_id: int):
     raise Http404
 
 
-def generate_single_elimination_matches(request, tournament_id):
+def generate_single_elimination_matches(request, tournament_id: int):
     #sort the list by ranking, then use a two-pointer alogrithm to make the starting matches
-    tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
+    tournament: SingleEliminationTournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
     arena_iterator = 0
     nmpt_iterator = 0
     arenas = [i for i in tournament.competition.arenas.filter(is_available=True)]
+    if not arenas:
+        raise SuspiciousOperation("No arenas available for this competition.")
     starting_time = tournament.start_time 
     team_ranks = []
     if tournament.prev_tournament == None or not tournament.prev_tournament.ranking_set.exists():
@@ -88,7 +90,7 @@ def generate_single_elimination_matches(request, tournament_id):
             nmpt_iterator = 0
             if arena_iterator >= len(arenas):
                 arena_iterator = 0
-                starting_time += tournament.event.match_time() 
+                starting_time += tournament.event.match_time
         match.save()
         extra_matches.append(match)
         i += 1
@@ -305,27 +307,43 @@ def tournament(request: HttpRequest, tournament_id: int):
 
 @login_required
 def create_tournament(request: HttpRequest):
+    competition_id = request.GET.get('competition_id',None)
     tournament_type = request.GET.get('tournament_type', None)
+
+    if competition_id is None:
+        messages.error(request, "No competition selected.")
+        return HttpResponseRedirect(reverse("competitions:competitions"))
+    try:
+        competition = Competition.objects.get(pk=int(competition_id))
+    except:
+        messages.error(request, "Invalid competition.")
+        return HttpResponseRedirect(reverse("competitions:competitions"))
+    
     if not tournament_type:
-        return render(request, "competitions/create_tournament.html")
+        return render(request, "competitions/create_tournament.html", context={"competition": competition})
+    
     tournament_type = str(tournament_type).lower().strip()
 
     if tournament_type == 'rr':
-        FORM_CLASS = CreateTournamentForm
+        FORM_CLASS = CreateRRTournamentForm
     elif tournament_type == 'se':
         FORM_CLASS = CreateSETournamentForm
     else:
         raise SuspiciousOperation
 
+    form = None
     if request.method == 'POST':
-        form = FORM_CLASS(request.POST)
+        form = FORM_CLASS(request.POST, competition=competition)
         if form.is_valid():
             form.save()
             messages.success(request, "Tournament created successfully.")
             return HttpResponseRedirect(reverse("competitions:tournament", args=(form.instance.id,)))
-
-    form = FORM_CLASS()
-    return render(request, "competitions/create_tournament_form.html", {"form": form, "tournament_type": tournament_type})
+        else:
+            for error_field, error_desc in form.errors.items():
+                form.add_error(error_field, error_desc)
+    if not form:
+        form = FORM_CLASS(competition=competition)
+    return render(request, "FORM_BASE.html", {'form_title': "Create Tournament", 'action': f"?tournament_type={tournament_type}&competition_id={competition.id}" , "form": form})
 
 def single_elimination_tournament(request: HttpRequest, tournament_id: int):
     redirect_to = request.GET.get('next', '')
@@ -609,12 +627,12 @@ def credits(request: HttpRequest):
 
 @login_required
 def judge_match(request: HttpRequest, match_id: int):
-    instance = get_object_or_404(Match, pk=match_id)
+    instance: Match = get_object_or_404(Match, pk=match_id)
     user = request.user
 
-    tournament = instance.tournament
+    tournament: AbstractTournament = instance.tournament
     assert isinstance(tournament, AbstractTournament)
-    competetion = tournament.competition
+    competetion: Competition = tournament.competition
     assert isinstance(competetion, Competition)
     
     if not competetion.is_judgable or not tournament.is_judgable:
@@ -648,6 +666,11 @@ def judge_match(request: HttpRequest, match_id: int):
         messages.error(request, "This match has no starting teams or previous matches.")
         #print("This match has no starting teams or previous matches.")
         raise SuspiciousOperation("This match has no starting teams or previous matches.")
+    
+    # if instance.next_match is not None and instance.next_match.advancers.exists():
+    #         messages.error(request, "The winner of the next match has already been decided.")
+    #         #print("This match has already been judged.")
+    #         return HttpResponseRedirect(reverse('competitions:tournament', args=[instance.tournament.id]))
 
     if request.method == 'POST':
         form = JudgeForm(request.POST, instance=instance, possible_advancers=winner_choices)
@@ -661,11 +684,12 @@ def judge_match(request: HttpRequest, match_id: int):
     return render(request, 'competitions/match_judge.html', {'form': form, 'match': instance, "teams": winner_choices})
 
 
-def user_profile(request, profile_id):
+def user_profile(request: HttpRequest, profile_id):
     context = {
         'user': User.objects.filter(profile__id = profile_id).first(),
         'profile': Profile.objects.filter(id = profile_id).first(),
     }
+    request.user.is_authenticated
     return render(request, 'competitions/user_profile.html', context)
 
 
