@@ -32,10 +32,10 @@
     {{ form|crispy }}
     {% comment %} <input type="submit" value="Login"> {% endcomment %}
     <input type="hidden" name="next" value="{{ next }}">
-    <button type="submit" class="btn btn-primary" value="login">{% translate "Login" %}</button>
+    <button type="submit" class="btn btn-secondary" value="login">{% translate "Login" %}</button>
   </form>
   <br>
   {# Assumes you set up the password_reset view in your URLconf #}
-  <p><a class='btn btn-primary' href="{% url 'password_reset' %}">{% translate "Lost password?" %}</a></p>
+  <p><a class='btn btn-secondary' href="{% url 'password_reset' %}">{% translate "Lost password?" %}</a></p>
 
 {% endblock %}

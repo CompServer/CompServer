@@ -109,6 +109,7 @@ class CreateSETournamentForm(forms.ModelForm):
         self.fields['competition'].initial = competition
         self.event_queryset = competition.events
         self.fields['event'].queryset = self.event_queryset
+        self.fields['teams'].queryset = competition.teams
         #self.events = competition.events
         #self.fields['events'].queryset = Event.objects.filter(competition=competition)
 
@@ -127,10 +128,16 @@ class CreateRRTournamentForm(forms.ModelForm):
         self.fields['competition'].initial = competition
         self.event_queryset = competition.events
         self.fields['event'].queryset = self.event_queryset
+        self.fields['teams'].queryset = competition.teams
         #self.events = competition.events
         #self.fields['events'].queryset = Event.objects.filter(competition=competition)
 
     class Meta:
         model = RoundRobinTournament
-        fields = ['status', 'points', 'teams', 'judges', 'num_rounds', 'event', 'competition']
+        fields = ['competition', 'status', 'points', 'teams', 'judges', 'event', 'num_rounds', 'teams_per_match', 'points_per_win', 'points_per_tie', 'points_per_loss']
+
+class ArenaColorForm(forms.ModelForm):
+    class Meta:
+        model = Arena
+        fields = ['color']
     

@@ -20,6 +20,7 @@ urlpatterns = [
     path("tournament/<int:tournament_id>/swap/", views.swap_matches, name="swap_matches"),
     # path("coach/<int:coach_id>/", views.coach, name="coach-page"),
     # path("match/<int:match_id>/", views.match, name="match"),
+    path("competition/<int:competition_id>/arena/<int:arena_id>/color/", views.arena_color, name="arena_color"),
     path("match/<int:match_id>/judge/", views.judge_match, name="judge_match"),
     path("competition/profile/<int:profile_id>/", views.user_profile, name="user_profile"),
     path('credits/', views.credits, name="credits"),

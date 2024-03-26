@@ -314,7 +314,7 @@ def create_tournament(request: HttpRequest):
         messages.error(request, "No competition selected.")
         return HttpResponseRedirect(reverse("competitions:competitions"))
     try:
-        competition = Competition.objects.get(pk=int(competition_id))
+        competition = get_object_or_404(Competition, pk=int(competition_id))
     except:
         messages.error(request, "Invalid competition.")
         return HttpResponseRedirect(reverse("competitions:competitions"))
@@ -344,6 +344,35 @@ def create_tournament(request: HttpRequest):
     if not form:
         form = FORM_CLASS(competition=competition)
     return render(request, "FORM_BASE.html", {'form_title': "Create Tournament", 'action': f"?tournament_type={tournament_type}&competition_id={competition.id}" , "form": form})
+
+@login_required
+def arena_color(request: HttpRequest):
+    arena = request.GET.get('arena', None)
+    competition_id = request.GET.get('competition_id',None)
+
+    if competition_id is None:
+        messages.error(request, "No competition selected.")
+        return HttpResponseRedirect(reverse("competitions:competitions"))
+    try:
+        competition = get_object_or_404(Competition, pk=int(competition_id))
+    except:
+        messages.error(request, "Invalid competition.")
+        return HttpResponseRedirect(reverse("competitions:competitions"))
+    
+    if not tournament_type:
+        return render(request, "competitions/create_tournament.html", context={"competition": competition})
+    
+    if request.method == 'POST':
+        form = ArenaColorForm(request.POST, instance=arena)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Color changed successfully.")
+            return HttpResponseRedirect(reverse('competitions:competition', args=(competition_id,)))
+    context = {
+        'arena': arena,
+        'form': ArenaColorForm(instance=arena),
+    }
+    return render(request, "competitions/arena_color.html", context)
 
 def single_elimination_tournament(request: HttpRequest, tournament_id: int):
     redirect_to = request.GET.get('next', '')
