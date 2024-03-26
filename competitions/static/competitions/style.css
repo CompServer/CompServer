@@ -66,6 +66,10 @@ img.error {
     /* overflow: hidden; */
 }
 
+span.with-padding {
+    padding: 5%;
+}
+
 /* from comp.css */
 /* p {
     word-spacing: 5px;
