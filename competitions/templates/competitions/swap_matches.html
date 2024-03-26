@@ -1,12 +1,12 @@
 {% extends 'skeleton.html' %}
 {% load static %}
 {% load i18n %}
-{% block title %}Title{% endblock%}
+{% block title %}Swap Matches{% endblock%}
 
 {% block content %}
 <form method="POST">
     {% csrf_token %}
     {{ form.as_p }}
-    <button type="submit" class="btn btn-secondary">{% translate "Swap" %}</button>
+    <button type="submit" class="btn btn-secondary">{% translate "Swap Matches" %}</button>
 </form>
 {% endblock %}

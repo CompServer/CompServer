@@ -7,7 +7,6 @@ from django.dispatch import receiver
 from django.utils import timezone
 import random, string, datetime
 from functools import lru_cache
-from colorfield.fields import ColorField
 from .widgets import ColorPickerWidget
 
 ACCESS_KEY_LENGTH = 10

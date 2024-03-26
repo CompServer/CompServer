@@ -2,8 +2,8 @@
 
 from django import forms
 from django.contrib import messages
-
-from competitions.models import AbstractTournament, Competition, SingleEliminationTournament, Sport, Team, Match, RoundRobinTournament
+from django.forms.widgets import TextInput
+from competitions.models import AbstractTournament, Competition, SingleEliminationTournament, Sport, Team, Match, RoundRobinTournament, Arena
 
 
 class JudgeForm(forms.ModelForm):
@@ -115,4 +115,5 @@ class CreateRRTournamentForm(forms.ModelForm):
     class Meta:
         model = RoundRobinTournament
         fields = ['status', 'points', 'teams', 'judges', 'num_rounds']
+
     
