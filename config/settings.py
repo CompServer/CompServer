@@ -57,7 +57,7 @@ INSTALLED_APPS = [
     'debug_toolbar',
     'crispy_forms',
     'mathfilters', # pip install django-mathfilters
-    'colorfield', # pip install django-colorfield
+    #'colorfield', # pip install django-colorfield
     #'easy_timezones', # pip install django-easy-timezones
 ]
 
