@@ -301,15 +301,16 @@ class Competition(models.Model):
         s: str = self.name # type: ignore
         if (qs := (Competition.objects.filter(name=self.name))).count() > 1: # saves the queryset to a variable to avoid running the same query twice
             if (qs2 := (qs.filter(start_date__year=self.start_date.year))).count() > 1:
-                s += f" {self.start_date.month}"
                 if qs2.filter(start_date__month=self.start_date.month).exists():
                     # if you have two on the same day, good luck
-                    s += f"/{self.start_date.day}" # RoboMed June, 2023
-
-                s += f",  {self.start_date.year}" # RoboMed June, 2023
+                    s += f" {self.start_date.month}/{self.start_date.day}/{self.start_date.year}" # RoboMed June, 2023
+                else:
+                    s += f" {self.start_date.month}"
             else:
-                s += f" {self.start_date.year}" # RoboMed 2023
-        return s
+                s += f" {self.start_date.year}" # RoboMed June, 2023
+        else:
+            s += f" {self.start_date.year}" # RoboMed 2023
+        return str(s)
 
     @property
     def is_viewable(self) -> bool:
