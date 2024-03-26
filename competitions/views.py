@@ -56,6 +56,8 @@ def generate_single_elimination_matches(request, tournament_id: int):
     arena_iterator = 0
     nmpt_iterator = 0
     arenas = [i for i in tournament.competition.arenas.filter(is_available=True)]
+    if not arenas:
+        raise SuspiciousOperation("No arenas available for this competition.")
     starting_time = tournament.start_time 
     team_ranks = []
     if tournament.prev_tournament == None or not tournament.prev_tournament.ranking_set.exists():
