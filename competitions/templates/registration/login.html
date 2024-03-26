@@ -1,5 +1,6 @@
 {% extends "skeleton.html" %}
 {% load i18n %}
+{% load crispy_forms_tags %}
 
 {% block content %}
 
@@ -18,7 +19,7 @@
 
   <form method="post" action="{% url 'login' %}">
     {% csrf_token %}
-    <table>
+    {% comment %} <table>
       <tr>
         <td>{{ form.username.label_tag }}</td>
         <td>{{ form.username }}</td>
@@ -27,7 +28,8 @@
         <td>{{ form.password.label_tag }}</td>
         <td>{{ form.password }}</td>
       </tr>
-    </table>
+    </table> {% endcomment %}
+    {{ form|crispy }}
     {% comment %} <input type="submit" value="Login"> {% endcomment %}
     <input type="hidden" name="next" value="{{ next }}">
     <button type="submit" class="btn btn-primary" value="login">{% translate "Login" %}</button>
