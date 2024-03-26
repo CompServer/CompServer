@@ -81,6 +81,20 @@
                     {% block links %}
                     {% endblock %}
                 </ul>
+                {% if user.is_authenticated %}
+                    <span class="navbar-text me-3">
+                    {% translate "Logged in as" %} {{ user.username }}
+                        {% if user.is_superuser %}
+                            {% translate " (Superuser)" %}
+                        {% endif %}
+                    </span>
+                    <a class="btn btn-primary me-3" href="{% url "logout" %}" role="button">Log Out</a>
+                {% else %}
+                    <a class="btn btn-primary me-3" href="{% url "login" %}{% if request.path %}?next={{ request.path }}{% endif %}" role="button">Log In</a>
+                {% endif %}
+
+
+                    
                 {% get_available_languages as LANGUAGES %} 
                 <form class="form-inline my-2 my-md-0 justify-content-end" action="{% url 'set_language' %}" method="post">
                     {% csrf_token %}
