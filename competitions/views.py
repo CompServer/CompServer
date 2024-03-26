@@ -503,9 +503,8 @@ def results(request, competition_id):
                 scores.append(0)
         score_total = sum(scores)
         totals.append((team_name, score_total))
-        team_scorings.append((team_name, scores))
+        team_scorings.append((scores))
     judge_names = [plenary_judge.first_name + " " + plenary_judge.last_name for plenary_judge in competition.plenary_judges.order_by("-username")]
-    
     context = {
         'tournament_names': tournament_names,
         'team_names': team_names,
@@ -522,29 +521,59 @@ def team(request: HttpRequest, team_id: int):
     today = timezone.now().date()
     upcoming_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), tournament__competition__start_date__lte=today, tournament__competition__end_date__gte=today, advancers=None).order_by("-time")
     past_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id)).exclude(advancers=None).order_by("-time")
-    past_competitions = Competition.objects.filter(teams__id = team_id, status = Status.COMPLETE).order_by("end_date")    
-    losses = list()
-    wins = list()
-    draws = list()
+    past_competitions = Competition.objects.filter(teams__id = team_id, status = Status.COMPLETE).order_by("end_date")
     past_tournaments_won = list()
     past_tournaments = SingleEliminationTournament.objects.filter(teams__id = team_id, status = Status.COMPLETE).order_by("start_time")
     for past_tournament in past_tournaments:
         last_match_advancers = past_tournament.match_set.last().advancers.all()
         if Team.objects.filter(id = team_id) in last_match_advancers:
             past_tournaments_won.append(past_tournament)
+    losses = list() #add all of the strings to these lists in the order that they are listed on the template
+    wins = list()
+    draws = list()
+    string = list()
     for pm in past_matches:
-        for match in Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), tournament__id = pt.id):
-            ids = list()
-            for advancer in match.advancers.all():
-                ids.append(advancer.id)
-                if team_id in ids:
-                    if match.advancers.count() == 1:
-                        wins.append(match)
-                    else:
-                        draws.append(match)
+        if team in match.advancers.all():
+            if match.advancers.count() == 1:
+                str = ""
+                if match.starting_teams.count() == 1:
+                    str = "Granted a BYE for " + match.round_num + " for " + match.tournament.event.name + " in @" + match.tournament.competition.name
+                    strings.add(("win"), match.tournament)
                 else:
-                    losses.append(match)
-    #append round and who 
+                    str = str + "Won Against "
+                    i = 0
+                    for starting_team in match.starting_teams.all():
+                        if i < (match.starting_teams.count()-1):
+                            if team.id != starting_team.id:
+                                str = starting_team.name + ", "
+                                i = i + 1
+                        else:
+                            str = str + starting_team.name
+                    str = " in Round " + match.num_round + " for " + match.tournament.event.name + " tournament @" + match.tournament.competition.name
+                    strings.add(("win"), match.tournament)
+            else:
+                i = 0
+                str = "Drew with "
+                for advancer in match.advancers.all():
+                    if i < (match.advancers.count()-1):
+                        str = advancer.name + ", "
+                        i = i + 1
+                    str = advancer.name + " in Round " + match.round_num + " for " + match.tournament.event.name + " tournament @" + match.tournament.competition.name
+                strings.add(("draw"), match.tournament)
+        else:
+            str = "Lost against "
+            if match.advancers.count() == 1:
+                str = str + match.advancers.first().name + " in Round " + match.round_num + " for " + match.tournament.event.name + " tournament @" + match.tournament.competition.name
+                tournament_objects.add(("loss"), match.tournament)
+            else:
+                i = 0
+                for advancer in match.advancers.all():
+                    while i < (match.advnacers.count()-1):
+                        str = str + advancer.name + ", "
+                        i = i + 1
+                    str = str + advancer.name
+                str = " in Round " + match.num_round + " for " + match.tournament.event.name + " tournmanet @" + match.tournament.competition.name
+                strings.add(("loss"), match.tournament)
     context = {
         'team': Team.objects.get(pk=team_id),
         'upcoming_matches': upcoming_matches,
