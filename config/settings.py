@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'hijack.contrib.admin',
     'debug_toolbar',
     'crispy_forms',
+    'crispy_bootstrap5',
     'mathfilters', # pip install django-mathfilters
     #'colorfield', # pip install django-colorfield
     #'easy_timezones', # pip install django-easy-timezones
