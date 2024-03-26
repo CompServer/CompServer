@@ -657,10 +657,10 @@ def judge_match(request: HttpRequest, match_id: int):
         #print("This match has no starting teams or previous matches.")
         raise SuspiciousOperation("This match has no starting teams or previous matches.")
     
-    if instance.next_match is not None and instance.next_match.advancers.exists():
-            messages.error(request, "The winner of the next match has already been decided.")
-            #print("This match has already been judged.")
-            return HttpResponseRedirect(reverse('competitions:tournament', args=[instance.tournament.id]))
+    # if instance.next_match is not None and instance.next_match.advancers.exists():
+    #         messages.error(request, "The winner of the next match has already been decided.")
+    #         #print("This match has already been judged.")
+    #         return HttpResponseRedirect(reverse('competitions:tournament', args=[instance.tournament.id]))
 
     if request.method == 'POST':
         form = JudgeForm(request.POST, instance=instance, possible_advancers=winner_choices)
@@ -674,11 +674,12 @@ def judge_match(request: HttpRequest, match_id: int):
     return render(request, 'competitions/match_judge.html', {'form': form, 'match': instance, "teams": winner_choices})
 
 
-def user_profile(request, profile_id):
+def user_profile(request: HttpRequest, profile_id):
     context = {
         'user': User.objects.filter(profile__id = profile_id).first(),
         'profile': Profile.objects.filter(id = profile_id).first(),
     }
+    request.user.is_authenticated
     return render(request, 'competitions/user_profile.html', context)
 
 
