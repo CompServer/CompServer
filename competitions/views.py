@@ -230,7 +230,7 @@ def generate_round_robin_matches(request, tournament_id):
                 if arena_iterator >= len(arenas):
                     arena_iterator = 0
                     starting_time += tournament.event.match_time 
-            match.round = k+1
+            match.round_num = k+1
             match.save()
     return HttpResponseRedirect(reverse("competitions:round_robin_tournament", args=(tournament_id,)))
     #still have a little bit of confusion with the ordering of matches.
@@ -247,8 +247,10 @@ def generate_round_robin_rankings(request, tournament_id):
         else:
             for team in match.advancers.all():
                 team_wins[team] += tournament.points_per_win
+        for team in match.starting_teams.all():
+            if team not in match.advancers.all():
+                team_wins[team] += tournament.points_per_loss
     sorted_team_wins = dict(sorted(team_wins.items(), key=lambda x:x[1]))
-    i = len(sorted_team_wins)
     for i, kv in zip(range(len(sorted_team_wins), 1), sorted_team_wins.items()):
         key = kv[0]
         rank = Ranking.objects.create(tournament=tournament, team=key, rank=i)
@@ -273,10 +275,11 @@ def swap_matches(request: HttpRequest, tournament_id: int):
             match1.starting_teams.remove(team1)
             match2.starting_teams.remove(team2)
             match1.starting_teams.add(team2)
-            match2.starting_teams.add(team1)
+            match2.starting_teams.add(team1) 
             match1.save()
             match2.save()
             #print(match1, match2)
+            messages.success(request, "Teams swapped successfully.")
             return HttpResponseRedirect(reverse("competitions:tournament", args=(tournament_id,)))
         else:
             for error_field, error_desc in form.errors.items():
@@ -318,6 +321,7 @@ def create_tournament(request: HttpRequest):
         form = FORM_CLASS(request.POST)
         if form.is_valid():
             form.save()
+            messages.success(request, "Tournament created successfully.")
             return HttpResponseRedirect(reverse("competitions:tournament", args=(form.instance.id,)))
 
     form = FORM_CLASS()
@@ -335,6 +339,7 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
             status = form.cleaned_data.get('status')
             tournament.status = status
             tournament.save()
+            messages.success(request, "Status changed successfully.")
             if redirect_id == None:
                 return HttpResponseRedirect(reverse(f"competitions:{redirect_to}"))
             else:
@@ -463,6 +468,7 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
             status = form.cleaned_data.get('status')
             tournament.status = status
             tournament.save()
+            messages.success(request, "Status changed successfully.")
             if redirect_id == None:
                 return HttpResponseRedirect(reverse(f"competitions:{redirect_to}"))
             else:
@@ -472,7 +478,7 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
     numRounds = tournament.num_rounds
     bracket_array =  [{i:[]} for i in range(numRounds)]
     for i in range(numRounds):
-        rounds = sorted([match for match in Match.objects.filter(tournament=tournament, round=i+1)], key=lambda match : match.arena.id)
+        rounds = sorted([match for match in Match.objects.filter(tournament=tournament, round_num=i+1)], key=lambda match : (match.arena.id, match.time))
         for j in range(len(rounds)):
             team_data = []
             won = False
@@ -553,6 +559,7 @@ def competition(request: HttpRequest, competition_id: int):
             status = form.cleaned_data.get('status')
             competition.status = status
             competition.save()
+            messages.success(request, "Status changed successfully.")
             if redirect_id:
                 return HttpResponseRedirect(reverse(f"competitions:{redirect_to}",args=redirect_id))
             elif redirect_to:
@@ -588,6 +595,7 @@ def create_competition(request: HttpRequest):
         form = CreateCompetitionsForm(request.POST, sport=sport)
         if form.is_valid():
             form.save()
+            messages.success(request, "Competition created successfully.")
             return HttpResponseRedirect(reverse("competitions:competition", args=(form.instance.id,)))
         else:
             for error_field, error_desc in form.errors.items():

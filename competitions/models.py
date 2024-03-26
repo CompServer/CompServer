@@ -357,14 +357,8 @@ class RoundRobinTournament(AbstractTournament):
 #         Can be used to establish rankings for an Elimination
 #         This is often used for league play (not necessarily a tournament)
 #     '''
-#     # points_per_win: 3 for World Cup group round
-#     # points_per_tie: 1 for World Cup group round
-#     # points_per_loss: probably always 0
 #     # accumulation: sum of all points (e.g. goals), sum of match points (e.g. 2 for win, 1 for tie, 0 for loss)
 #     # interpolated: rull rankings (order of points)
-
-    #this part is for the modelForm to have the correct name, not to be actually used
-    round = models.PositiveIntegerField(default=0)
 
 class SingleEliminationTournament(AbstractTournament):
     ''' Elimination style with brackets (last man standing) 
