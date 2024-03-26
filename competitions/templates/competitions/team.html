@@ -116,7 +116,7 @@
                 <h4>{% translate "Wins" %}</h4>
                 <ul>
                     {% for win in wins %}  
-                        <li>{{ win.0 }} <a href="{% url 'competitions:tournament' win.1.id %}">{{ win.1 }}</a></li>
+                        <li>{{ win.0 }} <a href="{% url 'competitions:tournament' win.1.id %}">{{ win.1.event.name }}</a>{{ win.2 }}</li>
                     {% endfor %}
                 </ul>
             {% endif %}
@@ -124,7 +124,7 @@
                 <h4>{% translate "Losses" %}</h4>
                 <ul>
                     {% for loss in losses %}
-                        <li>{{ loss.0 }} <a href="{% url 'competitions:tournament' loss.1.id %}">{{ loss.1 }}</li>
+                        <li>{{ loss.0 }} <a href="{% url 'competitions:tournament' loss.1.id %}">{{ loss.1.event.name }}</a>{{ loss.2 }}</li>
                     {% endfor %}
                 </ul>
             {% endif %}
@@ -132,7 +132,7 @@
                 <h4>{% translate "Draws" %}</h4>
                 <ul>
                     {% for draw in draws %}
-                        <li>{{ draw.0 }} <a href="{% url 'competitions:tournament' draw.1.id %}">{{ draw.1 }}</li>
+                        <li>{{ draw.0 }} <a href="{% url 'competitions:tournament' draw.1.id %}">{{ draw.1.event.name }}</a>{{ draw.2 }}</li>
                     {% endfor %}
                 </ul>
             {% endif %}
