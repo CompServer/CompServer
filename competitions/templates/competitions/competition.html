@@ -94,5 +94,9 @@
         </div>
         {% endfor %}
     {% endif %}
+
+    {% if user.is_superuser %}
+        <a href="{% url "competitions:create_tournament" %}?competition_id={{ competition.id }}" class="btn btn-primary">{% translate "Create Tournament" %}</a>
+    {% endif %}
 {% endblock %}
 <!-- pass in urls for the results page in competitions/ -->
