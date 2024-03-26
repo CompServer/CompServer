@@ -127,6 +127,7 @@ class CreateRRTournamentForm(forms.ModelForm):
         self.fields['competition'].initial = competition
         self.event_queryset = competition.events
         self.fields['event'].queryset = self.event_queryset
+        self.fields['teams'].queryset = competition.teams
         #self.events = competition.events
         #self.fields['events'].queryset = Event.objects.filter(competition=competition)
 
