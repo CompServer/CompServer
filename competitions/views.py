@@ -528,52 +528,51 @@ def team(request: HttpRequest, team_id: int):
         last_match_advancers = past_tournament.match_set.last().advancers.all()
         if Team.objects.filter(id = team_id) in last_match_advancers:
             past_tournaments_won.append(past_tournament)
-    losses = list() #add all of the strings to these lists in the order that they are listed on the template
+    losses = list()
     wins = list()
     draws = list()
-    string = list()
     for pm in past_matches:
-        if team in match.advancers.all():
-            if match.advancers.count() == 1:
+        if team in pm.advancers.all():
+            if pm.advancers.count() == 1:
                 str = ""
-                if match.starting_teams.count() == 1:
-                    str = "Granted a BYE for " + match.round_num + " for " + match.tournament.event.name + " in @" + match.tournament.competition.name
-                    strings.add(("win"), match.tournament)
+                if pm.starting_teams.count() == 1:
+                    str = "Granted a BYE for " + pm.round_num + " for " + pm.tournament.event.name + " in @"
+                    wins.add((str, pm.tournament))
                 else:
                     str = str + "Won Against "
                     i = 0
-                    for starting_team in match.starting_teams.all():
-                        if i < (match.starting_teams.count()-1):
+                    for starting_team in pm.starting_teams.all():
+                        if i < (pm.starting_teams.count()-1):
                             if team.id != starting_team.id:
                                 str = starting_team.name + ", "
                                 i = i + 1
                         else:
                             str = str + starting_team.name
-                    str = " in Round " + match.num_round + " for " + match.tournament.event.name + " tournament @" + match.tournament.competition.name
-                    strings.add(("win"), match.tournament)
+                    str = " in Round " + pm.num_round + " for " + pm.tournament.event.name + " tournament @" + pm.tournament.competition.name
+                    wins.add((str, pm.tournament))
             else:
                 i = 0
                 str = "Drew with "
-                for advancer in match.advancers.all():
-                    if i < (match.advancers.count()-1):
+                for advancer in pm.advancers.all():
+                    if i < (pm.advancers.count()-1):
                         str = advancer.name + ", "
                         i = i + 1
-                    str = advancer.name + " in Round " + match.round_num + " for " + match.tournament.event.name + " tournament @" + match.tournament.competition.name
-                strings.add(("draw"), match.tournament)
+                    str = advancer.name + " in Round " + pm.round_num + " for " + pm.tournament.event.name + " tournament @" + pm.tournament.competition.name
+                draws.add((str, pm.tournament))
         else:
             str = "Lost against "
-            if match.advancers.count() == 1:
-                str = str + match.advancers.first().name + " in Round " + match.round_num + " for " + match.tournament.event.name + " tournament @" + match.tournament.competition.name
-                tournament_objects.add(("loss"), match.tournament)
+            if pm.advancers.count() == 1:
+                str = str + pm.advancers.first().name + " in Round " + pm.round_num + " for " + pm.tournament.event.name + " tournament @" + pm.tournament.competition.name
+                losses.add((str, pm.tournament))
             else:
                 i = 0
-                for advancer in match.advancers.all():
-                    while i < (match.advnacers.count()-1):
+                for advancer in pm.advancers.all():
+                    while i < (pm.advnacers.count()-1):
                         str = str + advancer.name + ", "
                         i = i + 1
                     str = str + advancer.name
-                str = " in Round " + match.num_round + " for " + match.tournament.event.name + " tournmanet @" + match.tournament.competition.name
-                strings.add(("loss"), match.tournament)
+                str = " in Round " + pm.num_round + " for " + pm.tournament.event.name + " tournmanet @" + pm.tournament.competition.name
+                losses.add((str, pm.tournament))
     context = {
         'team': Team.objects.get(pk=team_id),
         'upcoming_matches': upcoming_matches,

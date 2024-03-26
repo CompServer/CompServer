@@ -115,24 +115,24 @@
             {% if wins %}
                 <h4>{% translate "Wins" %}</h4>
                 <ul>
-                    {% for match in wins %}  
-                        <li>{{ match }}</li>
+                    {% for win in wins %}  
+                        <li>{{ win[0] }} <a href="{% url 'competitions:tournament" win[1].id %}>{{ win[1] }}</a></li>
                     {% endfor %}
                 </ul>
             {% endif %}
             {% if losses %}
                 <h4>{% translate "Losses" %}</h4>
                 <ul>
-                    {% for match in losses %}
-                        <li>{{ match }}</li>
+                    {% for loss in losses %}
+                        <li>{{ loss[0] }} <a href="{% url 'competitions:tournament" loss[1].id %}>{{ loss[1] }}</li>
                     {% endfor %}
                 </ul>
             {% endif %}
             {% if draws %}
                 <h4>{% translate "Draws" %}</h4>
                 <ul>
-                    {% for match in draws %}
-                        <li>{{ match }}</li>
+                    {% for draw in draws %}
+                        <li>{{ draw[0] }} <a href="{% url 'competitions:tournament" draw[1].id %}>{{ draw[1] }}</li>
                     {% endfor %}
                 </ul>
             {% endif %}
