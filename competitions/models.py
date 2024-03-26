@@ -1,4 +1,4 @@
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Optional
 from django.db import models
 from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy as _
@@ -364,7 +364,7 @@ class RoundRobinTournament(AbstractTournament):
 #     # interpolated: rull rankings (order of points)
 
     #this part is for the modelForm to have the correct name, not to be actually used
-    round = models.PositiveIntegerField(default=0)
+    round_num = models.PositiveIntegerField(default=0)
 
 class SingleEliminationTournament(AbstractTournament):
     ''' Elimination style with brackets (last man standing) 
@@ -448,6 +448,10 @@ class Match(models.Model):
             for prev_match in self.prev_matches.all() 
             for team in (prev_match.advancers.all() if prev_match.advancers.exists() else [None])
         ]
+
+    @property
+    def next_match(self) -> Optional['Match']:
+        return self.__class__.objects.filter(prev_matches=[self] + list(self.prev_matches.all()))
 
     def _generate_str_recursive(self, force: bool=False) -> str:
         """Recursive algorithm for generating the string representation of this match.
