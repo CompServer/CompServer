@@ -9,7 +9,7 @@ urlpatterns = [
     path("competition/<int:competition_id>/", views.competition, name="competition"),
     path("competition/create/", views.create_competition, name="create_competition"),
     path("competition/<int:competition_id>/", RedirectView.as_view(url='competition'), name="competition_score"), # legacy so they can be hyperlinked to
-    path("competition/<int:competition_id>/results/", views.competition_score_page, name="competition_score_page"), # legacy so they can be hyperlinked to
+    path("competition/<int:competition_id>/results", views.results, name="results"), # legacy so they can be hyperlinked to
     path("team/<int:team_id>/", views.team, name="team"),
     path("tournament/", views.tournaments, name="tournaments"),
     path("tournament/create/", views.create_tournament, name="create_tournament"),
@@ -21,7 +21,7 @@ urlpatterns = [
     # path("coach/<int:coach_id>/", views.coach, name="coach-page"),
     # path("match/<int:match_id>/", views.match, name="match"),
     path("match/<int:match_id>/judge/", views.judge_match, name="judge_match"),
-    path("competition/profile/<int:profile_id>/", views.user_profile, name="user_profile"),
+    # path("competition/profile/<int:user_id>/", views.profile, name="user_profile"),
     path('credits/', views.credits, name="credits"),
 
     path('_error/', views._raise_error_code, name="_error"), # for testing error pages

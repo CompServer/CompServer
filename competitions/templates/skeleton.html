@@ -20,6 +20,7 @@
     <link rel='icon' href="{% static 'logo.png' %}">
     <link rel="stylesheet" href="{% static 'style.css' %}">
     <link rel="stylesheet" href="{% static 'competitions/style.css' %}">
+    {% block stylesheets %}{% endblock %}
     <title>
         {% block title %}Robocomp{% endblock %}
     </title>
@@ -72,6 +73,11 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'competitions:credits' %}">{% translate "Credits" %}</a>
                     </li>
+                    <!-- {% if user.is_logged_in %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'competitions:profile' %}">{% translate "Profile"%}</a>
+                        </li>
+                    {% endif %} -->
                     {% comment %} only implemented for home page {% endcomment %}
                     {% if user.is_staff %}
                         <li class="nav-item">
