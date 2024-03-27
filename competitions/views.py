@@ -763,7 +763,7 @@ def team(request: HttpRequest, team_id: int):
                     if advancer.id != team_id:
                         if i < pm.advancers.count()-1:
                             desc = desc + advancer.name + ", "
-                                i = i + 1
+                            i = i + 1
                         else:
                             desc = desc + advancers.name
                     desc = desc + " and " + advancer.name + " in Round " + str(pm.round_num) + " for " 
