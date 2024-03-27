@@ -77,30 +77,13 @@
                             <div class="connector-back"></div>
                         {% endif %}
                         {% if team_data.is_next and team_data.won%}
-
                             {% comment %} reworking this {% endcomment %}
-
-                            {% with connector_height=match_data.match_height|div:2 straight_connector_height=match_data.match_height|div:4 A=forloop.parentloop.counter|divisibleby:2 B=forloop.counter|divisibleby:2%}                          
+                            {% with connector_height=match_data.match_height|mul:team_data.match_offset_mult %}     
                             <div class="connector-front {{ team_data.connector }}" onclick=""
-                            style=" cursor: default; {% if A and not B or B and not A %}
-                                    {% if team_data.connector == 'connector-down'%}
-                                        height:{{connector_height|sub:24}}px;
-                                    {% elif team_data.connector == 'connector-straight' %}
-                                        height:{{straight_connector_height}}px
-                                    {% else %}
-                                        height:{{connector_height|sub:26}}px;
-                                    {%endif%}
-                                {%else%}
-                                    {% if team_data.connector == 'connector-down'%}
-                                        height:{{connector_height|add:2}}px;
-                                    {% elif team_data.connector == 'connector-straight' %}
-                                        height:{{straight_connector_height|add:3}}px
-                                    {% else %}
-                                        height:{{connector_height}}px;
-                                    {%endif%}
-                                {%endif%}">
-                            </div>
+                            style=" cursor: default;
+                            height: {{connector_height|add:team_data.team_index_offset}}px
                             {%endwith %}
+                            "></div>
                         {%endif%}
                     </div>
                 {% endfor %}
