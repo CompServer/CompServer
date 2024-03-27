@@ -732,59 +732,91 @@ def team(request: HttpRequest, team_id: int):
     losses = list()
     wins = list()
     draws = list()
-    team_ids = list()
     for pm in past_matches:
-        for advancer in pm.advancers.all():
-            team_ids.append(advancer.id)
-        if team_id in team_ids:
-            if pm.advancers.count() == 1:
-                desc = ""
-                if pm.starting_teams.count() == 1:
-                    desc = desc + "Granted a BYE for " + str(pm.round_num) + " for " 
-                    desc2 = " tournament in @" + pm.tournament.competition.name
-                    wins.append((desc, pm.tournament, desc2))
-                else:
-                    desc = desc + "Won Against "
-                    i = 0
-                    for starting_team in pm.starting_teams.all():
-                        if i < (pm.starting_teams.count()-1):
-                            if team_id != starting_team.id:
-                                desc = desc + starting_team.name + ", "
-                                i = i + 1
-                        else:
-                            desc = desc + starting_team.name
-                    desc = desc + " in Round " + str(pm.round_num) + " for " 
-                    desc2 = " tournament in @" + pm.tournament.competition.name
-                    wins.append((desc, pm.tournament, desc2))
-            else:
-                desc = "Drew with "
-                for advancer in pm.advancers.all():
-                    i = 0
-                    if advancer.id != team_id:
-                        if i < pm.advancers.count()-1:
-                            desc = desc + advancer.name + ", "
-                            i = i + 1
-                        else:
-                            desc = desc + advancers.name
-                    desc = desc + " and " + advancer.name + " in Round " + str(pm.round_num) + " for " 
-                    desc2 = " tournament @" + pm.tournament.competition.name
-                draws.append((desc, pm.tournament, desc2))
+        first_half = " in Round " + str(pm.round_num) + " in "
+        second_half = " @" + pm.tournament.competition.name
+        num_starting_teams = pm.starting_teams.count()
+        num_advnacers = pm.advancers.count()
+        if num_starting_teams == 1 and pm.starting_teams.all().first().id == team_id and pm.advancers.all().first().id == team_id:
+            wins.append((("Granted a BYE" + first_half), pm.tournament, second_half))
         else:
-            desc = "Lost against "
-            if pm.advancers.count() == 1:
-                desc = desc + pm.advancers.first().name + " in Round " + str(pm.round_num) + " for " 
-                desc2 = " tournament @" + pm.tournament.competition.name
-                losses.append((desc, pm.tournament, desc2))
+            starting_teams_names = list()
+            for starting_team in pm.starting_teams.all():
+                if starting_team.id != team_id:
+                    starting_team_names.append(starting_team.name)
+            if num_advancers == 1 and pm.advancers.all().first().id == team_id:
+                if num_starting_teams == 2:
+                    wins.append((("Won against " + "".join(starting_teams_names) + first_half), pm.tournament, second_half))
+                else:
+                    wins.append((("Won against " + ",".join(starting_teams_names) + first_half), pm.tournament, second_half))
             else:
-                i = 0
+                advancer_team_ids = list()
+                advancer_teams_names = list()
                 for advancer in pm.advancers.all():
-                    while i < (pm.advancers.count()-1):
-                        desc = desc + advancer.name + ", "
-                        i = i + 1
-                    desc = desc + " and " + advancer.name
-                desc = desc + " in Round " + str(pm.round_num) + " for "
-                desc2 = " tournmanet @" + pm.tournament.competition.name
-                losses.append((desc, pm.tournament, desc2))
+                    advancer_team_ids.append(advancer.id)
+                    if advancer.id != team.id:
+                        advancer_team_names.append(advancer.name)
+                if num_advancers > 1 and team_id in advancer_team_ids:
+                    if num_advancers == 2:
+                        draws.append((("Drew with " + "".join(advancer_teams_names) + first_half), pm.tournament, second_half))
+                    else:
+                        draws.append((("Drew with " + ",".join(advancer_teams_names) + first_half), pm.tournament, second_half))
+                else:
+                    if num_advancers == 2:
+                        losses.append((("Lost against " + "".join(advancer_teams_names) + first_half), pm.tournament, second_half))
+                    else:
+                        losses.append((("Lost against " + ",".join(advancer_teams_names) + first_half), pm.tournament, second_half))
+        # for advancer in pm.advancers.all():
+        #     team_ids.append(advancer.id)
+        # if team_id in team_ids:
+        #     if pm.advancers.count() == 1:
+        #         desc = ""
+        #         if pm.starting_teams.count() == 1:
+        #             desc = desc + "Granted a BYE for " + str(pm.round_num) + " for " 
+        #             desc2 = " tournament in @" + pm.tournament.competition.name
+        #             wins.append((desc, pm.tournament, desc2))
+        #         else:
+        #             desc = desc + "Won Against "
+        #             i = 0
+        #             for starting_team in pm.starting_teams.all():
+        #                 if i < (pm.starting_teams.count()-1):
+        #                     if team_id != starting_team.id:
+        #                         desc = desc + starting_team.name + ", "
+        #                         i = i + 1
+        #                 else:
+        #                     desc = desc + starting_team.name
+        #             desc = desc + " in Round " + str(pm.round_num) + " for " 
+        #             desc2 = " tournament in @" + pm.tournament.competition.name
+        #             wins.append((desc, pm.tournament, desc2))
+        #     else:
+        #         desc = "Drew with "
+        #         for advancer in pm.advancers.all():
+        #             i = 0
+        #             if advancer.id != team_id:
+        #                 if i < pm.advancers.count()-1:
+        #                     desc = desc + advancer.name + ", "
+        #                     i = i + 1
+        #                 else:
+        #                     desc = desc + advancers.name
+        #             desc = desc + " and " + advancer.name + " in Round " + str(pm.round_num) + " for " 
+        #             desc2 = " tournament @" + pm.tournament.competition.name
+        #         draws.append((desc, pm.tournament, desc2))
+        # else:
+        #     desc = "Lost against "
+        #     if pm.advancers.count() == 1:
+        #         desc = desc + pm.advancers.first().name + " in Round " + str(pm.round_num) + " for " 
+        #         desc2 = " tournament @" + pm.tournament.competition.name
+        #         losses.append((desc, pm.tournament, desc2))
+        #     else:
+        #         i = 0
+        #         for advancer in pm.advancers.all():
+        #             while i < (pm.advancers.count()-1):
+        #                 desc = desc + advancer.name + ", "
+        #                 i = i + 1
+        #             desc = desc + " and " + advancer.name
+        #         desc = desc + " in Round " + str(pm.round_num) + " for "
+        #         desc2 = " tournmanet @" + pm.tournament.competition.name
+        #         losses.append((desc, pm.tournament, desc2))
     context = {
         'team': team,
         'upcoming_matches': upcoming_matches,
