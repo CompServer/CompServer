@@ -18,12 +18,10 @@ urlpatterns = [
     path("tournament/<int:tournament_id>/", RedirectView.as_view(url='tournament'), name="single_elimination_tournament"), # both legacy so they can be hyperlinked to
     path("tournament/<int:tournament_id>/generate/", views.generate_tournament_matches, name="_generate_matches"),
     path("tournament/<int:tournament_id>/swap/", views.swap_matches, name="swap_matches"),
-    # path("coach/<int:coach_id>/", views.coach, name="coach-page"),
     # path("match/<int:match_id>/", views.match, name="match"),
     path("match/<int:match_id>/judge/", views.judge_match, name="judge_match"),
-    # path("competition/profile/<int:user_id>/", views.profile, name="user_profile"),
+    #path("profile/user/<int:user_id>/", views.profile, name="profile"),
     path('credits/', views.credits, name="credits"),
-
     path('_error/', views._raise_error_code, name="_error"), # for testing error pages
     path('settings/timezone/',views.set_timezone_view, name='set_timezone'),
 ]

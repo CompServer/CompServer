@@ -683,6 +683,28 @@ def judge_match(request: HttpRequest, match_id: int):
     return render(request, 'competitions/match_judge.html', {'form': form, 'match': instance, "teams": winner_choices})
 
 def profile(request, user_id):
+    #check admin
+    #check coach
+    if Coach.objects.filter(id = user_id).exists():
+        teams_coached = Team.objects.filter(coach_id = user_id)
+        team_records = list()
+        wins = 0
+        losses = 0
+        for team_coached in teams_coached:
+            past_matches = Match.objects.filter(starting_teams=team_coached)#add a part about time and ordering)
+            for match in past_matches:
+                if team_coached in match.advancers:
+                    wins = wins + 1
+                else:
+                    losses = lossess + 1
+            team_records.append((team_coached, wins, losses))
+        #current coaching competitions
+        # see collection of forms
+    #admin
+    #coach
+    #judge
+    #competitors
+    #spectatotr
     user = User.objects.filter(id = user_id).first()
     context = {
         'user': user,
@@ -725,7 +747,7 @@ def results(request, competition_id):
     return render(request, "competitions/results.html", context)
 
 def team(request: HttpRequest, team_id: int):
-    team = Team.objects.filter(id=team_id)
+    team = Team.objects.filter(id=team_id).first()
     today = timezone.now().date()
     upcoming_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), tournament__competition__start_date__lte=today, tournament__competition__end_date__gte=today, advancers=None).order_by("-time")
     past_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id)).exclude(advancers=None).order_by("-time")
@@ -734,55 +756,47 @@ def team(request: HttpRequest, team_id: int):
     past_tournaments = SingleEliminationTournament.objects.filter(teams__id = team_id, status = Status.COMPLETE).order_by("start_time")
     for past_tournament in past_tournaments:
         last_match_advancers = past_tournament.match_set.last().advancers.all()
-        if Team.objects.filter(id = team_id) in last_match_advancers:
+        if team in last_match_advancers:
             past_tournaments_won.append(past_tournament)
     losses = list()
     wins = list()
     draws = list()
     for pm in past_matches:
-        if team in pm.advancers.all():
-            if pm.advancers.count() == 1:
-                desc = ""
-                if pm.starting_teams.count() == 1:
-                    desc = "Granted a BYE for " + pm.round_num + " for " + pm.tournament.event.name + " in @"
-                    wins.append((desc, pm.tournament))
-                else:
-                    desc = desc + "Won Against "
-                    i = 0
-                    for starting_team in pm.starting_teams.all():
-                        if i < (pm.starting_teams.count()-1):
-                            if team.id != starting_team.id:
-                                desc = starting_team.name + ", "
-                                i = i + 1
-                        else:
-                            desc = desc + starting_team.name
-                    desc = " in Round " + pm.num_round + " for " + pm.tournament.event.name + " tournament @" + pm.tournament.competition.name
-                    wins.append((desc, pm.tournament))
-            else:
-                i = 0
-                desc = "Drew with "
-                for advancer in pm.advancers.all():
-                    if i < (pm.advancers.count()-1):
-                        desc = advancer.name + ", "
-                        i = i + 1
-                    desc = advancer.name + " in Round " + pm.round_num + " for " + pm.tournament.event.name + " tournament @" + pm.tournament.competition.name
-                draws.append((desc, pm.tournament))
+        first_half = " in Round " + str(pm.round_num) + " in "
+        second_half = " tournament @" + pm.tournament.competition.name
+        num_starting_teams = pm.starting_teams.count()
+        num_advancers = pm.advancers.count()
+        if num_starting_teams == 1 and pm.starting_teams.all().first().id == team_id and pm.advancers.all().first().id == team_id:
+            wins.append((("Granted a BYE" + first_half), pm.tournament, second_half))
         else:
-            desc = "Lost against "
-            if pm.advancers.count() == 1:
-                desc = desc + pm.advancers.first().name + " in Round " + str(pm.round_num) + " for " + pm.tournament.event.name + " tournament @" + pm.tournament.competition.name
-                losses.append((desc, pm.tournament))
+            starting_teams_names = list()
+            for starting_team in pm.starting_teams.all():
+                if starting_team.id != team_id:
+                    starting_teams_names.append(starting_team.name)
+            if num_advancers == 1 and pm.advancers.all().first().id == team_id:
+                if num_starting_teams == 2:
+                    wins.append((("Won against " + starting_teams_names.__getitem__(0) + first_half), pm.tournament, second_half))
+                else:
+                    wins.append((("Won against " + ",".join(starting_teams_names) + first_half), pm.tournament, second_half))
             else:
-                i = 0
+                advancer_team_ids = list()
+                advancer_teams_names = list()
                 for advancer in pm.advancers.all():
-                    while i < (pm.advnacers.count()-1):
-                        desc = desc + advancer.name + ", "
-                        i = i + 1
-                    desc = desc + advancer.name
-                desc = " in Round " + pm.num_round + " for " + pm.tournament.event.name + " tournmanet @" + pm.tournament.competition.name
-                losses.append((desc, pm.tournament))
+                    advancer_team_ids.append(advancer.id)
+                    if advancer.id != team_id:
+                        advancer_teams_names.append(advancer.name)
+                if num_advancers > 1 and team_id in advancer_team_ids:
+                    if num_advancers == 2:
+                        draws.append((("Drew with " + "".join(advancer_teams_names) + first_half), pm.tournament, second_half))
+                    else:
+                        draws.append((("Drew with " + ",".join(advancer_teams_names) + first_half), pm.tournament, second_half))
+                else:
+                    if num_advancers == 2:
+                        losses.append((("Lost against " + "".join(advancer_teams_names) + first_half), pm.tournament, second_half))
+                    else:
+                        losses.append((("Lost against " + ",".join(advancer_teams_names) + first_half), pm.tournament, second_half))
     context = {
-        'team': Team.objects.get(pk=team_id),
+        'team': team,
         'upcoming_matches': upcoming_matches,
         'wins': wins,
         'past_matches': past_matches,
@@ -793,7 +807,6 @@ def team(request: HttpRequest, team_id: int):
         'past_competitions': past_competitions,
     }
     return render(request, "competitions/team.html", context)
-
 
 def _raise_error_code(request: HttpRequest):
     try:
