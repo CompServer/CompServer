@@ -100,7 +100,7 @@
         <hr>
         <a href="{% url "competitions:create_tournament" %}?competition_id={{ competition.id }}" class="btn btn-secondary">{% translate "Create Tournament" %}</a>
         <br><br>
-        {% comment %} <a href="{% url "competitions:arena" competition.id %}" class="btn btn-secondary">{% translate "Change Arena Colors" %}</a> {% endcomment %}
+        <a href="{% url "competitions:arena_color" competition.id %}" class="btn btn-secondary">{% translate "Change Arena Colors" %}</a>
     {% endif %}
 {% endblock %}
 <!-- pass in urls for the results page in competitions/ -->

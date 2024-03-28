@@ -3,8 +3,8 @@
 from django import forms
 from django.contrib import messages
 from django.forms.widgets import TextInput
-from competitions.models import AbstractTournament, Competition, SingleEliminationTournament, Sport, Team, Match, RoundRobinTournament, Arena
-
+from competitions.models import AbstractTournament, Competition, SingleEliminationTournament, Sport, Team, Match, RoundRobinTournament, Arena, ColorField
+from .widgets import ColorPickerWidget
 
 class JudgeForm(forms.ModelForm):
     possible_advancers = None
@@ -136,8 +136,15 @@ class CreateRRTournamentForm(forms.ModelForm):
         model = RoundRobinTournament
         fields = ['competition', 'status', 'points', 'teams', 'judges', 'event', 'num_rounds', 'teams_per_match', 'points_per_win', 'points_per_tie', 'points_per_loss']
 
-class ArenaColorForm(forms.ModelForm):
-    class Meta:
-        model = Arena
-        fields = ['color']
-    
+class ArenaColorForm(forms.Form):
+    arena = forms.ModelChoiceField(queryset=None, label="Arena")
+    color = forms.ChoiceField(widget=None, label="Color")
+    def __init__(self, *args, competition: Competition, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.competition = competition
+        self.fields['arena'].queryset = competition.arenas.all()
+        self.fields['color'].widget = TextInput(attrs={"type": "color"})
+
+    def is_valid(self):
+        self.full_clean()
+        return super().is_valid()

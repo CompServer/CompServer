@@ -346,33 +346,24 @@ def create_tournament(request: HttpRequest):
     return render(request, "FORM_BASE.html", {'form_title': "Create Tournament", 'action': f"?tournament_type={tournament_type}&competition_id={competition.id}" , "form": form})
 
 @login_required
-def arena_color(request: HttpRequest):
-    arena = request.GET.get('arena', None)
-    competition_id = request.GET.get('competition_id',None)
-
-    if competition_id is None:
-        messages.error(request, "No competition selected.")
-        return HttpResponseRedirect(reverse("competitions:competitions"))
-    try:
-        competition = get_object_or_404(Competition, pk=int(competition_id))
-    except:
-        messages.error(request, "Invalid competition.")
-        return HttpResponseRedirect(reverse("competitions:competitions"))
-    
-    if not tournament_type:
-        return render(request, "competitions/create_tournament.html", context={"competition": competition})
-    
+def arena_color(request: HttpRequest, competition_id: int):
+    competition = get_object_or_404(Competition, pk=competition_id)
+    form = None
     if request.method == 'POST':
-        form = ArenaColorForm(request.POST, instance=arena)
+        form = ArenaColorForm(request.POST, competition=competition)
         if form.is_valid():
-            form.save()
+            arena = form.cleaned_data.get('arena')
+            color = form.cleaned_data.get('color')
+            arena.color = color
+            arena.save()
             messages.success(request, "Color changed successfully.")
             return HttpResponseRedirect(reverse('competitions:competition', args=(competition_id,)))
-    context = {
-        'arena': arena,
-        'form': ArenaColorForm(instance=arena),
-    }
-    return render(request, "competitions/arena_color.html", context)
+        else:
+            for error_field, error_desc in form.errors.items():
+                form.add_error(error_field, error_desc)
+    if not form:
+        form = ArenaColorForm(competition=competition)
+    return render(request, "competitions/arena_color.html", {'form': form})
 
 def single_elimination_tournament(request: HttpRequest, tournament_id: int):
     redirect_to = request.GET.get('next', '')
