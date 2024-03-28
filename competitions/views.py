@@ -14,6 +14,7 @@ from django.utils import timezone
 from django.core.exceptions import SuspiciousOperation
 import random
 import zoneinfo
+import math
 from typing import Union
 from .forms import *
 from .models import *
@@ -309,7 +310,13 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
     if tournament.is_archived:
         return HttpResponseRedirect(reverse("competitions:competitions"))
 
+    # -----VARIABLES-----
     bracket_array = []
+    matchWidth = 175
+    connectorWidth = 50
+    teamHeight = 25
+    roundWidth = matchWidth + connectorWidth
+    # -------------------
 
     def generate_competitor_data(match):
         output = []
@@ -317,37 +324,62 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
         # T/F the match has a next match (is not the final)
         is_next = match.next_matches.exists()
 
+        curr_match_teams = match.get_competing_teams()
+
         # loop through all the team playing in a match
-        for from_index, team in enumerate(match.get_competing_teams()):
+        for from_index, team in enumerate(curr_match_teams):
 
             # T/F the team advance from a previous match
             prev = team not in match.starting_teams.all()
             #set up variables
-            team_index_offset, match_offset_mult, connector = [None]*3
+            team_index_offset, match_offset_mult, connector, connector_width_actual,team_index_offset_mult = [None]*5
 
             if is_next and team in match.advancers.all():
                 # the match the immediately follows our current match
                 next_match = match.next_matches.all().first()
                 # the set of matches that feed into next_match, which must include the current match
                 feed_matches = next_match.prev_matches.all()
+                num_feed_matches = feed_matches.count()
                 # to determine wether connectors should go up or down
-                midpoint = (feed_matches.count() - 1) / 2
+                midpoint_index = (num_feed_matches - 1) / 2
                 # where our current match is in the set of next matches
                 match_index = list(feed_matches).index(match)
+                num_divisions = max(math.floor(num_feed_matches/2),1)
 
-                if (abs(match_index - midpoint) < 1):
-                    match_offset_mult = 0.5
+                if (abs(match_index - midpoint_index) <= 1):
+                    match_offset_mult = abs(match_index - midpoint_index)
+                    connector_width_actual = (1*connectorWidth)/(num_divisions+1)
                 else:
-                    match_offset_mult = abs(match_index - midpoint)
+                    match_offset_mult = abs(match_index - midpoint_index)
+                    num_something_idk = math.floor(abs(match_index - midpoint_index) + 0.5)
+                    connector_width_actual = (num_something_idk*connectorWidth)/(num_divisions+1)
 
                 #class for the direction of the connector
-                connector = "connector-down" if match_index < midpoint else "connector-up" if match_index > midpoint else "connector-straight"
+                connector = "connector-down" if match_index < midpoint_index else "connector-up" if match_index > midpoint_index else "connector-straight"
 
+                
+                next_match_teams = next_match.get_competing_teams()
                 # index for the end of the connector
                 to_index = next_match.get_competing_teams().index(team)
-                teamHeight = 25
-                # TODO: this only works if matches have the same number of teams
-                team_index_offset = (to_index - from_index if match_index < midpoint else from_index - to_index)*teamHeight
+                
+                # from_index_fraction = (from_index/len(curr_match_teams))
+                # to_index_fraction = to_index/len(next_match_teams)
+                # team_index_offset_mult = (
+                #     to_index_fraction - from_index_fraction 
+                #     if match_index < midpoint_index 
+                #     else from_index_fraction - to_index_fraction
+                # )*len(next_match_teams)
+                # team_index_offset = team_index_offset_mult*teamHeight
+
+                if match_index < midpoint_index:
+                    index_diff = to_index-from_index
+                    len_diff = (len(curr_match_teams)-len(next_match_teams))/2 
+                else:
+                    index_diff = from_index-to_index
+                    len_diff = (len(next_match_teams)-len(curr_match_teams))/2
+
+                team_index_offset_mult = index_diff+len_diff
+                team_index_offset = team_index_offset_mult*teamHeight
 
             output.append({
                 "name": team.name if team else "TBD",
@@ -358,6 +390,8 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
                 "connector": connector,
                 "team_index_offset": team_index_offset,
                 "match_offset_mult": match_offset_mult,
+                "connector_width_actual": connector_width_actual,
+                "team_index_offset_mult": team_index_offset_mult,
             })
         return output
     
@@ -385,10 +419,9 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
     mostTeamsInRound = max(sum(len(teams) if teams else 0 for teams in round.values()) for round in bracket_array)
 
     round_data = []
-    matchWidth, connectorWidth, teamHeight = 200, 25, 25
-    bracketWidth = (matchWidth + (connectorWidth * 2)) * numRounds
+
+    bracketWidth = (matchWidth + connectorWidth ) * numRounds
     bracketHeight = mostTeamsInRound * 50
-    roundWidth = matchWidth + connectorWidth
 
     for round_matches in reversed(bracket_array):
         num_matches = len(round_matches)
@@ -414,11 +447,12 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
     bracket_dict = {
         "bracketWidth": bracketWidth, 
         "bracketHeight": bracketHeight, 
-        "roundWidth": roundWidth+connectorWidth, 
+        "roundWidth": roundWidth, 
         "roundHeight": bracketHeight,
         "teamHeight": teamHeight,
         "connectorWidth": connectorWidth,
         "round_data": round_data,
+        "team_height": teamHeight,
     }
     
     tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
