@@ -169,8 +169,11 @@ class SiteConfig(models.Model):
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    # bio = models.TextField(blank=True)
-    # profile_pic = models.ImageField()
+    bio = models.TextField(blank=True)
+    profile_pic = models.ImageField(upload_to="profile_pics", default="static/default_pfp.jpg")
+
+    def __str__(self) -> str:
+        return f"Profile for {self.user}"
 
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
@@ -179,8 +182,10 @@ def create_user_profile(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
-    instance.profile.save()
-
+    if Profile.objects.filter(user=instance).exists():
+        instance.profile.save()
+    else:
+        Profile.objects.create(user=instance)
 
 class Status(models.TextChoices):
     SETUP = "SETUP", _("Setup")  # for entries
