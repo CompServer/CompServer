@@ -49,8 +49,8 @@
                         {% elif competition.is_closed %} 
                             <i class="bi-x-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
                         {% elif competition.is_in_setup %}
-                            <i class="bi-gear" title="{{ competition.status }}"></i> {{ competition }}
-                        {% elif competition.is_archived %}
+                            <i class="bi-gear" title="{{ competition.status }}"></i> {% if user.is_staff %}<a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>{% else %}{{ competition }}{% endif %}
+                        {% elif competition.is_archived and user.is_staff %}
                             <i class="bi-archive" title="{{ competition.status }}"></i> {{ competition }} <small>You can see this archived item because you are signed in as a superuser.</small>
                         {% endif %}
                         {% if user.is_staff %}
@@ -83,8 +83,8 @@
                         {% elif tournament.is_closed %} 
                             <i class="bi-x-circle" title="{{ tournament.status }}"></i> <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a>
                         {% elif tournament.is_in_setup %}
-                            <i class="bi-gear" title="{{ tournament.status }}"></i> {{ tournament }}
-                        {% elif tournament.is_archived %}
+                            <i class="bi-gear" title="{{ tournament.status }}"></i> {% if user.is_staff %}<a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a>{% else %}{{ tournament }}{% endif %}
+                        {% elif tournament.is_archived and user.is_staff %}
                             <i class="bi-archive" title="{{ tournament.status }}"></i> {{ tournament }} <small>You can see this archived item because you are signed in as a superuser.</small>
                         {% endif %}
                         {% if user.is_staff %}
@@ -117,8 +117,8 @@
                         {% elif tournament.is_closed %} 
                             <i class="bi-x-circle" title="{{ tournament.status }}"></i> <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a>
                         {% elif tournament.is_in_setup %}
-                            <i class="bi-gear" title="{{ tournament.status }}"></i> {{ tournament }}
-                        {% elif competition.is_archived %}
+                            <i class="bi-gear" title="{{ tournament.status }}"></i> {% if user.is_staff %}<a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a>{% else %}{{ tournament }}{% endif %}
+                        {% elif competition.is_archived and user.is_staff %}
                             <i class="bi-archive" title="{{ tournament.status }}"></i> {{ tournament }} <small>You can see this archived item because you are signed in as a superuser.</small>
                         {% endif %}
                         ({{ tournament.points|floatformat:"0" }} {% translate "points" %}) 

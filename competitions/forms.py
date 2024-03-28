@@ -4,7 +4,7 @@ from django import forms
 from django.contrib import messages
 from django.forms.widgets import TextInput
 from competitions.models import AbstractTournament, Competition, SingleEliminationTournament, Sport, Team, Match, RoundRobinTournament, Arena, ColorField
-from .widgets import ColorPickerWidget
+from .widgets import ColorPickerWidget, ColorWidget
 
 class JudgeForm(forms.ModelForm):
     possible_advancers = None
@@ -138,7 +138,7 @@ class CreateRRTournamentForm(forms.ModelForm):
 
 class ArenaColorForm(forms.Form):
     arena = forms.ModelChoiceField(queryset=None, label="Arena")
-    color = forms.ChoiceField(widget=None, label="Color")
+    color = forms.CharField(widget=None, label="Color")
     def __init__(self, *args, competition: Competition, **kwargs):
         super().__init__(*args, **kwargs)
         self.competition = competition

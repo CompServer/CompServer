@@ -65,7 +65,6 @@ def generate_single_elimination_matches(request, tournament_id: int):
         for i, team in enumerate(teams, start=1):
             rank = Ranking.objects.create(tournament=tournament,team=team,rank=i)
             rank.save()
-            team_ranks.append((rank.team, rank.rank))
     else:
         team_ranks = sorted([(rank.team, rank.rank) for rank in tournament.prev_tournament.ranking_set.all()], key=lambda x: x[1])
     #sort_list(teams, ranks)        
@@ -222,7 +221,9 @@ def generate_round_robin_matches(request, tournament_id):
                 match.starting_teams.add(teams[j])
                 num_participated[j] += 1 
                 if num_participated == [1 for _ in range(len(teams))]:
-                    break
+                    if match.starting_teams.count() != tournament.teams_per_match:
+                        #add points at bottom of tournament page of teams
+                        break
             match.time = starting_time
             match.arena = arenas[arena_iterator]
             nmpt_iterator += 1
