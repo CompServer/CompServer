@@ -718,7 +718,7 @@ def results(request, competition_id):
     return render(request, "competitions/results.html", context)
 
 def team(request: HttpRequest, team_id: int):
-    team = Team.objects.filter(id=team_id)
+    team = Team.objects.filter(id=team_id).first()
     today = timezone.now().date()
     upcoming_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), tournament__competition__start_date__lte=today, tournament__competition__end_date__gte=today, advancers=None).order_by("-time")
     past_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id)).exclude(advancers=None).order_by("-time")
@@ -734,19 +734,19 @@ def team(request: HttpRequest, team_id: int):
     draws = list()
     for pm in past_matches:
         first_half = " in Round " + str(pm.round_num) + " in "
-        second_half = " @" + pm.tournament.competition.name
+        second_half = " tournament @" + pm.tournament.competition.name
         num_starting_teams = pm.starting_teams.count()
-        num_advnacers = pm.advancers.count()
+        num_advancers = pm.advancers.count()
         if num_starting_teams == 1 and pm.starting_teams.all().first().id == team_id and pm.advancers.all().first().id == team_id:
             wins.append((("Granted a BYE" + first_half), pm.tournament, second_half))
         else:
             starting_teams_names = list()
             for starting_team in pm.starting_teams.all():
                 if starting_team.id != team_id:
-                    starting_team_names.append(starting_team.name)
+                    starting_teams_names.append(starting_team.name)
             if num_advancers == 1 and pm.advancers.all().first().id == team_id:
                 if num_starting_teams == 2:
-                    wins.append((("Won against " + "".join(starting_teams_names) + first_half), pm.tournament, second_half))
+                    wins.append((("Won against " + starting_teams_names.__getitem__(0) + first_half), pm.tournament, second_half))
                 else:
                     wins.append((("Won against " + ",".join(starting_teams_names) + first_half), pm.tournament, second_half))
             else:
@@ -754,8 +754,8 @@ def team(request: HttpRequest, team_id: int):
                 advancer_teams_names = list()
                 for advancer in pm.advancers.all():
                     advancer_team_ids.append(advancer.id)
-                    if advancer.id != team.id:
-                        advancer_team_names.append(advancer.name)
+                    if advancer.id != team_id:
+                        advancer_teams_names.append(advancer.name)
                 if num_advancers > 1 and team_id in advancer_team_ids:
                     if num_advancers == 2:
                         draws.append((("Drew with " + "".join(advancer_teams_names) + first_half), pm.tournament, second_half))
@@ -766,57 +766,6 @@ def team(request: HttpRequest, team_id: int):
                         losses.append((("Lost against " + "".join(advancer_teams_names) + first_half), pm.tournament, second_half))
                     else:
                         losses.append((("Lost against " + ",".join(advancer_teams_names) + first_half), pm.tournament, second_half))
-        # for advancer in pm.advancers.all():
-        #     team_ids.append(advancer.id)
-        # if team_id in team_ids:
-        #     if pm.advancers.count() == 1:
-        #         desc = ""
-        #         if pm.starting_teams.count() == 1:
-        #             desc = desc + "Granted a BYE for " + str(pm.round_num) + " for " 
-        #             desc2 = " tournament in @" + pm.tournament.competition.name
-        #             wins.append((desc, pm.tournament, desc2))
-        #         else:
-        #             desc = desc + "Won Against "
-        #             i = 0
-        #             for starting_team in pm.starting_teams.all():
-        #                 if i < (pm.starting_teams.count()-1):
-        #                     if team_id != starting_team.id:
-        #                         desc = desc + starting_team.name + ", "
-        #                         i = i + 1
-        #                 else:
-        #                     desc = desc + starting_team.name
-        #             desc = desc + " in Round " + str(pm.round_num) + " for " 
-        #             desc2 = " tournament in @" + pm.tournament.competition.name
-        #             wins.append((desc, pm.tournament, desc2))
-        #     else:
-        #         desc = "Drew with "
-        #         for advancer in pm.advancers.all():
-        #             i = 0
-        #             if advancer.id != team_id:
-        #                 if i < pm.advancers.count()-1:
-        #                     desc = desc + advancer.name + ", "
-        #                     i = i + 1
-        #                 else:
-        #                     desc = desc + advancers.name
-        #             desc = desc + " and " + advancer.name + " in Round " + str(pm.round_num) + " for " 
-        #             desc2 = " tournament @" + pm.tournament.competition.name
-        #         draws.append((desc, pm.tournament, desc2))
-        # else:
-        #     desc = "Lost against "
-        #     if pm.advancers.count() == 1:
-        #         desc = desc + pm.advancers.first().name + " in Round " + str(pm.round_num) + " for " 
-        #         desc2 = " tournament @" + pm.tournament.competition.name
-        #         losses.append((desc, pm.tournament, desc2))
-        #     else:
-        #         i = 0
-        #         for advancer in pm.advancers.all():
-        #             while i < (pm.advancers.count()-1):
-        #                 desc = desc + advancer.name + ", "
-        #                 i = i + 1
-        #             desc = desc + " and " + advancer.name
-        #         desc = desc + " in Round " + str(pm.round_num) + " for "
-        #         desc2 = " tournmanet @" + pm.tournament.competition.name
-        #         losses.append((desc, pm.tournament, desc2))
     context = {
         'team': team,
         'upcoming_matches': upcoming_matches,

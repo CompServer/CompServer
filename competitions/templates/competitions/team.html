@@ -3,7 +3,7 @@
 {% block title %}{% translate "Team:" %} {{ team.name }}{% endblock %} 
 {% block content %}
     <header>
-        <h1>{% translate "Team:" %} {{ team }}</h1>
+        <h1>{% translate "Team:" %} {{ team.name }}</h1>
         {% if team.coach %}
             <p>{% translate "Coached by" %} 
                 <a href="{% url 'competitions:user_profile' team.coach.id %}">

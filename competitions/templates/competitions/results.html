@@ -41,8 +41,10 @@
             data: {  
                 labels: team_names,
                 datasets: [{
-                    label: "names",
-                    data: [9,0,0,0,5,8,10,16,20,3,10,13,14,15,16,9,10],
+                    for (var i = 0; i < team_scorings.length; i++) {
+                        label: tournament_names[i],
+                        data: team_scorings[i],
+                    }
                 }],
             },
             options: {
