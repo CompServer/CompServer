@@ -676,6 +676,28 @@ def judge_match(request: HttpRequest, match_id: int):
     return render(request, 'competitions/match_judge.html', {'form': form, 'match': instance, "teams": winner_choices})
 
 def profile(request, user_id):
+    #check admin
+    #check coach
+    if Coach.objects.filter(id = user_id).exists():
+        teams_coached = Team.objects.filter(coach_id = user_id)
+        team_records = list()
+        wins = 0
+        losses = 0
+        for team_coached in teams_coached:
+            past_matches = Match.objects.filter(starting_teams=team_coached)#add a part about time and ordering)
+            for match in past_matches:
+                if team_coached in match.advancers:
+                    wins = wins + 1
+                else:
+                    losses = lossess + 1
+            team_records.append((team_coached, wins, losses))
+        #current coaching competitions
+        # see collection of forms
+    #admin
+    #coach
+    #judge
+    #competitors
+    #spectatotr
     user = User.objects.filter(id = user_id).first()
     context = {
         'user': user,
