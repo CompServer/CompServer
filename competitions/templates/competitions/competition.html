@@ -85,6 +85,7 @@
     {% endif %}
 
     {% if winner %}
+        <hr>
         <h3>{% translate "Winners:" %}</h3>
         {% for team in winner %}
         <div class="row d-flex">
@@ -96,7 +97,10 @@
     {% endif %}
 
     {% if user.is_superuser %}
-        <a href="{% url "competitions:create_tournament" %}?competition_id={{ competition.id }}" class="btn btn-primary">{% translate "Create Tournament" %}</a>
+        <hr>
+        <a href="{% url "competitions:create_tournament" %}?competition_id={{ competition.id }}" class="btn btn-secondary">{% translate "Create Tournament" %}</a>
+        <br><br>
+        <a href="{% url "competitions:arena_color" competition.id %}" class="btn btn-secondary">{% translate "Change Arena Colors" %}</a>
     {% endif %}
 {% endblock %}
 <!-- pass in urls for the results page in competitions/ -->

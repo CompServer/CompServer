@@ -2,9 +2,9 @@
 
 from django import forms
 from django.contrib import messages
-
-from competitions.models import AbstractTournament, Competition, SingleEliminationTournament, Sport, Team, Match, RoundRobinTournament
-
+from django.forms.widgets import TextInput
+from competitions.models import AbstractTournament, Competition, SingleEliminationTournament, Sport, Team, Match, RoundRobinTournament, Arena, ColorField
+from .widgets import ColorPickerWidget
 
 class JudgeForm(forms.ModelForm):
     possible_advancers = None
@@ -109,6 +109,7 @@ class CreateSETournamentForm(forms.ModelForm):
         self.fields['competition'].initial = competition
         self.event_queryset = competition.events
         self.fields['event'].queryset = self.event_queryset
+        self.fields['teams'].queryset = competition.teams
         #self.events = competition.events
         #self.fields['events'].queryset = Event.objects.filter(competition=competition)
 
@@ -127,10 +128,23 @@ class CreateRRTournamentForm(forms.ModelForm):
         self.fields['competition'].initial = competition
         self.event_queryset = competition.events
         self.fields['event'].queryset = self.event_queryset
+        self.fields['teams'].queryset = competition.teams
         #self.events = competition.events
         #self.fields['events'].queryset = Event.objects.filter(competition=competition)
 
     class Meta:
         model = RoundRobinTournament
-        fields = ['status', 'points', 'teams', 'judges', 'num_rounds', 'event', 'competition']
-    
+        fields = ['competition', 'status', 'points', 'teams', 'judges', 'event', 'num_rounds', 'teams_per_match', 'points_per_win', 'points_per_tie', 'points_per_loss']
+
+class ArenaColorForm(forms.Form):
+    arena = forms.ModelChoiceField(queryset=None, label="Arena")
+    color = forms.ChoiceField(widget=None, label="Color")
+    def __init__(self, *args, competition: Competition, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.competition = competition
+        self.fields['arena'].queryset = competition.arenas.all()
+        self.fields['color'].widget = TextInput(attrs={"type": "color"})
+
+    def is_valid(self):
+        self.full_clean()
+        return super().is_valid()
