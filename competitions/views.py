@@ -713,27 +713,29 @@ def results(request, competition_id):
     tournament_names = [tournament.event.name for tournament in tournaments]
     team_names = []
     team_names = [team.name for team in competition.teams.order_by("name")]
-    totals = []
-    team_scorings = []
-    for team_name in team_names:
-        team = Team.objects.filter(name=team_name).first()
+    totals = dict()
+    tournament_scorings = dict()
+    for tournament_name in tournament_names:
         scores = []
-        for tournament in tournaments:
+        for team_name in team_names:
+            tournament = SingleEliminationTournament.objects.filter(event__name=tournament_name).first()
+            team = Team.objects.filter(name=team_name).first()
             last_match = Match.objects.filter(tournament__id = tournament.id, next_matches__isnull = True).first()
             if team in last_match.advancers.all():
                 scores.append(tournament.points)
             else:
                 scores.append(0)
-        score_total = sum(scores)
-        totals.append((team_name, score_total))
-        team_scorings.append((scores))
-    judge_names = [plenary_judge.first_name + " " + plenary_judge.last_name for plenary_judge in competition.plenary_judges.order_by("-username")]
+            #score_total = sum(scores)
+            #totals.append({team_name: score_total})
+        tournament_scorings[tournament_name] = scores
+        judge_names = [plenary_judge.first_name + " " + plenary_judge.last_name for plenary_judge in competition.plenary_judges.order_by("-username")]
+    index = 0
     context = {
         'tournament_names': tournament_names,
         'team_names': team_names,
         'competition': competition,
         'tournaments': tournaments,
-        'team_scorings': team_scorings,
+        'tournament_scorings': tournament_scorings,
         'judge_names': judge_names,
         'team_and_total': totals,
     }
