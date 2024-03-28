@@ -632,9 +632,9 @@ def judge_match(request: HttpRequest, match_id: int):
     assert isinstance(competetion, Competition)
     
     if not competetion.is_judgable or not tournament.is_judgable:
-        messages.error(request, "This match is not judgable.")
+        messages.error(request, "This match is not judgable: Both the competition and tournament must be set to Open.")
         #print("This match is not judgable.")
-        raise PermissionDenied("This match is not judgable.")
+        raise SuspiciousOperation("This match is not judgable.")
     # if the user is a judge for the tournament, or a plenary judge for the competition, or a superuser
     if not (user in tournament.judges.all() \
     or user in competetion.plenary_judges.all() \
@@ -645,7 +645,7 @@ def judge_match(request: HttpRequest, match_id: int):
         #return HttpResponseRedirect(reverse('competitions:competition', args=[competetion.id]))
 
     winner_choices = []
-    if instance.prev_matches.exists():
+    if instance.starting_teams.exists() and instance.prev_matches.exists():
         winner_choice_ids = []
         for match in instance.prev_matches.all():
             if match.advancers.exists():
@@ -653,6 +653,18 @@ def judge_match(request: HttpRequest, match_id: int):
             else:
                 messages.error(request, "One or more previous matches have not been judged.")
                 #print("One or more previous matches have not been judged.")
+                raise SuspiciousOperation("One or more previous matches have not been judged.")
+                #return HttpResponse(, reason="One or more previous matches have not been judged.")
+        winner_choice_ids.extend([x.id for x in instance.starting_teams.all()])
+        winner_choices = Team.objects.filter(id__in=winner_choice_ids)
+    elif instance.prev_matches.exists():
+        winner_choice_ids = []
+        for match in instance.prev_matches.all():
+            if match.advancers.exists():
+                winner_choice_ids.extend([x.id for x in match.advancers.all()])
+            else:
+                messages.error(request, "One or more previous matches have not been judged.")
+                #print("One or more previous matches have not been judged.")r
                 raise SuspiciousOperation("One or more previous matches have not been judged.")
                 #return HttpResponse(, reason="One or more previous matches have not been judged.")
         winner_choices = Team.objects.filter(id__in=winner_choice_ids)
