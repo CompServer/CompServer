@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'crispy_forms',
     'crispy_bootstrap5',
     'mathfilters', # pip install django-mathfilters
+    'whitenoise.runserver_nostatic',
     #'colorfield', # pip install django-colorfield
     #'easy_timezones', # pip install django-easy-timezones
 ]
@@ -99,6 +100,12 @@ TEMPLATES = [
         },
     },
 ]
+
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
@@ -164,7 +171,7 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
-STATIC_ROOT= os.path.join(BASE_DIR,'static_media/')
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 STATIC_URL = f"/static/"
 
@@ -183,7 +190,7 @@ MESSAGE_TAGS = {
     messages.ERROR: 'danger',
 }
 
-SHOW_TOOLBAR_CALLBACK = lambda request: True
+SHOW_TOOLBAR_CALLBACK = lambda request: DEBUG
 
 LOGIN_REDIRECT_URL = '/'
 

@@ -133,7 +133,6 @@
             </form> {% endcomment %}
     </nav>       
 
-    {% block messages %}
     {% if messages %}
         {% for message in messages %}
             <div class="alert alert-{{ message.tags }}">
@@ -142,7 +141,6 @@
             </div>
         {% endfor %}
     {% endif %}
-    {% endblock %}
 
     <div id="content" style="margin-left: 10px; margin-top: 8px;">
         {% block content %}
