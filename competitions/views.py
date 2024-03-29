@@ -245,7 +245,7 @@ def get_points(tournament_id: int):
     for match in matches:
         if not match.advancers.exists():
             continue
-        if match.advancers.all().count > 1:
+        if match.advancers.all().count() > 1:
             for team in match.advancers.all():
                 team_wins[team] += tournament.points_per_tie
         else:
