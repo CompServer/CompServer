@@ -132,6 +132,19 @@ class CreateRRTournamentForm(forms.ModelForm):
         #self.events = competition.events
         #self.fields['events'].queryset = Event.objects.filter(competition=competition)
 
+    def is_valid(self):
+        self.full_clean()
+        if self.cleaned_data['teams_per_match'] > self.cleaned_data['teams'].count():
+            self.add_error('teams_per_match', 'Teams per match must be less than or equal to the number of teams')
+            return False
+        elif self.cleaned_data['teams_per_match'] < 2:
+            self.add_error('teams_per_match', 'Teams per match must be greater than or equal to 2')
+            return False
+        elif self.cleaned_data['teams'].count() % self.cleaned_data['teams_per_match'] != 0:
+            self.add_error('teams', 'Teams must be able to be divided evenly into matches')
+            return False
+        return super().is_valid()
+
     class Meta:
         model = RoundRobinTournament
         fields = ['competition', 'status', 'points', 'teams', 'judges', 'event', 'num_rounds', 'teams_per_match', 'points_per_win', 'points_per_tie', 'points_per_loss']
