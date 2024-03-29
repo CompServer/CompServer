@@ -547,7 +547,6 @@ class Match(models.Model):
     """The round of the tournament that this match is in. 1 for the first round, 2 for the second, etc."""
 
     str_recursive_level: ClassVar[int] = 0
-    round = models.PositiveIntegerField(default=1)
 
     def get_competing_teams(self):
         return [
