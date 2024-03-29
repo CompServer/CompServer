@@ -5,6 +5,7 @@
 <body>
     <header>
         <h1>{% trans "Results For " %} {{ competition.name }} {{ competition.start_date }} - {{competition.end_date }}</h1>
+        status of competiion is either completed or open 
         <h2>{% trans "Judged by " %}</h2>
         <ul>
             {% for judge_name in judge_names %}

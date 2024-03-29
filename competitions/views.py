@@ -676,26 +676,40 @@ def judge_match(request: HttpRequest, match_id: int):
     return render(request, 'competitions/match_judge.html', {'form': form, 'match': instance, "teams": winner_choices})
 
 def profile(request, user_id):
-    #check admin
-    #check coach
+    bool is_coach = False
+    bool is_admin = False
+    bool is_judge = False
+    bool is_spectator = True
+    bool is_player = False
+    user = User.objects.filter(id=user_id).first()
+    judge_list = list()
+    for tournaments in Tournament.objects.filter(Q()):
+        judge_list.append(tournaments.plenary_judges)
+    if judge_list.exists():
+        for judge in judge_list:
+            if judge is user:
+                is_judge = True
+    #check other if statements
     if Coach.objects.filter(id = user_id).exists():
+        competitions = dict()
         teams_coached = Team.objects.filter(coach_id = user_id)
-        team_records = list()
-        wins = 0
-        losses = 0
+        team_records = dict()
         for team_coached in teams_coached:
-            past_matches = Match.objects.filter(starting_teams=team_coached)#add a part about time and ordering)
-            for match in past_matches:
-                if team_coached in match.advancers:
-                    wins = wins + 1
-                else:
-                    losses = lossess + 1
-            team_records.append((team_coached, wins, losses))
-        #current coaching competitions
-        # see collection of forms
-    #admin
-    #coach
+            wins = Match.objects.filter(starting_teams=team_coached, advancers=team_coached).order_by("-end_date")
+            losses = Match.objects.filter(starting_teams=team_coached).order_by("-end_date").exclude(Q(advancers=team_coached))
+            team_records[team_coached] = (wins, losses)
+            competitions_sign_up = Competition.objects.filter(STATUS = Status.SETUP, sport__name = "Robotics").exclude(teams=team_coached)
+            competitions_ongoing = Competition.objects.filter(teams=team_coached)
+            for comeptition_ongoing in competitions_ongoing:
+                tournaments = Tournament.objects.filter(competition=competition_ongoing).order_by("-end_date")
+                ongoing_tournaments = tournaments.filter(status=Status.OPEN) 
+                completed_tournaments = tournmaents.filter(status=Status.COMPLETE) #display the general stats
+                setup_tournaments = tournaments.filter(status=Status.SETUP) #coach might sign up
+            #competitions[comeptitions_sign_up] = "Sign up"
+            #competitions[competitions[ongoing] = "ongoing"
+                #might need  a graphic for all teams and their tournaments in a grapj
     #judge
+    if 
     #competitors
     #spectatotr
     user = User.objects.filter(id = user_id).first()
