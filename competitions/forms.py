@@ -4,7 +4,7 @@ from django import forms
 from django.contrib import messages
 from django.forms.widgets import TextInput
 from competitions.models import AbstractTournament, Competition, SingleEliminationTournament, Sport, Team, Match, RoundRobinTournament, Arena, ColorField
-from .widgets import ColorPickerWidget
+from .widgets import ColorPickerWidget, ColorWidget
 
 class JudgeForm(forms.ModelForm):
     possible_advancers = None
@@ -132,13 +132,26 @@ class CreateRRTournamentForm(forms.ModelForm):
         #self.events = competition.events
         #self.fields['events'].queryset = Event.objects.filter(competition=competition)
 
+    def is_valid(self):
+        self.full_clean()
+        if self.cleaned_data['teams_per_match'] > self.cleaned_data['teams'].count():
+            self.add_error('teams_per_match', 'Teams per match must be less than or equal to the number of teams')
+            return False
+        elif self.cleaned_data['teams_per_match'] < 2:
+            self.add_error('teams_per_match', 'Teams per match must be greater than or equal to 2')
+            return False
+        elif self.cleaned_data['teams'].count() % self.cleaned_data['teams_per_match'] != 0:
+            self.add_error('teams', 'Teams must be able to be divided evenly into matches')
+            return False
+        return super().is_valid()
+
     class Meta:
         model = RoundRobinTournament
         fields = ['competition', 'status', 'points', 'teams', 'judges', 'event', 'num_rounds', 'teams_per_match', 'points_per_win', 'points_per_tie', 'points_per_loss']
 
 class ArenaColorForm(forms.Form):
     arena = forms.ModelChoiceField(queryset=None, label="Arena")
-    color = forms.ChoiceField(widget=None, label="Color")
+    color = forms.CharField(widget=None, label="Color")
     def __init__(self, *args, competition: Competition, **kwargs):
         super().__init__(*args, **kwargs)
         self.competition = competition

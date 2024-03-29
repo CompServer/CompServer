@@ -49,36 +49,45 @@
     </h1>
     <hr>
     {% if tournament.match_set.all %}
-    <div class="bracket">
-        {% for round_data in bracket_dict.round_data %}
-        <div class="round">
-            {% translate "Round" %} {{ forloop.counter }}
-            {% for match_data in round_data.match_data %}
-            <div class="match" style="height: {{ match_data.match_height }}px; width: {{ match_data.match_width }}px;">
-                <div class="center"
-                    style="height: {{ match_data.center_height }}px; margin-top: {{ match_data.center_top_margin }}px; ">
-                    {{ match_data.arena }}
-                    {% for team_data in match_data.team_data %}
-                        <div class="team"
-                            style="width: {{ match_data.match_width }}px; background-color:{% if team_data.won %} #fff5a8 {% else %} {{ match_data.arena.color }} {% endif %}; cursor: pointer;"
-                            onclick="location.href='{% url 'competitions:judge_match' team_data.match.id %}';">
-                            {{ team_data.name }} 
-                        </div>
-                    {% endfor %}
+        <div class="bracket">
+            {% for round_data in bracket_dict.round_data %}
+            <div class="round">
+                {% translate "Round" %} {{ forloop.counter }}
+                {% for match_data in round_data.match_data %}
+                <div class="match" style="height: {{ match_data.match_height }}px; width: {{ match_data.match_width }}px;">
+                    <div class="center"
+                        style="height: {{ match_data.center_height }}px; margin-top: {{ match_data.center_top_margin }}px; ">
+                        {{ match_data.arena }}
+                        {% for team_data in match_data.team_data %}
+                            <div class="team"
+                                style="width: {{ match_data.match_width }}px; background-color:{% if team_data.won %} #fff5a8 {% else %} {{ match_data.arena.color }} {% endif %}; cursor: pointer;"
+                                onclick="location.href='{% url 'competitions:judge_match' team_data.match.id %}';">
+                                {{ team_data.name }} 
+                            </div>
+                        {% endfor %}
+                    </div>
                 </div>
+                {% endfor %}    
             </div>
-            {% endfor %}    
+            {% endfor %}
         </div>
-        {% endfor %}
-    </div>
-    <hr>
-    <a href="{% url 'competitions:swap_matches' tournament.id %}" class="btn btn-secondary">Swap Matches</a>
+        <div class="col-12">
+            | 
+            {% for team, points in team_wins.items %}
+                <b>{{ team.name }}</b>: {{ points }} points | 
+            {% endfor %}
+        </div>
+        {% if user.is_superuser %}
+            <hr>
+            <a href="{% url 'competitions:swap_matches' tournament.id %}" class="btn btn-secondary">Swap Matches</a>
+            {% comment %} <br><br>
+            <a href="{% url "competitions:arena_color" tournament.competition.id %}" class="btn btn-secondary">{% translate "Change Arena Colors" %}</a> {% endcomment %}
+        {% endif %}
     {% else %}
         <form class="form-inline my-2 my-md-0 justify-content-end" action="/tournament/{{ tournament.id }}/generate/" method="POST" id="status">
             {% csrf_token %}
             <input type="submit" value={% translate "Generate Matches" %}>
         </form>
     {% endif %}
-
     {% comment %} <h3>{% translate "Matches" %}</h3> {% endcomment %}
 {% endblock %}

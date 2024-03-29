@@ -66,7 +66,6 @@ def generate_single_elimination_matches(request, tournament_id: int):
         for i, team in enumerate(teams, start=1):
             rank = Ranking.objects.create(tournament=tournament,team=team,rank=i)
             rank.save()
-            team_ranks.append((rank.team, rank.rank))
     else:
         team_ranks = sorted([(rank.team, rank.rank) for rank in tournament.prev_tournament.ranking_set.all()], key=lambda x: x[1])
     #sort_list(teams, ranks)        
@@ -223,6 +222,7 @@ def generate_round_robin_matches(request, tournament_id):
                 match.starting_teams.add(teams[j])
                 num_participated[j] += 1 
                 if num_participated == [1 for _ in range(len(teams))]:
+                    #add points at bottom of tournament page of teams
                     break
             match.time = starting_time
             match.arena = arenas[arena_iterator]
@@ -238,12 +238,13 @@ def generate_round_robin_matches(request, tournament_id):
     return HttpResponseRedirect(reverse("competitions:round_robin_tournament", args=(tournament_id,)))
     #still have a little bit of confusion with the ordering of matches.
 
-
-def generate_round_robin_rankings(request, tournament_id):
+def get_points(tournament_id: int):
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
     team_wins = {team: 0 for team in tournament.teams.all()}
     matches = tournament.match_set.all()
     for match in matches:
+        if not match.advancers.exists():
+            continue
         if match.advancers.all().count > 1:
             for team in match.advancers.all():
                 team_wins[team] += tournament.points_per_tie
@@ -253,6 +254,11 @@ def generate_round_robin_rankings(request, tournament_id):
         for team in match.starting_teams.all():
             if team not in match.advancers.all():
                 team_wins[team] += tournament.points_per_loss
+    return team_wins
+
+def generate_round_robin_rankings(request, tournament_id):
+    tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
+    team_wins = get_points(tournament_id)
     sorted_team_wins = dict(sorted(team_wins.items(), key=lambda x:x[1]))
     for i, kv in zip(range(len(sorted_team_wins), 1), sorted_team_wins.items()):
         key = kv[0]
@@ -617,8 +623,9 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
         "connectorWidth": connectorWidth,
         "round_data": round_data,
     }
+    team_wins = get_points(tournament_id)
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
-    context = {"tournament": tournament, "bracket_dict": bracket_dict}
+    context = {"tournament": tournament, "bracket_dict": bracket_dict, "team_wins": team_wins}
     return render(request, "competitions/round_robin_tournament.html", context)
 
 def tournaments(request: HttpRequest):
