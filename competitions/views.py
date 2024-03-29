@@ -805,6 +805,18 @@ def results(request, competition_id):
     team_names = []
     team_names = [team.name for team in competition.teams.order_by("name")]
     totals = []
+    tournament_scorings = {}
+    for tournament in tournaments:
+        scores = []
+        last_match = Match.objects.filter(tournament__id = tournament.id, next_matches__isnull = True).first()
+        winners = last_match.advancers.all()
+        for team_name in team_names:
+            team = Team.objects.filter(name=team_name).first()
+            if team in winners:
+                scores.append(float(tournament.points))
+            else:
+                scores.append(0)
+        tournament_scorings[tournament.event.name] = scores
     team_scorings = []
     for team_name in team_names:
         team = Team.objects.filter(name=team_name).first()
@@ -820,6 +832,7 @@ def results(request, competition_id):
         team_scorings.append((scores))
     judge_names = [plenary_judge.first_name + " " + plenary_judge.last_name for plenary_judge in competition.plenary_judges.order_by("-username")]
     context = {
+        'tournament_scorings': tournament_scorings,
         'tournament_names': tournament_names,
         'team_names': team_names,
         'competition': competition,

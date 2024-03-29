@@ -39,13 +39,15 @@
         var chart = new Chart(context, {
             type: 'bar',
             data: {  
-                labels: team_names,
-                datasets: [{
-                    for (var i = 0; i < team_scorings.length; i++) {
-                        label: tournament_names[i],
-                        data: team_scorings[i],
-                    }
-                }],
+                labels: {{ team_names|safe }},
+                datasets: [
+                    {% for tournament, scores in tournament_scorings.items %}
+                        {
+                            label: '{{ tournament|safe }}',
+                            data: {{ scores|safe }},
+                        },
+                    {% endfor %}
+                ],
             },
             options: {
                 plugins: {
