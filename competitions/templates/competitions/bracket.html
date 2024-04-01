@@ -6,19 +6,8 @@
 
 <style>
 .team {
-    margin: 0px {{bracket_dict.connectorWidth}}px 0px {{bracket_dict.connectorWidth}}px;
+    margin: 0px {{bracket_dict.connectorWidth}}px 0px 0px;
   }
-
-.connector-back {
-    width: {{bracket_dict.connectorWidth}}px;
-    left: -{{bracket_dict.connectorWidth}}px;
-    top: {{ bracket_dict.teamHeight|div:2 }}px
-}
-
-.connector-front {
-    width: {{bracket_dict.connectorWidth|add:3}}px;
-    right: -{{bracket_dict.connectorWidth|add:3}}px;
-}
 
 .connector-up {
     bottom: {{bracket_dict.teamHeight|div:2}}px;
@@ -70,37 +59,26 @@
                 style="height: {{ match_data.center_height }}px; margin-top: {{ match_data.center_top_margin }}px; ">
                 {% for team_data in match_data.team_data %}
                     <div class="team"
-                        style="height: 25px; width: {{ match_data.match_width }}px; {%if team_data.won %}background-color: #fff5a8;{%endif%} cursor: pointer;"
+                        style="height: {{bracket_dict.team_height}}px; width: {{ match_data.match_width }}px; {%if team_data.won %}background-color: #fff5a8;{%endif%} cursor: pointer;"
                         onclick="location.href='{% url 'competitions:judge_match' team_data.match_id %}';">
                         {{ team_data.name }}
-                        {% if team_data.prev %}
-                            <div class="connector-back"></div>
-                        {% endif %}
+               
+
+                            
                         {% if team_data.is_next and team_data.won%}
-
-                            {% comment %} reworking this {% endcomment %}
-
-                            {% with connector_height=match_data.match_height|div:2 straight_connector_height=match_data.match_height|div:4 A=forloop.parentloop.counter|divisibleby:2 B=forloop.counter|divisibleby:2%}                          
+                            {% with connector_height=match_data.match_height|mul:team_data.match_offset_mult %}    
                             <div class="connector-front {{ team_data.connector }}" onclick=""
-                            style=" cursor: default; {% if A and not B or B and not A %}
-                                    {% if team_data.connector == 'connector-down'%}
-                                        height:{{connector_height|sub:24}}px;
-                                    {% elif team_data.connector == 'connector-straight' %}
-                                        height:{{straight_connector_height}}px
-                                    {% else %}
-                                        height:{{connector_height|sub:26}}px;
-                                    {%endif%}
-                                {%else%}
-                                    {% if team_data.connector == 'connector-down'%}
-                                        height:{{connector_height|add:2}}px;
-                                    {% elif team_data.connector == 'connector-straight' %}
-                                        height:{{straight_connector_height|add:3}}px
-                                    {% else %}
-                                        height:{{connector_height}}px;
-                                    {%endif%}
-                                {%endif%}">
-                            </div>
+                            style=" cursor: default;
+                            height: {{connector_height|add:team_data.team_index_offset|abs}}px;
+                            width: {{team_data.connector_width_actual}}px;
+                            right: -{{team_data.connector_width_actual}}px;
                             {%endwith %}
+                            ">
+                                <div class="connector-end" 
+                                style="width: {{bracket_dict.connectorWidth|sub:team_data.connector_width_actual|add:2}}px;
+                                right: -{{bracket_dict.connectorWidth|sub:team_data.connector_width_actual|add:4}}px;
+                                height: 3px;"></div>
+                            </div>
                         {%endif%}
                     </div>
                 {% endfor %}

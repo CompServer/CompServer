@@ -18,7 +18,7 @@
         </h1>
     </header>
     <div class="row d-flex">
-        <a href="{% url 'competitions:competition_score_page' competition.id %}">See Results</a>
+        <a href="{% url 'competitions:results' competition.id %}">See Results</a>
     </div>
     <hr>
     {% if competition.tournament_set.all %}
