@@ -325,23 +325,23 @@ class Competition(models.Model):
     @property
     def is_judgable(self) -> bool:
         """Whether judging for this comptetation should be allowed."""
-        return self.status is Status.OPEN
+        return self.status == Status.OPEN
     
     @property
     def is_complete(self) -> bool:
-        return self.status is Status.COMPLETE
+        return self.status == Status.COMPLETE
 
     @property
     def is_closed(self) -> bool:
-        return self.status is Status.CLOSED
+        return self.status == Status.CLOSED
     
     @property
     def is_archived(self) -> bool:
-        return self.status is Status.ARCHIVED
+        return self.status == Status.ARCHIVED
     
     @property
     def is_in_setup(self) -> bool:
-        return self.status is Status.SETUP
+        return self.status == Status.SETUP
 
     class Meta:
         ordering = ['-start_date', 'name']
@@ -485,7 +485,6 @@ class RoundRobinTournament(AbstractTournament):
 #     # interpolated: rull rankings (order of points)
 
     #this part is for the modelForm to have the correct name, not to be actually used
-    round_num = models.PositiveIntegerField(default=0)
 
 class SingleEliminationTournament(AbstractTournament):
     ''' Elimination style with brackets (last man standing) 
@@ -558,7 +557,6 @@ class Match(models.Model):
     """The round of the tournament that this match is in. 1 for the first round, 2 for the second, etc."""
 
     str_recursive_level: ClassVar[int] = 0
-    round = models.PositiveIntegerField(default=1)
 
     def get_competing_teams(self):
         return [
