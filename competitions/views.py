@@ -11,6 +11,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.core.exceptions import SuspiciousOperation
 from django.template.exceptions import TemplateDoesNotExist
+from operator import attrgetter
 import random
 import zoneinfo
 from typing import Union
@@ -756,11 +757,22 @@ def results(request, competition_id):
     return render(request, "competitions/results.html", context)
 
 def team(request: HttpRequest, team_id: int):
-    #what is the difference between a draw and a win
     team = Team.objects.filter(id=team_id).first()
     today = timezone.now().date()
-    upcoming_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), tournament__competition__start_date__lte=today, tournament__competition__end_date__gte=today, advancers=None).order_by("-time")
-    past_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id)).exclude(advancers=None).order_by("-time")
+    upcoming_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), tournament__competition__start_date__lte=today, tournament__competition__end_date__gte=today).exclude(advancers=None).order_by("-time")
+    
+    
+    
+    
+    #these are all past matches
+    starter_matches = Match.objects.filter(Q(starting_teams__id=team_id)).exclude(advancers=None)
+    previous_advancer_matches = Match.objects.filter(Q(prev_matches__advancers__id=team_id)).exclude(advancers=None)
+    past_matches = list(starter_matches, previous_advancer_matches)
+
+
+
+
+
     past_competitions = Competition.objects.filter(teams__id = team_id, status = Status.COMPLETE).order_by("end_date")
     past_tournaments_won = list()
     past_tournaments = SingleEliminationTournament.objects.filter(teams__id = team_id, status = Status.COMPLETE).order_by("start_time")
@@ -768,66 +780,84 @@ def team(request: HttpRequest, team_id: int):
         last_match_advancers = past_tournament.match_set.last().advancers.all()
         if team in last_match_advancers:
             past_tournaments_won.append(past_tournament)
+
+
+
+    
     losses = list()
     wins = list()
     draws = list()
+    checking = dict()
+
+
+
+
+
+    past_matches_count = past_matches.count()
+    round_ones_count = past_matches.filter(prev_matches=False).count()
+    not_round_ones_count = past_matches.exclude(prev_matches=False).count()
+    #will have to verify time at the end
     for pm in past_matches:
-        first_half = " in Round " + str(pm.round_num) + " in "
-        second_half = " tournament @" + pm.tournament.competition.name
+        #first things first
+        #first_half = " in Round " + str(pm.round_num) + " in "
+        #second_half = " tournament @" + pm.tournament.competition.name
         #check for the number of starters and the number of advancers
+        #get the starter names for every round
+        
+
         #starters
         starters_names = list()
-        if pm.prev_matches.exists():
-            starters_names = list(advancer.name for advancer in pm.prev_matches.last().advancers)
-        starters_names.extend(team.name for team in pm.starting_teams.all())
-        #now that you know everyone that is starting
-        if starters_names.len() == 1:
-            if starters_names[0].id == team_id and team_id == pm.advancers.first().id:
-                #you didn't play anyone and advanced
-                #fix the repetition here
-                wins.append((("Granted a 'Bye' in Round " + str(pm.round_num) + " of "), pm.tournament, (" tournament @" + str(pm.tournament.competition.name))))
-            else: 
-                #you didn't play anyone and lost
-                losses.append((("Eliminated singly" + first_half), pm.tournament, second_half))
-        if starters_names.len() == 2 or starters_names.len() > 2:
-            num_advancers = pm.advnacers.count()
-            advancers_names = (team.name for team in pm.advancers.all())
-            #condense these removers
-            for name in advancers_names:
-                if team.name == name:
-                    advancers_names.remove(name)
-            for name in starters_names:
-                if team.name == name:
-                    starters_names.remove(name)
-            if num_advancers == 1:
-                #if team is in general advancers
-                if team.name in advancers_names and starters_names.len() > 2:
-                    #you won against all other starters
-                    wins.append(("Won against " + ",".join(starters_names) + first_half), pm.tournament, second_half)
-                if team.name in advancers_names and starters_names.len() == 2:
-                    #you won against exactly one starter
-                    wins.append(("Won against " + "".join(starters_names) + first_half), pm.tournament, second_half)
-            if num_advancers == 2:
-                #you won with another starter of many starters, or both starters won
-                if team.name in advancers_names:
-                    if num_advancers > starters_names.count()+1:
-                        #must add + 1 because I removed the current team
-                        #shows there were more people than those that one
-                        wins.append((("Won with " + "".join(starters_names) + first_half), pm.tournament, second_half))
-                    else:
-                        draws.append((("Drew with " + "".join(starters_names) + first_half), pm.tournament, second_half))
-                else:
-                    losses.append((("Lost against " + ",".join(advancers_names)+ first_half), pm.tournament, second_half))
-            if num_advancers > 2:
-                #you won with many starters or multiple starters won against you 
-                if team.name in advancers_names():
-                    if num_advancers > starters.names.count()+1:
-                        wins.append((("Won with " + "".join(starters_names) + first_half), pm.tournament, second_half))
-                    else:
-                        draws.append((("Drew with " + "".join(starters_names) + first_half), pm.tournament, second_half))
-                else:
-                    losses.append((("Lost against" + ,"".join(starters_names) + first_half), pm.tournament, second_half))
         # if pm.prev_matches.exists():
+        #     starters_names = list(advancer.name for advancer in pm.prev_matches.last().advancers)
+        # starters_names.extend(team.name for team in pm.starting_teams.all())
+        # #now that you know everyone that is starting
+        # if starters_names.len() == 1:
+        #     if starters_names[0].id == team_id and team_id == pm.advancers.first().id:
+        #         #you didn't play anyone and advanced
+        #         #fix the repetition here
+        #         wins.append((("Granted a 'Bye' in Round " + str(pm.round_num) + " of "), pm.tournament, (" tournament @" + str(pm.tournament.competition.name))))
+        #     else: 
+        #         #you didn't play anyone and lost
+        #         losses.append((("Eliminated singly" + first_half), pm.tournament, second_half))
+        # if starters_names.len() == 2 or starters_names.len() > 2:
+        #     num_advancers = pm.advnacers.count()
+        #     advancers_names = (team.name for team in pm.advancers.all())
+        #     #condense these removers
+        #     for name in advancers_names:
+        #         if team.name == name:
+        #             advancers_names.remove(name)
+        #     for name in starters_names:
+        #         if team.name == name:
+        #             starters_names.remove(name)
+        #     if num_advancers == 1:
+        #         #if team is in general advancers
+        #         if team.name in advancers_names and starters_names.len() > 2:
+        #             #you won against all other starters
+        #             wins.append(("Won against " + ",".join(starters_names) + first_half), pm.tournament, second_half)
+        #         if team.name in advancers_names and starters_names.len() == 2:
+        #             #you won against exactly one starter
+        #             wins.append(("Won against " + "".join(starters_names) + first_half), pm.tournament, second_half)
+        #     if num_advancers == 2:
+        #         #you won with another starter of many starters, or both starters won
+        #         if team.name in advancers_names:
+        #             if num_advancers > starters_names.count()+1:
+        #                 #must add + 1 because I removed the current team
+        #                 #shows there were more people than those that one
+        #                 wins.append((("Won with " + "".join(starters_names) + first_half), pm.tournament, second_half))
+        #             else:
+        #                 draws.append((("Drew with " + "".join(starters_names) + first_half), pm.tournament, second_half))
+        #         else:
+        #             losses.append((("Lost against " + ",".join(advancers_names)+ first_half), pm.tournament, second_half))
+        #     if num_advancers > 2:
+        #         #you won with many starters or multiple starters won against you 
+        #         if team.name in advancers_names():
+        #             if num_advancers > starters.names.count()+1:
+        #                 wins.append((("Won with " + "".join(starters_names) + first_half), pm.tournament, second_half))
+        #             else:
+        #                 draws.append((("Drew with " + "".join(starters_names) + first_half), pm.tournament, second_half))
+        #         else:
+        #             losses.append((("Lost against" + ,"".join(starters_names) + first_half), pm.tournament, second_half))
+        # # if pm.prev_matches.exists():
         #     num_starting_teams = pm.starting_teams.count() + pm.prev_matches.last().advancers.count()
         # else:
         #     num_starting_teams = pm.starting_teams.count()
