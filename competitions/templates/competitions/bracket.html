@@ -5,21 +5,6 @@
 {% block head %}
 
 <style>
-.team {
-    margin: 0px {{bracket_dict.connectorWidth}}px 0px 0px;
-  }
-
-.connector-up {
-    bottom: {{bracket_dict.teamHeight|div:2}}px;
-}
-
-.connector-down {
-    top: {{ bracket_dict.teamHeight|div:2 }}px;
-}
-
-.connector-straight {
-    top: {{ bracket_dict.teamHeight|div:2 }}px;
-}
 
 .bracket {
     height:{{bracket_dict.bracketHeight}}px; 
@@ -55,31 +40,32 @@
     <div class="round">
         {% for match_data in round_data.match_data %}
         <div class="match" style="height: {{ match_data.match_height }}px; width: {{ match_data.match_width }}px;">
+
+            {{match_data.connector_data.midpoint_index}}
+
             <div class="center"
                 style="height: {{ match_data.center_height }}px; margin-top: {{ match_data.center_top_margin }}px; ">
-                {% for team_data in match_data.team_data %}
+                
+                {% with connector_height=match_data.match_height|mul:match_data.connector_data.match_offset_mult %}    
+                <div class="connector-front {{ match_data.connector_data.connector }}" onclick=""
+                style=" cursor: default;
+                height: {{connector_height|add:match_data.connector_data.team_index_offset|abs}}px;
+                width: {{match_data.connector_data.connector_width_actual}}px;
+                right: -{{match_data.connector_data.connector_width_actual}}px;
+                top: {{ match_data.connector_data.vertical_margin }}px;
+                {%endwith %}
+                ">
+                    <div class="connector-end" 
+                    style="width: {{bracket_dict.connectorWidth|sub:match_data.connector_data.connector_width_actual|add:2}}px;
+                    right: -{{bracket_dict.connectorWidth|sub:match_data.connector_data.connector_width_actual|add:4}}px;
+                    height: 3px;"></div>
+                </div>
+                
+                {% for curr_team in match_data.team_data %}
                     <div class="team"
-                        style="height: {{bracket_dict.team_height}}px; width: {{ match_data.match_width }}px; {%if team_data.won %}background-color: #fff5a8;{%endif%} cursor: pointer;"
-                        onclick="location.href='{% url 'competitions:judge_match' team_data.match_id %}';">
-                        {{ team_data.name }}
-               
-
-                            
-                        {% if team_data.is_next and team_data.won%}
-                            {% with connector_height=match_data.match_height|mul:team_data.match_offset_mult %}    
-                            <div class="connector-front {{ team_data.connector }}" onclick=""
-                            style=" cursor: default;
-                            height: {{connector_height|add:team_data.team_index_offset|abs}}px;
-                            width: {{team_data.connector_width_actual}}px;
-                            right: -{{team_data.connector_width_actual}}px;
-                            {%endwith %}
-                            ">
-                                <div class="connector-end" 
-                                style="width: {{bracket_dict.connectorWidth|sub:team_data.connector_width_actual|add:2}}px;
-                                right: -{{bracket_dict.connectorWidth|sub:team_data.connector_width_actual|add:4}}px;
-                                height: 3px;"></div>
-                            </div>
-                        {%endif%}
+                        style="height: {{bracket_dict.team_height}}px; width: {{ match_data.match_width }}px; {%if curr_team.won %}background-color: #fff5a8;{%endif%} cursor: pointer;"
+                        onclick="location.href='{% url 'competitions:judge_match' curr_team.match_id %}';">
+                        {{ curr_team.name }}
                     </div>
                 {% endfor %}
             </div>
