@@ -63,8 +63,6 @@ class TournamentSwapForm(forms.Form):
         return super().is_valid()
 
 class CreateCompetitionsForm(forms.ModelForm):
-    sport = forms.ModelChoiceField(queryset=None) # just for display
-    teams = forms.ModelMultipleChoiceField(queryset=None)
 
     def __init__(self, *args, sport: Sport, **kwargs):
         super().__init__(*args, **kwargs)
@@ -91,7 +89,7 @@ class CreateCompetitionsForm(forms.ModelForm):
 
     class Meta:
         model = Competition
-        fields = ['name', 'status', 'plenary_judges', 'start_date', 'end_date', 'arenas']
+        fields = ['name', 'status', 'sport', 'teams', 'plenary_judges', 'start_date', 'end_date', 'arenas']
         widgets = {
             'start_date': forms.DateInput(attrs={'format': 'yyyy-mm-dd','type':'date'}),
             'end_date': forms.DateInput(attrs={'format': 'yyyy-mm-dd','type':'date'}),
@@ -109,7 +107,7 @@ class CreateSETournamentForm(forms.ModelForm):
         self.fields['competition'].initial = competition
         self.event_queryset = competition.events
         self.fields['event'].queryset = self.event_queryset
-        self.fields['teams'].queryset = competition.teams
+        self.fields['teams'].queryset = competition.teams.all()
         #self.events = competition.events
         #self.fields['events'].queryset = Event.objects.filter(competition=competition)
 
@@ -119,6 +117,7 @@ class CreateSETournamentForm(forms.ModelForm):
 
 class CreateRRTournamentForm(forms.ModelForm):
     generate_matches = forms.CheckboxInput()
+    teams = forms.ModelMultipleChoiceField(queryset=None)
     #competition_field = forms.ModelChoiceField(queryset=None,label='Competition')
 
     def __init__(self, *args, competition: Competition, **kwargs):
@@ -128,7 +127,7 @@ class CreateRRTournamentForm(forms.ModelForm):
         self.fields['competition'].initial = competition
         self.event_queryset = competition.events
         self.fields['event'].queryset = self.event_queryset
-        self.fields['teams'].queryset = competition.teams
+        self.fields['teams'].queryset = competition.teams.all()
         #self.events = competition.events
         #self.fields['events'].queryset = Event.objects.filter(competition=competition)
 
