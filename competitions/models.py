@@ -385,12 +385,12 @@ class Event(models.Model):
 
 # dwheadon: can we force this to be abstract (non-instantiable)?
 class AbstractTournament(models.Model):
+    name = models.CharField(max_length=255, blank=True)
     #for times to work, we need to be add time-specific stuff in this model
     #tournament_starting_time, match_duration, and how many matches can occur per time period to name a few.
     status = StatusField()
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="tournament_set") # besides helpfing to identify this tournament this will change how teams advance (high or low score)
     competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name="tournament_set")
-    points = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True) # for winner # dwheadon: is 10 digits / decimals enough / too much?
     # interpolate_points = models.BooleanField(default=False) # otherwise winner takes all: RoboMed doesn't need this but it could be generally useful
     teams = models.ManyToManyField(Team, related_name="tournament_set")
     judges = models.ManyToManyField(User, blank=True, related_name="tournament_set")  # people entrusted to judge this tournament alone (as opposed to plenary judges)
@@ -475,10 +475,13 @@ class RoundRobinTournament(AbstractTournament):
     points_per_tie = models.PositiveIntegerField(default=1)
     points_per_loss = models.PositiveIntegerField(default=0)
 
+    class Meta:
+        verbose_name = "PreliminaryTournament"
 #     ''' Everyone plays everyone else (most points / wins, wins) 
 #         Can be used to establish rankings for an Elimination
 #         This is often used for league play (not necessarily a tournament)
-#     '''
+#     ''
+# '
 #     # accumulation: sum of all points (e.g. goals), sum of match points (e.g. 2 for win, 1 for tie, 0 for loss)
 #     # interpolated: rull rankings (order of points)
 
@@ -488,6 +491,7 @@ class SingleEliminationTournament(AbstractTournament):
         Seeding (ranking) is important because you want the last match to be close, not a total blowout
         Winner take all situation (1st place is really the only position that's established)
     '''
+    points = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True) # for winner # dwheadon: is 10 digits / decimals enough / too much?
     prev_tournament = models.ForeignKey(RoundRobinTournament, on_delete=models.DO_NOTHING, blank=True, null=True)
     # interpolated: winner (of the top-level match)
 

@@ -74,8 +74,23 @@
         <div class="col-12">
             | 
             {% for team, points in team_wins.items %}
-                <b>{{ team.name }}</b>: {{ points }} points | 
+                {% if team == winning_team %}
+                    <b><font color="#ff0000">{{ team.name }}</font></b>: {{ points }} points |
+                {% else %}
+                    <b>{{ team.name }}</b>: {{ points }} points | 
+                {% endif %}
             {% endfor %}
+        </div>
+        <div class="row d-flex justify-content-center">
+            <div class="col-4" align="center">
+                {% translate "Points Per Win: "%} {{ tournament.points_per_win }} 
+            </div>
+            <div class="col-4" align="center">
+                {% translate "Points Per Tie: "%} {{ tournament.points_per_tie }} 
+            </div>
+            <div class="col-4" align="center">
+                {% translate "Points Per Loss: "%} {{ tournament.points_per_loss }}
+            </div>
         </div>
         {% if user.is_superuser %}
             <hr>

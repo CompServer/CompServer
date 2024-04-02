@@ -62,12 +62,8 @@ def generate_single_elimination_matches(request, tournament_id: int):
     starting_time = tournament.start_time 
     team_ranks = []
     if tournament.prev_tournament == None or not tournament.prev_tournament.ranking_set.exists():
-        teams = tournament.teams.all()
-        for i, team in enumerate(teams, start=1):
-            rank = Ranking.objects.create(tournament=tournament,team=team,rank=i)
-            rank.save()
-    else:
-        team_ranks = sorted([(rank.team, rank.rank) for rank in tournament.prev_tournament.ranking_set.all()], key=lambda x: x[1])
+        generate_round_robin_rankings(tournament_id)
+    team_ranks = sorted([(rank.team, rank.rank) for rank in tournament.prev_tournament.ranking_set.all()], key=lambda x: x[1])
     #sort_list(teams, ranks)        
     rank_teams = {i+1: team_ranks[i][0] for i in range(len(team_ranks))}
     num_teams = len(rank_teams)
@@ -222,7 +218,6 @@ def generate_round_robin_matches(request, tournament_id):
                 match.starting_teams.add(teams[j])
                 num_participated[j] += 1 
                 if num_participated == [1 for _ in range(len(teams))]:
-                    #add points at bottom of tournament page of teams
                     break
             match.time = starting_time
             match.arena = arenas[arena_iterator]
@@ -256,7 +251,7 @@ def get_points(tournament_id: int):
                 team_wins[team] += tournament.points_per_loss
     return team_wins
 
-def generate_round_robin_rankings(request, tournament_id):
+def generate_round_robin_rankings(tournament_id):
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
     team_wins = get_points(tournament_id)
     sorted_team_wins = dict(sorted(team_wins.items(), key=lambda x:x[1]))
@@ -624,8 +619,9 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
         "round_data": round_data,
     }
     team_wins = get_points(tournament_id)
+    winning_team = max(team_wins, key= lambda x: team_wins[x])
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
-    context = {"tournament": tournament, "bracket_dict": bracket_dict, "team_wins": team_wins}
+    context = {"tournament": tournament, "bracket_dict": bracket_dict, "team_wins": team_wins, "winning_team": winning_team}
     return render(request, "competitions/round_robin_tournament.html", context)
 
 def tournaments(request: HttpRequest):
