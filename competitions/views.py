@@ -353,7 +353,7 @@ def create_tournament(request: HttpRequest):
                 form.add_error(error_field, error_desc)
     if not form:
         form = FORM_CLASS(competition=competition)
-    return render(request, "FORM_BASE.html", {'form_title': "Create Tournament", 'action': f"?tournament_type={tournament_type}&competition_id={competition.id}" , "form": form})
+    return render(request, "FORM_BASE.html", {'form_title': "Create Tournament", 'action': f"?tournament_type={tournament_type}&competition_id={competition.id}" , "form": form,  "form_submit_text": "Create"})
 
 @login_required
 def arena_color(request: HttpRequest, competition_id: int):
