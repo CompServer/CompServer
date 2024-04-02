@@ -196,29 +196,45 @@ def generate_single_elimination_matches(request, tournament_id: int):
         num_matches = len(matches)
     return HttpResponseRedirect(reverse("competitions:single_elimination_tournament", args=(tournament_id,)))
 
+def isPlayed(teams_played, match_teams):
+    for team in match_teams:
+        if team in teams_played:
+            return True
+    return False
+
 def generate_round_robin_matches(request, tournament_id):
+    #may have to include buys, but check with schwartz first.
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
     arena_iterator = 0
     nmpt_iterator = 0
     arenas = [i for i in tournament.competition.arenas.filter(is_available=True)]
     starting_time = tournament.start_time 
     teams = [team for team in tournament.teams.all()]
+    teams_played = {team: set() for team in teams}
     for k in range(tournament.num_rounds):
         nmpt_iterator = 0
         if arena_iterator > 0:
             arena_iterator = 0
             starting_time += tournament.event.match_time
         num_participated = [0 for _ in range(len(teams))]
+        temp = min(teams_played.values(), key=lambda x: len(x))
+        if temp == len(teams) - 1:
+            teams_played = {team: set() for team in teams}
         while num_participated != [1 for _ in range(len(teams))]:
             match = Match.objects.create(tournament=tournament)
             for i in range(tournament.teams_per_match):
                 j = random.randint(0, len(teams)-1)
-                while(num_participated[j] > 0 or teams[j] in match.starting_teams.all()):
-                    j = random.randint(0, len(teams)-1)          
-                match.starting_teams.add(teams[j])
+                while(num_participated[j] > 0 or teams[j] in match.starting_teams.all() or \
+                isPlayed(teams_played[teams[j]], match.starting_teams.all())):
+                    j = random.randint(0, len(teams)-1)    
+                match.starting_teams.add(teams[j])      
                 num_participated[j] += 1 
                 if num_participated == [1 for _ in range(len(teams))]:
                     break
+            for team in match.teams.all():
+                for team2 in match.teams.all():
+                    if team != team2:
+                        teams_played[team].add(team2)
             match.time = starting_time
             match.arena = arenas[arena_iterator]
             nmpt_iterator += 1
@@ -619,9 +635,10 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
         "round_data": round_data,
     }
     team_wins = get_points(tournament_id)
-    winning_team = max(team_wins, key= lambda x: team_wins[x])
+    winning_points = max(team_wins.values())
+    winning_teams = [team for team in team_wins if team_wins[team] == winning_points]
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
-    context = {"tournament": tournament, "bracket_dict": bracket_dict, "team_wins": team_wins, "winning_team": winning_team}
+    context = {"tournament": tournament, "bracket_dict": bracket_dict, "team_wins": team_wins, "winning_teams": winning_teams}
     return render(request, "competitions/round_robin_tournament.html", context)
 
 def tournaments(request: HttpRequest):

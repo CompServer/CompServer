@@ -74,7 +74,7 @@
         <div class="col-12">
             | 
             {% for team, points in team_wins.items %}
-                {% if team == winning_team %}
+                {% if team in winning_teams %}
                     <b><font color="#ff0000">{{ team.name }}</font></b>: {{ points }} points |
                 {% else %}
                     <b>{{ team.name }}</b>: {{ points }} points | 
