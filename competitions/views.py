@@ -763,16 +763,15 @@ def team(request: HttpRequest, team_id: int):
     
     
     
-    
-    #these are all past matches
+    #sort time of matchess
+
+
+
     starter_matches = Match.objects.filter(Q(starting_teams__id=team_id)).exclude(advancers=None)
     previous_advancer_matches = Match.objects.filter(Q(prev_matches__advancers__id=team_id)).exclude(advancers=None)
-    past_matches = list(starter_matches, previous_advancer_matches)
-
-
-
-
-
+    past_matches = [match for match in starter_matches]
+    for match in previous_advancer_matches:
+        past_matches.append(match)
     past_competitions = Competition.objects.filter(teams__id = team_id, status = Status.COMPLETE).order_by("end_date")
     past_tournaments_won = list()
     past_tournaments = SingleEliminationTournament.objects.filter(teams__id = team_id, status = Status.COMPLETE).order_by("start_time")
@@ -780,7 +779,33 @@ def team(request: HttpRequest, team_id: int):
         last_match_advancers = past_tournament.match_set.last().advancers.all()
         if team in last_match_advancers:
             past_tournaments_won.append(past_tournament)
-
+    
+    
+    
+    
+    
+    for match in past_matches:
+        if match.prev_matches.exists():
+            if team_id in match.advancers.id:
+                if match.advancers.count() == match.starting_teams.count() + match.prev_matches.advancers.count)(): #if all those who played won
+                    #you drew wiht ...
+                else:
+                    if match.advancers.count() == 1:#you won by yourself
+                    elif match.advancers.count() > 2: #you won wiht other people
+            else:#you lost in the first round
+                #you lost
+                if match.advancers.count() == 1: #you lost to one person
+                elif match.advancers.count() > 1: #you lost to many people
+        else:
+            if team_id in match.advancers.id:
+                if match.advancers.count() == match.starting_teams.count():
+                    #draw
+                else:
+                    if match.advancers.count() == 1:
+                    elif match.advancers.count() > 1:
+            else:
+                if match.advancers.count() == 1: #u lost to 1 person
+                elif match.advancers.count() > 1: #u lost to manu people
 
 
     
