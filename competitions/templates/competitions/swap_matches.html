@@ -1,12 +1,1 @@
-{% extends 'skeleton.html' %}
-{% load static %}
-{% load i18n %}
-{% block title %}Title{% endblock%}
-
-{% block content %}
-<form method="POST">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-primary">{% translate "Swap" %}</button>
-</form>
-{% endblock %}
+{% include "FORM_BASE.html" with form_title="Swap Matches" action="" form_submit_text="Swap" %}
