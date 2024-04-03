@@ -395,7 +395,7 @@ class AbstractTournament(models.Model):
     teams = models.ManyToManyField(Team, related_name="tournament_set")
     judges = models.ManyToManyField(User, blank=True, related_name="tournament_set")  # people entrusted to judge this tournament alone (as opposed to plenary judges)
     start_time = models.DateTimeField(default=timezone.now)
-    
+    points = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True) # for winner # dwheadon: is 10 digits / decimals enough / too much?
     # These Event-related things might depend on the competition: speed race with 1 v 1 at this competition but speed race with 4 v 4 at another (both are the same event)
     # max_teams_per_match = models.SmallIntegerField(default=2)
     # max_teams_to_advance = models.SmallIntegerField(default=1)
@@ -475,13 +475,12 @@ class RoundRobinTournament(AbstractTournament):
     points_per_tie = models.PositiveIntegerField(default=1)
     points_per_loss = models.PositiveIntegerField(default=0)
 
-    class Meta:
+    class Meta():
         verbose_name = "PreliminaryTournament"
 #     ''' Everyone plays everyone else (most points / wins, wins) 
 #         Can be used to establish rankings for an Elimination
 #         This is often used for league play (not necessarily a tournament)
-#     ''
-# '
+#     '''
 #     # accumulation: sum of all points (e.g. goals), sum of match points (e.g. 2 for win, 1 for tie, 0 for loss)
 #     # interpolated: rull rankings (order of points)
 
@@ -491,7 +490,6 @@ class SingleEliminationTournament(AbstractTournament):
         Seeding (ranking) is important because you want the last match to be close, not a total blowout
         Winner take all situation (1st place is really the only position that's established)
     '''
-    points = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True) # for winner # dwheadon: is 10 digits / decimals enough / too much?
     prev_tournament = models.ForeignKey(RoundRobinTournament, on_delete=models.DO_NOTHING, blank=True, null=True)
     # interpolated: winner (of the top-level match)
 

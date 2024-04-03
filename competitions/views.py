@@ -393,7 +393,7 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
         redirect_id = [redirect_id]
     tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
     if request.method == 'POST':
-        form = SETournamentStatusForm(request.POST)
+        form = TournamentStatusForm(request.POST)
         if form.is_valid():
             status = form.cleaned_data.get('status')
             tournament.status = status
@@ -592,7 +592,7 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
                 won = False
                 k += 1
             for q in range(k, tournament.teams_per_match):
-                team_data.append({'name': 'TBD', 'won': won, 'is_next': is_next, 'prev': prev, 'match': rounds[j], 'connector': connector})
+                team_data.append({'name': 'No Team', 'won': won, 'is_next': is_next, 'prev': prev, 'match': rounds[j], 'connector': connector})
             bracket_array[i][j] = team_data
     
     num_matches = len(bracket_array)/numRounds
@@ -641,9 +641,6 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
     context = {"tournament": tournament, "bracket_dict": bracket_dict, "team_wins": team_wins, "winning_teams": winning_teams}
     return render(request, "competitions/round_robin_tournament.html", context)
 
-def tournaments(request: HttpRequest):
-    return render(request, "competitions/tournaments.html")
-
 def competitions(request: HttpRequest):
     competition_list = Competition.objects.all().order_by("-status", "start_date")
     context = {"competition_list": competition_list, "form": CompetitionStatusForm()}
@@ -677,7 +674,7 @@ def competition(request: HttpRequest, competition_id: int):
         winner = None
     context = {
         "competition": competition, 
-        "form": SETournamentStatusForm(), 
+        "form": TournamentStatusForm(), 
         "winner": winner,
     }
     return render(request, "competitions/competition.html", context)

@@ -15,7 +15,7 @@
                 {% elif competition.is_closed %} 
                     <i class="bi-x-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
                 {% elif competition.is_in_setup %}
-                    <i class="bi-gear" title="{{ competition.status }}"></i> {% if user.is_staff %}<a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>{% else %}{{ competition }}{% endif %}
+                    <i class="bi bi-device-ssd" title="{{ competition.status }}"></i> {% if user.is_staff %}<a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>{% else %}{{ competition }}{% endif %}
                 {% elif competition.is_archived and user.is_staff %}
                     <i class="bi-archive" title="{{ competition.status }}"></i> {{ competition }} <small>{% translate "You can see this archived item because you are signed in as a superuser." %}</small>
                 {% endif %}

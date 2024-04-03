@@ -9,7 +9,7 @@
         {% elif tournament.is_closed %} 
             <i class="bi-x-circle" title="{{ competition.status }}"></i> {{ tournament.event.name }}
         {% elif tournament.is_in_setup %}
-            <i class="bi-gear" title="{{ competition.status }}"></i> {{ tournament.event.name }}
+            <i class="bi bi-device-ssd" title="{{ competition.status }}"></i> {{ tournament.event.name }}
         {% elif competition.is_archived %}
             <i class="bi-archive" title="{{ competition.status }}"></i> {{ tournament }} <small>You can see this archived item because you are signed in as a superuser.</small>
         {% endif %}

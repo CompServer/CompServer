@@ -32,15 +32,10 @@ class CompetitionStatusForm(forms.ModelForm):
     class Meta:
         model = Competition
         fields = ['status']
-
-class SETournamentStatusForm(forms.ModelForm):
-    class Meta:
-        model = SingleEliminationTournament
-        fields = ['status']
-
+        
 class TournamentStatusForm(forms.ModelForm):
     class Meta:
-        model = RoundRobinTournament
+        model = AbstractTournament
         fields = ['status']
 
 class TournamentSwapForm(forms.Form):
@@ -160,4 +155,6 @@ class ArenaColorForm(forms.Form):
 
     def is_valid(self):
         self.full_clean()
+        if self.cleaned_data['color'] == '#fff5a8':
+            return False
         return super().is_valid()

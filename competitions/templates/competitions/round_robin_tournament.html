@@ -2,31 +2,31 @@
 {% load i18n %}
 <style>
     .team {
-        margin: 0px {{bracket_dict.connectorWidth}}px 0px {{bracket_dict.connectorWidth}}px;
+        margin: 0px {{ bracket_dict.connectorWidth }}px 0px {{ bracket_dict.connectorWidth }}px;
       }
     
     .connector-back {
-        width: {{bracket_dict.connectorWidth}}px;
-        left: -{{bracket_dict.connectorWidth}}px;
-        top: {% widthratio bracket_dict.teamHeight 2 1%}px
+        width: {{ bracket_dict.connectorWidth }}px;
+        left: -{{ bracket_dict.connectorWidth }}px;
+        top: {% widthratio bracket_dict.teamHeight 2 1 %}px
     }
     
     .connector-front {
-        width: {{bracket_dict.connectorWidth|add:3}}px;
-        right: -{{bracket_dict.connectorWidth|add:3}}px;
+        width: {{ bracket_dict.connectorWidth|add:3 }}px;
+        right: -{{ bracket_dict.connectorWidth|add:3 }}px;
     }
     
     .connector-up {
-        bottom: {% widthratio bracket_dict.teamHeight 2 1%}px;
+        bottom: {% widthratio bracket_dict.teamHeight 2 1 %}px;
     }
     
     .connector-down {
-        top: {% widthratio bracket_dict.teamHeight 2 1%}px;
+        top: {% widthratio bracket_dict.teamHeight 2 1 %}px;
     }
     
     .bracket {
-        height:{{bracket_dict.bracketHeight}}px; 
-        width:{{bracket_dict.bracketWidth}}px;
+        height:{{ bracket_dict.bracketHeight }}px; 
+        width:{{ bracket_dict.bracketWidth }}px;
     }
     
     .round {
@@ -36,15 +36,15 @@
 </style>
 {% block content %}
     <h1>{% if tournament.is_judgable %} 
-            <i class="bi-activity" title="{{ competition.status }}"></i> {{ tournament.event.name }}
+            <i class="bi-activity" title="{{ competition.status }}"></i> {{ tournament.competition.name }} {{ tournament.event.name }} Tournament
         {% elif tournament.is_complete %} 
-            <i class="bi-check2-circle" title="{{ competition.status }}"></i> {{ tournament.event.name }}
+            <i class="bi-check2-circle" title="{{ competition.status }}"></i> {{ tournament.competition.name }} {{ tournament.event.name }} Tournament
         {% elif tournament.is_closed %} 
-            <i class="bi-x-circle" title="{{ competition.status }}"></i> {{ tournament.event.name }}
+            <i class="bi-x-circle" title="{{ competition.status }}"></i> {{ tournament.competition.name }} {{ tournament.event.name }} Tournament
         {% elif tournament.is_in_setup %}
-            <i class="bi-gear" title="{{ competition.status }}"></i> {{ tournament.event.name }}
+            <i class="bi bi-device-ssd" title="{{ competition.status }}"></i> {{ tournament.competition.name }} {{ tournament.event.name }} Tournament
         {% elif competition.is_archived %}
-            <i class="bi-archive" title="{{ competition.status }}"></i> {{ tournament }} <small>You can see this archived item because you are signed in as a superuser.</small>
+            <i class="bi-archive" title="{{ competition.status }}"></i> {{ tournament.competition.name }} {{ tournament.event.name }} Tournament <small>You can see this archived item because you are signed in as a superuser.</small>
         {% endif %}
     </h1>
     <hr>
