@@ -766,6 +766,8 @@ def team(request: HttpRequest, team_id: int):
     #sort time of matchess
 
 
+    
+
 
     starter_matches = Match.objects.filter(Q(starting_teams__id=team_id)).exclude(advancers=None)
     previous_advancer_matches = Match.objects.filter(Q(prev_matches__advancers__id=team_id)).exclude(advancers=None)
@@ -780,146 +782,47 @@ def team(request: HttpRequest, team_id: int):
         if team in last_match_advancers:
             past_tournaments_won.append(past_tournament)
     
-    
-    
-    
-    
-    for match in past_matches:
-        if match.prev_matches.exists():
-            if team_id in match.advancers.id:
-                if match.advancers.count() == match.starting_teams.count() + match.prev_matches.advancers.count)(): #if all those who played won
-                    #you drew wiht ...
-                else:
-                    if match.advancers.count() == 1:#you won by yourself
-                    elif match.advancers.count() > 2: #you won wiht other people
-            else:#you lost in the first round
-                #you lost
-                if match.advancers.count() == 1: #you lost to one person
-                elif match.advancers.count() > 1: #you lost to many people
-        else:
-            if team_id in match.advancers.id:
-                if match.advancers.count() == match.starting_teams.count():
-                    #draw
-                else:
-                    if match.advancers.count() == 1:
-                    elif match.advancers.count() > 1:
-            else:
-                if match.advancers.count() == 1: #u lost to 1 person
-                elif match.advancers.count() > 1: #u lost to manu people
 
 
-    
     losses = list()
     wins = list()
     draws = list()
-    checking = dict()
-
-
-
-
-
-    past_matches_count = past_matches.count()
-    round_ones_count = past_matches.filter(prev_matches=False).count()
-    not_round_ones_count = past_matches.exclude(prev_matches=False).count()
-    #will have to verify time at the end
-    for pm in past_matches:
-        #first things first
-        #first_half = " in Round " + str(pm.round_num) + " in "
-        #second_half = " tournament @" + pm.tournament.competition.name
-        #check for the number of starters and the number of advancers
-        #get the starter names for every round
-        
-
-        #starters
-        starters_names = list()
-        # if pm.prev_matches.exists():
-        #     starters_names = list(advancer.name for advancer in pm.prev_matches.last().advancers)
-        # starters_names.extend(team.name for team in pm.starting_teams.all())
-        # #now that you know everyone that is starting
-        # if starters_names.len() == 1:
-        #     if starters_names[0].id == team_id and team_id == pm.advancers.first().id:
-        #         #you didn't play anyone and advanced
-        #         #fix the repetition here
-        #         wins.append((("Granted a 'Bye' in Round " + str(pm.round_num) + " of "), pm.tournament, (" tournament @" + str(pm.tournament.competition.name))))
-        #     else: 
-        #         #you didn't play anyone and lost
-        #         losses.append((("Eliminated singly" + first_half), pm.tournament, second_half))
-        # if starters_names.len() == 2 or starters_names.len() > 2:
-        #     num_advancers = pm.advnacers.count()
-        #     advancers_names = (team.name for team in pm.advancers.all())
-        #     #condense these removers
-        #     for name in advancers_names:
-        #         if team.name == name:
-        #             advancers_names.remove(name)
-        #     for name in starters_names:
-        #         if team.name == name:
-        #             starters_names.remove(name)
-        #     if num_advancers == 1:
-        #         #if team is in general advancers
-        #         if team.name in advancers_names and starters_names.len() > 2:
-        #             #you won against all other starters
-        #             wins.append(("Won against " + ",".join(starters_names) + first_half), pm.tournament, second_half)
-        #         if team.name in advancers_names and starters_names.len() == 2:
-        #             #you won against exactly one starter
-        #             wins.append(("Won against " + "".join(starters_names) + first_half), pm.tournament, second_half)
-        #     if num_advancers == 2:
-        #         #you won with another starter of many starters, or both starters won
-        #         if team.name in advancers_names:
-        #             if num_advancers > starters_names.count()+1:
-        #                 #must add + 1 because I removed the current team
-        #                 #shows there were more people than those that one
-        #                 wins.append((("Won with " + "".join(starters_names) + first_half), pm.tournament, second_half))
-        #             else:
-        #                 draws.append((("Drew with " + "".join(starters_names) + first_half), pm.tournament, second_half))
-        #         else:
-        #             losses.append((("Lost against " + ",".join(advancers_names)+ first_half), pm.tournament, second_half))
-        #     if num_advancers > 2:
-        #         #you won with many starters or multiple starters won against you 
-        #         if team.name in advancers_names():
-        #             if num_advancers > starters.names.count()+1:
-        #                 wins.append((("Won with " + "".join(starters_names) + first_half), pm.tournament, second_half))
-        #             else:
-        #                 draws.append((("Drew with " + "".join(starters_names) + first_half), pm.tournament, second_half))
-        #         else:
-        #             losses.append((("Lost against" + ,"".join(starters_names) + first_half), pm.tournament, second_half))
-        # # if pm.prev_matches.exists():
-        #     num_starting_teams = pm.starting_teams.count() + pm.prev_matches.last().advancers.count()
-        # else:
-        #     num_starting_teams = pm.starting_teams.count()
-        # num_advancers = pm.advancers.count()
-        # if num_starting_teams == 1 and pm.starting_teams.exists() and pm.starting_teams.first().id == team_id and pm.advancers.all().first().id == team_id:
-        #     wins.append((("Granted a BYE" + first_half), pm.tournament, second_half))
-        # else:
-        #     starting_teams_names = list()
-        #     if pm.prev_matches.exists():
-        #         for prev_match_advancer in pm.prev_matches.last().advancers.all():
-        #             if prev_match_advancer.id != team_id:
-        #                 starting_team_names.append(prev_match_advancer.name)
-        #     for starting_team in pm.starting_teams.all():
-        #         if starting_team.id != team_id:
-        #             starting_teams_names.append(starting_team.name)
-        #     if num_advancers == 1 and pm.advancers.all().first().id == team_id:
-        #         if num_starting_teams == 2:
-        #             wins.append((("Won against " + starting_teams_names.__getitem__(0) + first_half), pm.tournament, second_half))
-        #         else:
-        #             wins.append((("Won against " + ",".join(starting_teams_names) + first_half), pm.tournament, second_half))
-        #     else:
-        #         advancer_team_ids = list()
-        #         advancer_teams_names = list()
-        #         for advancer in pm.advancers.all():
-        #             advancer_team_ids.append(advancer.id)
-        #             if advancer.id != team_id:
-        #                 advancer_teams_names.append(advancer.name)
-        #         if num_advancers > 1 and team_id in advancer_team_ids:
-        #             if num_advancers == 2:
-        #                 draws.append((("Drew with " + "".join(advancer_teams_names) + first_half), pm.tournament, second_half))
-        #             else:
-        #                 draws.append((("Drew with " + ",".join(advancer_teams_names) + first_half), pm.tournament, second_half))
-        #         else:
-        #             if num_advancers == 2:
-        #                 losses.append((("Lost against " + "".join(advancer_teams_names) + first_half), pm.tournament, second_half))
-        #             else:
-        #                 losses.append((("Lost against " + ",".join(advancer_teams_names) + first_half), pm.tournament, second_half))
+    
+    
+    #make sure to sort by gtim
+    if past_matches:
+        for match in past_matches:
+            first_half = " in Round " + str(match.round_num) + " in "
+            second_half = " tournament @" + match.tournament.competition.name
+            if match.prev_matches.exists():
+                if team_id in [team.id for team in match.advancers.all()]:
+                    if match.advancers.count() == match.starting_teams.count() + len([advancer for advancer in match.prev_matches.last().advancers.all()]): 
+                        draws.append((("Drew in match against " + ",".join([team.name for team in match.starting_teams.exclude(id=team_id)] + ",".join([team.name for team in match.prev_matches.last().advancers.exclude(id=team_id)])+first_half), match.tournament, second_half)))
+                    else:
+                        if match.advancers.count() == 1:
+                            wins.append((("Won" + first_half), match.tournament, second_half))
+                        elif match.advancers.count() > 2: 
+                            wins.append((("Won with " + ",".join([team.name for team in match.advancers])+first_half), match.tournament, second_half))
+                else:
+                    if match.advancers.count() == 1:
+                        losses.append((("Lost against " + match.advancers.first().name + first_half), match.tournament, second_half))
+                    elif match.advancers.count() > 1: 
+                        losses.append((("Lost against " + ",".join([team.name for team in match.advancers])+first_half), match.tournament, second_half))
+            else:
+                if team_id in match.advancers.id:
+                    if match.advancers.count() == match.starting_teams.count():
+                        draws.append((("Drew with " + ",".join([team.name for team in match.starting_teams.exclude(id=team_id)] + first_half), match.tournament, second_half)))
+                    else:
+                        if match.advancers.count() == 1:
+                            wins.append((("Won" + first_half), match.tournament, second_half))
+                        elif match.advancers.count() > 1:
+                            wins.append((("Won with " + ",".join([team.name for team in match.advancers.exclude(id=team_id)]+first_half), match.tournament, second_half)))
+                else:
+                    if match.advancers.count() == 1: #u lost to 1 person
+                        losses.append((("Lost against " + match.advancers.first().name + first_half), match.tournament, second_half))
+                    elif match.advancers.count() > 1: #u lost to manu people
+                        losses.append((("Lost against " + ",".join([team.name for team in match.advancers]) + first_half), match.tournament, second_half))
+    #timing here
     context = {
         'team': team,
         'upcoming_matches': upcoming_matches,
