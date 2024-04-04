@@ -118,7 +118,7 @@ class CreateSETournamentForm(forms.ModelForm):
         fields = ['status', 'points', 'teams', 'judges', 'event', 'competition']
 
 class CreateRRTournamentForm(forms.ModelForm):
-    generate_matches = forms.CheckboxInput()
+    generate_matches = forms.BooleanField(label='Generate Matches')
     teams = forms.ModelMultipleChoiceField(queryset=None)
     #competition_field = forms.ModelChoiceField(queryset=None,label='Competition')
 
