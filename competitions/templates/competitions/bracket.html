@@ -43,7 +43,7 @@
     {% elif tournament.is_closed %}
         <i class="bi-x-circle"></i>
     {% elif tournament.is_in_setup %}
-        <i class="bi-gear"></i>
+        <i class="bi bi-device-ssd"></i>
     {% endif %}
     {{ tournament.competition.name }} {{ tournament.event.name }} {% translate "Tournament" %}
     ({{ tournament.points|floatformat:"0" }} {% translate "points" %})

@@ -32,15 +32,10 @@ class CompetitionStatusForm(forms.ModelForm):
     class Meta:
         model = Competition
         fields = ['status']
-
-class SETournamentStatusForm(forms.ModelForm):
-    class Meta:
-        model = SingleEliminationTournament
-        fields = ['status']
-
+        
 class TournamentStatusForm(forms.ModelForm):
     class Meta:
-        model = RoundRobinTournament
+        model = AbstractTournament
         fields = ['status']
 
 class TournamentSwapForm(forms.Form):
@@ -147,7 +142,7 @@ class CreateRRTournamentForm(forms.ModelForm):
 
     class Meta:
         model = RoundRobinTournament
-        fields = ['competition', 'status', 'points', 'teams', 'judges', 'event', 'num_rounds', 'teams_per_match', 'points_per_win', 'points_per_tie', 'points_per_loss']
+        fields = ['competition', 'status', 'teams', 'judges', 'event', 'num_rounds', 'teams_per_match', 'points_per_win', 'points_per_tie', 'points_per_loss']
 
 class ArenaColorForm(forms.Form):
     arena = forms.ModelChoiceField(queryset=None, label="Arena")
@@ -160,4 +155,6 @@ class ArenaColorForm(forms.Form):
 
     def is_valid(self):
         self.full_clean()
+        if self.cleaned_data['color'] == '#fff5a8':
+            return False
         return super().is_valid()

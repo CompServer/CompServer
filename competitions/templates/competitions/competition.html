@@ -12,7 +12,7 @@
             {% elif competition.is_closed %}
             <i class="bi-x-circle" title="{{ competition.status }}"></i>
             {% elif competition.is_in_setup %}
-            <i class="bi-gear" title="{{ competition.status }}"></i>
+            <i class="bi bi-device-ssd" title="{{ competition.status }}"></i>
             {% endif %}
             {{ competition }}
         </h1>
@@ -33,11 +33,13 @@
                     {% elif tournament.is_closed %} 
                         <i class="bi-x-circle" title="{{ tournament.status }}"></i> <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.event.name }}</a>
                     {% elif tournament.is_in_setup %}
-                        <i class="bi-gear" title="{{ tournament.status }}"></i> {% if user.is_staff %}<a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.event.name }}</a>{% else %}{{ tournament.event.name }}{% endif %}
+                        <i class="bi bi-device-ssd" title="{{ tournament.status }}"></i> {% if user.is_staff %}<a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.event.name }}</a>{% else %}{{ tournament.event.name }}{% endif %}
                     {% elif competition.is_archived and user.is_staff %}
                         <i class="bi-archive" title="{{ tournament.status }}"></i> {{ tournament }} <small>You can see this archived item because you are signed in as a superuser.</small>
                     {% endif %}
-                    ({{ tournament.points|floatformat:"0" }} {% translate "points" %}) 
+                    {% if tournament.points %}
+                        ({{ tournament.points|floatformat:"0" }} {% translate "points" %}) 
+                    {% endif %}
                     {% if user.is_staff %}
                         <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/tournament/{{ tournament.id }}/?next=competition&id={{ competition.id }}" method="POST" id="status">
                             {% csrf_token %}
