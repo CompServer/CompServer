@@ -97,7 +97,7 @@ class CreateCompetitionsForm(forms.ModelForm):
 
 # class CreateCompetitionsForm(forms.):
 class CreateSETournamentForm(forms.ModelForm):
-    generate_matches = forms.CheckboxInput()
+    generate_matches = forms.BooleanField(label='Generate Matches')
     #competition_field = forms.ModelChoiceField(queryset=None,label='Competition')
 
     def __init__(self, *args, competition: Competition, **kwargs):
