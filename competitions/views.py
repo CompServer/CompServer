@@ -61,8 +61,12 @@ def generate_single_elimination_matches(request, tournament_id: int):
         raise SuspiciousOperation("No arenas available for this competition.")
     starting_time = tournament.start_time 
     team_ranks = []
-    if tournament.prev_tournament == None or not tournament.prev_tournament.ranking_set.exists():
-        generate_round_robin_rankings(tournament_id)
+    if tournament.prev_tournament == None:
+        for i, team in enumerate(tournament.teams.all()):
+            rank = Ranking.objects.create(tournament=tournament, team=team, rank=i+1)
+            rank.save()
+    elif not tournament.prev_tournament.ranking_set.exists():
+        generate_round_robin_rankings(tournament.prev_tournament.id)
     team_ranks = sorted([(rank.team, rank.rank) for rank in tournament.prev_tournament.ranking_set.all()], key=lambda x: x[1])
     #sort_list(teams, ranks)        
     rank_teams = {i+1: team_ranks[i][0] for i in range(len(team_ranks))}

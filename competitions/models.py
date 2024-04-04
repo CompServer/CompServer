@@ -474,7 +474,7 @@ class RoundRobinTournament(AbstractTournament):
     points_per_win = models.PositiveIntegerField(default=3)
     points_per_tie = models.PositiveIntegerField(default=1)
     points_per_loss = models.PositiveIntegerField(default=0)
-
+    
     class Meta():
         verbose_name = "PreliminaryTournament"
 #     ''' Everyone plays everyone else (most points / wins, wins) 
