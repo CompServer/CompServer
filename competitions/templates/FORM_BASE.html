@@ -13,7 +13,7 @@
                 <form method="POST" enctype="multipart/form-data" action={{ action }}>
                     {% csrf_token %}
                     {{ form|crispy }}
-                    <button type="submit" class="btn btn-secondary">{{ form_submit_text|default_if_none:'Create' }}</button>
+                    <button type="submit" class="btn btn-secondary">{{ form_submit_text|default_if_none:"Create" }}</button>
                 </form>
             </div>
         </div>
