@@ -108,6 +108,8 @@ class CreateSETournamentForm(forms.ModelForm):
         self.event_queryset = competition.events
         self.fields['event'].queryset = self.event_queryset
         self.fields['teams'].queryset = competition.teams.all()
+        self.fields['points'].help_text = "How many points should be awarded to the winner?"
+
         #self.events = competition.events
         #self.fields['events'].queryset = Event.objects.filter(competition=competition)
 

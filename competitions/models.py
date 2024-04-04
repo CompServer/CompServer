@@ -267,6 +267,7 @@ class Arena(models.Model):
     capacity = models.PositiveSmallIntegerField()
     is_available = models.BooleanField(default=True)
     color = ColorField(default="#CBCBCB")
+
     def __str__(self) -> str:
         return str(self.name)
 
@@ -285,7 +286,7 @@ class Competition(models.Model):
     plenary_judges = models.ManyToManyField(User, blank=True)  # people entrusted to judge this competition as a whole: won't restrict them to a specific event
     access_key = models.CharField(max_length=ACCESS_KEY_LENGTH, default=get_random_access_key, blank=True, null=True)
     # For scheduling purposes, we need to be able to specify for this competition how many different (Event-specific) arenas are available and their capacity
-    arenas = models.ManyToManyField(Arena, blank=True)
+    arenas = models.ManyToManyField(Arena, blank=False)
     # related: tournament_set
 
     #may not need the bottom function
