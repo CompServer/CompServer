@@ -231,8 +231,8 @@ def generate_round_robin_matches(request, tournament_id):
                 num_participated[j] += 1 
                 if num_participated == [1 for _ in range(len(teams))]:
                     break
-            for team in match.teams.all():
-                for team2 in match.teams.all():
+            for team in match.starting_teams.all():
+                for team2 in match.starting_teams.all():
                     if team != team2:
                         teams_played[team].add(team2)
             match.time = starting_time
