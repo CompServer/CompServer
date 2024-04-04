@@ -84,7 +84,7 @@
             {% endfor %}
         </div>
     {% endif %}
-    {% if won_tournaments.exists %}
+    {% if won_tournaments %}
         <div class="tournament-set">
             <h3>{% translate "Tournaments Won" %}</h3>
             {% for tournament in won_tournaments %}
@@ -109,7 +109,7 @@
             {% endfor %}
         </div>
     {% endif %}
-    {% if past_matches.exists %}
+    {% if past_matches %}
         <div class="match-records">
             <h3>{% translate "Match History" %}</h3>
             {% if wins %}
@@ -137,12 +137,5 @@
                 </ul>
             {% endif %}
         </div>
-    {% endif %}
-    {% if upcoming_matches.exists %}
-        {% for match in upcoming_matches %}
-            <div class="match-records">
-                {{ match }} {{ match.time }}
-            </div>
-        {% endfor %}
     {% endif %}
 {% endblock %}
