@@ -61,7 +61,7 @@ def generate_single_elimination_matches(request, tournament_id: int):
         raise SuspiciousOperation("No arenas available for this competition.")
     starting_time = tournament.start_time 
     team_ranks = []
-    if tournament.prev_tournament == None or not tournament.prev_tournament.ranking_set.exists():
+    if tournament.prev_tournament is not None: # or tournament.prev_tournament.ranking_set.exists()
         generate_round_robin_rankings(tournament_id)
     team_ranks = sorted([(rank.team, rank.rank) for rank in tournament.prev_tournament.ranking_set.all()], key=lambda x: x[1])
     #sort_list(teams, ranks)        
@@ -362,7 +362,7 @@ def create_tournament(request: HttpRequest):
             instance.competition = competition
             instance.save()
             form.save() # may not work?
-            return HttpResponseRedirect(f"{reverse('competitions:tournament', args=(form.instance.id,))}?generate_matches={form.generate_matches}")
+            return HttpResponseRedirect(f"{reverse('competitions:tournament', args=(form.instance.id,))}?generate_matches={form.cleaned_data.get('generate_matches')}")
         else:
             for error_field, error_desc in form.errors.items():
                 form.add_error(error_field, error_desc)
@@ -683,6 +683,7 @@ def competition(request: HttpRequest, competition_id: int):
     }
     return render(request, "competitions/competition.html", context)
 
+@login_required
 def create_competition(request: HttpRequest):
     sport_id = request.GET.get('sport', None)
     if sport_id is None:
