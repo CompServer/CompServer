@@ -94,9 +94,9 @@
                             {% translate " (Superuser)" %}
                         {% endif %}
                     </span>
-                    <a class="btn btn-secondary me-3" href="{% url "logout" %}" role="button">Log Out</a>
+                    <a class="btn btn-primary me-3" href="{% url "logout" %}" role="button">{% translate "Log Out" %}</a>
                 {% else %}
-                    <a class="btn btn-secondary me-3" href="{% url "login" %}{% if request.path %}?next={{ request.path }}{% endif %}" role="button">Log In</a>
+                    <a class="btn btn-primary me-3" href="{% url "login" %}{% if request.path %}?next={{ request.path }}{% endif %}" role="button">{% translate "Log In" %}</a>
                 {% endif %}
 
 
@@ -131,7 +131,7 @@
             {% comment %} <form class="form-inline my-2 my-md-0">
                 <input class="form-control" type="text" placeholder="Search">
             </form> {% endcomment %}
-    </nav>       
+    </nav>
 
     {% if messages %}
         {% for message in messages %}
@@ -144,7 +144,7 @@
 
     <div id="content" style="margin-left: 10px; margin-top: 8px;">
         {% block content %}
-            Template Content TBD
+            {% translate "No Content" %}
         {% endblock %}
     </div>
 

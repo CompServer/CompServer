@@ -362,7 +362,10 @@ def create_tournament(request: HttpRequest):
     if request.method == 'POST':
         form = FORM_CLASS(request.POST, competition=competition)
         if form.is_valid():
-            form.save() 
+            form.full_clean()
+            instance = form.save(commit=False)
+            instance.competition = competition
+            instance.save()
             return HttpResponseRedirect(f"{reverse('competitions:tournament', args=(form.instance.id,))}?generate_matches={form.generate_matches}")
         else:
             for error_field, error_desc in form.errors.items():
