@@ -16,7 +16,7 @@ media/
 .venv
 
 # Visual Studio Code files
-.vscode/
+#.vscode/ #  uncommented so we can share a launch.json file
 *.code-workspace
 
 # future secret files 
