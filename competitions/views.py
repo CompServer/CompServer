@@ -50,7 +50,6 @@ def generate_tournament_matches(request: HttpRequest, tournament_id: int):
         return generate_round_robin_matches(request, tournament_id)
     raise Http404
 
-
 def generate_single_elimination_matches(request, tournament_id: int):
     #sort the list by ranking, then use a two-pointer alogrithm to make the starting matches
     tournament: SingleEliminationTournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
@@ -61,10 +60,15 @@ def generate_single_elimination_matches(request, tournament_id: int):
         raise SuspiciousOperation("No arenas available for this competition.")
     starting_time = tournament.start_time 
     team_ranks = []
-    if tournament.prev_tournament is not None: # or tournament.prev_tournament.ranking_set.exists()
-        generate_round_robin_rankings(tournament_id)
-    team_ranks = sorted([(rank.team, rank.rank) for rank in tournament.prev_tournament.ranking_set.all()], key=lambda x: x[1])
-    #sort_list(teams, ranks)        
+    if tournament.prev_tournament == None:
+        for i, team in enumerate(tournament.teams.all()):
+            rank = Ranking.objects.create(tournament=tournament, team=team, rank=i+1)
+            rank.save()
+            team_ranks = sorted([(rank.team, rank.rank) for rank in tournament.ranking_set.all()], key=lambda x: x[1])
+    elif not tournament.prev_tournament.ranking_set.exists():
+        generate_round_robin_rankings(tournament.prev_tournament.id)
+        team_ranks = sorted([(rank.team, rank.rank) for rank in tournament.prev_tournament.ranking_set.all()], key=lambda x: x[1])
+    #sort_list(teams, ranks)
     rank_teams = {i+1: team_ranks[i][0] for i in range(len(team_ranks))}
     num_teams = len(rank_teams)
     num_matches, i = 1, 1
