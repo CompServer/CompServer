@@ -534,6 +534,8 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
 
         for team_data in round_matches.values():
             num_teams = len(team_data) if team_data else 0
+            if num_teams > tournament.teams_per_match:
+                messages.error(request, "Invalid number of teams per match.")
             center_height = teamHeight * num_teams
             center_top_margin = (match_height - center_height) / 2
 
