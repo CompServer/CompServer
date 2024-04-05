@@ -316,11 +316,11 @@ def home(request: HttpRequest):
     return render(request, "competitions/home.html")
 
 def tournament(request: HttpRequest, tournament_id: int):
-    generate_matches = request.GET.get('generate_matches', True)
+    #generate_matches = request.GET.get('generate_matches', True)
 
     tournament = get_tournament(request, tournament_id)
 
-    if not tournament.match_set.exists() and generate_matches:
+    if not tournament.match_set.exists(): #and generate_matches:
         return generate_tournament_matches(request, tournament_id)
 
     if isinstance(tournament, SingleEliminationTournament):
@@ -366,7 +366,7 @@ def create_tournament(request: HttpRequest):
             instance.competition = competition
             instance.save()
             form.save() # may not work?
-            return HttpResponseRedirect(f"{reverse('competitions:tournament', args=(form.instance.id,))}?generate_matches={form.cleaned_data.get('generate_matches')}")
+            return HttpResponseRedirect(f"{reverse('competitions:tournament', args=(form.instance.id,))}")
         else:
             for error_field, error_desc in form.errors.items():
                 form.add_error(error_field, error_desc)
@@ -773,7 +773,7 @@ def judge_match(request: HttpRequest, match_id: int):
     #         messages.error(request, "The winner of the next match has already been decided.")
     #         #print("This match has already been judged.")
     #         return HttpResponseRedirect(reverse('competitions:tournament', args=[instance.tournament.id]))
-
+    form = None
     if request.method == 'POST':
         form = JudgeForm(request.POST, instance=instance, possible_advancers=winner_choices)
         if form.is_valid():
@@ -781,8 +781,11 @@ def judge_match(request: HttpRequest, match_id: int):
             messages.success(request, "Match judged successfully.")
             #print("Match judged successfully.")
             return HttpResponseRedirect(reverse('competitions:tournament', args=[instance.tournament.id]))
-
-    form = JudgeForm(instance=instance, possible_advancers=winner_choices)
+        # else:
+        #     for error_field, error_desc in form.errors.items():
+        #         form.add_error(error_field, error_desc)
+    if not form:
+        form = JudgeForm(instance=instance, possible_advancers=winner_choices)
     return render(request, 'competitions/match_judge.html', {'form': form, 'match': instance, "teams": winner_choices})
 
 def profile(request, user_id):

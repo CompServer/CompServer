@@ -20,6 +20,10 @@ class JudgeForm(forms.ModelForm):
         assert isinstance(self.instance, Match)
         # if hasattr(self, "possible_advancers"): return False
         # ^ above doesn't work, gotta use this try except -_-
+        self.full_clean()
+        if len(self.instance.teams) <= (self.cleaned_data.get('advancers').count()):
+            self.add_error('advancers', 'You cannot advance all teams in a match.')
+            return False
         return all([team in self.possible_advancers.all() for team in self.instance.advancers.all()]) and super().is_valid()
 
     class Meta:
@@ -92,7 +96,7 @@ class CreateCompetitionsForm(forms.ModelForm):
 
 # class CreateCompetitionsForm(forms.):
 class CreateSETournamentForm(forms.ModelForm):
-    generate_matches = forms.BooleanField(label='Generate Matches')
+    #generate_matches = forms.BooleanField(label='Generate Matches')
     #competition_field = forms.ModelChoiceField(queryset=None,label='Competition')
 
     def __init__(self, *args, competition: Competition, **kwargs):
@@ -113,7 +117,7 @@ class CreateSETournamentForm(forms.ModelForm):
         fields = ['status', 'points', 'teams', 'judges', 'event', 'competition']
 
 class CreateRRTournamentForm(forms.ModelForm):
-    generate_matches = forms.BooleanField(label='Generate Matches')
+    #generate_matches = forms.BooleanField(label='Generate Matches')
     #competition_field = forms.ModelChoiceField(queryset=None,label='Competition')
 
     def __init__(self, *args, competition: Competition, **kwargs):
