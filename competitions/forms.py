@@ -92,7 +92,7 @@ class CreateCompetitionsForm(forms.ModelForm):
 
 # class CreateCompetitionsForm(forms.):
 class CreateSETournamentForm(forms.ModelForm):
-    generate_matches = forms.BooleanField(label='Generate Matches')
+    #generate_matches = forms.BooleanField(label='Generate Matches')
     #competition_field = forms.ModelChoiceField(queryset=None,label='Competition')
 
     def __init__(self, *args, competition: Competition, **kwargs):
@@ -113,7 +113,7 @@ class CreateSETournamentForm(forms.ModelForm):
         fields = ['status', 'points', 'teams', 'judges', 'event', 'competition']
 
 class CreateRRTournamentForm(forms.ModelForm):
-    generate_matches = forms.BooleanField(label='Generate Matches')
+    #generate_matches = forms.BooleanField(label='Generate Matches')
     #competition_field = forms.ModelChoiceField(queryset=None,label='Competition')
 
     def __init__(self, *args, competition: Competition, **kwargs):

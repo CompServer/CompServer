@@ -316,11 +316,11 @@ def home(request: HttpRequest):
     return render(request, "competitions/home.html")
 
 def tournament(request: HttpRequest, tournament_id: int):
-    generate_matches = request.GET.get('generate_matches', True)
+    #generate_matches = request.GET.get('generate_matches', True)
 
     tournament = get_tournament(request, tournament_id)
 
-    if not tournament.match_set.exists() and generate_matches:
+    if not tournament.match_set.exists(): #and generate_matches:
         return generate_tournament_matches(request, tournament_id)
 
     if isinstance(tournament, SingleEliminationTournament):
@@ -366,7 +366,7 @@ def create_tournament(request: HttpRequest):
             instance.competition = competition
             instance.save()
             form.save() # may not work?
-            return HttpResponseRedirect(f"{reverse('competitions:tournament', args=(form.instance.id,))}?generate_matches={form.cleaned_data.get('generate_matches')}")
+            return HttpResponseRedirect(f"{reverse('competitions:tournament', args=(form.instance.id,))}")
         else:
             for error_field, error_desc in form.errors.items():
                 form.add_error(error_field, error_desc)
