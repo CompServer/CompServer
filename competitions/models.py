@@ -1,4 +1,4 @@
-from typing import Any, ClassVar, Optional
+from typing import Any, ClassVar, List, Optional
 from django.db import models
 from django.db.models.signals import post_save
 from django.utils.translation import gettext_lazy as _
@@ -571,6 +571,10 @@ class Match(models.Model):
     # def next_match(self) -> Optional['Match']:
     #     qs: models.QuerySet = self.prev_matches.all().union(self.__class__.objects.filter(id=self.id))
     #     return self.__class__.objects.filter(prev_matches=qs).first()
+
+    @property
+    def teams(self) -> List[Team]:
+        return [team for team in self.starting_teams.all()] + [match.advancers.all() for match in [previous_match for previous_match in self.prev_matches.all()]]
 
     def _generate_str_recursive(self, force: bool=False) -> str:
         """Recursive algorithm for generating the string representation of this match.
