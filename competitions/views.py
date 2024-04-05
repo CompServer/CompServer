@@ -65,9 +65,10 @@ def generate_single_elimination_matches(request, tournament_id: int):
         for i, team in enumerate(tournament.teams.all()):
             rank = Ranking.objects.create(tournament=tournament, team=team, rank=i+1)
             rank.save()
+            team_ranks = sorted([(rank.team, rank.rank) for rank in tournament.ranking_set.all()], key=lambda x: x[1])
     elif not tournament.prev_tournament.ranking_set.exists():
         generate_round_robin_rankings(tournament.prev_tournament.id)
-    team_ranks = sorted([(rank.team, rank.rank) for rank in tournament.prev_tournament.ranking_set.all()], key=lambda x: x[1])
+        team_ranks = sorted([(rank.team, rank.rank) for rank in tournament.prev_tournament.ranking_set.all()], key=lambda x: x[1])
     #sort_list(teams, ranks)        
     rank_teams = {i+1: team_ranks[i][0] for i in range(len(team_ranks))}
     num_teams = len(rank_teams)
@@ -320,7 +321,7 @@ def tournament(request: HttpRequest, tournament_id: int):
 
     tournament = get_tournament(request, tournament_id)
 
-    if not tournament.match_set.exists() and generate_matches:
+    if (not tournament.match_set.exists()) and generate_matches:
         return generate_tournament_matches(request, tournament_id)
 
     if isinstance(tournament, SingleEliminationTournament):
