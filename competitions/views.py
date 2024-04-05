@@ -50,7 +50,6 @@ def generate_tournament_matches(request: HttpRequest, tournament_id: int):
         return generate_round_robin_matches(request, tournament_id)
     raise Http404
 
-
 def generate_single_elimination_matches(request, tournament_id: int):
     #sort the list by ranking, then use a two-pointer alogrithm to make the starting matches
     tournament: SingleEliminationTournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
@@ -366,7 +365,8 @@ def create_tournament(request: HttpRequest):
             instance = form.save(commit=False)
             instance.competition = competition
             instance.save()
-            return HttpResponseRedirect(f"{reverse('competitions:tournament', args=(form.instance.id,))}?generate_matches={form.generate_matches}")
+            form.save() # may not work?
+            return HttpResponseRedirect(f"{reverse('competitions:tournament', args=(form.instance.id,))}?generate_matches={form.cleaned_data.get('generate_matches')}")
         else:
             for error_field, error_desc in form.errors.items():
                 form.add_error(error_field, error_desc)
@@ -687,6 +687,7 @@ def competition(request: HttpRequest, competition_id: int):
     }
     return render(request, "competitions/competition.html", context)
 
+@login_required
 def create_competition(request: HttpRequest):
     sport_id = request.GET.get('sport', None)
     if sport_id is None:

@@ -114,7 +114,6 @@ class CreateSETournamentForm(forms.ModelForm):
 
 class CreateRRTournamentForm(forms.ModelForm):
     generate_matches = forms.BooleanField(label='Generate Matches')
-    teams = forms.ModelMultipleChoiceField(queryset=None)
     #competition_field = forms.ModelChoiceField(queryset=None,label='Competition')
 
     def __init__(self, *args, competition: Competition, **kwargs):
