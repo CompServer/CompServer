@@ -768,15 +768,16 @@ def team(request: HttpRequest, team_id: int):
     past_competitions = Competition.objects.filter(teams__id = team_id, status = Status.COMPLETE).order_by("end_date")
     past_tournaments_won = list()
     past_tournaments = SingleEliminationTournament.objects.filter(teams__id = team_id, status = Status.COMPLETE).order_by("start_time")
-    for past_tournament in past_tournaments:
-        last_match_advancers = past_tournament.match_set.last().advancers.all()
-        if team in last_match_advancers:
-            past_tournaments_won.append(past_tournament)
+    if past_tournaments.exists():
+        for past_tournament in past_tournaments:
+            if team_id in [team.id for team in past_tournament.match_set.last().advancers.all()]:
+                past_tournaments_won.append(past_tournament)
     losses = list()
     wins = list()
     draws = list()
     if past_matches:
         #theres an issue with joining team names
+        #forgot to check for byes
         #the problem is that round numbers arent accurate
         #fix upcoming matches for two gray teams , fix other if staements fo rthis
         for match in past_matches:
@@ -816,7 +817,6 @@ def team(request: HttpRequest, team_id: int):
                         losses.append((("Lost against " + match.advancers.first().name + first_half), match.tournament, second_half))
                     elif match.advancers.count() > 1: #u lost to manu people
                         losses.append((("Lost against " + advancers_names + first_half), match.tournament, second_half))
-    #timing to sort matches here
     context = {
         'team': team,
         'upcoming_matches': upcoming_matches,

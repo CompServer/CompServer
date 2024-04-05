@@ -42,18 +42,8 @@
             {% for competition in past_competitions %}
                 <div class="row d-flex">
                     <div class="col-12 competition">
-                        <i class="bi-check2-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
                         {% if user.is_staff %}
-                            <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/competition/{{ competition.id }}/?next=team&id={{ team.id }}" method="POST" id="status">
-                                {% csrf_token %}
-                                <div class="input-group d-inline">
-                                    <select name="status" onchange="this.form.submit();">
-                                        {% for value, translated_value in form.status.field.choices %}
-                                            <option value="{{ value }}" {% if competition.status == value %}selected{% endif %}>{{ translated_value }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            </form>
+                            <i class="bi-check2-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
                         {% endif %}
                     </div>
                 </div>
@@ -66,18 +56,8 @@
             {% for tournament in past_tournaments %}
                 <div class="row d-flex">
                     <div class="col-12 tournmanet">
-                        <i class="bi-check2-circle" title="{{ tournament.status }}"></i> <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a>
                         {% if user.is_staff %}
-                            <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/competition/{{ tournament.id }}/?next=team&id={{ team.id }}" method="POST" id="status">
-                                {% csrf_token %}
-                                <div class="input-group d-inline">
-                                    <select name="status" onchange="this.form.submit();">
-                                        {% for value, translated_value in form.status.field.choices %}
-                                            <option value="{{ value }}" {% if tournament.status == value %}selected{% endif %}>{{ translated_value }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            </form>
+                            <i class="bi-check2-circle" title="{{ tournament.status }}"></i> <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a>
                         {% endif %}
                     </div>
                 </div>
@@ -90,19 +70,9 @@
             {% for tournament in won_tournaments %}
                 <div class="row d-flex">
                     <div class = "col-12 tournament">
-                        <i class="bi-check2-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a>
-                        ({{ tournament.points|floatformat:"0" }} {% translate "points" %}) 
                         {% if user.is_staff %}
-                            <form class="form-inline my-2 my-md-0 justify-content-end" action="/tournament/{{ tournament.id }}/?next=team&id={{ team.id }}" method="POST" id="status">
-                                {% csrf_token %}
-                                <div class="input-group d-inline">
-                                    <select name="status" onchange="this.form.submit();">
-                                        {% for value, translated_value in form.status.field.choices %}
-                                            <option value="{{ value }}" {% if tournament.status == value %}selected{% endif %}>{{ translated_value }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            </form>
+                            <i class="bi-check2-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a>
+                            ({{ tournament.points|floatformat:"0" }} {% translate "points" %}) 
                         {% endif %} 
                     </div>
                 </div>

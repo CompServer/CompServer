@@ -464,6 +464,7 @@ class Ranking(models.Model):
 
 class RoundRobinTournament(AbstractTournament):
     num_rounds = models.PositiveSmallIntegerField()
+    #default should be determined
     teams_per_match = models.PositiveSmallIntegerField(default=2)
     points_per_win = models.PositiveIntegerField(default=3)
     points_per_tie = models.PositiveIntegerField(default=1)
@@ -489,6 +490,12 @@ class SingleEliminationTournament(AbstractTournament):
         Winner take all situation (1st place is really the only position that's established)
     '''
     prev_tournament = models.ForeignKey(RoundRobinTournament, on_delete=models.DO_NOTHING, blank=True, null=True)
+    #num_rounds = models.PositiveSmallIntegerField()
+    #should be determined
+    #if SingleEliminationTournament.teams().count()%2 == 0:
+        #if its an even number of competitiors
+    #else:
+        #if its an odd number of competiitors
     # interpolated: winner (of the top-level match)
 
 # class DoubleEliminationTournament(AbstractTournament):
@@ -550,6 +557,11 @@ class Match(models.Model):
     arena = models.ForeignKey(Arena, related_name="match_set", on_delete=models.DO_NOTHING, blank=True, null=True)
     _cached_str = models.TextField(blank=True, null=True) # for caching the string representation
     round_num = models.PositiveIntegerField(default=1) # don't name it round, it overrides a built-in method (bad)
+    #should not have a default, should examine other factors and then calculator
+    #i = 0
+    #for match in Match.objects.(starting_teams__id = team_id, tournament__id = tournament_id).order_by("-blah"):
+    #   i++;
+    # round_num = i
     """The round of the tournament that this match is in. 1 for the first round, 2 for the second, etc."""
 
     str_recursive_level: ClassVar[int] = 0
