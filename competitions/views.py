@@ -773,7 +773,7 @@ def judge_match(request: HttpRequest, match_id: int):
     #         messages.error(request, "The winner of the next match has already been decided.")
     #         #print("This match has already been judged.")
     #         return HttpResponseRedirect(reverse('competitions:tournament', args=[instance.tournament.id]))
-
+    form = None
     if request.method == 'POST':
         form = JudgeForm(request.POST, instance=instance, possible_advancers=winner_choices)
         if form.is_valid():
@@ -781,8 +781,11 @@ def judge_match(request: HttpRequest, match_id: int):
             messages.success(request, "Match judged successfully.")
             #print("Match judged successfully.")
             return HttpResponseRedirect(reverse('competitions:tournament', args=[instance.tournament.id]))
-
-    form = JudgeForm(instance=instance, possible_advancers=winner_choices)
+        # else:
+        #     for error_field, error_desc in form.errors.items():
+        #         form.add_error(error_field, error_desc)
+    if not form:
+        form = JudgeForm(instance=instance, possible_advancers=winner_choices)
     return render(request, 'competitions/match_judge.html', {'form': form, 'match': instance, "teams": winner_choices})
 
 def profile(request, user_id):
