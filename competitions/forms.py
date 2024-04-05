@@ -20,6 +20,10 @@ class JudgeForm(forms.ModelForm):
         assert isinstance(self.instance, Match)
         # if hasattr(self, "possible_advancers"): return False
         # ^ above doesn't work, gotta use this try except -_-
+        self.full_clean()
+        if len(self.instance.teams) <= (self.cleaned_data.get('advancers').count()):
+            self.add_error('advancers', 'You cannot advance all teams in a match.')
+            return False
         return all([team in self.possible_advancers.all() for team in self.instance.advancers.all()]) and super().is_valid()
 
     class Meta:
