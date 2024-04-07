@@ -744,7 +744,6 @@ def results(request, competition_id):
             #totals.append({team_name: score_total})
         tournament_scorings[tournament_name] = scores
         judge_names = [plenary_judge.first_name + " " + plenary_judge.last_name for plenary_judge in competition.plenary_judges.order_by("-username")]
-    index = 0
     context = {
         'tournament_names': tournament_names,
         'team_names': team_names,
@@ -776,10 +775,6 @@ def team(request: HttpRequest, team_id: int):
     wins = list()
     draws = list()
     if past_matches:
-        #theres an issue with joining team names
-        #forgot to check for byes
-        #the problem is that round numbers arent accurate
-        #fix upcoming matches for two gray teams , fix other if staements fo rthis
         for match in past_matches:
             first_half = " in Round " + str(match.round_num) + " in "
             second_half = " tournament @" + match.tournament.competition.name
@@ -817,10 +812,20 @@ def team(request: HttpRequest, team_id: int):
                         losses.append((("Lost against " + match.advancers.first().name + first_half), match.tournament, second_half))
                     elif match.advancers.count() > 1: #u lost to manu people
                         losses.append((("Lost against " + advancers_names + first_half), match.tournament, second_half))
+    #show upcoming matches
+    byes = list()
+    for match in past_matches.filter(advancers__id=team_id):
+        if team_id in match.starting_teams.id and match.starting_teams.count() == 1 and match.advancers.count() == 1:
+            byes.append((("BYE" + first_half), match.tournament, second_half))
+        if team_id in match.prev_matches.last().advancers.id and match.prev_matches.last().advancers.count() ==1 and match.advancers.count() == 1:
+            byes.append((("BYE" + first_half), match.tournament, second_half))
+    old_and_upcoming_matches = Match.objects.filter(Q(starting_teams__id == team_id) | Q(prev_matches__advancers__id == team_id), advancers == None).exclude(upcoming_matches)
     context = {
         'team': team,
         'upcoming_matches': upcoming_matches,
+        'old_and_upcoming_matches': old_and_upcoming_matches,
         'wins': wins,
+        'byes': byes,
         'past_matches': past_matches,
         'draws': draws,
         'losses': losses,

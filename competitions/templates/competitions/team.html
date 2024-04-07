@@ -36,6 +36,16 @@
             </ul>
         </div>
     {% endif %}
+    {% if old_and_upcoming_matches.exists %}
+        <div class="match-schedule">
+            <h3>{% translate "Upcoming Matches" %}</h3>
+            <ul>
+                {% for match in upcoming_matches %}
+                    <li>{{ match.time }} {% translate "between" %} {{ match }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
     {% if past_competitions.exists %}
         <div class="row d-flex past-competitions-set">
             <h3>{% translate "Past Competitions" %}</h3>
@@ -82,6 +92,14 @@
     {% if past_matches %}
         <div class="match-records">
             <h3>{% translate "Match History" %}</h3>
+            {% if byes %}
+                <h4>{% translate "Byes" %}</h4>
+                <ul>
+                    {% for bye in byes %}  
+                        <li>{{ bye.0 }} <a href="{% url 'competitions:tournament' bye.1.id %}">{{ bye.1.event.name }}</a>{{ bye.2 }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
             {% if wins %}
                 <h4>{% translate "Wins" %}</h4>
                 <ul>
