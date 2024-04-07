@@ -812,14 +812,13 @@ def team(request: HttpRequest, team_id: int):
                         losses.append((("Lost against " + match.advancers.first().name + first_half), match.tournament, second_half))
                     elif match.advancers.count() > 1: #u lost to manu people
                         losses.append((("Lost against " + advancers_names + first_half), match.tournament, second_half))
-    #show upcoming matches
     byes = list()
     for match in past_matches.filter(advancers__id=team_id):
         if team_id in match.starting_teams.id and match.starting_teams.count() == 1 and match.advancers.count() == 1:
             byes.append((("BYE" + first_half), match.tournament, second_half))
         if team_id in match.prev_matches.last().advancers.id and match.prev_matches.last().advancers.count() ==1 and match.advancers.count() == 1:
             byes.append((("BYE" + first_half), match.tournament, second_half))
-    old_and_upcoming_matches = Match.objects.filter(Q(starting_teams__id == team_id) | Q(prev_matches__advancers__id == team_id), advancers == None).exclude(upcoming_matches)
+    old_and_upcoming_matches = Match.objects.filter(Q(starting_teams__id == team_id) | Q(prev_matches__advancers__id == team_id), advancers == None).exclude(upcoming_matches).order_by("-time")
     context = {
         'team': team,
         'upcoming_matches': upcoming_matches,

@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured
 from django.db.models import CharField, signals
 from django.db.models.fields.files import ImageField
-import random, string, datetime
+import math, random, string, datetime
 from functools import lru_cache
 #from colorfield.fields import ColorField
 from .widgets import ColorPickerWidget, ColorWidget
@@ -491,11 +491,11 @@ class SingleEliminationTournament(AbstractTournament):
     '''
     prev_tournament = models.ForeignKey(RoundRobinTournament, on_delete=models.DO_NOTHING, blank=True, null=True)
     #num_rounds = models.PositiveSmallIntegerField()
-    #should be determined
-    #if SingleEliminationTournament.teams().count()%2 == 0:
-        #if its an even number of competitiors
+    #should be determined if not enetered already
+    #if self.teams().count() % 2 == 0:
+        #num_rounds = math.log(2, self.teams().count());
     #else:
-        #if its an odd number of competiitors
+        #num_rounds = int(math.ceil(math.log(2, self.teams().count())));
     # interpolated: winner (of the top-level match)
 
 # class DoubleEliminationTournament(AbstractTournament):
@@ -557,13 +557,16 @@ class Match(models.Model):
     arena = models.ForeignKey(Arena, related_name="match_set", on_delete=models.DO_NOTHING, blank=True, null=True)
     _cached_str = models.TextField(blank=True, null=True) # for caching the string representation
     round_num = models.PositiveIntegerField(default=1) # don't name it round, it overrides a built-in method (bad)
-    #should not have a default, should examine other factors and then calculator
+    #set the round_num automatically
     #i = 0
-    #for match in Match.objects.(starting_teams__id = team_id, tournament__id = tournament_id).order_by("-blah"):
-    #   i++;
-    # round_num = i
+    #for match in Match.objects.filter(Q(starting_teams__id=team_id)|Q(prev_matches__advancers__id=team_id)).order_by("-time"):
+    #   if match.prev_matches.exists():
+    #       for match in match.prev_matches:
+    #           i++;
+    #       round_num = i;
+    #   else:
+    #       round_num = 1;
     """The round of the tournament that this match is in. 1 for the first round, 2 for the second, etc."""
-
     str_recursive_level: ClassVar[int] = 0
     round = models.PositiveIntegerField(default=1)
 
