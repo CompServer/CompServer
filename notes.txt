@@ -204,3 +204,10 @@ where value is a datetime object
 Turns out the ^^^ doesn't work as easy as you might think. Found a different post where there is a lib that handles this for you.
 It has context processors, and converts any datetime objects it sees to the user's timezone.
 pip install django-tz-detect
+
+
+ERRORS
+'CreateSETournamentForm' object has no attribute 'generate_matches'
+'NoneType' object has no attribute 'next_matches' (Called single_elimination_tournament)
+generate_matches is always True for some reason (may tie in with the first error)
+I (Harry) can't solve them because they pertain to parts of the project that I have no knowledge on

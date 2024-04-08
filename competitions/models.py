@@ -386,6 +386,7 @@ class Event(models.Model):
 
 # dwheadon: can we force this to be abstract (non-instantiable)?
 class AbstractTournament(models.Model):
+    teams_per_match = models.PositiveSmallIntegerField(default=2)
     name = models.CharField(max_length=255, blank=True)
     #for times to work, we need to be add time-specific stuff in this model
     #tournament_starting_time, match_duration, and how many matches can occur per time period to name a few.
@@ -471,11 +472,10 @@ class Ranking(models.Model):
 
 class RoundRobinTournament(AbstractTournament):
     num_rounds = models.PositiveSmallIntegerField()
-    teams_per_match = models.PositiveSmallIntegerField(default=2)
     points_per_win = models.PositiveIntegerField(default=3)
     points_per_tie = models.PositiveIntegerField(default=1)
     points_per_loss = models.PositiveIntegerField(default=0)
-
+    
     class Meta():
         verbose_name = "PreliminaryTournament"
 #     ''' Everyone plays everyone else (most points / wins, wins) 

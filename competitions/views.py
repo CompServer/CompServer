@@ -68,7 +68,7 @@ def generate_single_elimination_matches(request, tournament_id: int):
     elif not tournament.prev_tournament.ranking_set.exists():
         generate_round_robin_rankings(tournament.prev_tournament.id)
         team_ranks = sorted([(rank.team, rank.rank) for rank in tournament.prev_tournament.ranking_set.all()], key=lambda x: x[1])
-    #sort_list(teams, ranks)
+    #sort_list(teams, ranks)        
     rank_teams = {i+1: team_ranks[i][0] for i in range(len(team_ranks))}
     num_teams = len(rank_teams)
     num_matches, i = 1, 1
@@ -274,8 +274,8 @@ def get_points(tournament_id: int):
 def generate_round_robin_rankings(tournament_id):
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
     team_wins = get_points(tournament_id)
-    sorted_team_wins = dict(sorted(team_wins.items(), key=lambda x:x[1]))
-    for i, kv in zip(range(len(sorted_team_wins), 1), sorted_team_wins.items()):
+    sorted_team_wins = dict(sorted(team_wins.items(), key=lambda x:x[1], reverse=True))
+    for i, kv in zip(range(1, len(sorted_team_wins)+1), sorted_team_wins.items()):
         key = kv[0]
         rank = Ranking.objects.create(tournament=tournament, team=key, rank=i)
         rank.save()
@@ -534,6 +534,8 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
 
         for team_data in round_matches.values():
             num_teams = len(team_data) if team_data else 0
+            if num_teams > tournament.teams_per_match:
+                messages.error(request, "Invalid number of teams per match.")
             center_height = teamHeight * num_teams
             center_top_margin = (match_height - center_height) / 2
 
