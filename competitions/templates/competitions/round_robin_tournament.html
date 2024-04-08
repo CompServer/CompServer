@@ -83,10 +83,11 @@
                             {% for team, points in team_wins.items %}
                                 <li class="nav-item">
                                     {% if team in winning_teams %}
-                                        <b><font color="#ff0000">{{ team.name }}</font></b>: {{ points }} points
+                                        <b><font color="#ff0000">{{ team.name }}</font></b>:
                                     {% else %}
-                                        <b>{{ team.name }}</b>: {{ points }} points 
+                                        <b>{{ team.name }}</b>:
                                     {% endif %}
+                                    {{ points }} {% if points == 1 %} point {% else %} points {% endif %}
                                 </li>
                             {% endfor %}
                         </ul>
