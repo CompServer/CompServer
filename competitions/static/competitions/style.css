@@ -47,10 +47,6 @@
     border-top: 2px black solid;
 }
 
-.connector-straight {
-    border-top: 2px black solid;
-}
-
 .connector-up .connector-end {
     top: 0px;
 }
@@ -59,9 +55,6 @@
     bottom: -1px;
 }
 
-.connector-straight .connector-end {
-    bottom: -1px;
-}
 
 div.img {
     position: relative;

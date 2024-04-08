@@ -52,7 +52,11 @@
                 height: {{connector_height|add:match_data.connector_data.team_index_offset|abs}}px;
                 width: {{match_data.connector_data.connector_width_actual}}px;
                 right: -{{match_data.connector_data.connector_width_actual}}px;
-                top: {{ match_data.connector_data.vertical_margin }}px;
+                {% if  match_data.connector_data.connector == "connector-up" %}
+                bottom: {{ match_data.connector_data.vertical_margin }}px;
+                {% else %}
+                top: {{ match_data.connector_data.vertical_margin|sub:1 }}px;
+                {% endif %}
                 {%endwith %}
                 ">
                     <div class="connector-end" 

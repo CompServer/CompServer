@@ -361,25 +361,34 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
             num_something_idk = math.floor(abs(match_index - midpoint_index) + 0.5)
             connector_width_actual = (num_something_idk*connectorWidth)/(num_divisions+1)
 
-        connector = "connector-down" if match_index < midpoint_index else "connector-up" if match_index > midpoint_index else "connector-straight"
         
         next_match_teams = next_match.get_competing_teams()
         from_index = len(curr_match_teams)/2
-        to_index =  0
+        to_index =  match_index
+        winner = False
         
         for index, team in enumerate(curr_match_teams):
             if is_next and team in match.advancers.all():
                 to_index = next_match_teams.index(team)
                 from_index = index
+                winner = True
 
-        if match_index < midpoint_index:
+        if match_index <= midpoint_index:
             index_diff = to_index-from_index
             len_diff = (len(curr_match_teams)-len(next_match_teams))/2 
-            vertical_margin = (teamHeight/2)*(from_index+1)
+            vertical_margin = teamHeight*(from_index+0.5)
+            connector = "connector-down"
+            if not winner:
+                index_diff += 0.5
+                vertical_margin -= (teamHeight/2)
         else:
             index_diff = from_index-to_index
             len_diff = (len(next_match_teams)-len(curr_match_teams))/2
-            vertical_margin = (teamHeight/2)*(len(curr_match_teams)-from_index)
+            vertical_margin = teamHeight*(len(curr_match_teams)-from_index-0.5)
+            connector = "connector-up"
+            if not winner:
+                index_diff += 0.5
+                vertical_margin += (teamHeight/2)
 
         team_index_offset_mult = index_diff+len_diff
         team_index_offset = team_index_offset_mult*teamHeight
