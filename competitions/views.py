@@ -351,9 +351,9 @@ def create_tournament(request: HttpRequest):
     tournament_type = str(tournament_type).lower().strip()
 
     if tournament_type == 'rr':
-        FORM_CLASS = CreateRRTournamentForm
+        FORM_CLASS = RRTournamentForm
     elif tournament_type == 'se':
-        FORM_CLASS = CreateSETournamentForm
+        FORM_CLASS = SETournamentForm
     else:
         raise SuspiciousOperation
 
@@ -373,6 +373,29 @@ def create_tournament(request: HttpRequest):
     if not form:
         form = FORM_CLASS(competition=competition)
     return render(request, "FORM_BASE.html", {'form_title': "Create Tournament", 'action': f"?tournament_type={tournament_type}&competition_id={competition.id}" , "form": form,  "form_submit_text": "Create"})
+
+@login_required
+def edit_tournament(request: HttpRequest, tournament_id: int):
+    tournament = get_tournament(request, tournament_id)
+    if isinstance(tournament, SingleEliminationTournament):
+        FORM_CLASS = SETournamentForm
+    elif isinstance(tournament, RoundRobinTournament):
+        FORM_CLASS = RRTournamentForm
+    else:
+        raise Http404
+
+    form = None
+    if request.method == 'POST':
+        form = FORM_CLASS(request.POST, instance=tournament, competition=tournament.competition)
+        if form.is_valid():
+            form.save() # may not work?
+            return HttpResponseRedirect(f"{reverse('competitions:tournament', args=(form.instance.id,))}")
+        else:
+            for error_field, error_desc in form.errors.items():
+                form.add_error(error_field, error_desc)
+    if not form:
+        form = FORM_CLASS(instance=tournament, competition=tournament.competition)
+    return render(request, "FORM_BASE.html", {'form_title': "Edit Tournament", 'action': f"" , "form": form,  "form_submit_text": "Edit"})
 
 @login_required
 def arena_color(request: HttpRequest, competition_id: int):
