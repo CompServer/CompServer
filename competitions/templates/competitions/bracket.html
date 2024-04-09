@@ -47,7 +47,7 @@
                 style="height: {{ match_data.center_height }}px; margin-top: {{ match_data.center_top_margin }}px; ">
                 
                 {% with connector_height=match_data.match_height|mul:match_data.connector_data.match_offset_mult %}    
-                <div class="connector-front {{ match_data.connector_data.connector }}" onclick=""
+                <div class="connector-front {{ match_data.connector_data.connector }} highlight-{{match_data.connector_data.winner_id}}" onclick=""
                 style=" cursor: default;
                 height: {{connector_height|add:match_data.connector_data.team_index_offset|abs}}px;
                 width: {{match_data.connector_data.connector_width_actual}}px;
@@ -66,7 +66,7 @@
                 </div>
                 
                 {% for curr_team in match_data.team_data %}
-                    <div class="team"
+                    <div class="team highlight-{{curr_team.team_id}}"
                         style="height: {{bracket_dict.team_height}}px; width: {{ match_data.match_width }}px; {%if curr_team.won %}background-color: #fff5a8;{%endif%} cursor: pointer;"
                         onclick="location.href='{% url 'competitions:judge_match' curr_team.match_id %}';">
                         {{ curr_team.name }}

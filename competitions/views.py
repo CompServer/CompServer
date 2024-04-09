@@ -329,7 +329,8 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
                 "name": team.name if team else "TBD",
                 "won": team in match.advancers.all(),
                 "is_next": is_next,
-                "match_id": match.id
+                "match_id": match.id,
+                "team_id": team.id
             })
         return output
     
@@ -366,12 +367,14 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
         from_index = len(curr_match_teams)/2
         to_index =  match_index
         winner = False
+        winner_id = None
         
         for index, team in enumerate(curr_match_teams):
             if is_next and team in match.advancers.all():
                 to_index = next_match_teams.index(team)
                 from_index = index
                 winner = True
+                winner_id = team.id
 
         if match_index <= midpoint_index:
             index_diff = to_index-from_index
@@ -400,6 +403,7 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
             "connector_width_actual": connector_width_actual,
             "team_index_offset_mult": team_index_offset_mult,
             "vertical_margin": vertical_margin,
+            "winner_id": winner_id
         }
     
     def read_tree_from_node(curr_match, curr_round, base_index):
