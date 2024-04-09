@@ -238,7 +238,6 @@ def generate_round_robin_matches(request, tournament_id):
     return HttpResponseRedirect(reverse("competitions:round_robin_tournament", args=(tournament_id,)))
     #still have a little bit of confusion with the ordering of matches.
 
-
 def generate_round_robin_rankings(request, tournament_id):
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
     team_wins = {team: 0 for team in tournament.teams.all()}
@@ -813,12 +812,16 @@ def team(request: HttpRequest, team_id: int):
                     elif match.advancers.count() > 1: #u lost to manu people
                         losses.append((("Lost against " + advancers_names + first_half), match.tournament, second_half))
     byes = list()
-    for match in past_matches.filter(advancers__id=team_id):
-        if team_id in match.starting_teams.id and match.starting_teams.count() == 1 and match.advancers.count() == 1:
-            byes.append((("BYE" + first_half), match.tournament, second_half))
-        if team_id in match.prev_matches.last().advancers.id and match.prev_matches.last().advancers.count() ==1 and match.advancers.count() == 1:
-            byes.append((("BYE" + first_half), match.tournament, second_half))
-    old_and_upcoming_matches = Match.objects.filter(Q(starting_teams__id == team_id) | Q(prev_matches__advancers__id == team_id), advancers == None).exclude(upcoming_matches).order_by("-time")
+    for match in past_matches:
+        if team_id in [team.id for team in match.advancers.all()]:
+            if match.starting_teams.all().exists():
+                if team_id in [team.id for team in match.starting_teams.all()] and match.starting_teams.count() == 1 and match.advancers.count() == 1:
+                    byes.append((("BYE" + first_half), match.tournament, second_half))
+            if match.prev_matches.last().exists():
+                if team_id in [team.id for team in match.prev_matches.last().advancers.id] and match.prev_matches.last().advancers.count() ==1 and match.advancers.count() == 1:
+                    byes.append((("BYE" + first_half), match.tournament, second_half))
+        if match.advancers.all() == None and match.id not in [match.id for match in upcoming_matches]:
+            old_and_upcoming_matches.append(match)
     context = {
         'team': team,
         'upcoming_matches': upcoming_matches,
