@@ -98,6 +98,7 @@
         {% if user.is_superuser %}
             <hr>
             <a href="{% url 'competitions:swap_matches' tournament.id %}" class="btn btn-secondary">Swap Matches</a>
+            <a href="{% url 'competitions:edit_tournament' tournament.id %}" class="btn btn-secondary">Edit Tournament</a>
             {% comment %} <br><r>
             <a href="{% url "competitions:arena_color" tournament.competition.id %}" class="btn btn-secondary">{% translate "Change Arena Colors" %}</a> {% endcomment %}
         {% endif %}

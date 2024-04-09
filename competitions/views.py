@@ -408,6 +408,40 @@ def create_tournament(request: HttpRequest):
     return render(request, "FORM_BASE.html", {'form_title': "Create Tournament", 'action': f"?tournament_type={tournament_type}&competition_id={competition.id}" , "form": form,  "form_submit_text": "Create"})
 
 @login_required
+def edit_tournament(request: HttpRequest, tournament_id: int):
+    tournament = get_tournament(request, tournament_id)
+    if isinstance(tournament, SingleEliminationTournament):
+        FORM_CLASS = CreateSETournamentForm
+    elif isinstance(tournament, RoundRobinTournament):
+        FORM_CLASS = CreateRRTournamentForm
+    else:
+        raise Http404
+    form = None
+    if request.method == 'POST':
+        form = FORM_CLASS(request.POST, competition=tournament.competition)
+        if form.is_valid():
+            if isinstance(tournament, SingleEliminationTournament):
+                FORM_CLASS = CreateSETournamentForm
+            elif isinstance(tournament, RoundRobinTournament):
+                tournament.status = form.cleaned_data.get('status')
+                tournament.teams.set(form.cleaned_data.get('teams'))
+                tournament.judges.set(form.cleaned_data.get('judges'))
+                tournament.event = form.cleaned_data.get('event')
+                tournament.num_rounds = form.cleaned_data.get('num_rounds')
+                tournament.teams_per_match = form.cleaned_data.get('teams_per_match')
+                tournament.points_per_win = form.cleaned_data.get('points_per_win')
+                tournament.points_per_tie = form.cleaned_data.get('points_per_tie')
+                tournament.points_per_loss = form.cleaned_data.get('points_per_loss')
+                tournament.save()
+            return HttpResponseRedirect(reverse("competitions:tournament", args=(tournament_id,)))
+        else:
+            for error_field, error_desc in form.errors.items():
+                form.add_error(error_field, error_desc)
+    if not form:
+        form = FORM_CLASS(competition=tournament.competition)
+    return render(request, "FORM_BASE.html", {'form_title': "Edit Tournament", 'action': f"?tournament_id={tournament_id}" , "form": form,  "form_submit_text": "Edit"})
+
+@login_required
 def arena_color(request: HttpRequest, competition_id: int):
     competition = get_object_or_404(Competition, pk=competition_id)
     form = None
