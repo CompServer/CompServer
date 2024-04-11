@@ -418,10 +418,14 @@ def edit_tournament(request: HttpRequest, tournament_id: int):
         raise Http404
     form = None
     if request.method == 'POST':
-        form = FORM_CLASS(request.POST, competition=tournament.competition)
+        form = FORM_CLASS(request.POST, instance=tournament, competition=tournament.competition)
         if form.is_valid():
             if isinstance(tournament, SingleEliminationTournament):
-                FORM_CLASS = CreateSETournamentForm
+                tournament.status = form.cleaned_data.get('status')
+                tournament.teams.set(form.cleaned_data.get('teams'))
+                tournament.judges.set(form.cleaned_data.get('judges'))
+                tournament.event = form.cleaned_data.get('event')
+                tournament.points = form.cleaned_data.get('points')
             elif isinstance(tournament, RoundRobinTournament):
                 tournament.status = form.cleaned_data.get('status')
                 tournament.teams.set(form.cleaned_data.get('teams'))
@@ -432,7 +436,7 @@ def edit_tournament(request: HttpRequest, tournament_id: int):
                 tournament.points_per_win = form.cleaned_data.get('points_per_win')
                 tournament.points_per_tie = form.cleaned_data.get('points_per_tie')
                 tournament.points_per_loss = form.cleaned_data.get('points_per_loss')
-                tournament.save()
+            tournament.save()
             return HttpResponseRedirect(reverse("competitions:tournament", args=(tournament_id,)))
         else:
             for error_field, error_desc in form.errors.items():
@@ -629,7 +633,7 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
     }
     
     tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
-    context = {"tournament": tournament, "bracket_dict": bracket_dict}
+    context = {"tournament": tournament, "bracket_dict": bracket_dict, "form": TournamentStatusForm()}
     return render(request, "competitions/bracket.html", context)
 
 def round_robin_tournament(request: HttpRequest, tournament_id: int):
@@ -715,7 +719,7 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
     winning_points = max(team_wins.values())
     winning_teams = [team for team in team_wins if team_wins[team] == winning_points]
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
-    context = {"tournament": tournament, "bracket_dict": bracket_dict, "team_wins": team_wins, "winning_teams": winning_teams}
+    context = {"tournament": tournament, "bracket_dict": bracket_dict, "team_wins": team_wins, "winning_teams": winning_teams, "form": TournamentStatusForm()}
     return render(request, "competitions/round_robin_tournament.html", context)
 
 def competitions(request: HttpRequest):

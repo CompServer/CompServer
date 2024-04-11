@@ -135,9 +135,9 @@ class CreateRRTournamentForm(forms.ModelForm):
         elif self.cleaned_data['teams_per_match'] < 2:
             self.add_error('teams_per_match', 'Teams per match must be greater than or equal to 2')
             return False
-        elif self.cleaned_data['teams'].count() % self.cleaned_data['teams_per_match'] != 0:
-            self.add_error('teams', 'Teams must be able to be divided evenly into matches')
-            return False
+        # elif self.cleaned_data['teams'].count() % self.cleaned_data['teams_per_match'] != 0:
+        #     self.add_error('teams', 'Teams must be able to be divided evenly into matches')
+        #     return False
         return super().is_valid()
 
     class Meta:
