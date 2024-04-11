@@ -1,20 +1,21 @@
 from datetime import datetime
-from logging import error
+import math
+import random
+from typing import Dict, Set, Union
+import zoneinfo
+
 from django.contrib import messages
-from django.shortcuts import render, get_object_or_404
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth.views import login_required
-from django.db.models import Q, Count
-from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, Http404
-from django.shortcuts import render, get_object_or_404, redirect
+from django.core.exceptions import SuspiciousOperation
+from django.db.models import Q, QuerySet
+from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
+from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.template.exceptions import TemplateDoesNotExist
 from django.urls import reverse
 from django.utils import timezone
-from django.core.exceptions import SuspiciousOperation
-from django.template.exceptions import TemplateDoesNotExist
-import random
-import zoneinfo
-import math
-from typing import Union
+
 from .forms import *
 from .models import *
 from .utils import *
@@ -202,11 +203,8 @@ def generate_single_elimination_matches(request, tournament_id: int):
         num_matches = len(matches)
     return HttpResponseRedirect(reverse("competitions:single_elimination_tournament", args=(tournament_id,)))
 
-def isPlayed(teams_played, match_teams):
-    for team in match_teams:
-        if team in teams_played:
-            return True
-    return False
+def isPlayed(teams_played: Dict[Team, Set], match_teams: QuerySet[Team]):
+    return any([team in teams_played for team in match_teams])
 
 def generate_round_robin_matches(request, tournament_id):
     #may have to include buys, but check with schwartz first.
