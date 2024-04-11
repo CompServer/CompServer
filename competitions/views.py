@@ -306,7 +306,7 @@ def get_points(tournament_id: int):
                 team_wins[team] += tournament.points_per_loss
     return team_wins
 
-def generate_round_robin_rankings(tournament_id):
+def generate_round_robin_rankings(tournament_id: int):
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
     team_wins = get_points(tournament_id)
     sorted_team_wins = dict(sorted(team_wins.items(), key=lambda x:x[1]))

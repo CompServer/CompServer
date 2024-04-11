@@ -137,6 +137,7 @@ class RRTournamentForm(forms.ModelForm):
         self.fields['event'].queryset = competition.events
         self.fields['teams'].queryset = competition.teams.all()
         self.fields['points'].help_text = "How many points should be awarded to the winner?"
+        self.fields['prev_tournament'].queryset = RoundRobinTournament.objects.filter(competition=competition)
         #self.events = competition.events
         #self.fields['events'].queryset = Event.objects.filter(competition=competition)
 
