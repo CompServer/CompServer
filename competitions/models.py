@@ -377,8 +377,20 @@ class Event(models.Model):
     def __str__(self) -> str:
         return str(self.name)
 
-class GENERATED_CHOICES(models.TextCHOICES):
-    #generate a list of colors based on color wheel
+class Colors(models.TextChoices):
+    RED = "#FF0000", _("Red")
+    GREEN = "#008000", _("Green")
+    BLACK = "#000000", _("Black")
+    BROWN = "#964B00", _("Brown")
+    PURPLE = "#A020F0", _("Purple")
+    GRAY = "#808080", _("Gray")
+    BLUE = "#0000FF", _("Blue")
+    ORANGE = "#FFA500", _("Orange")
+    YELLOW = "#FFFF00", _("Yellow")
+    INDIGO = "#4B0082", _("Indigo")
+    PINK = "#FFC0CB", _("Pink")
+    MAGNETA = "#FF00FF", _("Magneta")
+    RANDOM_COLOR = str("#" ''.join([random.choice('0123456789ABCDEF') for j in range(6)])), _("Random Color")
 
 # dwheadon: can we force this to be abstract (non-instantiable)?
 class AbstractTournament(models.Model):
@@ -399,7 +411,6 @@ class AbstractTournament(models.Model):
     # tied_teams_all_advance = models.BooleanField()
     # dwheadon: what about tie_breakers? should we have a field for that?
     # related: match_set, ranking_set
-    color = ColorField(choices=GENERATED_CHOICES, blank=True)#a color choice should be optional for a tournament
 
     def __str__(self) -> str:
         return self.event.name + _(" tournament @ ") + str(self.competition) # SumoBot tournament at RoboMed 2023
@@ -493,13 +504,6 @@ class SingleEliminationTournament(AbstractTournament):
         Winner take all situation (1st place is really the only position that's established)
     '''
     prev_tournament = models.ForeignKey(RoundRobinTournament, on_delete=models.DO_NOTHING, blank=True, null=True)
-    #num_rounds = models.PositiveSmallIntegerField()
-    #should be determined if not enetered already
-    #if self.teams().count() % 2 == 0:
-        #num_rounds = math.log(2, self.teams().count());
-    #else:
-        #num_rounds = int(math.ceil(math.log(2, self.teams().count())));
-    # interpolated: winner (of the top-level match)
 
 # class DoubleEliminationTournament(AbstractTournament):
 #     ''' Has a "looser's" bracket
@@ -559,19 +563,10 @@ class Match(models.Model):
     time = models.DateTimeField(blank=True, null=True) # that it's scheduled for
     arena = models.ForeignKey(Arena, related_name="match_set", on_delete=models.DO_NOTHING, blank=True, null=True)
     _cached_str = models.TextField(blank=True, null=True) # for caching the string representation
-    round_num = models.PositiveIntegerField(default=1) # don't name it round, it overrides a built-in method (bad)
-    #set the round_num automatically
-    #i = 0
-    #for match in Match.objects.filter(Q(starting_teams__id=team_id)|Q(prev_matches__advancers__id=team_id)).order_by("-time"):
-    #   if match.prev_matches.exists():
-    #       for match in match.prev_matches:
-    #           i++;
-    #       round_num = i;
-    #   else:
-    #       round_num = 1;
+    #round_num = models.PositiveIntegerField(default=1) # don't name it round, it overrides a built-in method (bad)
     """The round of the tournament that this match is in. 1 for the first round, 2 for the second, etc."""
     str_recursive_level: ClassVar[int] = 0
-    round = models.PositiveIntegerField(default=1)
+    #round = models.PositiveIntegerField(default=1)
 
     def get_competing_teams(self):
         return [

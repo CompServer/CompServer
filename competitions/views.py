@@ -676,13 +676,17 @@ def judge_match(request: HttpRequest, match_id: int):
     return render(request, 'competitions/match_judge.html', {'form': form, 'match': instance, "teams": winner_choices})
 
 def profile(request, user_id):
-    # bool is_coach = False
-    # bool is_admin = False
-    # bool is_judge = False
-    # bool is_spectator = True
-    # bool is_player = False
-    # user = User.objects.filter(id=user_id).first()
-    # judge_list = list()
+    is_coach = False
+    is_admin = False
+    is_spectator = False
+    is_player = False
+    user = User.objects.filter(id=user_id).first()
+    if user_id in [user.id for user in [tournament.planeary_judges for tournament in SingleEliminationTournament.objects.all()]]:
+        is_judge = True
+    else:
+        is_judge = False
+    if user_id in [user.id for user in []]
+    #judge_list = list()
     # for tournaments in Tournament.objects.filter(Q()):
     #     judge_list.append(tournaments.plenary_judges)
     # if judge_list.exists():
@@ -757,7 +761,6 @@ def results(request, competition_id):
     return render(request, "competitions/results.html", context)
 
 def team(request: HttpRequest, team_id: int):
-    #verify the round numbers, sort matches information by time
     team = Team.objects.filter(id=team_id).first()
     today = timezone.now().date()
     upcoming_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), tournament__competition__start_date__lte=today, tournament__competition__end_date__gte=today).exclude(advancers=None).order_by("-time")
@@ -778,7 +781,7 @@ def team(request: HttpRequest, team_id: int):
     draws = list()
     if past_matches:
         for match in past_matches:
-            first_half = " in Round " + str(match.round_num) + " in "
+            first_half = " in "
             second_half = " tournament @" + match.tournament.competition.name
             if match.starting_teams.exists():
                 starting_teams_names = ",".join([team.name for team in match.starting_teams.exclude(id=team_id)])
@@ -789,10 +792,10 @@ def team(request: HttpRequest, team_id: int):
             if match.prev_matches.exists():
                 if team_id in [team.id for team in match.advancers.all()]:
                     if match.advancers.count() == match.starting_teams.count() + len([advancer for advancer in match.prev_matches.last().advancers.all()]): 
-                        draws.append((("Drew in match against " + ",".join(starting_teams_names + prev_advancing_names) + first_half), match.tournament, second_half))
+                        draws.append((("Drew in match against " + ",".join(starting_teams_names) + ",".join(prev_advancing_names) + first_half), match.tournament, second_half))
                     else:
                         if match.advancers.count() == 1:
-                            wins.append((("Won against " + ",".join(starting_teams_names + prev_advancing_names) + first_half), match.tournament, second_half))
+                            wins.append((("Won against " + ",".join(starting_teams_names) + ",".join(prev_advancing_names) + first_half), match.tournament, second_half))
                         elif match.advancers.count() > 2: 
                             wins.append((("Won with " + advancers_names + first_half), match.tournament, second_half))
                 else:
@@ -826,8 +829,8 @@ def team(request: HttpRequest, team_id: int):
                                 byes.append((("BYE" + first_half), match.tournament, second_half))
                             if match.starting_teams.count() == 0 and match.prev_matches.last().starting_teams.count() == 0:
                                 byes.append((("BYE" + first_half), match.tournament, second_half))
-        if match.advancers.all() == None and match.id not in [match.id for match in upcoming_matches] and match.status != Status.COMPLETE:
-            old_upcoming_matches.append(match)
+        #old_upcoming_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), advancers=None).exclude(upcoming_matches)
+    #y = "WHY"
     context = {
         'team': team,
         'upcoming_matches': upcoming_matches,
