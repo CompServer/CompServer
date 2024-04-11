@@ -109,6 +109,7 @@ class SETournamentForm(forms.ModelForm):
             self.fields['competition'].initial = competition
         else:
             self.fields['competition'].initial = kwargs['instance'].competition
+            competition = kwargs['instance'].competition
         self.fields['event'].queryset = competition.events
         self.fields['teams'].queryset = competition.teams.all()
         self.fields['teams'].initial = competition.teams.all()
