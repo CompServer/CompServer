@@ -1,5 +1,6 @@
 
 
+from typing import Optional
 from django import forms
 from django.contrib import messages
 from django.forms.widgets import TextInput
@@ -110,6 +111,7 @@ class SETournamentForm(forms.ModelForm):
             self.fields['competition'].initial = kwargs['instance'].competition
         self.fields['event'].queryset = competition.events
         self.fields['teams'].queryset = competition.teams.all()
+        self.fields['teams'].initial = competition.teams.all()
         self.fields['points'].help_text = "How many points should be awarded to the winner?"
 
         #self.events = competition.events
@@ -117,7 +119,7 @@ class SETournamentForm(forms.ModelForm):
 
     class Meta:
         model = SingleEliminationTournament
-        fields = ['status', 'points', 'teams', 'judges', 'event', 'competition']
+        fields = ['status', 'points', 'teams', 'judges', 'event', 'competition', 'prev_tournament']
 
 class RRTournamentForm(forms.ModelForm):
     #generate_matches = forms.BooleanField(label='Generate Matches')
