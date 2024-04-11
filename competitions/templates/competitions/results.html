@@ -4,19 +4,29 @@
 {% block content %}
 <body>
     <header>
-        <h1>{% trans "Results For " %} {{ competition.name }} {{ competition.start_date }} - {{competition.end_date }}</h1>
-        status of competiion is either completed or open 
-        <h2>{% trans "Judged by " %}</h2>
-        <ul>
-            {% for judge_name in judge_names %}
-                <li> {{ judge_name }} </li>
-            {% endfor %}
-        </ul>
+        {% if tournaments.exists %}
+            <h1>{% trans "Results For " %} {{ competition.name }}: {{ competition.start_date }} - {{ competition.end_date }}</h1>
+            {% if judge_names %}
+                <h2>{% trans "Judged by " %}</h2>
+                <ul>
+                    {% for judge_name in judge_names %}
+                        <li> {{ judge_name }} </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
     </header>
-    {% if tournaments.exists %}
     {% else %}
-        <p>All of the tournaments are currently ongoing and haven't finished yet.</p>
+        <h1>{% trans "Awaiting Results For " %} {{ competition.name }}: {{ competition.start_date }} - {{ competition.end_date }}</h1>
+        {% if judge_names %}
+                <h2>{% trans "Judged by " %}</h2>
+                <ul>
+                    {% for judge_name in judge_names %}
+                        <li> {{ judge_name }} </li>
+                    {% endfor %}
+                </ul>
+        {% endif %}
     {% endif %}
+    {% if tournaments.exists %}
     {{ tournament_names|json_script:"tournament_names" }}
     {{ team_names|json_script:"team_names" }}
     {{ tournament_scorings|json_script:"tournament_scorings" }}
@@ -66,14 +76,6 @@
             }
         });
     </script>
-    <!-- <div class="stats-section">
-        <h2>{% trans "Total Scores For Each Team" %}</h2>
-        <ul>
-            {% for team_and_score in team_and_score %}
-                <li></li>
-            {% endfor %}
-        </ul>
-        
-    </div> -->
+    {% endif %}
 </body>
 {% endblock %}

@@ -377,6 +377,8 @@ class Event(models.Model):
     def __str__(self) -> str:
         return str(self.name)
 
+class GENERATED_CHOICES(models.TextCHOICES):
+    #generate a list of colors based on color wheel
 
 # dwheadon: can we force this to be abstract (non-instantiable)?
 class AbstractTournament(models.Model):
@@ -397,6 +399,7 @@ class AbstractTournament(models.Model):
     # tied_teams_all_advance = models.BooleanField()
     # dwheadon: what about tie_breakers? should we have a field for that?
     # related: match_set, ranking_set
+    color = ColorField(choices=GENERATED_CHOICES, blank=True)#a color choice should be optional for a tournament
 
     def __str__(self) -> str:
         return self.event.name + _(" tournament @ ") + str(self.competition) # SumoBot tournament at RoboMed 2023

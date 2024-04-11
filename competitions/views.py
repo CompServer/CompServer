@@ -728,11 +728,13 @@ def results(request, competition_id):
     team_names = []
     team_names = [team.name for team in competition.teams.order_by("name")]
     totals = dict()
+    #tournament colors, check if a tournament has a specific color otherwise choose one for them from generated chocies
     tournament_scorings = dict()
     for tournament_name in tournament_names:
         scores = []
         for team_name in team_names:
             tournament = SingleEliminationTournament.objects.filter(event__name=tournament_name).first()
+            #single elim tournament above
             team = Team.objects.filter(name=team_name).first()
             last_match = Match.objects.filter(tournament__id = tournament.id, next_matches__isnull = True).first()
             if team in last_match.advancers.all():
@@ -755,6 +757,7 @@ def results(request, competition_id):
     return render(request, "competitions/results.html", context)
 
 def team(request: HttpRequest, team_id: int):
+    #verify the round numbers, sort matches information by time
     team = Team.objects.filter(id=team_id).first()
     today = timezone.now().date()
     upcoming_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), tournament__competition__start_date__lte=today, tournament__competition__end_date__gte=today).exclude(advancers=None).order_by("-time")
@@ -786,10 +789,10 @@ def team(request: HttpRequest, team_id: int):
             if match.prev_matches.exists():
                 if team_id in [team.id for team in match.advancers.all()]:
                     if match.advancers.count() == match.starting_teams.count() + len([advancer for advancer in match.prev_matches.last().advancers.all()]): 
-                        draws.append((("Drew in match against " + starting_teams_names + prev_advancing_names + first_half), match.tournament, second_half))
+                        draws.append((("Drew in match against " + ",".join(starting_teams_names + prev_advancing_names) + first_half), match.tournament, second_half))
                     else:
                         if match.advancers.count() == 1:
-                            wins.append((("Won against " + starting_teams_names + prev_advancing_names + first_half), match.tournament, second_half))
+                            wins.append((("Won against " + ",".join(starting_teams_names + prev_advancing_names) + first_half), match.tournament, second_half))
                         elif match.advancers.count() > 2: 
                             wins.append((("Won with " + advancers_names + first_half), match.tournament, second_half))
                 else:
@@ -812,20 +815,23 @@ def team(request: HttpRequest, team_id: int):
                     elif match.advancers.count() > 1: #u lost to manu people
                         losses.append((("Lost against " + advancers_names + first_half), match.tournament, second_half))
     byes = list()
+    old_upcoming_matches = list()
     for match in past_matches:
         if team_id in [team.id for team in match.advancers.all()]:
             if match.starting_teams.all().exists():
-                if team_id in [team.id for team in match.starting_teams.all()] and match.starting_teams.count() == 1 and match.advancers.count() == 1:
-                    byes.append((("BYE" + first_half), match.tournament, second_half))
-            if match.prev_matches.last().exists():
-                if team_id in [team.id for team in match.prev_matches.last().advancers.id] and match.prev_matches.last().advancers.count() ==1 and match.advancers.count() == 1:
-                    byes.append((("BYE" + first_half), match.tournament, second_half))
-        if match.advancers.all() == None and match.id not in [match.id for match in upcoming_matches]:
-            old_and_upcoming_matches.append(match)
+                if match.prev_matches.last():
+                    if team_id in [team.id for team in match.starting_teams.all()] or team_id in [team.id for team in match.prev_matches.last().starting_teams]:
+                        if match.advancers.count() == 1:
+                            if match.starting_teams.count() == 1 and match.prev_matches.last().starting_teams.count() == 1:
+                                byes.append((("BYE" + first_half), match.tournament, second_half))
+                            if match.starting_teams.count() == 0 and match.prev_matches.last().starting_teams.count() == 0:
+                                byes.append((("BYE" + first_half), match.tournament, second_half))
+        if match.advancers.all() == None and match.id not in [match.id for match in upcoming_matches] and match.status != Status.COMPLETE:
+            old_upcoming_matches.append(match)
     context = {
         'team': team,
         'upcoming_matches': upcoming_matches,
-        'old_and_upcoming_matches': old_and_upcoming_matches,
+        'old_upcoming_matches': old_upcoming_matches,
         'wins': wins,
         'byes': byes,
         'past_matches': past_matches,

@@ -36,7 +36,7 @@
             </ul>
         </div>
     {% endif %}
-    {% if old_and_upcoming_matches.exists %}
+    {% if old_upcoming_matches.exists %}
         <div class="match-schedule">
             <h3>{% translate "Upcoming Matches" %}</h3>
             <ul>
@@ -52,9 +52,7 @@
             {% for competition in past_competitions %}
                 <div class="row d-flex">
                     <div class="col-12 competition">
-                        {% if user.is_staff %}
                             <i class="bi-check2-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>
-                        {% endif %}
                     </div>
                 </div>
             {% endfor %}
@@ -66,9 +64,7 @@
             {% for tournament in past_tournaments %}
                 <div class="row d-flex">
                     <div class="col-12 tournmanet">
-                        {% if user.is_staff %}
                             <i class="bi-check2-circle" title="{{ tournament.status }}"></i> <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a>
-                        {% endif %}
                     </div>
                 </div>
             {% endfor %}
@@ -80,10 +76,8 @@
             {% for tournament in won_tournaments %}
                 <div class="row d-flex">
                     <div class = "col-12 tournament">
-                        {% if user.is_staff %}
                             <i class="bi-check2-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a>
                             ({{ tournament.points|floatformat:"0" }} {% translate "points" %}) 
-                        {% endif %} 
                     </div>
                 </div>
             {% endfor %}
