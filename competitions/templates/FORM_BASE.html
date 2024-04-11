@@ -8,7 +8,8 @@
 {% block content %}
     <div class="container">
         <div class="row">
-            <div class="col-md-12">
+            <div class="col-4"></div>
+            <div class="col-md-4">
                 <h1 class="text-center">{{ form_title }}</h1>
                 <form method="POST" enctype="multipart/form-data" action={{ action }}>
                     {% csrf_token %}
@@ -16,6 +17,7 @@
                     <button type="submit" class="btn btn-secondary">{{ form_submit_text|default_if_none:"Create" }}</button>
                 </form>
             </div>
+            <div class="col-4"></div>
         </div>
     </div>
 {% endblock %}
