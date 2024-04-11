@@ -59,7 +59,7 @@
                 {% endif %}
                 {%endwith %}
                 ">
-                    <div class="connector-end" 
+                    <div class="connector-end highlight-{{match_data.connector_data.winner_id}}" 
                     style="width: {{bracket_dict.connectorWidth|sub:match_data.connector_data.connector_width_actual|add:2}}px;
                     right: -{{bracket_dict.connectorWidth|sub:match_data.connector_data.connector_width_actual|add:4}}px;
                     height: 3px;"></div>
@@ -70,7 +70,7 @@
                         style="height: {{bracket_dict.team_height}}px; width: {{ match_data.match_width }}px; 
                         {%if curr_team.won %}background-color: #fff5a8;{%endif%} cursor: pointer;"
                         onclick="location.href='{% url 'competitions:judge_match' curr_team.match_id %}';"
-                        onmouseover="highlightOnHover('highlight-{{curr_team.team_id}}')" onmouseout="normalImg(this)">
+                        onmouseover="highlight({{curr_team.team_id}})" onmouseout="dehighlight({{curr_team.team_id}})">
                         {{ curr_team.name }}
                     </div>
                 {% endfor %}
@@ -90,10 +90,26 @@
 {% endif %}
 
 <script>
-function highlightOnHover(class) {
-    document.querySelectorAll(class).forEach(function(element) {
-        element.style.backgroundcolor = "red";
-    });
+function highlight(num) {
+    document.querySelectorAll(".highlight-"+num).forEach((element)=>{
+        element.style.borderColor = "#2ec4b6";
+        if (element.className.includes("connector")) {
+            element.style.borderWidth = "2px"
+        } else {
+            element.style.borderWidth = "1px"
+        }
+        
+    })
+}
+function dehighlight(num) {
+    document.querySelectorAll(".highlight-"+num).forEach((element)=>{
+        element.style.borderColor = "black";
+        if (element.className.includes("connector")) {
+            element.style.borderWidth = "2px"
+        } else {
+            element.style.borderWidth = "1px"
+        }
+    })
 }
 </script>
 
