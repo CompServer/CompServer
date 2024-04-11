@@ -476,7 +476,7 @@ class Ranking(models.Model):
         # unique_together += ['tournament', 'rank'] # NCAA has 4 teams with a #1 seed
 
 class RoundRobinTournament(AbstractTournament):
-    num_rounds = models.PositiveSmallIntegerField()
+    matches_per_team = models.PositiveSmallIntegerField()
     points_per_win = models.DecimalField(max_digits=20, decimal_places=10, default=3.0)
     points_per_tie = models.DecimalField(max_digits=20, decimal_places=10, default=1.0)
     points_per_loss = models.DecimalField(max_digits=20, decimal_places=10, default=0.0)
