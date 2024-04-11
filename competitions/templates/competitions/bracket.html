@@ -67,8 +67,10 @@
                 
                 {% for curr_team in match_data.team_data %}
                     <div class="team highlight-{{curr_team.team_id}}"
-                        style="height: {{bracket_dict.team_height}}px; width: {{ match_data.match_width }}px; {%if curr_team.won %}background-color: #fff5a8;{%endif%} cursor: pointer;"
-                        onclick="location.href='{% url 'competitions:judge_match' curr_team.match_id %}';">
+                        style="height: {{bracket_dict.team_height}}px; width: {{ match_data.match_width }}px; 
+                        {%if curr_team.won %}background-color: #fff5a8;{%endif%} cursor: pointer;"
+                        onclick="location.href='{% url 'competitions:judge_match' curr_team.match_id %}';"
+                        onmouseover="highlightOnHover('highlight-{{curr_team.team_id}}')" onmouseout="normalImg(this)">
                         {{ curr_team.name }}
                     </div>
                 {% endfor %}
@@ -84,6 +86,15 @@
         <input type="submit" value="Generate Matches">
     </form>
 {% endif %}
+
+<script>
+function highlightOnHover(class) {
+    document.querySelectorAll(class).forEach(function(element) {
+        element.style.backgroundcolor = "red";
+    });
+}
+</script>
+
 {% endblock %}
 
 
