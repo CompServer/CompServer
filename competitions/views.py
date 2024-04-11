@@ -425,85 +425,96 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
     def generate_competitor_data(match):
         output = []
 
-        # T/F the match has a next match (is not the final)
         is_next = match.next_matches.exists()
-
         curr_match_teams = match.get_competing_teams()
-
-        # loop through all the team playing in a match
-        for from_index, team in enumerate(curr_match_teams):
-
-            # T/F the team advance from a previous match
-            prev = team not in match.starting_teams.all()
-            #set up variables
-            team_index_offset, match_offset_mult, connector, connector_width_actual,team_index_offset_mult = [None]*5
-
-            if is_next and team in match.advancers.all():
-                # the match the immediately follows our current match
-                next_match = match.next_matches.all().first()
-                # the set of matches that feed into next_match, which must include the current match
-                feed_matches = next_match.prev_matches.all()
-                num_feed_matches = feed_matches.count()
-                # to determine wether connectors should go up or down
-                midpoint_index = (num_feed_matches - 1) / 2
-                # where our current match is in the set of next matches
-                match_index = list(feed_matches).index(match)
-                num_divisions = max(math.floor(num_feed_matches/2),1)
-
-                if (abs(match_index - midpoint_index) <= 1):
-                    match_offset_mult = abs(match_index - midpoint_index)
-                    connector_width_actual = (1*connectorWidth)/(num_divisions+1)
-                else:
-                    match_offset_mult = abs(match_index - midpoint_index)
-                    num_something_idk = math.floor(abs(match_index - midpoint_index) + 0.5)
-                    connector_width_actual = (num_something_idk*connectorWidth)/(num_divisions+1)
-
-                #class for the direction of the connector
-                connector = "connector-down" if match_index < midpoint_index else "connector-up" if match_index > midpoint_index else "connector-straight"
-
-                
-                next_match_teams = next_match.get_competing_teams()
-                # index for the end of the connector
-                to_index = next_match.get_competing_teams().index(team)
-                
-                # from_index_fraction = (from_index/len(curr_match_teams))
-                # to_index_fraction = to_index/len(next_match_teams)
-                # team_index_offset_mult = (
-                #     to_index_fraction - from_index_fraction 
-                #     if match_index < midpoint_index 
-                #     else from_index_fraction - to_index_fraction
-                # )*len(next_match_teams)
-                # team_index_offset = team_index_offset_mult*teamHeight
-
-                if match_index < midpoint_index:
-                    index_diff = to_index-from_index
-                    len_diff = (len(curr_match_teams)-len(next_match_teams))/2 
-                else:
-                    index_diff = from_index-to_index
-                    len_diff = (len(next_match_teams)-len(curr_match_teams))/2
-
-                team_index_offset_mult = index_diff+len_diff
-                team_index_offset = team_index_offset_mult*teamHeight
-
+        
+        for team in curr_match_teams:
             output.append({
                 "name": team.name if team else "TBD",
                 "won": team in match.advancers.all(),
                 "is_next": is_next,
-                "prev": prev and team,
                 "match_id": match.id,
-                "connector": connector,
-                "team_index_offset": team_index_offset,
-                "match_offset_mult": match_offset_mult,
-                "connector_width_actual": connector_width_actual,
-                "team_index_offset_mult": team_index_offset_mult,
+                "team_id": team.id
             })
         return output
+    
+    def generate_connector_data(match):
+        is_next = match.next_matches.exists()
+        if not is_next:
+            return {
+                "connector": None,
+                "team_index_offset": None,
+                "match_offset_mult": None,
+                "connector_width_actual": None,
+                "team_index_offset_mult": None,
+            }
+
+        curr_match_teams = match.get_competing_teams()
+
+        next_match = match.next_matches.all().first()
+        feed_matches = next_match.prev_matches.all()
+        num_feed_matches = feed_matches.count()
+        midpoint_index = (num_feed_matches - 1) / 2
+        match_index = list(feed_matches).index(match)
+        num_divisions = max(math.floor(num_feed_matches/2),1)
+
+        if (abs(match_index - midpoint_index) <= 1):
+            match_offset_mult = abs(match_index - midpoint_index)
+            connector_width_actual = (1*connectorWidth)/(num_divisions+1)
+        else:
+            match_offset_mult = abs(match_index - midpoint_index)
+            num_something_idk = math.floor(abs(match_index - midpoint_index) + 0.5)
+            connector_width_actual = (num_something_idk*connectorWidth)/(num_divisions+1)
+
+        
+        next_match_teams = next_match.get_competing_teams()
+        from_index = len(curr_match_teams)/2
+        to_index =  match_index
+        winner = False
+        winner_id = None
+        
+        for index, team in enumerate(curr_match_teams):
+            if is_next and team in match.advancers.all():
+                to_index = next_match_teams.index(team)
+                from_index = index
+                winner = True
+                winner_id = team.id
+
+        if match_index <= midpoint_index:
+            index_diff = to_index-from_index
+            len_diff = (len(curr_match_teams)-len(next_match_teams))/2 
+            vertical_margin = teamHeight*(from_index+0.5)
+            connector = "connector-down"
+            if not winner:
+                index_diff += 0.5
+                vertical_margin -= (teamHeight/2)
+        else:
+            index_diff = from_index-to_index
+            len_diff = (len(next_match_teams)-len(curr_match_teams))/2
+            vertical_margin = teamHeight*(len(curr_match_teams)-from_index-0.5)
+            connector = "connector-up"
+            if not winner:
+                index_diff += 0.5
+                vertical_margin += (teamHeight/2)
+
+        team_index_offset_mult = index_diff+len_diff
+        team_index_offset = team_index_offset_mult*teamHeight
+
+        return{
+            "connector": connector,
+            "team_index_offset": team_index_offset,
+            "match_offset_mult": match_offset_mult,
+            "connector_width_actual": connector_width_actual,
+            "team_index_offset_mult": team_index_offset_mult,
+            "vertical_margin": vertical_margin,
+            "winner_id": winner_id
+        }
     
     def read_tree_from_node(curr_match, curr_round, base_index):
         if len(bracket_array) <= curr_round:
             bracket_array.append({})
 
-        bracket_array[curr_round][base_index] = generate_competitor_data(curr_match) 
+        bracket_array[curr_round][base_index] = [generate_competitor_data(curr_match), generate_connector_data(curr_match)]
         
         prevs = curr_match.prev_matches.all()
         if prevs:
@@ -520,7 +531,7 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
 
     numRounds = len(bracket_array)
 
-    mostTeamsInRound = max(sum(len(teams) if teams else 0 for teams in round.values()) for round in bracket_array)
+    mostTeamsInRound = max(sum(len(teams[0]) if teams else 0 for teams in round.values()) for round in bracket_array)
 
     round_data = []
 
@@ -530,24 +541,27 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
     for round_matches in reversed(bracket_array):
         num_matches = len(round_matches)
         match_height = bracketHeight / num_matches
-        match_data = []
+        final_match_data = []
 
-        for team_data in round_matches.values():
-            num_teams = len(team_data) if team_data else 0
+        for generated_match_data in round_matches.values():
+            if not generated_match_data:
+                continue
+            num_teams = len(generated_match_data[0]) if generated_match_data else 0
             if num_teams > tournament.teams_per_match:
                 messages.error(request, "Invalid number of teams per match.")
             center_height = teamHeight * num_teams
             center_top_margin = (match_height - center_height) / 2
 
-            match_data.append({
-                "team_data": team_data,
+            final_match_data.append({
+                "team_data": generated_match_data[0],
+                "connector_data": generated_match_data[1],
                 "match_height": match_height,
                 "match_width": matchWidth,
                 "center_height": center_height,
                 "center_top_margin": center_top_margin,
             })
 
-        round_data.append({"match_data": match_data})
+        round_data.append({"match_data": final_match_data})
 
 
     bracket_dict = {
