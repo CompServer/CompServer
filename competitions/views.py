@@ -68,6 +68,8 @@ def generate_single_elimination_matches(request, tournament_id: int):
     elif not tournament.prev_tournament.ranking_set.exists():
         generate_round_robin_rankings(tournament.prev_tournament.id)
         team_ranks = sorted([(rank.team, rank.rank) for rank in tournament.prev_tournament.ranking_set.all()], key=lambda x: x[1])
+    elif  tournament.prev_tournament.ranking_set.exists():
+        team_ranks = sorted([(rank.team, rank.rank) for rank in tournament.prev_tournament.ranking_set.all()], key=lambda x: x[1])
     #sort_list(teams, ranks)
     rank_teams = {i+1: team_ranks[i][0] for i in range(len(team_ranks))}
     num_teams = len(rank_teams)
@@ -275,7 +277,7 @@ def generate_round_robin_rankings(tournament_id):
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
     team_wins = get_points(tournament_id)
     sorted_team_wins = dict(sorted(team_wins.items(), key=lambda x:x[1]))
-    for i, kv in zip(range(len(sorted_team_wins), 1), sorted_team_wins.items()):
+    for i, kv in zip(range(len(sorted_team_wins)), sorted_team_wins.items()):
         key = kv[0]
         rank = Ranking.objects.create(tournament=tournament, team=key, rank=i)
         rank.save()
