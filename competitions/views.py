@@ -330,7 +330,7 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
                 "won": team in match.advancers.all(),
                 "is_next": is_next,
                 "match_id": match.id,
-                "team_id": team.id
+                "team_id": team.id if team else None
             })
         return output
     
