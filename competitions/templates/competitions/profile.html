@@ -44,9 +44,11 @@
         account activity
         {% if user.is_admin %}
             <h2>{% translate "Admin "%}</h2>
-            changes they have made or mark their activity
-            collection of forms
-            manage live activities
+            <h2>{% translate "Your Activity" %}</h2>
+            <h2>{% translate "Forms For You" %}</h2>
+            <h2>{% translate "Manage Other Activities" %}</h2>
+            <h3>{% translate "Send Forms" %}</h3>
+            <h3>{% translate "Manage Compeititons and Tournaments" %}</h3>
         {% endif%}
         {% if user.is_coach %}
             <div section="coach-information">
@@ -54,14 +56,21 @@
                 <h3></h3>
                 <h3></h3>
             </div>
+            <div section="current-competitions">
+                <h2>{% trans "Team Records" %]</h2>
+            </div>
+            <div section="upcoming-competitions">
+                <h2>{% trans "Team Rankings" %}</h2>
+            </div>
+            <div section="coach-to-do-forms">
+                <h2>{% trans "Forms" %}</h2>
+                <h3>{% "Sign Up For Competitions" %}</h3>
+                <h3>{% "Sign Up For Tournaments" %}</h3>
+                <h3>{% "Sign Up To Judge" %}</h3>
+            </div>
             <h2>{% translate "Coach " %}</h2>
-            teams that you Coach
-            team records and history
-            collection of forms (attending competitions and such)
-            see current compeittions
         {% endif%}
         {% if user.is_judge%}
-            <h2>{% translate "Competitions That You've Judged" %}</h2>
             <h2>{% translate "Tournaments That You've Judged" %}</h2>
             <h2>{% translate "Upcoming Judging" %}</h2>
             {% if upcoming_gigs.exists %}
@@ -96,15 +105,11 @@
                 </ul>
         {% endif%}
         {% if user.is_player %}
-            <h2>{% trans "Your Team: "%}</h2>
-            <p></p>
-        team
-        organization
-        played tournaments, competitions
-        wins and lossses and draws you were apart of
             <h2>{% translate "Player " %}</h2>
-            similar to team page 
-            colletion of forms
+            <h2>{% trans "Your Team: "%}</h2>
+            <h2>{% trans "Your Organization: " %}</h2>
+            <h2>{% trans "Your Track Record of Wins, Losses, and Draws" %}</h2>
+            <h2>{% Translate "Fill Out Feedback Forms "%}</h2>
         {% endif%}
     </body>
 {% endblock %}

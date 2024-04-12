@@ -676,24 +676,31 @@ def judge_match(request: HttpRequest, match_id: int):
     return render(request, 'competitions/match_judge.html', {'form': form, 'match': instance, "teams": winner_choices})
 
 def profile(request, user_id):
-    is_coach = False
-    is_admin = False
-    is_spectator = False
-    is_player = False
     user = User.objects.filter(id=user_id).first()
     if user_id in [user.id for user in [tournament.planeary_judges for tournament in SingleEliminationTournament.objects.all()]]:
         is_judge = True
+        current_gigs = Tournament.ojbects.filter(planeary_judges__id == user_id, status = Status.OPEN)#order
+        upcoming_gigs = Tournament.ojbects.filter(planeary_judges__id == user_id, status = Status.SETUP)#order
+        judged_tournaments = Tournament.ojbects.filter(Q(status = Status.COMPLETE) | Q(status = Status.CLOSED), planeary_judges__id == user_id)#order
     else:
         is_judge = False
-    if user_id in [user.id for user in []]
-    #judge_list = list()
-    # for tournaments in Tournament.objects.filter(Q()):
-    #     judge_list.append(tournaments.plenary_judges)
-    # if judge_list.exists():
-    #     for judge in judge_list:
-    #         if judge is user:
-    #             is_judge = True
-    # #check other if statements
+    if user_id in [team.coach.id for list_of_teams in [tournament.starting_teams for tournament in Tournament.objects.all()]]:
+        is_coach = True
+        coached_teams = Team.objects.filter(coach_id = user_id)#order
+        team_records = dict()#fill this
+        team_rankings = dict()#this should be in pair with records in a diagram
+        button_links_to_forms = list()#this is how they will be redirected, but it will be directly in the template
+    else:
+        is_coach = False
+    #a team should be full of users later, so I can't do player yet
+    if bool(is_judge) == False and bool(is_admin) == False and bool(is_coach) == False and bool(is_player) == False:
+        is_spectator = True
+    #determine if admin
+    #determine if player
+
+
+
+
     # if Coach.objects.filter(id = user_id).exists():
     #     competitions = dict()
     #     teams_coached = Team.objects.filter(coach_id = user_id)
@@ -712,16 +719,10 @@ def profile(request, user_id):
     #         #competitions[comeptitions_sign_up] = "Sign up"
     #         #competitions[competitions[ongoing] = "ongoing"
     #             #might need  a graphic for all teams and their tournaments in a grapj
-    # #judge
-    # if 
-    # #competitors
-    # #spectatotr
-    # user = User.objects.filter(id = user_id).first()
     # context = {
     #     'user': user,
     #     'profile': Profile.objects.filter(id = user.profile_id).first(),
     # }
-    # request.user.is_authenticated
     return render(request, 'competitions/user_profile.html', context)
 
 def results(request, competition_id):
