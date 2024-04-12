@@ -21,17 +21,30 @@
 
 {% block content %}
 <h1>
-    {% if tournament.is_judgable %}
-        <i class="bi-activity"></i>
-    {% elif tournament.is_complete %}
-        <i class="bi-check2-circle"></i>
-    {% elif tournament.is_closed %}
-        <i class="bi-x-circle"></i>
+    {% if tournament.is_judgable %} 
+        <i class="bi-activity" title="{{ competition.status }}"></i> {{ tournament.competition.name }} {% translate "Preliminary Tournament" %}: {{ tournament.event.name }}
+    {% elif tournament.is_complete %} 
+        <i class="bi-check2-circle" title="{{ competition.status }}"></i> {{ tournament.competition.name }} {% translate "Preliminary Tournament" %}: {{ tournament.event.name }}
+    {% elif tournament.is_closed %} 
+        <i class="bi-x-circle" title="{{ competition.status }}"></i> {{ tournament.competition.name }} {% translate "Preliminary Tournament" %}: {{ tournament.event.name }}
     {% elif tournament.is_in_setup %}
-        <i class="bi bi-device-ssd"></i>
+        <i class="bi bi-device-ssd" title="{{ competition.status }}"></i> {{ tournament.competition.name }} {% translate "Preliminary Tournament" %}: {{ tournament.event.name }}
+    {% elif competition.is_archived %}
+        <i class="bi-archive" title="{{ competition.status }}"></i> {{ tournament.competition.name }} {% translate "Preliminary Tournament" %}: {{ tournament.event.name }} <small>You can see this archived item because you are signed in as a superuser.</small>
     {% endif %}
-    {{ tournament.competition.name }} {{ tournament.event.name }} {% translate "Tournament" %}
     ({{ tournament.points|floatformat:"0" }} {% translate "points" %})
+    {% if user.is_staff %}
+        <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/tournament/{{ tournament.id }}/?next=tournament&id={{ tournament.id }}" method="POST" id="status">
+            {% csrf_token %}
+            <div class="input-group d-inline">
+                <select name="status" onchange="this.form.submit();">
+                    {% for value, translated_value in form.status.field.choices %}
+                        <option value="{{ value }}" {% if tournament.status == value %}selected{% endif %}>{{ translated_value }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+    {% endif %} 
 </h1>
 {% comment %} not sure how to show match times here, bc I need to know exactly how they work {% endcomment %}
 {% if tournament.match_set.exists %}

@@ -98,8 +98,6 @@
                 {% else %}
                     <a class="btn btn-primary me-3" href="{% url "login" %}{% if request.path %}?next={{ request.path }}{% endif %}" role="button">{% translate "Log In" %}</a>
                 {% endif %}
-
-
                     
                 {% get_available_languages as LANGUAGES %} 
                 <form class="form-inline my-2 my-md-0 justify-content-end" action="{% url 'set_language' %}" method="post">

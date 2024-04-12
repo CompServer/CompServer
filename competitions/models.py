@@ -1,6 +1,7 @@
 from typing import Any, ClassVar, List, Optional
 from django.db import models
 from django.db.models.signals import post_save
+from django.urls.base import override
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User
 from django.dispatch import receiver
@@ -439,20 +440,24 @@ class AbstractTournament(models.Model):
     def tournament_type(self) ->  str:
         return self.__class__.__name__
 
-    def __check_tournament_type(self, tournament_type: str) -> bool:
-        """Private helper method for AbstractTournemnt to check if it is a certain type of tournament."""
-        if issubclass(self.__class__, __class__):
-            return self.tournament_type.lower().strip() == tournament_type.lower().strip()
-        raise TypeError("This property is only available on subclasses of AbstractTournament")
+    # def __check_tournament_type(self, tournament_type: str) -> bool:
+    #     """Private helper method for AbstractTournemnt to check if it is a certain type of tournament."""
+    #     if issubclass(self.__class__, __class__):
+    #         return self.tournament_type.lower().strip() == tournament_type.lower().strip()
+    #     raise TypeError("This property is only available on subclasses of AbstractTournament")
 
     @property
     def is_single_elimination(self) -> bool:
-        return self.__check_tournament_type("SingleEliminationTournament")
-
+        if SingleEliminationTournament.objects.filter(abstracttournament_ptr_id=self.id).exists():
+            return True
+        elif RoundRobinTournament.objects.filter(abstracttournament_ptr_id=self.id).exists():
+            return False
     @property
     def is_round_robin(self) -> bool:
-        return self.__check_tournament_type("RoundRobinTournament")
-
+        if SingleEliminationTournament.objects.filter(abstracttournament_ptr_id=self.id).exists():
+            return False
+        elif RoundRobinTournament.objects.filter(abstracttournament_ptr_id=self.id).exists():
+            return True
     class Meta:
         ordering = ['competition', 'event']
 
@@ -472,10 +477,17 @@ class Ranking(models.Model):
 
 class RoundRobinTournament(AbstractTournament):
     num_rounds = models.PositiveSmallIntegerField()
-    points_per_win = models.PositiveIntegerField(default=3)
-    points_per_tie = models.PositiveIntegerField(default=1)
-    points_per_loss = models.PositiveIntegerField(default=0)
-    
+    points_per_win = models.DecimalField(max_digits=20, decimal_places=10, default=3.0)
+    points_per_tie = models.DecimalField(max_digits=20, decimal_places=10, default=1.0)
+    points_per_loss = models.DecimalField(max_digits=20, decimal_places=10, default=0.0)
+
+    @property
+    def is_single_elimination(self) -> bool:   
+        return False
+    @property
+    def is_round_robin(self) -> bool:
+        return True
+
     class Meta():
         verbose_name = "PreliminaryTournament"
 #     ''' Everyone plays everyone else (most points / wins, wins) 
@@ -492,6 +504,13 @@ class SingleEliminationTournament(AbstractTournament):
         Winner take all situation (1st place is really the only position that's established)
     '''
     prev_tournament = models.ForeignKey(RoundRobinTournament, on_delete=models.DO_NOTHING, blank=True, null=True)
+
+    @property
+    def is_single_elimination(self) -> bool:   
+        return True
+    @property
+    def is_round_robin(self) -> bool:
+        return False
     # interpolated: winner (of the top-level match)
 
 # class DoubleEliminationTournament(AbstractTournament):

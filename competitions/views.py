@@ -68,7 +68,9 @@ def generate_single_elimination_matches(request, tournament_id: int):
     elif not tournament.prev_tournament.ranking_set.exists():
         generate_round_robin_rankings(tournament.prev_tournament.id)
         team_ranks = sorted([(rank.team, rank.rank) for rank in tournament.prev_tournament.ranking_set.all()], key=lambda x: x[1])
-    #sort_list(teams, ranks)        
+    elif  tournament.prev_tournament.ranking_set.exists():
+        team_ranks = sorted([(rank.team, rank.rank) for rank in tournament.prev_tournament.ranking_set.all()], key=lambda x: x[1])
+    #sort_list(teams, ranks)
     rank_teams = {i+1: team_ranks[i][0] for i in range(len(team_ranks))}
     num_teams = len(rank_teams)
     num_matches, i = 1, 1
@@ -215,7 +217,11 @@ def generate_round_robin_matches(request, tournament_id):
     starting_time = tournament.start_time 
     teams = [team for team in tournament.teams.all()]
     teams_played = {team: set() for team in teams}
+    num_byes = len(teams) % tournament.teams_per_match
+    byes = [0 for _ in range(len(teams))]
     for k in range(tournament.num_rounds):
+        if byes == [1 for _ in range(len(teams))]:
+            byes = [0 for _ in range(len(teams))]
         nmpt_iterator = 0
         if arena_iterator > 0:
             arena_iterator = 0
@@ -224,6 +230,35 @@ def generate_round_robin_matches(request, tournament_id):
         temp = min(teams_played.values(), key=lambda x: len(x))
         if temp == len(teams) - 1:
             teams_played = {team: set() for team in teams}
+
+        #create bye match
+        match = Match.objects.create(tournament=tournament)
+        for i in range(num_byes):
+            j = random.randint(0, len(teams)-1)
+            while(byes[j] > 0 or teams[j] in match.starting_teams.all() or \
+            isPlayed(teams_played[teams[j]], match.starting_teams.all())):
+                j = random.randint(0, len(teams)-1)    
+            match.starting_teams.add(teams[j])      
+            byes[j] += 1
+            num_participated[j] += 1 
+        for team in match.starting_teams.all():
+            for team2 in match.starting_teams.all():
+                if team != team2:
+                    teams_played[team].add(team2)
+        #starting time confusion for byes (do we have them)
+        match.time = starting_time
+        match.arena = arenas[arena_iterator]
+        nmpt_iterator += 1
+        if nmpt_iterator == arenas[arena_iterator].capacity:
+            arena_iterator += 1
+            nmpt_iterator = 0
+            if arena_iterator >= len(arenas):
+                arena_iterator = 0
+                starting_time += tournament.event.match_time 
+        match.round_num = k+1
+        match.save()
+    
+        #create rest of the matches
         while num_participated != [1 for _ in range(len(teams))]:
             match = Match.objects.create(tournament=tournament)
             for i in range(tournament.teams_per_match):
@@ -271,7 +306,7 @@ def get_points(tournament_id: int):
                 team_wins[team] += tournament.points_per_loss
     return team_wins
 
-def generate_round_robin_rankings(tournament_id):
+def generate_round_robin_rankings(tournament_id: int):
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
     team_wins = get_points(tournament_id)
     sorted_team_wins = dict(sorted(team_wins.items(), key=lambda x:x[1], reverse=True))
@@ -279,7 +314,6 @@ def generate_round_robin_rankings(tournament_id):
         key = kv[0]
         rank = Ranking.objects.create(tournament=tournament, team=key, rank=i)
         rank.save()
-    pass
 
 def swap_matches(request: HttpRequest, tournament_id: int):
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
@@ -351,9 +385,9 @@ def create_tournament(request: HttpRequest):
     tournament_type = str(tournament_type).lower().strip()
 
     if tournament_type == 'rr':
-        FORM_CLASS = CreateRRTournamentForm
+        FORM_CLASS = RRTournamentForm
     elif tournament_type == 'se':
-        FORM_CLASS = CreateSETournamentForm
+        FORM_CLASS = SETournamentForm
     else:
         raise SuspiciousOperation
 
@@ -373,6 +407,29 @@ def create_tournament(request: HttpRequest):
     if not form:
         form = FORM_CLASS(competition=competition)
     return render(request, "FORM_BASE.html", {'form_title': "Create Tournament", 'action': f"?tournament_type={tournament_type}&competition_id={competition.id}" , "form": form,  "form_submit_text": "Create"})
+
+@login_required
+def edit_tournament(request: HttpRequest, tournament_id: int):
+    tournament = get_tournament(request, tournament_id)
+    if isinstance(tournament, SingleEliminationTournament):
+        FORM_CLASS = SETournamentForm
+    elif isinstance(tournament, RoundRobinTournament):
+        FORM_CLASS = RRTournamentForm
+    else:
+        raise Http404
+
+    form = None
+    if request.method == 'POST':
+        form = FORM_CLASS(request.POST, instance=tournament, competition=tournament.competition)
+        if form.is_valid():
+            form.save() # may not work?
+            return HttpResponseRedirect(f"{reverse('competitions:tournament', args=(form.instance.id,))}")
+        else:
+            for error_field, error_desc in form.errors.items():
+                form.add_error(error_field, error_desc)
+    if not form:
+        form = FORM_CLASS(instance=tournament, competition=tournament.competition)
+    return render(request, "FORM_BASE.html", {'form_title': "Edit Tournament", 'action': f"" , "form": form,  "form_submit_text": "Edit"})
 
 @login_required
 def arena_color(request: HttpRequest, competition_id: int):
@@ -576,7 +633,7 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
     }
     
     tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
-    context = {"tournament": tournament, "bracket_dict": bracket_dict}
+    context = {"tournament": tournament, "bracket_dict": bracket_dict, "form": TournamentStatusForm()}
     return render(request, "competitions/bracket.html", context)
 
 def round_robin_tournament(request: HttpRequest, tournament_id: int):
@@ -662,7 +719,7 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
     winning_points = max(team_wins.values())
     winning_teams = [team for team in team_wins if team_wins[team] == winning_points]
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
-    context = {"tournament": tournament, "bracket_dict": bracket_dict, "team_wins": team_wins, "winning_teams": winning_teams}
+    context = {"tournament": tournament, "bracket_dict": bracket_dict, "team_wins": team_wins, "winning_teams": winning_teams, "form": TournamentStatusForm()}
     return render(request, "competitions/round_robin_tournament.html", context)
 
 def competitions(request: HttpRequest):

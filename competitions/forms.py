@@ -1,5 +1,6 @@
 
 
+from typing import Optional
 from django import forms
 from django.contrib import messages
 from django.forms.widgets import TextInput
@@ -95,39 +96,48 @@ class CreateCompetitionsForm(forms.ModelForm):
         }
 
 # class CreateCompetitionsForm(forms.):
-class CreateSETournamentForm(forms.ModelForm):
+class SETournamentForm(forms.ModelForm):
     #generate_matches = forms.BooleanField(label='Generate Matches')
     #competition_field = forms.ModelChoiceField(queryset=None,label='Competition')
 
-    def __init__(self, *args, competition: Competition, **kwargs):
+    def __init__(self, *args, competition: Optional[Competition]=None, **kwargs):
         super().__init__(*args, **kwargs)
         #self.fields['competition_field'].queryset = Competition.objects.filter(id=competition.id)
         self.fields['competition'].disabled = True
-        self.fields['competition'].initial = competition
-        self.event_queryset = competition.events
-        self.fields['event'].queryset = self.event_queryset
+        if not kwargs.get('instance',None):
+            assert competition is not None
+            self.fields['competition'].initial = competition
+        else:
+            self.fields['competition'].initial = kwargs['instance'].competition
+            competition = kwargs['instance'].competition
+        self.fields['event'].queryset = competition.events
         self.fields['teams'].queryset = competition.teams.all()
+        self.fields['teams'].initial = competition.teams.all()
         self.fields['points'].help_text = "How many points should be awarded to the winner?"
-
+        self.fields['prev_tournament'].queryset = RoundRobinTournament.objects.filter(competition=competition)
         #self.events = competition.events
         #self.fields['events'].queryset = Event.objects.filter(competition=competition)
 
     class Meta:
         model = SingleEliminationTournament
-        fields = ['status', 'points', 'teams', 'judges', 'event', 'competition']
+        fields = ['status', 'points', 'teams', 'judges', 'event', 'competition', 'prev_tournament']
 
-class CreateRRTournamentForm(forms.ModelForm):
+class RRTournamentForm(forms.ModelForm):
     #generate_matches = forms.BooleanField(label='Generate Matches')
     #competition_field = forms.ModelChoiceField(queryset=None,label='Competition')
 
-    def __init__(self, *args, competition: Competition, **kwargs):
+    def __init__(self, *args, competition: Optional[Competition]=None, **kwargs):
         super().__init__(*args, **kwargs)
         #self.fields['competition_field'].queryset = Competition.objects.filter(id=competition.id)
         self.fields['competition'].disabled = True
-        self.fields['competition'].initial = competition
-        self.event_queryset = competition.events
-        self.fields['event'].queryset = self.event_queryset
+        if not kwargs.get('instance',None):
+            assert competition is not None
+            self.fields['competition'].initial = competition
+        else:
+            self.fields['competition'].initial = kwargs['instance'].competition
+        self.fields['event'].queryset = competition.events
         self.fields['teams'].queryset = competition.teams.all()
+        self.fields['points'].help_text = "How many points should be awarded to the winner?"
         #self.events = competition.events
         #self.fields['events'].queryset = Event.objects.filter(competition=competition)
 
@@ -139,9 +149,9 @@ class CreateRRTournamentForm(forms.ModelForm):
         elif self.cleaned_data['teams_per_match'] < 2:
             self.add_error('teams_per_match', 'Teams per match must be greater than or equal to 2')
             return False
-        elif self.cleaned_data['teams'].count() % self.cleaned_data['teams_per_match'] != 0:
-            self.add_error('teams', 'Teams must be able to be divided evenly into matches')
-            return False
+        # elif self.cleaned_data['teams'].count() % self.cleaned_data['teams_per_match'] != 0:
+        #     self.add_error('teams', 'Teams must be able to be divided evenly into matches')
+        #     return False
         return super().is_valid()
 
     class Meta:
