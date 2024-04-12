@@ -1,9 +1,11 @@
 crispy-bootstrap5
-Django==4.2.7
+django-compressor
 django-crispy-forms
 django-debug-toolbar>4.0.0
 django-hijack>3.0.0
 django-mathfilters
+django-sass-processor
+Django==4.2.7
 pillow
 PyYAML
 typing_extensions

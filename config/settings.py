@@ -59,6 +59,8 @@ INSTALLED_APPS = [
     'crispy_bootstrap5',
     'mathfilters', # pip install django-mathfilters
     'whitenoise.runserver_nostatic',
+    'compressor',
+    'sass_processor',
     #'colorfield', # pip install django-colorfield
     #'easy_timezones', # pip install django-easy-timezones
 ]
@@ -171,17 +173,35 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
 STATIC_URL = f"/static/"
 
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
+STATIC_ROOT = "static/"
+
+MEDIA_ROOT = "media"
+
+MEDIA_URL = 'media/'
+
+SASS_PROCESSOR_ROOT = STATIC_ROOT
+
+# STATICFILES_DIRS = [
+#     os.path.join(BASE_DIR, 'static'),
+# ]
+
+STATICFILES_FINDERS = [
+    'compressor.finders.CompressorFinder',
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+    'sass_processor.finders.CssFinder',
 ]
 
-MEDIA_URL = '/media/'
+# COMPRESS_PRECOMPILERS = [
+#         ('text/x-scss', 'django_libsass.SassCompiler'),
+# ]
 
-MEDIA_ROOT = BASE_DIR / '/uploads/'
+COMPRESS_PRECOMPILERS = ( 
+    ('text/x-scss', 'sass {infile} {outfile}'), 
+)
+
 
 # for message framework
 # the django red alert class is called "danger", django calls it "error"
