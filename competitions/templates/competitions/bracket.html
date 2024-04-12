@@ -79,9 +79,9 @@
                 </div>
                 
                 {% for curr_team in match_data.team_data %}
-                    <div class="team highlight-{{curr_team.team_id}}"
+                    <div class="team highlight-{{curr_team.team_id}} {%if curr_team.won %}won{%endif%}"
                         style="height: {{bracket_dict.team_height}}px; width: {{ match_data.match_width }}px; 
-                        {%if curr_team.won %}background-color: #fff5a8;{%endif%} cursor: pointer;"
+                         cursor: pointer;"
                         onclick="location.href='{% url 'competitions:judge_match' curr_team.match_id %}';"
                         onmouseover="highlight({{curr_team.team_id}})" onmouseout="dehighlight({{curr_team.team_id}})">
                         {{ curr_team.name }}
@@ -110,6 +110,7 @@ function highlight(num) {
             element.style.borderWidth = "2px"
         } else {
             element.style.borderWidth = "1px"
+            element.style.backgroundColor= "lightgreen"
         }
         
     })
@@ -121,6 +122,11 @@ function dehighlight(num) {
             element.style.borderWidth = "2px"
         } else {
             element.style.borderWidth = "1px"
+            if (element.className.includes("won")) {
+                element.style.backgroundColor = "#fff5a8";
+            } else {
+                element.style.backgroundColor= "lightgrey"
+            }
         }
     })
 }

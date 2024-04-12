@@ -55,7 +55,6 @@
     bottom: -1px;
 }
 
-
 div.img {
     position: relative;
     height:150px;
@@ -107,4 +106,8 @@ span.with-padding {
     text-align: left;
     background-color: lightgray;
     border: 1px black solid;
+}
+
+.won {
+    background-color: #fff5a8
 }
