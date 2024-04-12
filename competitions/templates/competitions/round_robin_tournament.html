@@ -84,7 +84,7 @@
             {% endfor %}
         </div>
         <div class="row d-flex justify-content-center">
-            <span><b>Team Rankings</b> ({% translate "Points Per Win: "%} {{ tournament.points_per_win }}, {% translate "Points Per Tie: "%} {{ tournament.points_per_tie }}, {% translate "Points Per Loss: "%} {{ tournament.points_per_loss }})</span>
+            <span><b>Team Rankings</b> ({% translate "Points Per Win: "%} {{ tournament.points_per_win|floatformat }}, {% translate "Points Per Tie: "%} {{ tournament.points_per_tie|floatformat }}, {% translate "Points Per Loss: "%} {{ tournament.points_per_loss|floatformat }})</span>
             {% for team, points in team_wins.items %}
                 <li class="nav-item">
                     {% if team in winning_teams %}

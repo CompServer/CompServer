@@ -137,7 +137,10 @@ class RRTournamentForm(forms.ModelForm):
             self.fields['competition'].initial = kwargs['instance'].competition
         self.fields['event'].queryset = competition.events
         self.fields['teams'].queryset = competition.teams.all()
-        self.fields['points'].help_text = "How many points should be awarded to the winner?"
+        self.fields['points_per_win'].initial = round(self.fields['points_per_win'].initial, 2)
+        self.fields['points_per_tie'].initial = round(self.fields['points_per_tie'].initial, 2)
+        self.fields['points_per_loss'].initial = round(self.fields['points_per_loss'].initial, 2)
+        #self.fields['points'].help_text = "How many points should be awarded to the winner?"
         #self.events = competition.events
         #self.fields['events'].queryset = Event.objects.filter(competition=competition)
 
