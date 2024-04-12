@@ -142,7 +142,7 @@ class CreateRRTournamentForm(forms.ModelForm):
 
     class Meta:
         model = RoundRobinTournament
-        fields = ['competition', 'status', 'teams', 'judges', 'event', 'num_rounds', 'teams_per_match', 'points_per_win', 'points_per_tie', 'points_per_loss']
+        fields = ['competition', 'status', 'teams', 'judges', 'event', 'matches_per_team', 'teams_per_match', 'points_per_win', 'points_per_tie', 'points_per_loss']
 
 class ArenaColorForm(forms.Form):
     arena = forms.ModelChoiceField(queryset=None, label="Arena")

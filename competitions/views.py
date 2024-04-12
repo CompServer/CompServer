@@ -6,6 +6,7 @@ from typing import Union
 from typing import Dict, Set, Union
 import zoneinfo
 
+from django.db.models import Max
 from django.contrib import messages
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth.views import login_required
@@ -216,14 +217,18 @@ def generate_round_robin_matches(request, tournament_id):
     teams = [team for team in tournament.teams.all()]
     teams_played = {team: set() for team in teams}
     for team in teams:
+        if team == teams[len(teams)-1]:
+            break
         for k in range(tournament.matches_per_team):
+            if len(teams_played[team]) >= tournament.matches_per_team:
+                break
             match = Match.objects.create(tournament=tournament)
             match.starting_teams.add(team)
-            for i in range(tournament.teams_per_match):
+            for i in range(1, tournament.teams_per_match):
                 j = random.randint(0, len(teams)-1)
                 while(teams[j] in match.starting_teams.all() or \
                 isPlayed(teams_played[teams[j]], match.starting_teams.all()) or \
-                    teams_played[teams[j]] >= tournament.matches_per_team):
+                    len(teams_played[teams[j]]) >= tournament.matches_per_team):
                     j = random.randint(0, len(teams)-1)    
                 match.starting_teams.add(teams[j])
             for team in match.starting_teams.all():
@@ -233,14 +238,18 @@ def generate_round_robin_matches(request, tournament_id):
             match.save()
     matches = [match for match in tournament.match_set.all()]
     round_num = 1
+    curr_round = []
     num_participated = [0 for _ in range(len(matches))]
     while num_participated != [1 for _ in range(len(matches))]:
         j = random.randint(0, len(matches)-1)
+        while num_participated[j] == 1:
+            j = random.randint(0, len(matches)-1)
         num_participated[j] = 1    
         matches[j].time = starting_time
         matches[j].arena = arenas[arena_iterator]
         matches[j].round_num = round_num
         matches[j].save()
+        curr_round.append(matches[j])
         nmpt_iterator += 1
         if nmpt_iterator == arenas[arena_iterator].capacity:
             arena_iterator += 1
@@ -249,6 +258,7 @@ def generate_round_robin_matches(request, tournament_id):
                 arena_iterator = 0
                 starting_time += tournament.event.match_time 
                 round_num += 1
+                curr_round = []
     return HttpResponseRedirect(reverse("competitions:round_robin_tournament", args=(tournament_id,)))
     #still have a little bit of confusion with the ordering of matches.
 
@@ -289,7 +299,7 @@ def swap_matches(request: HttpRequest, tournament_id: int):
             team1 = form.cleaned_data.get('team1')
             team2 = form.cleaned_data.get('team2')
             round_num = form.cleaned_data.get('round_num')
-            if round_num > tournament.num_rounds or round_num < 1:
+            if round_num < 1 or not Match.objects.filter(tournament=tournament, round_num=round_num).exists():
                 #print("Invalid round")
                 return HttpResponseRedirect(reverse("competitions:swap_matches", args=(tournament_id,)))
             match1 = Match.objects.filter(tournament=tournament, starting_teams__in=[team1.id], round_num=round_num).first()
@@ -397,7 +407,7 @@ def edit_tournament(request: HttpRequest, tournament_id: int):
                 tournament.teams.set(form.cleaned_data.get('teams'))
                 tournament.judges.set(form.cleaned_data.get('judges'))
                 tournament.event = form.cleaned_data.get('event')
-                tournament.num_rounds = form.cleaned_data.get('num_rounds')
+                tournament.matches_per_team = form.cleaned_data.get('matches_per_team')
                 tournament.teams_per_match = form.cleaned_data.get('teams_per_match')
                 tournament.points_per_win = form.cleaned_data.get('points_per_win')
                 tournament.points_per_tie = form.cleaned_data.get('points_per_tie')
@@ -621,7 +631,7 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
                 return HttpResponseRedirect(reverse(f"competitions:{redirect_to}",args=redirect_id))
     if tournament.is_archived:
         return HttpResponseRedirect(reverse("competitions:competitions"))
-    numRounds = tournament.num_rounds
+    numRounds = tournament.match_set.order_by('-round_num').first().round_num
     bracket_array =  [{i:[]} for i in range(numRounds)]
     for i in range(numRounds):
         rounds = sorted([match for match in Match.objects.filter(tournament=tournament, round_num=i+1)], key=lambda match : (match.arena.id, match.time))
@@ -656,6 +666,8 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
         match_data = []
 
         for team_data in round_matches.values():
+            if team_data == []:
+                continue
             num_teams = mostTeamsInRound if team_data else 0
             center_height = teamHeight * num_teams
             center_top_margin = (match_height - center_height) / 2

@@ -318,6 +318,9 @@ class Competition(models.Model):
         else:
             s += f" {self.start_date.year}" # RoboMed 2023
         return str(s)
+    @property
+    def max_capacity(self) -> int:
+        return sum([arena.capacity for arena in self.arenas.all()])
 
     @property
     def is_viewable(self) -> bool:
