@@ -695,11 +695,11 @@ def profile(request, user_id):
     #a team should be full of users later, so I can't do player yet
     if bool(is_judge) == False and bool(is_admin) == False and bool(is_coach) == False and bool(is_player) == False:
         is_spectator = True
+    if is_admin == True:
+        #which should be checked
+        i = 0
     #determine if admin
     #determine if player
-
-
-
 
     # if Coach.objects.filter(id = user_id).exists():
     #     competitions = dict()
@@ -819,7 +819,10 @@ def team(request: HttpRequest, team_id: int):
                     elif match.advancers.count() > 1: #u lost to manu people
                         losses.append((("Lost against " + advancers_names + first_half), match.tournament, second_half))
     byes = list()
-    old_upcoming_matches = list()
+    old_upcoming_matches = list(Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), advancers=None).order_by("-time"))
+    for match in old_upcoming_matches:
+        if match.id in [match.id for match in upcoming_matches.all()]:
+            old_upcoming_matches.remove(match)
     for match in past_matches:
         if team_id in [team.id for team in match.advancers.all()]:
             if match.starting_teams.all().exists():
@@ -830,8 +833,7 @@ def team(request: HttpRequest, team_id: int):
                                 byes.append((("BYE" + first_half), match.tournament, second_half))
                             if match.starting_teams.count() == 0 and match.prev_matches.last().starting_teams.count() == 0:
                                 byes.append((("BYE" + first_half), match.tournament, second_half))
-        #old_upcoming_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), advancers=None).exclude(upcoming_matches)
-    #y = "WHY"
+    #ordering time for all the above
     context = {
         'team': team,
         'upcoming_matches': upcoming_matches,

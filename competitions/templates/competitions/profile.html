@@ -4,23 +4,7 @@
 {% block content %}
     <body>
         <h1>{% transalte "Your Profile" %}</h1>
-        <h2>{% translate "Status: " %}</h2>
-        <ul>
-            {% if user.is_admin %}
-                <li>{% trans "Admin"}</li>
-            {% if user.is_coach %}
-                <li>{% trans "Coach" %}</li>
-            {% if user.is_judge %}
-                <li>{% trans "Judge" %}</li>
-            {% if user.is_competitor %}
-                <li>{% trans "Competitor" %}</li>
-            {% if user.is_spectator %}
-                <li>{% trans "Spectator" %}</li>
-            <!-- could simplify with a function for user model -->
-        </ul>
-        <a href="#">
-            <button>{% trans "Edit Status" %}</button>
-        </a>
+        <button><a href="#">{% trans "Edit Status" %}</a></button>
         <div class="user-info-section">
             {% if user.profile.profile_pic.exists %}
                 <img src="{{ user.profile.profile_pic }}">
@@ -37,15 +21,14 @@
                 <h2>{% trans "Biography" %}</h2>
                 <p>{{ user.profile.bio }}</p>
             {% endif %}
-            <a href="#">
-                <button>{% trans "Edit Info" %}</button>
-            </a>
+            <button><a href="#">{% trans "Edit Info" %}</a></button>
         </div>
-        account activity
         {% if user.is_admin %}
-            <h2>{% translate "Admin "%}</h2>
-            <h2>{% translate "Your Activity" %}</h2>
-            <h2>{% translate "Forms For You" %}</h2>
+            <h2>{% translate "Status: Admin"%}</h2>
+            <!-- <h3>{% translate "Your Activity" %}</h3> -->
+            <h3>{% translate "Forms For You" %}</h3>
+            <button><a href="#">{% translate "Create A Competition" %}</a></button>
+            <button><a href=""></a></button>
             <h2>{% translate "Manage Other Activities" %}</h2>
             <h3>{% translate "Send Forms" %}</h3>
             <h3>{% translate "Manage Compeititons and Tournaments" %}</h3>
@@ -71,25 +54,25 @@
             <h2>{% translate "Coach " %}</h2>
         {% endif%}
         {% if user.is_judge%}
-            <h2>{% translate "Tournaments That You've Judged" %}</h2>
-            <h2>{% translate "Upcoming Judging" %}</h2>
+            <h2>{% translate "Status: Judge" %}</h2>
+            <h3>{% translate "Tournaments That You've Judged" %}</h3>
+            <ul>
+                {% for tournament in judged_tournaments %}
+                    <li>
+                        <p><a href="{{ 'urls:tournament' tournament.id }}">Go</a> To {{ tournament.event.name }}</p>
+                    </li>
+                {% endfor %}
+            </ul>
+            <h3>{% translate "Upcoming Judging Gigs" %}</h3>
             {% if upcoming_gigs.exists %}
-                {% if user.first_name %}
-                <h2>{% trans "What " %}{{ user.first_name }}{% trans "Will Be Judging" %}</h2>
-                <ul>
-                        {% for gig in upcoming_gigs %}
-                            <li>{{ gig }}</li>
+                go to form to determine matches
+                {% for gig in upcoming_gigs %}
+                    upcoming gigs shold be events with tournament and if it is being setup and all that
                         {% endfor %}
-                    </ul>
-                {% else %}
-                    <h2>{% translate "What @" %}{{ user.username }}{% trans "Will Be Judging" %}</h2>
-                        {% for gig in upcoming_gigs %}
-                            <li>{{ gig }}</li>
-                        {% endfor %}
-                {% endif %}
+                {% endfor %}
             {% endif %}
             {% if current_gigs.exists %}
-                <h2>{% trans "Currently Judging" %}</h2>
+                <h3>{% trans "Current Judging Gigs" %}</h3>
                 <ul>
                     {% for gig in current_gigs %}
                         <li>
@@ -105,7 +88,7 @@
                 </ul>
         {% endif%}
         {% if user.is_player %}
-            <h2>{% translate "Player " %}</h2>
+            <h2>{% translate "Status: Player" %}</h2>
             <h2>{% trans "Your Team: "%}</h2>
             <h2>{% trans "Your Organization: " %}</h2>
             <h2>{% trans "Your Track Record of Wins, Losses, and Draws" %}</h2>

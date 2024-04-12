@@ -28,27 +28,37 @@
     -->
     {% if upcoming_matches.exists %}
         <div class="match-schedule">
-            <h3>{% translate "Upcoming Matches" %}</h3>
+            <h3>{% translate "Upcoming Matches" %}{{ upcoming_matches.count }}{% translate ")"%}</h3>
             <ul>
                 {% for match in upcoming_matches %}
-                    <li>{{ match.time }} {% translate "between" %} {{ match }}</li>
+                    <li>{{ match.time }} {% translate "between" %} {{ match }} 
+                        {% if match.arena %}
+                            {% translate "in" %} {{ match.arena.name }}</li>
+                        {% else %}
+                            {% translate " (Location TBD)" %}</li>
+                        {% endif %}
                 {% endfor %}
             </ul>
         </div>
     {% endif %}
-    {% if old_upcoming_matches.exists %}
+    {% if old_upcoming_matches %}
         <div class="match-schedule">
-            <h3>{% translate "Upcoming Matches" %}</h3>
+            <h3>{% translate "Awaiting Matches To Begin (" %}{{ old_upcoming_matches|length }}{% translate ")"%}</h3>
             <ul>
-                {% for match in upcoming_matches %}
-                    <li>{{ match.time }} {% translate "between" %} {{ match }}</li>
+                {% for match in old_upcoming_matches %}
+                    <li>{% translate "Previously scheduled at" %} {{ match.time }} {% translate "between" %} {{ match }} 
+                        {% if match.arena %}
+                        {% translate "in" %} {{ match.arena.name }}</li>
+                    {% else %}
+                        {% translate " (Location TBD)" %}</li>
+                    {% endif %}
                 {% endfor %}
             </ul>
         </div>
     {% endif %}
     {% if past_competitions.exists %}
         <div class="row d-flex past-competitions-set">
-            <h3>{% translate "Past Competitions" %}</h3>
+            <h3>{% translate "Past Competitions (" %}{{ past_competitions.count }}{% translate ")" %}</h3>
             {% for competition in past_competitions %}
                 <div class="row d-flex">
                     <div class="col-12 competition">
@@ -60,7 +70,7 @@
     {% endif %}
     {% if past_tournaments.exists %}
         <div class="row d-flex past-tournaments-set">
-            <h3>{% translate "Past Tournaments" %}</h3>
+            <h3>{% translate "Past Tournaments (" %}{{ past_tournaments.count }}{% translate ")" %}</h3>
             {% for tournament in past_tournaments %}
                 <div class="row d-flex">
                     <div class="col-12 tournmanet">
@@ -72,7 +82,7 @@
     {% endif %}
     {% if won_tournaments %}
         <div class="tournament-set">
-            <h3>{% translate "Tournaments Won" %}</h3>
+            <h3>{% translate "Tournaments Won (" %}{{ won_tournaments|length }}{{% translate ")" %}</h3>
             {% for tournament in won_tournaments %}
                 <div class="row d-flex">
                     <div class = "col-12 tournament">
@@ -87,7 +97,7 @@
         <div class="match-records">
             <h3>{% translate "Match History" %}</h3>
             {% if byes %}
-                <h4>{% translate "Byes" %}</h4>
+                <h4>{% translate "Byes (" %}{{ byes|length }}{% translate ")"%}</h4>
                 <ul>
                     {% for bye in byes %}  
                         <li>{{ bye.0 }} <a href="{% url 'competitions:tournament' bye.1.id %}">{{ bye.1.event.name }}</a>{{ bye.2 }}</li>
@@ -95,7 +105,7 @@
                 </ul>
             {% endif %}
             {% if wins %}
-                <h4>{% translate "Wins" %}</h4>
+                <h4>{% translate "Wins (" %}{{ wins|length }}{% translate ")" %}</h4>
                 <ul>
                     {% for win in wins %}  
                         <li>{{ win.0 }} <a href="{% url 'competitions:tournament' win.1.id %}">{{ win.1.event.name }}</a>{{ win.2 }}</li>
@@ -103,7 +113,7 @@
                 </ul>
             {% endif %}
             {% if losses %}
-                <h4>{% translate "Losses" %}</h4>
+                <h4>{% translate "Losses (" %}{{ losses|length }}{% translate ")" %}</h4>
                 <ul>
                     {% for loss in losses %}
                         <li>{{ loss.0 }} <a href="{% url 'competitions:tournament' loss.1.id %}">{{ loss.1.event.name }}</a>{{ loss.2 }}</li>
@@ -111,7 +121,7 @@
                 </ul>
             {% endif %}
             {% if draws %}
-                <h4>{% translate "Draws" %}</h4>
+                <h4>{% translate "Draws (" %}{{ draws|length }}{% translate ")" %}</h4>
                 <ul>
                     {% for draw in draws %}
                         <li>{{ draw.0 }} <a href="{% url 'competitions:tournament' draw.1.id %}">{{ draw.1.event.name }}</a>{{ draw.2 }}</li>
