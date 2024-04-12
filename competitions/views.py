@@ -2,6 +2,7 @@ from datetime import datetime
 from logging import error
 import math
 import random
+from random import shuffle
 from typing import Union
 from typing import Dict, Set, Union
 import zoneinfo
@@ -215,27 +216,39 @@ def generate_round_robin_matches(request, tournament_id):
     arenas = [i for i in tournament.competition.arenas.filter(is_available=True)]
     starting_time = tournament.start_time 
     teams = [team for team in tournament.teams.all()]
+    shuffle(teams)
     teams_played = {team: set() for team in teams}
-    for team in teams:
-        if team == teams[len(teams)-1]:
+    num_participated = {team: 0 for team in teams}
+    indeces = [i for i in range(tournament.teams_per_match)]
+    for i in range(len(teams)):
+        if num_participated == {team: tournament.matches_per_team for team in teams}:
             break
-        for k in range(tournament.matches_per_team):
-            if len(teams_played[team]) >= tournament.matches_per_team:
-                break
-            match = Match.objects.create(tournament=tournament)
-            match.starting_teams.add(team)
-            for i in range(1, tournament.teams_per_match):
-                j = random.randint(0, len(teams)-1)
-                while(teams[j] in match.starting_teams.all() or \
-                isPlayed(teams_played[teams[j]], match.starting_teams.all()) or \
-                    len(teams_played[teams[j]]) >= tournament.matches_per_team):
-                    j = random.randint(0, len(teams)-1)    
-                match.starting_teams.add(teams[j])
-            for team in match.starting_teams.all():
-                for team2 in match.starting_teams.all():
-                    if team != team2:
-                        teams_played[team].add(team2)
-            match.save()
+        match = Match.objects.create(tournament=tournament)
+        for i in indeces:
+            match.starting_teams.add(teams[i])
+            num_participated[teams[i]] += 1
+        match.save()
+        
+    # for team in teams:
+    #     if team == teams[len(teams)-1]:
+    #         break
+    #     for k in range(tournament.matches_per_team):
+    #         if len(teams_played[team]) >= tournament.matches_per_team:
+    #             break
+    #         match = Match.objects.create(tournament=tournament)
+    #         match.starting_teams.add(team)
+    #         for i in range(1, tournament.teams_per_match):
+    #             j = random.randint(0, len(teams)-1)
+    #             while(teams[j] in match.starting_teams.all() or \
+    #             isPlayed(teams_played[teams[j]], match.starting_teams.all()) or \
+    #                 len(teams_played[teams[j]]) >= tournament.matches_per_team):
+    #                 j = random.randint(0, len(teams)-1)    
+    #             match.starting_teams.add(teams[j])
+    #         for team in match.starting_teams.all():
+    #             for team2 in match.starting_teams.all():
+    #                 if team != team2:
+    #                     teams_played[team].add(team2)
+    #         match.save()
     matches = [match for match in tournament.match_set.all()]
     round_num = 1
     curr_round = []
