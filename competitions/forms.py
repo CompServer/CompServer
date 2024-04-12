@@ -16,6 +16,7 @@ class JudgeForm(forms.ModelForm):
             self.fields['advancers'].queryset = possible_advancers
 
         self.possible_advancers = possible_advancers
+        self.fields['advancers'].label = "Winning Teams"
 
     def is_valid(self):
         assert isinstance(self.instance, Match)
