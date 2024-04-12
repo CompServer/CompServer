@@ -92,14 +92,15 @@
                     {% else %}
                         <b>{{ team.name }}</b>:
                     {% endif %}
-                    {{ points }} {% if points == 1 %} point {% else %} points {% endif %}
+                    {{ points }} {% if points == 1 %} {% translate "point" %} {% else %} {% translate "points" %} {% endif %}
                 </li>
             {% endfor %}
         </div>
         {% if user.is_superuser %}
             <hr>
-            <a href="{% url 'competitions:swap_matches' tournament.id %}" class="btn btn-secondary">Swap Teams</a>
-            <a href="{% url 'competitions:edit_tournament' tournament.id %}" class="btn btn-secondary">Edit Tournament</a>
+            <a href="{% url 'competitions:swap_matches' tournament.id %}" class="btn btn-secondary">{% translate "Swap Teams" %}</a>
+            <a href="{% url 'competitions:edit_tournament' tournament.id %}" class="btn btn-secondary">{% translate "Edit Tournament" %}</a>
+            <a href="{% url 'competitions:competition' tournament.competition.id %}" class="btn btn-secondary">{% translate "Go Back To Competition" %}</a>
             {% comment %} <br><r>
             <a href="{% url "competitions:arena_color" tournament.competition.id %}" class="btn btn-secondary">{% translate "Change Arena Colors" %}</a> {% endcomment %}
         {% endif %}

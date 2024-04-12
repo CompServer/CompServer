@@ -10,9 +10,11 @@ from django.contrib.auth.views import login_required
 from django.core.exceptions import SuspiciousOperation
 from django.db.models import Q, QuerySet
 from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
-from django.shortcuts import get_object_or_404, render
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.exceptions import TemplateDoesNotExist
+from django.urls import reverse
+from django.utils import timezone
+
 from django.urls import reverse
 from django.utils import timezone
 
@@ -203,11 +205,10 @@ def generate_single_elimination_matches(request, tournament_id: int):
         num_matches = len(matches)
     return HttpResponseRedirect(reverse("competitions:single_elimination_tournament", args=(tournament_id,)))
 
-def isPlayed(teams_played: Dict[Team, Set], match_teams: QuerySet[Team]):
+def isPlayed(teams_played: Set[Team], match_teams: QuerySet[Team]):
     return any([team in teams_played for team in match_teams])
 
 def generate_round_robin_matches(request, tournament_id):
-    #may have to include buys, but check with schwartz first.
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
     arena_iterator = 0
     nmpt_iterator = 0
@@ -215,37 +216,40 @@ def generate_round_robin_matches(request, tournament_id):
     starting_time = tournament.start_time 
     teams = [team for team in tournament.teams.all()]
     teams_played = {team: set() for team in teams}
-    num_byes = len(teams) % tournament.teams_per_match
-    byes = [0 for _ in range(len(teams))]
-    for k in range(tournament.num_rounds):
-        if byes == [1 for _ in range(len(teams))]:
-            byes = [0 for _ in range(len(teams))]
-        nmpt_iterator = 0
-        if arena_iterator > 0:
-            arena_iterator = 0
-            starting_time += tournament.event.match_time
-        num_participated = [0 for _ in range(len(teams))]
-        temp = min(teams_played.values(), key=lambda x: len(x))
-        if temp == len(teams) - 1:
-            teams_played = {team: set() for team in teams}
-
-        #create bye match
-        match = Match.objects.create(tournament=tournament)
-        for i in range(num_byes):
-            j = random.randint(0, len(teams)-1)
-            while(byes[j] > 0 or teams[j] in match.starting_teams.all() or \
-            isPlayed(teams_played[teams[j]], match.starting_teams.all())):
-                j = random.randint(0, len(teams)-1)    
-            match.starting_teams.add(teams[j])      
-            byes[j] += 1
-            num_participated[j] += 1 
-        for team in match.starting_teams.all():
-            for team2 in match.starting_teams.all():
-                if team != team2:
-                    teams_played[team].add(team2)
-        #starting time confusion for byes (do we have them)
-        match.time = starting_time
-        match.arena = arenas[arena_iterator]
+    for team in teams:
+        if team == teams[len(teams)-1]:
+            break
+        for k in range(tournament.matches_per_team):
+            if len(teams_played[team]) >= tournament.matches_per_team:
+                break
+            match = Match.objects.create(tournament=tournament)
+            match.starting_teams.add(team)
+            for i in range(1, tournament.teams_per_match):
+                j = random.randint(0, len(teams)-1)
+                while(teams[j] in match.starting_teams.all() or \
+                isPlayed(teams_played[teams[j]], match.starting_teams.all()) or \
+                    len(teams_played[teams[j]]) >= tournament.matches_per_team):
+                    j = random.randint(0, len(teams)-1)    
+                match.starting_teams.add(teams[j])
+            for team in match.starting_teams.all():
+                for team2 in match.starting_teams.all():
+                    if team != team2:
+                        teams_played[team].add(team2)
+            match.save()
+    matches = [match for match in tournament.match_set.all()]
+    round_num = 1
+    curr_round = []
+    num_participated = [0 for _ in range(len(matches))]
+    while num_participated != [1 for _ in range(len(matches))]:
+        j = random.randint(0, len(matches)-1)
+        while num_participated[j] == 1:
+            j = random.randint(0, len(matches)-1)
+        num_participated[j] = 1    
+        matches[j].time = starting_time
+        matches[j].arena = arenas[arena_iterator]
+        matches[j].round_num = round_num
+        matches[j].save()
+        curr_round.append(matches[j])
         nmpt_iterator += 1
         if nmpt_iterator == arenas[arena_iterator].capacity:
             arena_iterator += 1
@@ -253,36 +257,8 @@ def generate_round_robin_matches(request, tournament_id):
             if arena_iterator >= len(arenas):
                 arena_iterator = 0
                 starting_time += tournament.event.match_time 
-        match.round_num = k+1
-        match.save()
-    
-        #create rest of the matches
-        while num_participated != [1 for _ in range(len(teams))]:
-            match = Match.objects.create(tournament=tournament)
-            for i in range(tournament.teams_per_match):
-                j = random.randint(0, len(teams)-1)
-                while(num_participated[j] > 0 or teams[j] in match.starting_teams.all() or \
-                isPlayed(teams_played[teams[j]], match.starting_teams.all())):
-                    j = random.randint(0, len(teams)-1)    
-                match.starting_teams.add(teams[j])      
-                num_participated[j] += 1 
-                if num_participated == [1 for _ in range(len(teams))]:
-                    break
-            for team in match.starting_teams.all():
-                for team2 in match.starting_teams.all():
-                    if team != team2:
-                        teams_played[team].add(team2)
-            match.time = starting_time
-            match.arena = arenas[arena_iterator]
-            nmpt_iterator += 1
-            if nmpt_iterator == arenas[arena_iterator].capacity:
-                arena_iterator += 1
-                nmpt_iterator = 0
-                if arena_iterator >= len(arenas):
-                    arena_iterator = 0
-                    starting_time += tournament.event.match_time 
-            match.round_num = k+1
-            match.save()
+                round_num += 1
+                curr_round = []
     return HttpResponseRedirect(reverse("competitions:round_robin_tournament", args=(tournament_id,)))
     #still have a little bit of confusion with the ordering of matches.
 
@@ -323,7 +299,7 @@ def swap_matches(request: HttpRequest, tournament_id: int):
             team1 = form.cleaned_data.get('team1')
             team2 = form.cleaned_data.get('team2')
             round_num = form.cleaned_data.get('round_num')
-            if round_num > tournament.num_rounds or round_num < 1:
+            if round_num < 1 or not Match.objects.filter(tournament=tournament, round_num=round_num).exists():
                 #print("Invalid round")
                 return HttpResponseRedirect(reverse("competitions:swap_matches", args=(tournament_id,)))
             match1 = Match.objects.filter(tournament=tournament, starting_teams__in=[team1.id], round_num=round_num).first()
@@ -654,7 +630,7 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
                 return HttpResponseRedirect(reverse(f"competitions:{redirect_to}",args=redirect_id))
     if tournament.is_archived:
         return HttpResponseRedirect(reverse("competitions:competitions"))
-    numRounds = tournament.num_rounds
+    numRounds = tournament.match_set.order_by('-round_num').first().round_num
     bracket_array =  [{i:[]} for i in range(numRounds)]
     for i in range(numRounds):
         rounds = sorted([match for match in Match.objects.filter(tournament=tournament, round_num=i+1)], key=lambda match : (match.arena.id, match.time))
@@ -689,6 +665,8 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
         match_data = []
 
         for team_data in round_matches.values():
+            if team_data == []:
+                continue
             num_teams = mostTeamsInRound if team_data else 0
             center_height = teamHeight * num_teams
             center_top_margin = (match_height - center_height) / 2

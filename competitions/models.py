@@ -318,6 +318,9 @@ class Competition(models.Model):
         else:
             s += f" {self.start_date.year}" # RoboMed 2023
         return str(s)
+    @property
+    def max_capacity(self) -> int:
+        return sum([arena.capacity for arena in self.arenas.all()])
 
     @property
     def is_viewable(self) -> bool:
@@ -476,7 +479,7 @@ class Ranking(models.Model):
         # unique_together += ['tournament', 'rank'] # NCAA has 4 teams with a #1 seed
 
 class RoundRobinTournament(AbstractTournament):
-    num_rounds = models.PositiveSmallIntegerField()
+    matches_per_team = models.PositiveSmallIntegerField()
     points_per_win = models.DecimalField(max_digits=20, decimal_places=10, default=3.0)
     points_per_tie = models.DecimalField(max_digits=20, decimal_places=10, default=1.0)
     points_per_loss = models.DecimalField(max_digits=20, decimal_places=10, default=0.0)
