@@ -4,9 +4,9 @@ import math
 import random
 from random import shuffle
 from typing import Union
-from typing import Dict, Set, Union
+from typing import Dict, Set, Union, List
 import zoneinfo
-
+from heapq import nsmallest
 from django.db.models import Max
 from django.contrib import messages
 from django.contrib.auth import PermissionDenied
@@ -209,6 +209,7 @@ def generate_single_elimination_matches(request, tournament_id: int):
 def isPlayed(teams_played: Set[Team], match_teams: QuerySet[Team]):
     return any([team in teams_played for team in match_teams])
 
+
 def generate_round_robin_matches(request, tournament_id):
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
     arena_iterator = 0
@@ -218,51 +219,52 @@ def generate_round_robin_matches(request, tournament_id):
     teams = [team for team in tournament.teams.all()]
     shuffle(teams)
     teams_played = {team: set() for team in teams}
-    num_participated = {team: 0 for team in teams}
-    indeces = [i for i in range(tournament.teams_per_match)]
-    for i in range(len(teams)):
-        if num_participated == {team: tournament.matches_per_team for team in teams}:
-            break
+    num_participated = [0 for team in teams]
+    while num_participated != [tournament.matches_per_team for team in teams]:
         match = Match.objects.create(tournament=tournament)
-        for i in indeces:
-            match.starting_teams.add(teams[i])
-            num_participated[teams[i]] += 1
+        for i in range(tournament.teams_per_match):
+            if num_participated == [tournament.matches_per_team for team in teams]:
+                break
+            j = random.randint(0, len(teams)-1)
+            while teams[j] in match.starting_teams.all() or \
+            isPlayed(teams_played[teams[j]], match.starting_teams.all()) or \
+            num_participated[j] >= tournament.matches_per_team:
+                j = random.randint(0, len(teams)-1) 
+            match.starting_teams.add(teams[j])
+            num_participated[j] += 1
+        for team in match.starting_teams.all():
+            for team2 in match.starting_teams.all():
+                if team != team2:
+                    teams_played[team].add(team2)
         match.save()
-        
-    # for team in teams:
-    #     if team == teams[len(teams)-1]:
-    #         break
-    #     for k in range(tournament.matches_per_team):
-    #         if len(teams_played[team]) >= tournament.matches_per_team:
-    #             break
-    #         match = Match.objects.create(tournament=tournament)
-    #         match.starting_teams.add(team)
-    #         for i in range(1, tournament.teams_per_match):
-    #             j = random.randint(0, len(teams)-1)
-    #             while(teams[j] in match.starting_teams.all() or \
-    #             isPlayed(teams_played[teams[j]], match.starting_teams.all()) or \
-    #                 len(teams_played[teams[j]]) >= tournament.matches_per_team):
-    #                 j = random.randint(0, len(teams)-1)    
-    #             match.starting_teams.add(teams[j])
-    #         for team in match.starting_teams.all():
-    #             for team2 in match.starting_teams.all():
-    #                 if team != team2:
-    #                     teams_played[team].add(team2)
-    #         match.save()
     matches = [match for match in tournament.match_set.all()]
     round_num = 1
-    curr_round = []
+    curr_round = set()
     num_participated = [0 for _ in range(len(matches))]
-    while num_participated != [1 for _ in range(len(matches))]:
+    while num_participated != [1 for _ in range(len(matches))]:  
         j = random.randint(0, len(matches)-1)
-        while num_participated[j] == 1:
+        checkFull = set()
+        isFull = False
+        while num_participated[j] == 1 or \
+        isPlayed(curr_round, matches[j].starting_teams.all()):
+            checkFull.add(j)
+            if len(checkFull) == len(matches):
+                isFull = True
+                break
             j = random.randint(0, len(matches)-1)
+        if isFull:
+            arena_iterator = 0
+            starting_time += tournament.event.match_time 
+            round_num += 1
+            curr_round = set()
+            continue
         num_participated[j] = 1    
         matches[j].time = starting_time
         matches[j].arena = arenas[arena_iterator]
         matches[j].round_num = round_num
         matches[j].save()
-        curr_round.append(matches[j])
+        for team in matches[j].starting_teams.all():
+            curr_round.add(team)
         nmpt_iterator += 1
         if nmpt_iterator == arenas[arena_iterator].capacity:
             arena_iterator += 1
@@ -271,7 +273,7 @@ def generate_round_robin_matches(request, tournament_id):
                 arena_iterator = 0
                 starting_time += tournament.event.match_time 
                 round_num += 1
-                curr_round = []
+                curr_round = set()
     return HttpResponseRedirect(reverse("competitions:round_robin_tournament", args=(tournament_id,)))
     #still have a little bit of confusion with the ordering of matches.
 
