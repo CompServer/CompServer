@@ -593,7 +593,7 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
     round_data = []
 
     bracketWidth = (matchWidth + connectorWidth ) * numRounds
-    bracketHeight = mostTeamsInRound * 50
+    bracketHeight = mostTeamsInRound * teamHeight * 2
 
     for round_matches in reversed(bracket_array):
         num_matches = len(round_matches)
@@ -601,8 +601,7 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
         final_match_data = []
 
         for generated_match_data in round_matches.values():
-            # ASSUMPTION - - - - - - - - - - - - - - - - - - - - - - - - - - - -- V
-            num_teams = len(generated_match_data[0]) if generated_match_data else 2
+            num_teams = len(generated_match_data[0]) if generated_match_data else 0
             if num_teams > tournament.teams_per_match:
                 messages.error(request, "Invalid number of teams per match.")
             center_height = teamHeight * num_teams

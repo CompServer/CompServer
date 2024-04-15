@@ -7,7 +7,6 @@
 <style>
 
 .bracket {
-    height:{{bracket_dict.bracketHeight}}px; 
     width:{{bracket_dict.bracketWidth}}px;
 }
 
@@ -78,11 +77,12 @@
                     
                     {% for curr_team in match_data.team_data %}
                         <div class="team highlight-{{curr_team.team_id}} {%if curr_team.won %}won{%endif%}"
-                            style="height: {{bracket_dict.team_height}}px; width: {{ match_data.match_width }}px; 
-                            cursor: pointer;"
+                            style="height: {{bracket_dict.team_height}}px; width: {{ match_data.match_width }}px; cursor: pointer;
+                            {% if forloop.first %} border-top-right-radius: 8px; border-top-left-radius: 8px; {% endif %}
+                            {% if forloop.last %} border-bottom-right-radius: 8px; border-bottom-left-radius: 8px; {% endif %}"
                             onclick="location.href='{% url 'competitions:judge_match' curr_team.match_id %}';"
                             onmouseover="highlight({{curr_team.team_id}})" onmouseout="dehighlight({{curr_team.team_id}})">
-                            {{ curr_team.name }}
+                            <p>{{ curr_team.name }}</p>
                         </div>
                     {% endfor %}
                 {% endif %}
