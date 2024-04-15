@@ -47,46 +47,45 @@
     {% endif %} 
 </h1>
 {% comment %} not sure how to show match times here, bc I need to know exactly how they work {% endcomment %}
+
 {% if tournament.match_set.exists %}
 <div class="bracket">
     {% for round_data in bracket_dict.round_data %}
     <div class="round">
         {% for match_data in round_data.match_data %}
         <div class="match" style="height: {{ match_data.match_height }}px; width: {{ match_data.match_width }}px;">
-
-            {{match_data.connector_data.midpoint_index}}
-
             <div class="center"
                 style="height: {{ match_data.center_height }}px; margin-top: {{ match_data.center_top_margin }}px; ">
-                
-                {% with connector_height=match_data.match_height|mul:match_data.connector_data.match_offset_mult %}    
-                <div class="connector-front {{ match_data.connector_data.connector }} highlight-{{match_data.connector_data.winner_id}}" onclick=""
-                style=" cursor: default;
-                height: {{connector_height|add:match_data.connector_data.team_index_offset|abs}}px;
-                width: {{match_data.connector_data.connector_width_actual}}px;
-                right: -{{match_data.connector_data.connector_width_actual}}px;
-                {% if  match_data.connector_data.connector == "connector-up" %}
-                bottom: {{ match_data.connector_data.vertical_margin }}px;
-                {% else %}
-                top: {{ match_data.connector_data.vertical_margin|sub:1 }}px;
-                {% endif %}
-                {%endwith %}
-                ">
-                    <div class="connector-end highlight-{{match_data.connector_data.winner_id}}" 
-                    style="width: {{bracket_dict.connectorWidth|sub:match_data.connector_data.connector_width_actual|add:2}}px;
-                    right: -{{bracket_dict.connectorWidth|sub:match_data.connector_data.connector_width_actual|add:4}}px;
-                    height: 3px;"></div>
-                </div>
-                
-                {% for curr_team in match_data.team_data %}
-                    <div class="team highlight-{{curr_team.team_id}} {%if curr_team.won %}won{%endif%}"
-                        style="height: {{bracket_dict.team_height}}px; width: {{ match_data.match_width }}px; 
-                         cursor: pointer;"
-                        onclick="location.href='{% url 'competitions:judge_match' curr_team.match_id %}';"
-                        onmouseover="highlight({{curr_team.team_id}})" onmouseout="dehighlight({{curr_team.team_id}})">
-                        {{ curr_team.name }}
+                {% if match_data.team_data != None%}
+                    {% with connector_height=match_data.match_height|mul:match_data.connector_data.match_offset_mult %}    
+                    <div class="connector-front {{ match_data.connector_data.connector }} highlight-{{match_data.connector_data.winner_id}}" onclick=""
+                    style=" cursor: default;
+                    height: {{connector_height|add:match_data.connector_data.team_index_offset|abs}}px;
+                    width: {{match_data.connector_data.connector_width_actual}}px;
+                    right: -{{match_data.connector_data.connector_width_actual}}px;
+                    {% if  match_data.connector_data.connector == "connector-up" %}
+                    bottom: {{ match_data.connector_data.vertical_margin }}px;
+                    {% else %}
+                    top: {{ match_data.connector_data.vertical_margin|sub:1 }}px;
+                    {% endif %}
+                    {%endwith %}
+                    ">
+                        <div class="connector-end highlight-{{match_data.connector_data.winner_id}}" 
+                        style="width: {{bracket_dict.connectorWidth|sub:match_data.connector_data.connector_width_actual|add:2}}px;
+                        right: -{{bracket_dict.connectorWidth|sub:match_data.connector_data.connector_width_actual|add:4}}px;
+                        height: 3px;"></div>
                     </div>
-                {% endfor %}
+                    
+                    {% for curr_team in match_data.team_data %}
+                        <div class="team highlight-{{curr_team.team_id}} {%if curr_team.won %}won{%endif%}"
+                            style="height: {{bracket_dict.team_height}}px; width: {{ match_data.match_width }}px; 
+                            cursor: pointer;"
+                            onclick="location.href='{% url 'competitions:judge_match' curr_team.match_id %}';"
+                            onmouseover="highlight({{curr_team.team_id}})" onmouseout="dehighlight({{curr_team.team_id}})">
+                            {{ curr_team.name }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
             </div>
         </div>
         {% endfor %}
