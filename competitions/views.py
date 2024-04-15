@@ -12,6 +12,7 @@ from django.utils import timezone
 from django.core.exceptions import SuspiciousOperation
 from django.template.exceptions import TemplateDoesNotExist
 from operator import attrgetter
+import operator
 import random
 import zoneinfo
 from typing import Union
@@ -560,6 +561,8 @@ def competitions(request: HttpRequest):
     return render(request, "competitions/competitions.html", context)
 
 def competition(request: HttpRequest, competition_id: int):
+    #what is this doing
+    #find the overall single elimination tournametn winner
     redirect_to = request.GET.get('next', '')
     redirect_id = request.GET.get('id', None)
     if redirect_id:
@@ -580,10 +583,47 @@ def competition(request: HttpRequest, competition_id: int):
                 return HttpResponseRedirect(reverse(f"competitions:competition", args=[competition_id]))
     if competition.is_archived:
         return HttpResponseRedirect(reverse("competitions:competitions"))
-    if Match.objects.filter(next_matches__isnull=True).filter(tournament__competition=competition_id).exists():
-        winner = Match.objects.filter(next_matches__isnull=True).filter(tournament__competition=competition_id).first().advancers.all()
-    else:
-        winner = None
+    #get winners and tournamnets they won with points
+    #round robin vs single elimination tournaments
+    rr_tournaments = RoundRobinTournament.objects.filter(competition__id = competition_id)
+    se_tournament = SingleEliminationTournament.objects.filter(competition__id = competition_id).first()
+    #if either happened without the other
+    #if both happened
+    se_details = ""
+    if se_tournament:
+        final_match = Match.objects.filter(next_matches__isnull=True, tournament = SingleEliminationTournament, tournament__id = id, competition__id = competition_id)
+        winners = final_match.advancers.all()
+        tournament_name = se_tournament.event.name
+        tournament_points = se_tournament.points
+        se_details = se_details + tournament_name + "(" + str(tournament_points) + " points for " + ",".join(list(winners)) + ")"
+    if rr_tournaments.exists():
+        winner_and_total = dict()
+        for tournament in rr_tournaments.filter(status = Status.COMPLETE):
+            final_match = Match.objects.filter(next_matches__isnull=True, tournaemnt__id = tournament.id, tournament = RoundRobinTournament, competition__id = competition_id)
+            winners = final_match.advancers.all()
+            if winners.count() == 1:
+                tournament_points = tournament.points_per_win
+                if winners in winner_and_total:
+                    total = winner_and_total.get(winner)
+                    total = total + tournament_points
+                    winner_and_total[winners] = total
+                    #adding more to the total points that they won in the previous rr tournaments
+                else:
+                    winner_and_total = tournament_points
+            else:
+                tournament_points = tournament.points_per_tie
+                for winner in winners:
+                    if winner in winner_and_total:
+                        total = winner_and_total.get(winner)
+                        total = total + tournament_points
+                        winner_and_total[winners] = total
+                    else:
+                        winner_and_total[winner] = tournament_points
+        rr_details = "All Tournaments Winner Are "(" + max(winner_and_total) + "points for " + ",".join(max(winner_and_total.iteritems(), key=operator.itemgetter(1))) + ")"
+                details = "" + "blah" # do this
+            #find the team or teams with the largest amount of points
+        #find the overall competition winner
+#if some tournaments are still happening then it isn't complete
     context = {
         "competition": competition, 
         "form": SETournamentStatusForm(), 
