@@ -725,6 +725,16 @@ def profile(request, user_id):
     # }
     return render(request, 'competitions/user_profile.html', context)
 
+
+def organization(request, organization_id):
+    organization = Organization.objects.filter(id = organization_id).first()
+    associated_teams = Team.objects.filter(organization__id = organization_id)
+    context = {
+        'organization': organization,
+        'associated_teams': associated_teams,
+    }
+    return render(request, 'organization.html', context)
+
 def results(request, competition_id):
     competition = Competition.objects.get(id = competition_id)
     tournaments = competition.tournament_set.order_by("points").filter(status = Status.COMPLETE)

@@ -1,0 +1,16 @@
+{% extends 'skeleton.html' %}
+{% load i18n %}
+{% block title %}{% translate "Organization:" %} {{ organization.name }}{% endblock %} 
+{% block content %}
+    <header>
+        <h1>{% translate 'Organization - '%} {{ organization.name }}</h1>
+    </header>
+    <body>
+        <h2>{% translate 'Teams Associated With This Organization' %}</h2>
+        <ul>
+            {% for team in associated_teams %}
+                <li><a href="{% urls 'competitions:team' team.id %}">{{ team.__str__ }}</a> {% translate 'in the sport of' %} {{ team.sport.name }} {% translate 'coached by' %} {{ team.coach.name }}</li>
+            {% endfor %}
+        </ul>
+    </body>
+{% endblock %}
