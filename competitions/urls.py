@@ -19,6 +19,7 @@ urlpatterns = [
     path("tournament/<int:tournament_id>/", RedirectView.as_view(url='tournament'), name="single_elimination_tournament"), # both legacy so they can be hyperlinked to
     path("tournament/<int:tournament_id>/generate/", views.generate_tournament_matches, name="_generate_matches"),
     path("tournament/<int:tournament_id>/swap/", views.swap_matches, name="swap_matches"),
+    path("tournament/swap_teams/<int:match1_id>/<int:match2_id>/", views.swap_teams, name="swap_teams"),
     # path("match/<int:match_id>/", views.match, name="match"),
     path("competition/<int:competition_id>/color/", views.arena_color, name="arena_color"),
     path("match/<int:match_id>/judge/", views.judge_match, name="judge_match"),

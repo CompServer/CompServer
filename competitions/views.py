@@ -4,7 +4,7 @@ import math
 import random
 from random import shuffle
 from typing import Union
-from typing import Dict, Set, Union, List
+from typing import Dict, Set, Union, List, Iterable
 import zoneinfo
 from heapq import nsmallest
 from django.db.models import Max
@@ -206,10 +206,6 @@ def generate_single_elimination_matches(request, tournament_id: int):
         num_matches = len(matches)
     return HttpResponseRedirect(reverse("competitions:single_elimination_tournament", args=(tournament_id,)))
 
-def isPlayed(teams_played: Set[Team], match_teams: QuerySet[Team]):
-    return any([team in teams_played for team in match_teams])
-
-
 def generate_round_robin_matches(request, tournament_id):
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
     arena_iterator = 0
@@ -309,32 +305,46 @@ def swap_matches(request: HttpRequest, tournament_id: int):
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
     form = None
     if request.method == 'POST':
-        form = TournamentSwapForm(request.POST, tournament=tournament)
+        form = MatchSwapForm(request.POST, tournament=tournament)
         if form.is_valid():
-            team1 = form.cleaned_data.get('team1')
-            team2 = form.cleaned_data.get('team2')
-            round_num = form.cleaned_data.get('round_num')
-            if round_num < 1 or not Match.objects.filter(tournament=tournament, round_num=round_num).exists():
-                #print("Invalid round")
-                return HttpResponseRedirect(reverse("competitions:swap_matches", args=(tournament_id,)))
-            match1 = Match.objects.filter(tournament=tournament, starting_teams__in=[team1.id], round_num=round_num).first()
-            match2 = Match.objects.filter(tournament=tournament, starting_teams__in=[team2.id], round_num=round_num).first()
-            #print(match1, match2)
-            match1.starting_teams.remove(team1)
-            match2.starting_teams.remove(team2)
-            match1.starting_teams.add(team2)
-            match2.starting_teams.add(team1) 
-            match1.save()
-            match2.save()
-            #print(match1, match2)
-            messages.success(request, "Teams swapped successfully.")
-            return HttpResponseRedirect(reverse("competitions:tournament", args=(tournament_id,)))
+            match1 = form.cleaned_data.get('match1')
+            match2 = form.cleaned_data.get('match2')
+            return HttpResponseRedirect(reverse("competitions:swap_teams", args=(match1.id, match2.id,)))
         else:
             for error_field, error_desc in form.errors.items():
                 form.add_error(error_field, error_desc)
     if not form:
-        form = TournamentSwapForm(tournament=tournament)
+        form = MatchSwapForm(tournament=tournament)
     return render(request, "competitions/swap_matches.html", {"form": form})
+
+def swap_teams(request: HttpRequest, match1_id: int, match2_id: int):
+    match1 = get_object_or_404(Match, pk=match1_id)
+    match2 = get_object_or_404(Match, pk=match2_id)
+    form = None
+    if request.method == 'POST':
+        form = TeamSwapForm(request.POST, match1=match1, match2=match2)
+        if form.is_valid():
+            teams1 = form.cleaned_data.get('teams1')
+            teams2 = form.cleaned_data.get('teams2')
+            teams1_org = match1.starting_teams.all()
+            teams2_org = match2.starting_teams.all()
+            for team in teams1:
+                match1.starting_teams.remove(team)
+            for team in teams2:
+                 match2.starting_teams.remove(team)
+            for team in teams1:
+                match2.starting_teams.add(team)
+            for team in teams2:
+                match1.starting_teams.add(team)
+            match1.save()
+            match2.save()
+            return HttpResponseRedirect(reverse("competitions:tournament", args=(match1.tournament.id,)))
+        else:
+            for error_field, error_desc in form.errors.items():
+                form.add_error(error_field, error_desc)
+    if not form:
+        form = TeamSwapForm(match1=match1, match2=match2)
+    return render(request, "competitions/swap_teams.html", {"form": form})
 
 def home(request: HttpRequest):
     return render(request, "competitions/home.html")
@@ -693,7 +703,8 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
                 "match_width": matchWidth,
                 "center_height": center_height,
                 "center_top_margin": center_top_margin,
-                "arena": team_data[0].get('match').arena
+                "arena": team_data[0].get('match').arena,
+                "id": team_data[0].get('match').id
              })
 
         round_data.append({"match_data": match_data})

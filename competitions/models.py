@@ -29,7 +29,7 @@ def get_random_access_key():
 
 # https://github.com/h3/django-colorfield/blob/master/colorfield/fields.py
 
-from .utils import get_image_file_background_color
+from .utils_colorfield import get_image_file_background_color
 from .validators import (
     color_hex_validator,
     color_hexa_validator,
@@ -615,13 +615,13 @@ class Match(models.Model):
                 self._cached_str =  res + _(" in ") + str(self.tournament) # Battlebots vs Byters in SumoBot tournament @ RoboMed 2023
             else: 
                 self._cached_str =  res # if part of another match we don't want to repeat the tournament
-        return str(self._cached_str)
+        return self._cached_str
 
     def __str__(self) -> str:
-        if self._cached_str is None:
-            self._generate_str_recursive()
-            self.save()
-        return self._cached_str # type: ignore
+        self._generate_str_recursive()
+        #if self._cached_str is None:    
+        self.save()
+        return f"""ID {self.id}, {self._cached_str}""" # type: ignore
 
     class Meta:
         ordering = ['tournament']
