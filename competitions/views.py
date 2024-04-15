@@ -14,9 +14,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.template.exceptions import TemplateDoesNotExist
 from django.urls import reverse
 from django.utils import timezone
-
-from django.urls import reverse
-from django.utils import timezone
+from crispy_forms.utils import render_crispy_form
 
 from .forms import *
 from .models import *
@@ -677,7 +675,8 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
                 "match_width": matchWidth,
                 "center_height": center_height,
                 "center_top_margin": center_top_margin,
-                "arena": team_data[0].get('match').arena
+                "arena": team_data[0].get('match').arena,
+                "match":  team_data[0].get('match'),
              })
 
         round_data.append({"match_data": match_data})
@@ -739,18 +738,18 @@ def competition(request: HttpRequest, competition_id: int):
 
 @login_required
 def create_competition(request: HttpRequest):
-    sport_id = request.GET.get('sport', None)
-    if sport_id is None:
-        return render(request, "competitions/create_competition.html", {"sports": Sport.objects.all()})
-    try:
-        sport_id = int(sport_id)
-    except:
-        raise Http404("Not a valid sport.")
-    sport = get_object_or_404(Sport, pk=sport_id)
+    # sport_id = request.GET.get('sport', None)
+    # if sport_id is None:
+    #     return render(request, "competitions/create_competition.html", {"sports": Sport.objects.all()})
+    # try:
+    #     sport_id = int(sport_id)
+    # except:
+    #     raise Http404("Not a valid sport.")
+    # sport = get_object_or_404(Sport, pk=sport_id)
 
     form = None
     if request.method == 'POST':
-        form = CreateCompetitionsForm(request.POST, sport=sport)
+        form = CreateCompetitionsForm(request.POST)
         if form.is_valid():
             form.save()
             messages.success(request, "Competition created successfully.")
@@ -759,8 +758,9 @@ def create_competition(request: HttpRequest):
             for error_field, error_desc in form.errors.items():
                 form.add_error(error_field, error_desc)
     if not form:
-        form = CreateCompetitionsForm(sport=sport)
-    return render(request, "competitions/create_competition_form.html", {"form": form})
+        form = CreateCompetitionsForm()
+    #form_html = render_crispy_form(form)
+    return render(request, "competitions/create_competition_form.html", {"form": form}) #{"form_html": form_html})
 
 def credits(request: HttpRequest):
     return render(request, "competitions/credits.html")

@@ -3,9 +3,13 @@
 from typing import Optional
 from django import forms
 from django.contrib import messages
+from django.db.models import QuerySet
 from django.forms.widgets import TextInput
+from django.urls import reverse_lazy
 from competitions.models import AbstractTournament, Competition, SingleEliminationTournament, Sport, Team, Match, RoundRobinTournament, Arena, ColorField
 from .widgets import ColorPickerWidget, ColorWidget
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Submit
 
 class JudgeForm(forms.ModelForm):
     possible_advancers = None
@@ -65,14 +69,24 @@ class TournamentSwapForm(forms.Form):
 
 class CreateCompetitionsForm(forms.ModelForm):
 
-    def __init__(self, *args, sport: Sport, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._sport: Sport = sport
-        self.fields['teams'].queryset = Team.objects.filter(sport=sport)
-        sportfield: forms.ModelMultipleChoiceField = self.fields['sport']
-        sportfield.queryset = Sport.objects.filter(pk=sport.pk)
-        sportfield.initial = sport
-        sportfield.disabled = True
+        self.helper = FormHelper()
+        self.helper.form_id = 'create_competition_form'
+        self.helper.attrs = {
+            'hx-post': reverse_lazy('competitions:create_competition'),
+            'hx-target': '#competitions',
+            'hx-swap': 'outerHTML',
+        }
+        self.helper.add_input(Submit('submit', 'Create Competition'))
+        self.fields['sport'].queryset = Sport.objects.all()
+        self.fields['sport'].widget.attrs = {
+            'hx-get': '/api/v1/teams/',
+            'hx-trigger': 'change',
+            'hx-target': '#id_teams',
+        }
+
+        self.fields['teams'].queryset = Team.objects.none()
 
     def is_valid(self):
         self.full_clean()
@@ -80,9 +94,10 @@ class CreateCompetitionsForm(forms.ModelForm):
             self.add_error('start_date', 'Start date must be before end date')
             self.add_error('end_date', 'End date must be after start date')
             return False
-        if self.cleaned_data['sport'] != self._sport:
-            self.add_error('sport', 'Sport must be the same as the one in the URL')
-            return False
+        for team in self.cleaned_data['teams']:
+            if team.sport != self.cleaned_data['sport']:
+                self.add_error('teams', 'All teams must be for the same sport.')
+                return False
         # if self.cleaned_data['plenary_judges'].count() < 1:
         #     self.add_error('plenary_judges', 'You must select at least one plenary judge')
         #     return False
@@ -90,16 +105,15 @@ class CreateCompetitionsForm(forms.ModelForm):
 
     class Meta:
         model = Competition
-        fields = ['name', 'status', 'sport', 'teams', 'plenary_judges', 'start_date', 'end_date', 'arenas']
+        fields = ['sport', 'name', 'status', 'teams', 'plenary_judges', 'start_date', 'end_date', 'arenas']
         widgets = {
             'start_date': forms.DateInput(attrs={'format': 'yyyy-mm-dd','type':'date'}),
             'end_date': forms.DateInput(attrs={'format': 'yyyy-mm-dd','type':'date'}),
         }
 
-# class CreateCompetitionsForm(forms.):
+#class TournamentForm(forms.ModelForm):
+
 class SETournamentForm(forms.ModelForm):
-    #generate_matches = forms.BooleanField(label='Generate Matches')
-    #competition_field = forms.ModelChoiceField(queryset=None,label='Competition')
 
     def __init__(self, *args, competition: Optional[Competition]=None, **kwargs):
         super().__init__(*args, **kwargs)
