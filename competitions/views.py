@@ -589,41 +589,42 @@ def competition(request: HttpRequest, competition_id: int):
     se_tournament = SingleEliminationTournament.objects.filter(competition__id = competition_id).first()
     #if either happened without the other
     #if both happened
-    se_details = ""
-    if se_tournament:
-        final_match = Match.objects.filter(next_matches__isnull=True, tournament = SingleEliminationTournament, tournament__id = id, competition__id = competition_id)
-        winners = final_match.advancers.all()
-        tournament_name = se_tournament.event.name
-        tournament_points = se_tournament.points
-        se_details = se_details + tournament_name + "(" + str(tournament_points) + " points for " + ",".join(list(winners)) + ")"
-    if rr_tournaments.exists():
-        winner_and_total = dict()
-        for tournament in rr_tournaments.filter(status = Status.COMPLETE):
-            final_match = Match.objects.filter(next_matches__isnull=True, tournaemnt__id = tournament.id, tournament = RoundRobinTournament, competition__id = competition_id)
-            winners = final_match.advancers.all()
-            if winners.count() == 1:
-                tournament_points = tournament.points_per_win
-                if winners in winner_and_total:
-                    total = winner_and_total.get(winner)
-                    total = total + tournament_points
-                    winner_and_total[winners] = total
-                    #adding more to the total points that they won in the previous rr tournaments
-                else:
-                    winner_and_total = tournament_points
-            else:
-                tournament_points = tournament.points_per_tie
-                for winner in winners:
-                    if winner in winner_and_total:
-                        total = winner_and_total.get(winner)
-                        total = total + tournament_points
-                        winner_and_total[winners] = total
-                    else:
-                        winner_and_total[winner] = tournament_points
-        rr_details = "All Tournaments Winner Are "(" + max(winner_and_total) + "points for " + ",".join(max(winner_and_total.iteritems(), key=operator.itemgetter(1))) + ")"
-                details = "" + "blah" # do this
-            #find the team or teams with the largest amount of points
-        #find the overall competition winner
-#if some tournaments are still happening then it isn't complete
+#     se_details = ""
+#     if se_tournament:
+#         final_match = Match.objects.filter(next_matches__isnull=True, tournament = SingleEliminationTournament, tournament__id = id, competition__id = competition_id)
+#         winners = final_match.advancers.all()
+#         tournament_name = se_tournament.event.name
+#         tournament_points = se_tournament.points
+#         se_details = se_details + tournament_name + "(" + str(tournament_points) + " points for " + ",".join(list(winners)) + ")"
+#     if rr_tournaments.exists():
+#         winner_and_total = dict()
+#         for tournament in rr_tournaments.filter(status = Status.COMPLETE):
+#             final_match = Match.objects.filter(next_matches__isnull=True, tournaemnt__id = tournament.id, tournament = RoundRobinTournament, competition__id = competition_id)
+#             winners = final_match.advancers.all()
+#             if winners.count() == 1:
+#                 tournament_points = tournament.points_per_win
+#                 if winners in winner_and_total:
+#                     total = winner_and_total.get(winner)
+#                     total = total + tournament_points
+#                     winner_and_total[winners] = total
+#                     #adding more to the total points that they won in the previous rr tournaments
+#                 else:
+#                     winner_and_total = tournament_points
+#             else:
+#                 tournament_points = tournament.points_per_tie
+#                 for winner in winners:
+#                     if winner in winner_and_total:
+#                         total = winner_and_total.get(winner)
+#                         total = total + tournament_points
+#                         winner_and_total[winners] = total
+#                     else:
+#                         winner_and_total[winner] = tournament_points
+#         rr_details = "All Tournaments Winner Are "(" + max(winner_and_total) + "points for " + ",".join(max(winner_and_total.iteritems(), key=operator.itemgetter(1))) + ")"
+#                 details = "" + "blah" # do this
+#             #find the team or teams with the largest amount of points
+#         #find the overall competition winner
+# #if some tournaments are still happening then it isn't complete
+    winner = ""
     context = {
         "competition": competition, 
         "form": SETournamentStatusForm(), 
@@ -843,31 +844,43 @@ def team(request: HttpRequest, team_id: int):
             if match.prev_matches.exists():
                 if team_id in [team.id for team in match.advancers.all()]:
                     if match.advancers.count() == match.starting_teams.count() + len([advancer for advancer in match.prev_matches.last().advancers.all()]): 
-                        draws.append((("Drew in match against " + ",".join(starting_teams_names) + ",".join(prev_advancing_names) + first_half), match.tournament, second_half))
+                        draws.append((("Drew in match against " + ",".join(starting_teams_names) + ",".join(prev_advancing_names) + first_half), match.tournament, second_half, match))
                     else:
                         if match.advancers.count() == 1:
-                            wins.append((("Won against " + ",".join(starting_teams_names) + ",".join(prev_advancing_names) + first_half), match.tournament, second_half))
+                            wins.append((("Won against " + ",".join(starting_teams_names) + ",".join(prev_advancing_names) + first_half), match.tournament, second_half, match))
                         elif match.advancers.count() > 2: 
-                            wins.append((("Won with " + advancers_names + first_half), match.tournament, second_half))
+                            wins.append((("Won with " + advancers_names + first_half), match.tournament, second_half, match))
                 else:
                     if match.advancers.count() == 1:
-                        losses.append((("Lost against " + match.advancers.first().name + first_half), match.tournament, second_half))
+                        losses.append((("Lost against " + match.advancers.first().name + first_half), match.tournament, second_half, match))
                     elif match.advancers.count() > 1: 
-                        losses.append((("Lost against " + advancers_names + first_half), match.tournament, second_half))
+                        losses.append((("Lost against " + advancers_names + first_half), match.tournament, second_half, match))
             else:
                 if team_id in [team.id for team in match.advancers.all()]:
                     if match.advancers.count() == match.starting_teams.count():
                         draws.append((("Drew with " + starting_teams_names + first_half), match.tournament, second_half))
                     else:
                         if match.advancers.count() == 1:
-                            wins.append((("Won against " + starting_teams_names + first_half), match.tournament, second_half))
+                            wins.append((("Won against " + starting_teams_names + first_half), match.tournament, second_half, match))
                         elif match.advancers.count() > 1:
-                            wins.append((("Won with " + "," + advancers_names + first_half), match.tournament, second_half))
+                            wins.append((("Won with " + "," + advancers_names + first_half), match.tournament, second_half, match))
                 else:
-                    if match.advancers.count() == 1: #u lost to 1 person
-                        losses.append((("Lost against " + match.advancers.first().name + first_half), match.tournament, second_half))
-                    elif match.advancers.count() > 1: #u lost to manu people
-                        losses.append((("Lost against " + advancers_names + first_half), match.tournament, second_half))
+                    if match.advancers.count() == 1: 
+                        losses.append((("Lost against " + match.advancers.first().name + first_half), match.tournament, second_half, match))
+                    elif match.advancers.count() > 1: 
+                        losses.append((("Lost against " + advancers_names + first_half), match.tournament, second_half, match))
+    loss_dict = dict()
+    for loss in losses:
+        loss_dict[loss] = loss[-1].time
+    sorted_losses = list(sorted(loss_dict.items(), key=lambda x:x[1]))
+    wins_dict = dict()
+    for win in wins:
+        wins_dict[win] = win[-1].time
+    sorted_wins = list(sorted(wins_dict.items(), key=lambda x:x[1]))
+    draws_dict = dict()
+    for draw in draws:
+        draws_dict[draw] = draw[-1].time
+    sorted_draws = list(sorted(draws_dict.items(), key=lambda x:x[1])) 
     byes = list()
     old_upcoming_matches = list(Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), advancers=None).order_by("-time"))
     for match in old_upcoming_matches:
@@ -883,16 +896,20 @@ def team(request: HttpRequest, team_id: int):
                                 byes.append((("BYE" + first_half), match.tournament, second_half))
                             if match.starting_teams.count() == 0 and match.prev_matches.last().starting_teams.count() == 0:
                                 byes.append((("BYE" + first_half), match.tournament, second_half))
-    #ordering time for all the above
+    byes_dict = dict()
+    for bye in byes:
+        byes_dict[bye] = bye.time
+    sorted_byes = list(sorted(byes_dict.items(), key=lambda x:x[1]))
+    #fix these sorted items above
     context = {
         'team': team,
         'upcoming_matches': upcoming_matches,
         'old_upcoming_matches': old_upcoming_matches,
-        'wins': wins,
-        'byes': byes,
+        'wins': sorted_wins,
+        'byes': sorted_byes,
         'past_matches': past_matches,
-        'draws': draws,
-        'losses': losses,
+        'draws': sorted_draws,
+        'losses': sorted_losses,
         'won_tournaments': past_tournaments_won,
         'past_tournaments': past_tournaments,
         'past_competitions': past_competitions,
