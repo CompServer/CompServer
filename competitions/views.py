@@ -629,7 +629,7 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
         "round_data": round_data,
         "team_height": teamHeight,
         "championship_id": championship.id,
-        "champion_id": championship.advancers.first().id
+        "champion_id": championship.advancers.first().id if championship.advancers.first() else None
     }
     
     tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)

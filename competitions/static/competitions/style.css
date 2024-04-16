@@ -2,7 +2,7 @@
     display: flex;
     margin: 10px;
     background-color: #EAEFF2;
-    padding: 10px 0px 10px 30px;
+    padding: 10px 0px 10px 20px;
     border-radius: 10px;
     border: 1px black solid;
 }
@@ -88,3 +88,4 @@ span.with-padding {
 /* p {
     word-spacing: 5px;
 } */
+ 
