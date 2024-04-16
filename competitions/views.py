@@ -326,19 +326,20 @@ def swap_teams(request: HttpRequest, match1_id: int, match2_id: int):
         if form.is_valid():
             teams1 = form.cleaned_data.get('teams1')
             teams2 = form.cleaned_data.get('teams2')
-            teams1_org = match1.starting_teams.all()
-            teams2_org = match2.starting_teams.all()
-            for team in teams1:
-                match1.starting_teams.remove(team)
-            for team in teams2:
-                 match2.starting_teams.remove(team)
-            for team in teams1:
-                match2.starting_teams.add(team)
-            for team in teams2:
-                match1.starting_teams.add(team)
-            match1.save()
-            match2.save()
-            return HttpResponseRedirect(reverse("competitions:tournament", args=(match1.tournament.id,)))
+            if isPlayed(teams1, match2.starting_teams.all()) or isPlayed(teams2, match1.starting_teams.all()):
+                messages.error(request, "Cannot swap teams that have played in the other match.")
+            else:    
+                for team in teams1:
+                    match1.starting_teams.remove(team)
+                for team in teams2:
+                    match2.starting_teams.remove(team)
+                for team in teams1:
+                    match2.starting_teams.add(team)
+                for team in teams2:
+                    match1.starting_teams.add(team)
+                match1.save()
+                match2.save()
+                return HttpResponseRedirect(reverse("competitions:tournament", args=(match1.tournament.id,)))
         else:
             for error_field, error_desc in form.errors.items():
                 form.add_error(error_field, error_desc)

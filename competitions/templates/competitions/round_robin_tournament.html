@@ -50,7 +50,7 @@
                 <div class="match" style="height: {{ match_data.match_height }}px; width: {{ match_data.match_width }}px;">
                     <div class="center"
                         style="height: {{ match_data.center_height }}px; margin-top: {{ match_data.center_top_margin }}px; ">
-                        {{ match_data.arena }} <small><small id="match_id">(ID: {{ match_data.id }})</small></small> 
+                        {{ match_data.arena }} {% if user.is_staff %} <small><small id="match_id">(ID: {{ match_data.id }})</small></small> {% endif %}
                         {% for team_data in match_data.team_data %}
                             <div class="team"
                                 style="width: {{ match_data.match_width }}px; background-color:{% if team_data.won %} #fff5a8 {% else %} {{ match_data.arena.color }} {% endif %}; cursor: pointer;"
@@ -78,14 +78,14 @@
                 </li>
             {% endfor %}
         </div>
-        {% if user.is_superuser %}
-            <hr>
+        <hr>
+        {% if user.is_superuser and tournament.is_in_setup %}
             <a href="{% url 'competitions:swap_matches' tournament.id %}" class="btn btn-secondary">{% translate "Swap Match Teams" %}</a>
             <a href="{% url 'competitions:edit_tournament' tournament.id %}" class="btn btn-secondary">{% translate "Edit Tournament" %}</a>
-            <a href="{% url 'competitions:competition' tournament.competition.id %}" class="btn btn-secondary">{% translate "Go Back To Competition" %}</a>
             {% comment %} <br><r>
             <a href="{% url "competitions:arena_color" tournament.competition.id %}" class="btn btn-secondary">{% translate "Change Arena Colors" %}</a> {% endcomment %}
         {% endif %}
+        <a href="{% url 'competitions:competition' tournament.competition.id %}" class="btn btn-secondary">{% translate "Go Back To Competition" %}</a>
     {% else %}
         <form class="form-inline my-2 my-md-0 justify-content-end" action="/tournament/{{ tournament.id }}/generate/" method="POST" id="status">
             {% csrf_token %}

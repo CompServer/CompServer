@@ -88,8 +88,6 @@ class TeamSwapForm(forms.Form):
         self.full_clean()
         if self.cleaned_data['teams1'] == self.cleaned_data['teams2']:
             return False
-        if isPlayed(teams1, match2.starting_teams.all()) or isPlayed(teams2, match1.starting_teams.all()):
-            return False
         return super().is_valid()
 
 class CreateCompetitionsForm(forms.ModelForm):
