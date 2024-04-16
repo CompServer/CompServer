@@ -112,7 +112,19 @@ class CreateCompetitionsForm(forms.ModelForm):
             'end_date': forms.DateInput(attrs={'format': 'yyyy-mm-dd','type':'date'}),
         }
 
-#class TournamentForm(forms.ModelForm):
+# class TournamentForm(forms.Form):
+#     tournament_type = forms.ChoiceField(choices=[('rr', 'Round Robin'), ('se', 'Single Elimination')], label="Tournament Type")
+
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         self.helper = FormHelper()
+#         self.helper.form_id = 'create_tournament_form'
+#         self.helper.attrs = {
+#             'hx-post': reverse_lazy('competitions:create_tournament'),
+#             'hx-target': '#competitions',
+#             'hx-swap': 'outerHTML',
+#         }
+#         self.helper.add_input(Submit('submit', 'Create Tournament'))
 
 class SETournamentForm(forms.ModelForm):
 
