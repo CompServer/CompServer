@@ -582,7 +582,8 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
                 bracket_array.append({})
             bracket_array[curr_round+1][base_index] = None
 
-    read_tree_from_node(Match.objects.filter(tournament=tournament_id).filter(next_matches__isnull=True).first(), 0, 0)
+    championship = Match.objects.filter(tournament=tournament_id).filter(next_matches__isnull=True).first()
+    read_tree_from_node(championship, 0, 0)
 
     bracket_array.pop()
 
@@ -627,6 +628,8 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
         "connectorWidth": connectorWidth,
         "round_data": round_data,
         "team_height": teamHeight,
+        "championship_id": championship.id,
+        "champion_id": championship.advancers.first().id
     }
     
     tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
