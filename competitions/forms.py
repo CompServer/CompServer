@@ -10,6 +10,7 @@ from competitions.models import AbstractTournament, Competition, SingleEliminati
 from .widgets import ColorPickerWidget, ColorWidget
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
+from .models import Team
 
 class JudgeForm(forms.ModelForm):
     possible_advancers = None
@@ -27,7 +28,7 @@ class JudgeForm(forms.ModelForm):
         # if hasattr(self, "possible_advancers"): return False
         # ^ above doesn't work, gotta use this try except -_-
         self.full_clean()
-        if len(self.instance.teams) <= (self.cleaned_data.get('advancers').count()):
+        if len(self.instance.teams) <= (self.cleaned_data.get('advancers', Team.objects.none()).count()):
             self.add_error('advancers', 'You cannot advance all teams in a match.')
             return False
         return all([team in self.possible_advancers.all() for team in self.instance.advancers.all()]) and super().is_valid()
