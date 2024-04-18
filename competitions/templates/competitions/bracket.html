@@ -118,33 +118,36 @@
 {% endif %}
 
 <script>
-function highlight(num) {
-    document.querySelectorAll(".highlight-"+num).forEach((element)=>{
-        element.style.borderColor = "#2ec4b6";
-        if (element.className.includes("connector")) {
-            element.style.borderWidth = "2px"
-        } else {
-            element.style.borderWidth = "1px"
-            element.style.backgroundColor= "lightgreen"
-        }
-        
-    })
-}
-function dehighlight(num) {
-    document.querySelectorAll(".highlight-"+num).forEach((element)=>{
-        element.style.borderColor = "black";
-        if (element.className.includes("connector")) {
-            element.style.borderWidth = "2px"
-        } else {
-            element.style.borderWidth = "1px"
+    function highlight(num) {
+        document.querySelectorAll(".highlight-"+num).forEach((element)=>{
+            element.style.borderColor = "#2ec4b6";
             if (element.className.includes("won")) {
-                element.style.backgroundColor = "#fff5a8";
+                if (element.className.includes("team")) {
+                    element.style.backgroundColor = "lightgreen";
+                }
             } else {
-                element.style.backgroundColor= "lightgrey"
+                if (element.className.includes("team")) {
+                    element.style.borderColor = "#c9184a";
+                    element.style.backgroundColor= "#ff4d6d"
+                }
+                
             }
-        }
-    })
-}
+        })
+    }
+    function dehighlight(num) {
+        document.querySelectorAll(".highlight-"+num).forEach((element)=>{
+            element.style.borderColor = "black";
+            if (element.className.includes("won")) {
+                if (element.className.includes("team")) {
+                    element.style.backgroundColor = "#fff5a8";
+                }
+            } else {
+                if (element.className.includes("team")) {
+                    element.style.backgroundColor= "lightgrey"
+                }
+            }
+        })
+    }
 </script>
 
 {% endblock %}
