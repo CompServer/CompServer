@@ -11,8 +11,13 @@
 }
 
 .round {
-    height: {{ bracket_dict.roundHeight }}px; 
+    height: {{ bracket_dict.roundHeight|add:30 }}px; 
     width: {{ bracket_dict.roundWidth }}px;
+}
+
+.round-header {
+    height: {{bracket_dict.team_height}}px;
+    width: {{ bracket_dict.match_width }}px;
 }
 </style>
 
@@ -51,8 +56,11 @@
 <div class="bracket ">
     {% for round_data in bracket_dict.round_data %}
     <div class="round">
+        <div class="round-header">
+            <p>{{round_data.label}}</p>
+        </div>
         {% for match_data in round_data.match_data %}
-        <div class="match" style="height: {{ match_data.match_height }}px; width: {{ match_data.match_width }}px;">
+        <div class="match" style="height: {{ match_data.match_height }}px; width: {{ bracket_dict.match_width }}px;">
             <div class="center"
                 style="height: {{ match_data.center_height }}px; margin-top: {{ match_data.center_top_margin }}px; ">
                 {% if match_data.team_data != None%}
@@ -76,7 +84,7 @@
                     </div>
                     {% for curr_team in match_data.team_data %}
                         <div class="team highlight-{{curr_team.team_id}} {%if curr_team.won %}won{%endif%}"
-                            style="height: {{bracket_dict.team_height}}px; width: {{ match_data.match_width }}px; cursor: pointer;
+                            style="height: {{bracket_dict.team_height}}px; width: {{ bracket_dict.match_width }}px; cursor: pointer;
                             {% if forloop.first %} border-top-right-radius: 8px; border-top-left-radius: 8px; {% endif %}
                             {% if forloop.last %} border-bottom-right-radius: 8px; border-bottom-left-radius: 8px; {% endif %}"
                             onclick="location.href='{% url 'competitions:judge_match' curr_team.match_id %}';"

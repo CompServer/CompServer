@@ -7,7 +7,7 @@
     border: 1px black solid;
 }
 
-.round {
+/* .round {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -17,7 +17,7 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-}
+} */
 
 .center {
     margin: 0;
@@ -64,6 +64,18 @@
 
 .connector-down .connector-end {
     bottom: -1px;
+}
+
+.round-header {
+    background-color: #DDDDDD;
+    border: 1px black solid;
+    border-radius: 8px;
+}
+
+.round-header p{
+    margin-bottom: 0px;
+    text-align: center;
+    vertical-align: middle;
 }
 
 div.img {
