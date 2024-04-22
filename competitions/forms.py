@@ -127,7 +127,6 @@ class CreateCompetitionsForm(forms.ModelForm):
 #         self.helper.add_input(Submit('submit', 'Create Tournament'))
 
 class SETournamentForm(forms.ModelForm):
-
     def __init__(self, *args, competition: Optional[Competition]=None, **kwargs):
         super().__init__(*args, **kwargs)
         #self.fields['competition_field'].queryset = Competition.objects.filter(id=competition.id)
