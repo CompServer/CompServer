@@ -36,7 +36,20 @@ SECRET_KEY = 'django-insecure-2y0@hfzu761goc9!m&!#if&(vhcg=!uzre027l48r&oh_c^xcx
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "true").strip().lower() == "true"
 
-ALLOWED_HOSTS = ["*"]
+# https://cloud.google.com/python/django/appengine
+# for deployment
+
+# APPENGINE_URL = env("APPENGINE_URL", default=None)
+# if APPENGINE_URL:
+#     # Ensure a scheme is present in the URL before it's processed.
+#     if not urlparse(APPENGINE_URL).scheme:
+#         APPENGINE_URL = f"https://{APPENGINE_URL}"
+
+#     ALLOWED_HOSTS = [urlparse(APPENGINE_URL).netloc]
+#     CSRF_TRUSTED_ORIGINS = [APPENGINE_URL]
+#     SECURE_SSL_REDIRECT = True
+# else:
+#     ALLOWED_HOSTS = ["*"]
 
 INTERNAL_IPS = [
     "127.0.0.1",

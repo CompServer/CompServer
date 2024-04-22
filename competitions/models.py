@@ -620,7 +620,7 @@ class Match(models.Model):
             else: 
                 self._cached_str =  res # if part of another match we don't want to repeat the tournament
         return str(self._cached_str)
-
+    
     def __str__(self) -> str:
         if self._cached_str is None:
             self._generate_str_recursive()
