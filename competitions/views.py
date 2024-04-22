@@ -215,23 +215,35 @@ def generate_round_robin_matches(request, tournament_id):
     teams = [team for team in tournament.teams.all()]
     shuffle(teams)
     teams_played = {team: set() for team in teams}
+    matches_played = {team: list() for team in teams}
     num_participated = [0 for team in teams]
     while num_participated != [tournament.matches_per_team for team in teams]:
         match = Match.objects.create(tournament=tournament)
+        match_teams = []
         for i in range(tournament.teams_per_match):
             if num_participated == [tournament.matches_per_team for team in teams]:
                 break
             j = random.randint(0, len(teams)-1)
+            match.starting_teams.add(teams[j])
+            match_teams = sorted(list(match.starting_teams.all()))
             while teams[j] in match.starting_teams.all() or \
-            isPlayed(teams_played[teams[j]], match.starting_teams.all()) or \
-            num_participated[j] >= tournament.matches_per_team:
+                isPlayed(teams_played[teams[j]], match.starting_teams.all()) or \
+                num_participated[j] >= tournament.matches_per_team or \
+                match_teams in matches_played[teams[j]]:
                 j = random.randint(0, len(teams)-1) 
+                match_teams = sorted(list(match.starting_teams.all()) + [teams[j]])
             match.starting_teams.add(teams[j])
             num_participated[j] += 1
         for team in match.starting_teams.all():
             for team2 in match.starting_teams.all():
                 if team != team2:
                     teams_played[team].add(team2)
+            matches_played[team].append(match_teams)
+        for team in match.starting_teams.all():
+            if len(teams_played[team]) == len(teams) - 1:
+                for tem in teams_played[team]:
+                    teams_played[tem].remove(team)
+                teams_played[team] = set()
         match.save()
     matches = [match for match in tournament.match_set.all()]
     round_num = 1
