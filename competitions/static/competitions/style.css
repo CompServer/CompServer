@@ -1,9 +1,13 @@
 .bracket {
     display: flex;
     margin: 10px;
+    background-color: #EAEFF2;
+    padding: 10px 0px 10px 20px;
+    border-radius: 10px;
+    border: 1px black solid;
 }
 
-.round {
+/* .round {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -13,7 +17,7 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-}
+} */
 
 .center {
     margin: 0;
@@ -22,11 +26,18 @@
 }
 
 .team {
+    width: 100%;
     text-align: left;
-    background-color: lightgray;
+    background-color: #CCCCCC;
     border: 1px black solid;
-    float: none;
-    position: relative;
+}
+
+.won {
+    background-color: #fff5a8
+}
+
+.team p {
+    padding-left: 5px;
 }
 
 .connector-end {
@@ -55,6 +66,18 @@
     bottom: -1px;
 }
 
+.round-header {
+    background-color: #DDDDDD;
+    border: 1px black solid;
+    border-radius: 8px;
+}
+
+.round-header p{
+    margin-bottom: 0px;
+    text-align: center;
+    vertical-align: middle;
+}
+
 div.img {
     position: relative;
     height:150px;
@@ -77,37 +100,4 @@ span.with-padding {
 /* p {
     word-spacing: 5px;
 } */
-.bracket {
-    display: flex;
-    margin: 10px;
-    /* border: 1px red solid; */
-}
-
-.round {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-.match {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-.center {
-    margin: 0;
-    position: absolute;
-    flex: 1;
-}
-
-.team {
-    width: 100%;
-    text-align: left;
-    background-color: lightgray;
-    border: 1px black solid;
-}
-
-.won {
-    background-color: #fff5a8
-}
+ 

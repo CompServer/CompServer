@@ -473,10 +473,11 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
 
     # -----VARIABLES-----
     bracket_array = []
-    matchWidth = 175
+    matchWidth = 200
     connectorWidth = 50
     teamHeight = 25
     roundWidth = matchWidth + connectorWidth
+    roundNames = ["Quarter Finals", "Semi Finals", "Finals"]
     # -------------------
 
     def generate_competitor_data(match):
@@ -582,7 +583,8 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
                 bracket_array.append({})
             bracket_array[curr_round+1][base_index] = None
 
-    read_tree_from_node(Match.objects.filter(tournament=tournament_id).filter(next_matches__isnull=True).first(), 0, 0)
+    championship = Match.objects.filter(tournament=tournament_id).filter(next_matches__isnull=True).first()
+    read_tree_from_node(championship, 0, 0)
 
     bracket_array.pop()
 
@@ -593,32 +595,31 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
     round_data = []
 
     bracketWidth = (matchWidth + connectorWidth ) * numRounds
-    bracketHeight = mostTeamsInRound * 50
+    bracketHeight = mostTeamsInRound * teamHeight * 2
 
-    for round_matches in reversed(bracket_array):
+    namedRoundCutoff = len(bracket_array) - len(roundNames)
+    for round, round_matches in enumerate(reversed(bracket_array)):
+
         num_matches = len(round_matches)
         match_height = bracketHeight / num_matches
         final_match_data = []
 
         for generated_match_data in round_matches.values():
-            if not generated_match_data:
-                continue
             num_teams = len(generated_match_data[0]) if generated_match_data else 0
             if num_teams > tournament.teams_per_match:
                 messages.error(request, "Invalid number of teams per match.")
             center_height = teamHeight * num_teams
-            center_top_margin = (match_height - center_height) / 2
 
             final_match_data.append({
-                "team_data": generated_match_data[0],
-                "connector_data": generated_match_data[1],
+                "team_data": generated_match_data[0] if generated_match_data else None,
+                "connector_data": generated_match_data[1] if generated_match_data else None,
                 "match_height": match_height,
-                "match_width": matchWidth,
                 "center_height": center_height,
-                "center_top_margin": center_top_margin,
+                "center_top_margin": (match_height - center_height) / 2,
             })
 
-        round_data.append({"match_data": final_match_data})
+        label = "Round " + str(round+1) if round < namedRoundCutoff else roundNames[round - namedRoundCutoff]
+        round_data.append({"label": label,"match_data": final_match_data})
 
 
     bracket_dict = {
@@ -628,10 +629,13 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
         "roundHeight": bracketHeight,
         "teamHeight": teamHeight,
         "connectorWidth": connectorWidth,
+        "match_width": matchWidth,
         "round_data": round_data,
         "team_height": teamHeight,
+        "championship_id": championship.id,
+        "champion_id": championship.advancers.first().id if championship.advancers.first() else None
     }
-    
+
     tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
     context = {"tournament": tournament, "bracket_dict": bracket_dict, "form": TournamentStatusForm()}
     return render(request, "competitions/bracket.html", context)
