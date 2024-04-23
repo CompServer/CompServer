@@ -11,6 +11,7 @@ from django.core.exceptions import SuspiciousOperation
 from django.db.models import Q, QuerySet
 from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template import RequestContext
 from django.template.exceptions import TemplateDoesNotExist
 from django.urls import reverse
 from django.utils import timezone
@@ -382,6 +383,41 @@ def create_tournament(request: HttpRequest):
     return render(request, "FORM_BASE.html", {'form_title': "Create Tournament", 'action': f"?tournament_type={tournament_type}&competition_id={competition.id}" , "form": form,  "form_submit_text": "Create"})
 
 @login_required
+def create_tournament_htmx(request: HttpRequest):
+    competition_id = request.GET.get('competition_id',None)
+    tournament_type = str(request.GET.get('tournament_type','')).lower().strip()
+
+    if tournament_type == 'rr':
+        FORM_CLASS = RRTournamentForm
+    elif tournament_type == 'se':
+        FORM_CLASS = SETournamentForm
+    else:
+        raise SuspiciousOperation
+    
+    competition = get_object_or_404(Competition, pk=competition_id)
+    
+    form = None
+    if request.method == 'POST':
+        form = FORM_CLASS(request.POST, competition=competition)
+        if form.is_valid():
+            form.full_clean()
+            instance = form.save(commit=False)
+            instance.competition = competition
+            instance.save()
+            form.save() # may not work?
+            return HttpResponseRedirect(f"{reverse('competitions:tournament', args=(form.instance.id,))}")
+        else:
+            for error_field, error_desc in form.errors.items():
+                form.add_error(error_field, error_desc)
+    if not form:
+        form = FORM_CLASS(competition=competition)
+
+    form = TournamentTypeSelectForm(competition_id=competition.id)
+    form_html = render_crispy_form(form, helper=form.helper)
+
+    return render(request, "competitions/new_tournament_form.html", RequestContext(request, {"form_html": form_html, "action": "", "form_submit_text": "Select", "form_title": "Create"}).flatten())
+
+@login_required
 def edit_tournament(request: HttpRequest, tournament_id: int):
     tournament = get_tournament(request, tournament_id)
     if isinstance(tournament, SingleEliminationTournament):
@@ -555,7 +591,7 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
                 bracket_array.append({})
             bracket_array[curr_round+1][base_index] = None
 
-    read_tree_from_node(Match.objects.filter(tournament=tournament_id).filter(next_matches__isnull=True).first(), 0, 0)
+    read_tree_from_node(Match.objects.filter(tournament=tournament_id, next_matches__isnull=True).first(), 0, 0)
 
     bracket_array.pop()
 

@@ -130,6 +130,9 @@ class SETournamentForm(forms.ModelForm):
     def __init__(self, *args, competition: Optional[Competition]=None, **kwargs):
         super().__init__(*args, **kwargs)
         #self.fields['competition_field'].queryset = Competition.objects.filter(id=competition.id)
+        self.helper = FormHelper(self)
+
+        self.helper.form_id = 'create_setournament_form'
         self.fields['competition'].disabled = True
         if not kwargs.get('instance',None):
             assert competition is not None
@@ -137,17 +140,22 @@ class SETournamentForm(forms.ModelForm):
         else:
             self.fields['competition'].initial = kwargs['instance'].competition
             competition = kwargs['instance'].competition
+
         self.fields['event'].queryset = competition.events
         self.fields['teams'].queryset = competition.teams.all()
         self.fields['teams'].initial = competition.teams.all()
         self.fields['points'].help_text = "How many points should be awarded to the winner?"
         self.fields['prev_tournament'].queryset = RoundRobinTournament.objects.filter(competition=competition)
+        self.fields['prev_tournament'].label = "Previous Tournament"
+
+        if self.instance is None:
+            self.helper.add_input(Submit('submit', 'Create Tournament'))
         #self.events = competition.events
         #self.fields['events'].queryset = Event.objects.filter(competition=competition)
 
     class Meta:
         model = SingleEliminationTournament
-        fields = ['status', 'points', 'teams', 'judges', 'event', 'competition', 'prev_tournament']
+        fields = ['competition', 'status', 'teams', 'judges', 'event', 'points', 'prev_tournament']
 
 class RRTournamentForm(forms.ModelForm):
     #generate_matches = forms.BooleanField(label='Generate Matches')
@@ -155,6 +163,9 @@ class RRTournamentForm(forms.ModelForm):
 
     def __init__(self, *args, competition: Optional[Competition]=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+
+        self.helper.form_id = 'create_rrtournament_form'
         #self.fields['competition_field'].queryset = Competition.objects.filter(id=competition.id)
         self.fields['competition'].disabled = True
         if not kwargs.get('instance',None):
@@ -164,12 +175,15 @@ class RRTournamentForm(forms.ModelForm):
             self.fields['competition'].initial = kwargs['instance'].competition
         self.fields['event'].queryset = competition.events
         self.fields['teams'].queryset = competition.teams.all()
+        self.fields['teams'].initial = competition.teams.all()
         self.fields['points_per_win'].initial = round(self.fields['points_per_win'].initial, 2)
         self.fields['points_per_tie'].initial = round(self.fields['points_per_tie'].initial, 2)
         self.fields['points_per_loss'].initial = round(self.fields['points_per_loss'].initial, 2)
         #self.fields['points'].help_text = "How many points should be awarded to the winner?"
         #self.events = competition.events
         #self.fields['events'].queryset = Event.objects.filter(competition=competition)
+        if self.instance is None:
+            self.helper.add_input(Submit('submit', 'Create Tournament'))
 
     def is_valid(self):
         self.full_clean()
@@ -187,6 +201,31 @@ class RRTournamentForm(forms.ModelForm):
     class Meta:
         model = RoundRobinTournament
         fields = ['competition', 'status', 'teams', 'judges', 'event', 'matches_per_team', 'teams_per_match', 'points_per_win', 'points_per_tie', 'points_per_loss']
+
+class TournamentTypeSelectForm(forms.Form):
+    tournament_type  = forms.MultipleChoiceField(
+        choices=[('rr', 'Round Robin'), ('se', 'Single Elimination')],label="Tournament Type")
+
+    def __init__(self, *args, competition_id: int, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_id = 'create_tournament_form'
+        # self.helper.attrs = {
+        #     'hx-post': f'/api/v1/tournament_form/{competition_id}/',
+        #     #'hx-target': '#competitions',
+        #     'hx-trigger': 'change', 
+        #     'hx-swap': 'outerHTML',
+        # }
+        # self.tournament_type.widget.attrs = {
+        self.fields['tournament_type'].widget.attrs = {
+            'hx-post': f'/api/v1/tournament_form/{competition_id}/',
+            'hx-trigger': 'change', 
+            'hx-swap': 'innerHTML',
+            'hx-target': '#secondary-form',
+            #'hx-target': '',
+            #'onchange': 'this.form.submit()',
+        }
+        #self.helper.add_input(Submit('submit', 'Create Tournament'))
 
 class ArenaColorForm(forms.Form):
     arena = forms.ModelChoiceField(queryset=None, label="Arena")
