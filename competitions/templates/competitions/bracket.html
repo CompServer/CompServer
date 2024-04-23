@@ -29,6 +29,21 @@
     width: {{ bracket_dict.match_width }}px;
 }
 
+@media only screen and (max-width: 480px) and (orientation: portrait) {
+    .bracket {
+        width:{{bracket_dict.roundWidth}}px;
+    }
+    .connector {
+        display: none;
+    }
+    .round {
+        display: none;
+    }
+    .round-1 {
+        display: block;
+    }
+}
+
 </style>
 
 {% endblock%}
@@ -68,7 +83,7 @@
 {% if tournament.match_set.exists %}
 <div class="bracket ">
     {% for round_data in bracket_dict.round_data %}
-    <div class="round">
+    <div class="round round-{{forloop.counter}}">
         <div class="round-header">
             <p>{{round_data.label}}</p>
         </div>
@@ -78,7 +93,7 @@
                 style="height: {{ match_data.center_height }}px; margin-top: {{ match_data.center_top_margin }}px; ">
                 {% if match_data.team_data != None%}
                     {% with connector_height=match_data.match_height|mul:match_data.connector_data.match_offset_mult %}    
-                    <div class="connector-front {{ match_data.connector_data.connector }} highlight-{{match_data.connector_data.winner_id}}" onclick=""
+                    <div class="connector connector-front {{ match_data.connector_data.connector }} highlight-{{match_data.connector_data.winner_id}}" onclick=""
                     style=" cursor: default;
                     height: {{connector_height|add:match_data.connector_data.team_index_offset|abs}}px;
                     width: {{match_data.connector_data.connector_width_actual}}px;
