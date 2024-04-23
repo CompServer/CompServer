@@ -492,7 +492,8 @@ class RoundRobinTournament(AbstractTournament):
         return True
 
     class Meta():
-        verbose_name = "PreliminaryTournament"
+        verbose_name = "Preliminary Tournament (Round Robin)"
+        verbose_name_plural = "Preliminary Tournaments (Round Robin)"
 #     ''' Everyone plays everyone else (most points / wins, wins) 
 #         Can be used to establish rankings for an Elimination
 #         This is often used for league play (not necessarily a tournament)
