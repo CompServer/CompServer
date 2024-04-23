@@ -100,4 +100,25 @@ span.with-padding {
 /* p {
     word-spacing: 5px;
 } */
+
+.round-select {
+    display: none;
+}
  
+@media only screen and (max-width: 480px) and (orientation: portrait) {
+    .connector,
+    .round {
+        display: none;
+    }
+
+    .round-1,
+    .round-select {
+        display: block;
+    }
+}
+
+.center-content-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
