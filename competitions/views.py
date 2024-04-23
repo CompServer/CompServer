@@ -222,24 +222,33 @@ def generate_round_robin_matches(request, tournament_id):
         match_teams = []
         match_teams_played = set()
         for i in range(tournament.teams_per_match):
+            teams_tested = set()
             if num_participated == [tournament.matches_per_team for team in teams]:
                 break
             j = random.randint(0, len(teams)-1)
+            teams_tested.add(j)
             match_teams = sorted(list(match.starting_teams.all()) + [teams[j]], key=lambda x: x.id)
+            #randomly selects a team for the match
             while isPlayed(teams_played[teams[j]], match_teams_played) or \
                 num_participated[j] >= tournament.matches_per_team or \
                 match_teams in matches_played[teams[j]]:
                 j = random.randint(0, len(teams)-1) 
+                teams_tested.add(j)
                 match_teams = sorted(list(match.starting_teams.all()) + [teams[j]], key=lambda x: x.id)
+                #if all teams are for a match tested, then the only thing we should check for is participation
+                if len(teams_tested) == len(teams):
+                    while num_participated[j] >= tournament.matches_per_team:
+                        j = random.randint(0, len(teams)-1)
+                        match_teams = sorted(list(match.starting_teams.all()) + [teams[j]], key=lambda x: x.id)
+                    break
             match.starting_teams.add(teams[j])
             num_participated[j] += 1
-            match_teams_played.add(teams[j])
-            for team in teams_played[teams[j]]:
-                match_teams_played.add(team)
             for team in match.starting_teams.all():
                 for team2 in match.starting_teams.all():
                     if team != team2:
                         teams_played[team].add(team2)
+                for tem in teams_played[team]:
+                    match_teams_played.add(tem)
             if len(match_teams_played) == len(teams):
                 for team in match_teams_played:
                     for tem in teams_played[team]:
