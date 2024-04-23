@@ -33,7 +33,7 @@
                         {% elif tournament.is_round_robin %}
                             {% translate "Preliminary Tournament:" %}
                         {% endif %}
-                        <small>You can see this archived item because you are signed in as a superuser.</small>
+                        <small>{% translate "You can see this archived item because you are signed in as a superuser." %}</small>
                     {% elif tournament.is_in_setup %}
                         <i class="bi bi-device-ssd" title="{{ tournament.status }}"></i> 
                         {% if tournament.is_single_elimination %}

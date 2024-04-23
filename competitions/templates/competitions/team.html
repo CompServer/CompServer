@@ -51,7 +51,7 @@
                         {% elif competition.is_in_setup %}
                             <i class="bi bi-device-ssd" title="{{ competition.status }}"></i> {% if user.is_staff %}<a href="{% url 'competitions:competition' competition.id %}">{{ competition }}</a>{% else %}{{ competition }}{% endif %}
                         {% elif competition.is_archived and user.is_staff %}
-                            <i class="bi-archive" title="{{ competition.status }}"></i> {{ competition }} <small>You can see this archived item because you are signed in as a superuser.</small>
+                            <i class="bi-archive" title="{{ competition.status }}"></i> {{ competition }} <small>{% translate "You can see this archived item because you are signed in as a superuser." %}</small>
                         {% endif %}
                         {% if user.is_staff %}
                             <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/competition/{{ competition.id }}/?next=team&id={{ team.id }}" method="POST" id="status">
@@ -85,7 +85,7 @@
                         {% elif tournament.is_in_setup %}
                             <i class="bi bi-device-ssd" title="{{ tournament.status }}"></i> {% if user.is_staff %}<a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a>{% else %}{{ tournament }}{% endif %}
                         {% elif tournament.is_archived and user.is_staff %}
-                            <i class="bi-archive" title="{{ tournament.status }}"></i> {{ tournament }} <small>You can see this archived item because you are signed in as a superuser.</small>
+                            <i class="bi-archive" title="{{ tournament.status }}"></i> {{ tournament }} <small>{% translate "You can see this archived item because you are signed in as a superuser." %}</small>
                         {% endif %}
                         {% if user.is_staff %}
                             <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/competition/{{ tournament.id }}/?next=team&id={{ team.id }}" method="POST" id="status">
@@ -119,7 +119,7 @@
                         {% elif tournament.is_in_setup %}
                             <i class="bi bi-device-ssd" title="{{ tournament.status }}"></i> {% if user.is_staff %}<a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a>{% else %}{{ tournament }}{% endif %}
                         {% elif competition.is_archived and user.is_staff %}
-                            <i class="bi-archive" title="{{ tournament.status }}"></i> {{ tournament }} <small>You can see this archived item because you are signed in as a superuser.</small>
+                            <i class="bi-archive" title="{{ tournament.status }}"></i> {{ tournament }} <small>{% translate "You can see this archived item because you are signed in as a superuser." %}</small>
                         {% endif %}
                         ({{ tournament.points|floatformat:"0" }} {% translate "points" %}) 
                         {% if user.is_staff %}
