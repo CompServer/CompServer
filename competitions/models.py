@@ -167,21 +167,6 @@ class SiteConfig(models.Model):
     def __str__(self) -> str:
         return f"SiteConfig(name={self.name})"
 
-class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    # bio = models.TextField(blank=True)
-    # profile_pic = models.ImageField()
-
-@receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
-    if created:
-        Profile.objects.create(user=instance)
-
-@receiver(post_save, sender=User)
-def save_user_profile(sender, instance, **kwargs):
-    instance.profile.save()
-
-
 class Status(models.TextChoices):
     SETUP = "SETUP", _("Setup")  # for entries
     OPEN = "OPEN", _("Open")  # for judging
@@ -470,10 +455,6 @@ class AbstractTournament(models.Model):
 
     def get_winner(self):
         return self.match_set.last().advancers() #returns the list of winners
-
-    @property
-    def is_single_elimination(self) -> bool:
-        return self in SingleEliminationTournament.objects.filter(competition=self.competition).all()
 
     @property
     def is_viewable(self) -> bool:

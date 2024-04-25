@@ -561,8 +561,9 @@ def competitions(request: HttpRequest):
     return render(request, "competitions/competitions.html", context)
 
 def competition(request: HttpRequest, competition_id: int):
-    redirect_to = request.GET.get('next', '')
-    redirect_id = request.GET.get('id', None)
+    id = competition_id
+    redirect_to = request.GET.get('next', '') #redirect to next after login
+    redirect_id = request.GET.get('id', None) #redirect to page after id???
     if redirect_id:
         redirect_id = [redirect_id]
     competition = get_object_or_404(Competition, pk=competition_id)
@@ -583,17 +584,20 @@ def competition(request: HttpRequest, competition_id: int):
         return HttpResponseRedirect(reverse("competitions:competitions"))
     elimination_winners = dict()
     robin_winners = dict()
-    for tournament in SingleEliminationTournament.objects.filter(competition__id=competition.id):
+    elimination_tournaments = SingleEliminationTournament.objects.filter(competition__id = competition_id, status=Status.COMPLETE).order_by("-start_time")
+    for tournament in elimination_tournaments:
         if tournament.status == Status.COMPLETE:
-            elimination_winners[tournament.event.name] = get_winners(tournament)
-    for tournament in RoundRobinTournament.objects.filter(competition__id=competition.id):
+            elimination_winners[tournament] = get_winners(tournament)
+    robin_tournaments = RoundRobinTournament.objects.filter(competition__id=competition_id, status=Status.COMPLETE).order_by("-start_time")
+    for tournament in robin_tournaments:
         if tournament.status == Status.COMPLETE:
-            robin_winners[tournament.event.name] = get_winners(tournament)
-    #list out the resutls for each tournament in template
-    winner = get_winners(competition)#should be winners
+            robin_winners[tournament] = get_winners(tournament)
+    winner = get_winners(competition)
     context = {
         "competition": competition, 
         "form": SETournamentStatusForm(), 
+        "robin_winners": robin_winners,
+        "elimination_winners": elimination_winners,
         "winner": winner,
     }
     return render(request, "competitions/competition.html", context)
@@ -683,12 +687,13 @@ def judge_match(request: HttpRequest, match_id: int):
     return render(request, 'competitions/match_judge.html', {'form': form, 'match': instance, "teams": winner_choices})
 
 def profile(request, user_id):
+    #deleted the profile model
     user = User.objects.filter(id=user_id).first()
     if user_id in [user.id for user in [tournament.planeary_judges for tournament in SingleEliminationTournament.objects.all()]]:
         is_judge = True
-        current_gigs = Tournament.ojbects.filter(planeary_judges__id == user_id, status = Status.OPEN)#order
+        current_gigs = AbstractTournament.objects.filter(planeary_judges__id == user_id, status = Status.OPEN)#order
         upcoming_gigs = Tournament.ojbects.filter(planeary_judges__id == user_id, status = Status.SETUP)#order
-        judged_tournaments = Tournament.ojbects.filter(Q(status = Status.COMPLETE) | Q(status = Status.CLOSED), planeary_judges__id == user_id)#order
+        judged_tourna3ments = Tournament.ojbects.filter(Q(status = Status.COMPLETE) | Q(status = Status.CLOSED), planeary_judges__id == user_id)#order
     else:
         is_judge = False
     if user_id in [team.coach.id for list_of_teams in [tournament.starting_teams for tournament in Tournament.objects.all()]]:
@@ -702,10 +707,6 @@ def profile(request, user_id):
     #a team should be full of users later, so I can't do player yet
     if bool(is_judge) == False and bool(is_admin) == False and bool(is_coach) == False and bool(is_player) == False:
         is_spectator = True
-    if is_admin == True:
-        #which should be checked
-        i = 0
-    #determine if admin
     #determine if player
 
     # if Coach.objects.filter(id = user_id).exists():
@@ -742,7 +743,6 @@ def organization(request, organization_id):
     }
     return render(request, 'organization.html', context)
 
-#finish the profile html
 def results(request, competition_id):
     competition = Competition.objects.get(id = competition_id)
     tournaments = [tournament for tournament in competition.tournament_set.order_by("points").filter(status = Status.COMPLETE)]
@@ -802,7 +802,7 @@ def team(request: HttpRequest, team_id: int):
     past_matches_dict = dict()
     for match in past_matches:
         past_matches_dict[match] = match.time
-    #sorted past matches here
+    sorted_past_matches = {k for k, v in sorted(past_matches_dict.items(), key=lambda item: past_matches_dict[1])}
     past_competitions = Competition.objects.filter(teams__id = team_id, status = Status.COMPLETE).order_by("end_date")
     past_tournaments_won = list()
     past_tournaments = SingleEliminationTournament.objects.filter(teams__id = team_id, status = Status.COMPLETE).order_by("start_time")
@@ -858,11 +858,11 @@ def team(request: HttpRequest, team_id: int):
     wins_dict = dict()
     for win in wins:
         wins_dict[win] = win[-1].time
-    #sorted_wins = list(sorted(wins_dict.items(), key=lambda x:x[1]))
+    sorted_wins = {k for k, v in sorted(wins_dict.items(), key=lambda item: wins_dict[1])}
     draws_dict = dict()
     for draw in draws:
         draws_dict[draw] = draw[-1].time
-    #sorted_draws = list(sorted(draws_dict.items(), key=lambda x:x[1])) 
+    sorted_draws = {k for k, v in sorted(draws_dict.items(), key=lambda item: draws_dict[1])}
     byes = list()
     old_upcoming_matches = list(Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), advancers=None).order_by("-time"))
     for match in old_upcoming_matches:
@@ -881,14 +881,14 @@ def team(request: HttpRequest, team_id: int):
     byes_dict = dict()
     for bye in byes:
         byes_dict[bye] = bye.time
-    #sorted_byes = list(sorted(byes_dict.items(), key=lambda x:x[1]))
+    sorted_byes = {k for k, v in sorted(byes_dict.items(), key=lambda item: byes_dict[1])}
     context = {
         'team': team,
         'upcoming_matches': upcoming_matches,
         'old_upcoming_matches': old_upcoming_matches,
         'wins': sorted_wins,
         'byes': sorted_byes,
-        'past_matches': past_matches,#sorted past matches
+        'past_matches': sorted_past_matches,
         'draws': sorted_draws,
         'losses': sorted_losses,
         'won_tournaments': past_tournaments_won,

@@ -84,6 +84,28 @@
         </form> {% endcomment %}
     {% endif %}
 
+    {% if elimination_winners %}
+        <h3>{% translate "Single Elimination Tournament Winners:" %}</h3>
+        {% for winner in elimination_winners %}
+        <div class="row d-flex">
+            <div class = "col-12">
+                <a href="{% url 'competitions:tournament' winner.0 %}">{{ winner.0.event.name }} {% translate "- Winner(s): "} {{ winner.1 }}</a>
+            </div>
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if robin_winners %}
+        <h3>{% translate "Round Robin Tournament Winners:" %}</h3>
+        {% for winner in robin_winners %}
+        <div class="row d-flex">
+            <div class = "col-12">
+                <a href="{% url 'competitions:tournament' winner.0 %}">{{ winner.0.event.name }} {% translate "- Winner(s): "} {{ winner.1 }}</a>
+            </div>
+        </div>
+        {% endfor %}
+    {% endif %}
+
     {% if winner %}
         <h3>{% translate "Winners:" %}</h3>
         {% for team in winner %}

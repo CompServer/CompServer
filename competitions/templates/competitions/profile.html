@@ -23,21 +23,14 @@
             {% endif %}
             <button><a href="#">{% trans "Edit Info" %}</a></button>
         </div>
-        {% if user.is_admin %}
-            <h2>{% translate "Status: Admin"%}</h2>
-            <!-- <h3>{% translate "Your Activity" %}</h3> -->
-            <h3>{% translate "Forms For You" %}</h3>
-            <button><a href="#">{% translate "Create A Competition" %}</a></button>
-            <button><a href=""></a></button>
-            <h2>{% translate "Manage Other Activities" %}</h2>
-            <h3>{% translate "Send Forms" %}</h3>
-            <h3>{% translate "Manage Compeititons and Tournaments" %}</h3>
-        {% endif%}
         {% if user.is_coach %}
             <div section="coach-information">
                 <h2>{% trans "Teams Coached By You %}</h2>
-                <h3></h3>
-                <h3></h3>
+                <li>
+                    {% for team in coached_teams %}
+                        <li></li>
+                    {% endfor %}
+                </li>
             </div>
             <div section="current-competitions">
                 <h2>{% trans "Team Records" %]</h2>
