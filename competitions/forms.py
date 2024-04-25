@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.forms.widgets import TextInput
 from competitions.models import AbstractTournament, Competition, SingleEliminationTournament, Sport, Team, Match, RoundRobinTournament, Arena, ColorField
 from .widgets import ColorPickerWidget, ColorWidget
-
+from .utils import *
 class JudgeForm(forms.ModelForm):
     possible_advancers = None
 
@@ -59,6 +59,39 @@ class TournamentSwapForm(forms.Form):
         if self.cleaned_data['team1'] == self.cleaned_data['team2']:
             return False
         if self.cleaned_data['team1'] not in self.tournament.teams.all() or self.cleaned_data['team2'] not in self.tournament.teams.all():
+            return False
+        return super().is_valid()
+
+class MatchSwapForm(forms.Form):
+    match1 = forms.ModelChoiceField(queryset=None, label="Match 1")
+    match2 = forms.ModelChoiceField(queryset=None, label="Match 2")
+
+    def __init__(self, *args, tournament: AbstractTournament, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.tournament = tournament
+        self.fields['match1'].queryset = tournament.match_set.all()
+        self.fields['match2'].queryset = tournament.match_set.all()
+
+    def is_valid(self):
+        self.full_clean()
+        if self.cleaned_data['match1'] == self.cleaned_data['match2']:
+            return False
+        if self.cleaned_data['match1'] not in self.tournament.match_set.all() or self.cleaned_data['match2'] not in self.tournament.match_set.all():
+            return False
+        return super().is_valid()
+
+class TeamSwapForm(forms.Form):
+    teams1 = forms.ModelMultipleChoiceField(queryset=None, label="Teams 1")
+    teams2 = forms.ModelMultipleChoiceField(queryset=None, label="Teams 2")
+
+    def __init__(self, *args, match1: Match, match2: Match, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['teams1'].queryset = match1.starting_teams.all()
+        self.fields['teams2'].queryset = match2.starting_teams.all()
+
+    def is_valid(self):
+        self.full_clean()
+        if self.cleaned_data['teams1'] == self.cleaned_data['teams2']:
             return False
         return super().is_valid()
 
@@ -156,7 +189,7 @@ class RRTournamentForm(forms.ModelForm):
 
     class Meta:
         model = RoundRobinTournament
-        fields = ['competition', 'status', 'teams', 'judges', 'event', 'num_rounds', 'teams_per_match', 'points_per_win', 'points_per_tie', 'points_per_loss']
+        fields = ['competition', 'status', 'teams', 'judges', 'event', 'matches_per_team', 'teams_per_match', 'points_per_win', 'points_per_tie', 'points_per_loss']
 
 class ArenaColorForm(forms.Form):
     arena = forms.ModelChoiceField(queryset=None, label="Arena")

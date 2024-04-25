@@ -1,20 +1,26 @@
 from datetime import datetime
 from logging import error
+import math
+import random
+from random import shuffle
+from typing import Union
+from typing import Dict, Set, Union, List, Iterable
+import zoneinfo
+from heapq import nsmallest
+from django.db.models import Max
 from django.contrib import messages
-from django.shortcuts import render, get_object_or_404
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth.views import login_required
-from django.db.models import Q, Count
-from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, Http404
-from django.shortcuts import render, get_object_or_404, redirect
+from django.core.exceptions import SuspiciousOperation
+from django.db.models import Count, Q
+from django.db.models import Q, QuerySet
+from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
+from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.template.exceptions import TemplateDoesNotExist
 from django.urls import reverse
 from django.utils import timezone
-from django.core.exceptions import SuspiciousOperation
-from django.template.exceptions import TemplateDoesNotExist
-import random
-import zoneinfo
-import math
-from typing import Union
+
 from .forms import *
 from .models import *
 from .utils import *
@@ -202,52 +208,105 @@ def generate_single_elimination_matches(request, tournament_id: int):
         num_matches = len(matches)
     return HttpResponseRedirect(reverse("competitions:single_elimination_tournament", args=(tournament_id,)))
 
-def isPlayed(teams_played, match_teams):
-    for team in match_teams:
-        if team in teams_played:
-            return True
-    return False
-
 def generate_round_robin_matches(request, tournament_id):
-    #may have to include buys, but check with schwartz first.
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
     arena_iterator = 0
     nmpt_iterator = 0
     arenas = [i for i in tournament.competition.arenas.filter(is_available=True)]
     starting_time = tournament.start_time 
     teams = [team for team in tournament.teams.all()]
+    shuffle(teams)
     teams_played = {team: set() for team in teams}
-    num_byes = len(teams) % tournament.teams_per_match
-    byes = [0 for _ in range(len(teams))]
-    for k in range(tournament.num_rounds):
-        if byes == [1 for _ in range(len(teams))]:
-            byes = [0 for _ in range(len(teams))]
-        nmpt_iterator = 0
-        if arena_iterator > 0:
-            arena_iterator = 0
-            starting_time += tournament.event.match_time
-        num_participated = [0 for _ in range(len(teams))]
-        temp = min(teams_played.values(), key=lambda x: len(x))
-        if temp == len(teams) - 1:
-            teams_played = {team: set() for team in teams}
-
-        #create bye match
+    matches_played = {team: list() for team in teams}
+    num_participated = [0 for team in teams]
+    num_teams_per_match = tournament.teams_per_match
+    path = False
+    while num_participated != [tournament.matches_per_team for team in teams]:
+        if sum(num_participated) >= (len(teams) * tournament.matches_per_team) - (2 * num_teams_per_match) and \
+        sum(num_participated) < (len(teams) * tournament.matches_per_team) - num_teams_per_match and path == False:
+            num_teams_per_match = int((len(teams) * tournament.matches_per_team - sum(num_participated) + 1)/2)
+            path = True
+        # elif sum(num_participated) >= (len(teams) * tournament.matches_per_team) - num_teams_per_match and path == False:
+        #     num_teams_per_match = len(teams) * tournament.matches_per_team - sum(num_participated)
+        #     path = True
         match = Match.objects.create(tournament=tournament)
-        for i in range(num_byes):
+        match_teams = []
+        match_teams_played = set()
+        for i in range(num_teams_per_match):
+            teams_tested = set()
+            if num_participated == [tournament.matches_per_team for team in teams]:
+                break
             j = random.randint(0, len(teams)-1)
-            while(byes[j] > 0 or teams[j] in match.starting_teams.all() or \
-            isPlayed(teams_played[teams[j]], match.starting_teams.all())):
-                j = random.randint(0, len(teams)-1)    
-            match.starting_teams.add(teams[j])      
-            byes[j] += 1
-            num_participated[j] += 1 
+            teams_tested.add(j)
+            match_teams = sorted(list(match.starting_teams.all()) + [teams[j]], key=lambda x: x.id)
+            #randomly selects a team for the match
+            #while isPlayed(teams_played[teams[j]], match_teams_played) or \
+            while teams[j] in match.starting_teams.all() or \
+            num_participated[j] >= tournament.matches_per_team or \
+            num_participated[j] > min(num_participated) or \
+            match_teams in matches_played[teams[j]]:
+                j = random.randint(0, len(teams)-1) 
+                teams_tested.add(j)
+                match_teams = sorted(list(match.starting_teams.all()) + [teams[j]], key=lambda x: x.id)
+                #if all teams are for a match tested, then the only thing we should check for is participation
+                if len(teams_tested) == len(teams):
+                    while num_participated[j] >= tournament.matches_per_team or \
+                    num_participated[j] > min(num_participated) or \
+                    teams[j] in match.starting_teams.all():
+                        j = random.randint(0, len(teams)-1)
+                        match_teams = sorted(list(match.starting_teams.all()) + [teams[j]], key=lambda x: x.id)
+                    break
+            match.starting_teams.add(teams[j])
+            num_participated[j] += 1
+            for team in match.starting_teams.all():
+                for team2 in match.starting_teams.all():
+                    if team != team2:
+                        teams_played[team].add(team2)
+                for tem in teams_played[team]:
+                    match_teams_played.add(tem)
+            if len(match_teams_played) == len(teams):
+                for team in match_teams_played:
+                    for tem in teams_played[team]:
+                        if team in teams_played[tem]:
+                            teams_played[tem].remove(team)
+                    teams_played[team] = set()
+                match_teams_played = {team for team in match.starting_teams.all()}
+            for team in match.starting_teams.all():
+                if len(teams_played[team]) == len(teams) - 1:
+                    for tem in teams_played[team]:
+                        teams_played[tem].remove(team)
+                    teams_played[team] = set()
         for team in match.starting_teams.all():
-            for team2 in match.starting_teams.all():
-                if team != team2:
-                    teams_played[team].add(team2)
-        #starting time confusion for byes (do we have them)
-        match.time = starting_time
-        match.arena = arenas[arena_iterator]
+            matches_played[team].append(match_teams)
+        match.save()
+    matches = [match for match in tournament.match_set.all()]
+    round_num = 1
+    curr_round = set()
+    num_participated = [0 for _ in range(len(matches))]
+    while num_participated != [1 for _ in range(len(matches))]:  
+        j = random.randint(0, len(matches)-1)
+        checkFull = set()
+        isFull = False
+        while num_participated[j] == 1 or \
+        isPlayed(curr_round, matches[j].starting_teams.all()):
+            checkFull.add(j)
+            if len(checkFull) == len(matches):
+                isFull = True
+                break
+            j = random.randint(0, len(matches)-1)
+        if isFull:
+            arena_iterator = 0
+            starting_time += tournament.event.match_time 
+            round_num += 1
+            curr_round = set()
+            continue
+        num_participated[j] = 1    
+        matches[j].time = starting_time
+        matches[j].arena = arenas[arena_iterator]
+        matches[j].round_num = round_num
+        matches[j].save()
+        for team in matches[j].starting_teams.all():
+            curr_round.add(team)
         nmpt_iterator += 1
         if nmpt_iterator == arenas[arena_iterator].capacity:
             arena_iterator += 1
@@ -255,36 +314,8 @@ def generate_round_robin_matches(request, tournament_id):
             if arena_iterator >= len(arenas):
                 arena_iterator = 0
                 starting_time += tournament.event.match_time 
-        match.round_num = k+1
-        match.save()
-    
-        #create rest of the matches
-        while num_participated != [1 for _ in range(len(teams))]:
-            match = Match.objects.create(tournament=tournament)
-            for i in range(tournament.teams_per_match):
-                j = random.randint(0, len(teams)-1)
-                while(num_participated[j] > 0 or teams[j] in match.starting_teams.all() or \
-                isPlayed(teams_played[teams[j]], match.starting_teams.all())):
-                    j = random.randint(0, len(teams)-1)    
-                match.starting_teams.add(teams[j])      
-                num_participated[j] += 1 
-                if num_participated == [1 for _ in range(len(teams))]:
-                    break
-            for team in match.starting_teams.all():
-                for team2 in match.starting_teams.all():
-                    if team != team2:
-                        teams_played[team].add(team2)
-            match.time = starting_time
-            match.arena = arenas[arena_iterator]
-            nmpt_iterator += 1
-            if nmpt_iterator == arenas[arena_iterator].capacity:
-                arena_iterator += 1
-                nmpt_iterator = 0
-                if arena_iterator >= len(arenas):
-                    arena_iterator = 0
-                    starting_time += tournament.event.match_time 
-            match.round_num = k+1
-            match.save()
+                round_num += 1
+                curr_round = set()
     return HttpResponseRedirect(reverse("competitions:round_robin_tournament", args=(tournament_id,)))
     #still have a little bit of confusion with the ordering of matches.
 
@@ -319,32 +350,47 @@ def swap_matches(request: HttpRequest, tournament_id: int):
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
     form = None
     if request.method == 'POST':
-        form = TournamentSwapForm(request.POST, tournament=tournament)
+        form = MatchSwapForm(request.POST, tournament=tournament)
         if form.is_valid():
-            team1 = form.cleaned_data.get('team1')
-            team2 = form.cleaned_data.get('team2')
-            round_num = form.cleaned_data.get('round_num')
-            if round_num > tournament.num_rounds or round_num < 1:
-                #print("Invalid round")
-                return HttpResponseRedirect(reverse("competitions:swap_matches", args=(tournament_id,)))
-            match1 = Match.objects.filter(tournament=tournament, starting_teams__in=[team1.id], round_num=round_num).first()
-            match2 = Match.objects.filter(tournament=tournament, starting_teams__in=[team2.id], round_num=round_num).first()
-            #print(match1, match2)
-            match1.starting_teams.remove(team1)
-            match2.starting_teams.remove(team2)
-            match1.starting_teams.add(team2)
-            match2.starting_teams.add(team1) 
-            match1.save()
-            match2.save()
-            #print(match1, match2)
-            messages.success(request, "Teams swapped successfully.")
-            return HttpResponseRedirect(reverse("competitions:tournament", args=(tournament_id,)))
+            match1 = form.cleaned_data.get('match1')
+            match2 = form.cleaned_data.get('match2')
+            return HttpResponseRedirect(reverse("competitions:swap_teams", args=(match1.id, match2.id,)))
         else:
             for error_field, error_desc in form.errors.items():
                 form.add_error(error_field, error_desc)
     if not form:
-        form = TournamentSwapForm(tournament=tournament)
+        form = MatchSwapForm(tournament=tournament)
     return render(request, "competitions/swap_matches.html", {"form": form})
+
+def swap_teams(request: HttpRequest, match1_id: int, match2_id: int):
+    match1 = get_object_or_404(Match, pk=match1_id)
+    match2 = get_object_or_404(Match, pk=match2_id)
+    form = None
+    if request.method == 'POST':
+        form = TeamSwapForm(request.POST, match1=match1, match2=match2)
+        if form.is_valid():
+            teams1 = form.cleaned_data.get('teams1')
+            teams2 = form.cleaned_data.get('teams2')
+            if isPlayed(teams1, match2.starting_teams.all()) or isPlayed(teams2, match1.starting_teams.all()):
+                messages.error(request, "Cannot swap teams that have played in the other match.")
+            else:    
+                for team in teams1:
+                    match1.starting_teams.remove(team)
+                for team in teams2:
+                    match2.starting_teams.remove(team)
+                for team in teams1:
+                    match2.starting_teams.add(team)
+                for team in teams2:
+                    match1.starting_teams.add(team)
+                match1.save()
+                match2.save()
+                return HttpResponseRedirect(reverse("competitions:tournament", args=(match1.tournament.id,)))
+        else:
+            for error_field, error_desc in form.errors.items():
+                form.add_error(error_field, error_desc)
+    if not form:
+        form = TeamSwapForm(match1=match1, match2=match2)
+    return render(request, "competitions/swap_teams.html", {"form": form})
 
 def home(request: HttpRequest):
     return render(request, "competitions/home.html")
@@ -659,7 +705,7 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
                 return HttpResponseRedirect(reverse(f"competitions:{redirect_to}",args=redirect_id))
     if tournament.is_archived:
         return HttpResponseRedirect(reverse("competitions:competitions"))
-    numRounds = tournament.num_rounds
+    numRounds = tournament.match_set.order_by('-round_num').first().round_num
     bracket_array =  [{i:[]} for i in range(numRounds)]
     for i in range(numRounds):
         rounds = sorted([match for match in Match.objects.filter(tournament=tournament, round_num=i+1)], key=lambda match : (match.arena.id, match.time))
@@ -694,6 +740,8 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
         match_data = []
 
         for team_data in round_matches.values():
+            if team_data == []:
+                continue
             num_teams = mostTeamsInRound if team_data else 0
             center_height = teamHeight * num_teams
             center_top_margin = (match_height - center_height) / 2
@@ -704,7 +752,8 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
                 "match_width": matchWidth,
                 "center_height": center_height,
                 "center_top_margin": center_top_margin,
-                "arena": team_data[0].get('match').arena
+                "arena": team_data[0].get('match').arena,
+                "id": team_data[0].get('match').id
              })
 
         round_data.append({"match_data": match_data})
