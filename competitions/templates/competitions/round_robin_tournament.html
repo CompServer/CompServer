@@ -54,8 +54,8 @@
                         {% for team_data in match_data.team_data %}
                             <div class="team"
                                 style="width: {{ match_data.match_width }}px; background-color:{% if team_data.won %} #fff5a8 {% else %} {{ match_data.arena.color }} {% endif %}; cursor: pointer;"
-                                onclick="location.href='{% url 'competitions:judge_match' team_data.match.id %}';">
-                                {{ team_data.name }} 
+                                color:{% if arena.color.is_dark %} white; {% endif %} onclick="location.href='{% url 'competitions:judge_match' team_data.match.id %}';">
+                                <p style="color: white;">{{ team_data.name }}</p>
                             </div>
                         {% endfor %}
                         
