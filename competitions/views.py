@@ -1,9 +1,10 @@
 from datetime import datetime
 import math
 import random
-from typing import Dict, Set, Union
+from typing import Set, Union
 import zoneinfo
 
+from crispy_forms.utils import render_crispy_form
 from django.contrib import messages
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth.views import login_required
@@ -15,7 +16,6 @@ from django.template import RequestContext
 from django.template.exceptions import TemplateDoesNotExist
 from django.urls import reverse
 from django.utils import timezone
-from crispy_forms.utils import render_crispy_form
 
 from .forms import *
 from .models import *
@@ -339,48 +339,49 @@ def tournament(request: HttpRequest, tournament_id: int):
         return round_robin_tournament(request, tournament_id)
     raise Http404
 
-# @login_required
-# def create_tournament(request: HttpRequest):
-#     competition_id = request.GET.get('competition_id',None)
-#     tournament_type = request.GET.get('tournament_type', None)
+@login_required
+def create_tournament_legacy(request: HttpRequest):
+    competition_id = request.GET.get('competition_id',None)
+    tournament_type = request.GET.get('tournament_type', None)
 
-#     if competition_id is None:
-#         messages.error(request, "No competition selected.")
-#         return HttpResponseRedirect(reverse("competitions:competitions"))
-#     try:
-#         competition = get_object_or_404(Competition, pk=int(competition_id))
-#     except:
-#         messages.error(request, "Invalid competition.")
-#         return HttpResponseRedirect(reverse("competitions:competitions"))
+    if competition_id is None:
+        messages.error(request, "No competition selected.")
+        return HttpResponseRedirect(reverse("competitions:competitions"))
+        
+    try:
+        competition = get_object_or_404(Competition, pk=int(competition_id))
+    except:
+        messages.error(request, "Invalid competition.")
+        return HttpResponseRedirect(reverse("competitions:competitions"))
     
-#     if not tournament_type:
-#         return render(request, "competitions/create_tournament.html", context={"competition": competition})
+    if not tournament_type:
+        return render(request, "competitions/create_tournament.html", context={"competition": competition})
     
-#     tournament_type = str(tournament_type).lower().strip()
+    tournament_type = str(tournament_type).lower().strip()
 
-#     if tournament_type == 'rr':
-#         FORM_CLASS = RRTournamentForm
-#     elif tournament_type == 'se':
-#         FORM_CLASS = SETournamentForm
-#     else:
-#         raise SuspiciousOperation
+    if tournament_type == 'rr':
+        FORM_CLASS = RRTournamentForm
+    elif tournament_type == 'se':
+        FORM_CLASS = SETournamentForm
+    else:
+        raise SuspiciousOperation
 
-#     form = None
-#     if request.method == 'POST':
-#         form = FORM_CLASS(request.POST, competition=competition)
-#         if form.is_valid():
-#             form.full_clean()
-#             instance = form.save(commit=False)
-#             instance.competition = competition
-#             instance.save()
-#             form.save() # may not work?
-#             return HttpResponseRedirect(f"{reverse('competitions:tournament', args=(form.instance.id,))}")
-#         else:
-#             for error_field, error_desc in form.errors.items():
-#                 form.add_error(error_field, error_desc)
-#     if not form:
-#         form = FORM_CLASS(competition=competition)
-#     return render(request, "FORM_BASE.html", {'form_title': "Create Tournament", 'action': f"?tournament_type={tournament_type}&competition_id={competition.id}" , "form": form,  "form_submit_text": "Create"})
+    form = None
+    if request.method == 'POST':
+        form = FORM_CLASS(request.POST, competition=competition)
+        if form.is_valid():
+            form.full_clean()
+            instance = form.save(commit=False)
+            instance.competition = competition
+            instance.save()
+            form.save() # may not work?
+            return HttpResponseRedirect(f"{reverse('competitions:tournament', args=(form.instance.id,))}")
+        else:
+            for error_field, error_desc in form.errors.items():
+                form.add_error(error_field, error_desc)
+    if not form:
+        form = FORM_CLASS(competition=competition)
+    return render(request, "FORM_BASE.html", {'form_title': "Create Tournament", 'action': f"?tournament_type={tournament_type}&competition_id={competition.id}" , "form": form,  "form_submit_text": "Create"})
 
 @login_required
 def create_tournament_htmx(request: HttpRequest):
@@ -393,9 +394,12 @@ def create_tournament_htmx(request: HttpRequest):
     #     FORM_CLASS = SETournamentForm
     # else:
     #     raise SuspiciousOperation
-    
-    competition = get_object_or_404(Competition, pk=competition_id)
-    
+    if competition_id:
+        competition = get_object_or_404(Competition, pk=competition_id)
+    else:
+        messages.error(request, "No competition selected.")
+        return HttpResponseRedirect(reverse("competitions:create_tournament_legacy"))
+
     form = None
     if request.method == 'POST':
         form = FORM_CLASS(request.POST, competition=competition)
@@ -1015,9 +1019,12 @@ def team(request: HttpRequest, team_id: int):
 
 def _raise_error_code(request: HttpRequest):
     try:
-        error_code = int(request.GET.get('code', 0)) # type: ignore
+        error_code = int(request.GET.get('code', 500)) # type: ignore
     except:
         raise SuspiciousOperation
+    
+    # if error_code not in range(100,600):
+    #     error_code = 500
 
     # if error_code == 403:
     #     raise PermissionDenied

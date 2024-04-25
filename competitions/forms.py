@@ -57,6 +57,7 @@ class TournamentSwapForm(forms.Form):
     def __init__(self, *args, tournament: AbstractTournament, **kwargs):
         super().__init__(*args, **kwargs)
         self.tournament = tournament
+        self.helper = FormHelper()
         self.fields['team1'].queryset = tournament.teams.all()
         self.fields['team2'].queryset = tournament.teams.all()
 

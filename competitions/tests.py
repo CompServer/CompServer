@@ -120,7 +120,8 @@ class SanityTests(TestCase):
         # All pages except judging should be accessible to an anonymous user (without being redirected to login)
         anon_client = Client()
         for path in urlpatterns:
-            if 'judg' in path.name or 'generate' in path.name:
+            #if 'judg' in path.name or 'generate' in path.name:
+            if any(x in path.name for x in ['judg', 'generate']) and not path.name.startswith('_'):
                 url = None
                 try:
                     url = reverse(f"{app_name}:{path.name}")
