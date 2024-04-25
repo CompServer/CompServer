@@ -41,7 +41,8 @@ def tournament_form(request: HttpRequest, competition_id: int):
         FORM_CLASS = SETournamentForm
     else:
         raise ValueError("Invalid tournament type")
-    
+
     form = FORM_CLASS(competition=competition)
+
 
     return render(request, 'CSRF_FORM.html', {'form': form, 'action': f"?competition_id={competition_id}&tournament_type={tournament_type}"})

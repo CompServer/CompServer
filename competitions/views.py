@@ -339,60 +339,60 @@ def tournament(request: HttpRequest, tournament_id: int):
         return round_robin_tournament(request, tournament_id)
     raise Http404
 
-@login_required
-def create_tournament(request: HttpRequest):
-    competition_id = request.GET.get('competition_id',None)
-    tournament_type = request.GET.get('tournament_type', None)
+# @login_required
+# def create_tournament(request: HttpRequest):
+#     competition_id = request.GET.get('competition_id',None)
+#     tournament_type = request.GET.get('tournament_type', None)
 
-    if competition_id is None:
-        messages.error(request, "No competition selected.")
-        return HttpResponseRedirect(reverse("competitions:competitions"))
-    try:
-        competition = get_object_or_404(Competition, pk=int(competition_id))
-    except:
-        messages.error(request, "Invalid competition.")
-        return HttpResponseRedirect(reverse("competitions:competitions"))
+#     if competition_id is None:
+#         messages.error(request, "No competition selected.")
+#         return HttpResponseRedirect(reverse("competitions:competitions"))
+#     try:
+#         competition = get_object_or_404(Competition, pk=int(competition_id))
+#     except:
+#         messages.error(request, "Invalid competition.")
+#         return HttpResponseRedirect(reverse("competitions:competitions"))
     
-    if not tournament_type:
-        return render(request, "competitions/create_tournament.html", context={"competition": competition})
+#     if not tournament_type:
+#         return render(request, "competitions/create_tournament.html", context={"competition": competition})
     
-    tournament_type = str(tournament_type).lower().strip()
+#     tournament_type = str(tournament_type).lower().strip()
 
-    if tournament_type == 'rr':
-        FORM_CLASS = RRTournamentForm
-    elif tournament_type == 'se':
-        FORM_CLASS = SETournamentForm
-    else:
-        raise SuspiciousOperation
+#     if tournament_type == 'rr':
+#         FORM_CLASS = RRTournamentForm
+#     elif tournament_type == 'se':
+#         FORM_CLASS = SETournamentForm
+#     else:
+#         raise SuspiciousOperation
 
-    form = None
-    if request.method == 'POST':
-        form = FORM_CLASS(request.POST, competition=competition)
-        if form.is_valid():
-            form.full_clean()
-            instance = form.save(commit=False)
-            instance.competition = competition
-            instance.save()
-            form.save() # may not work?
-            return HttpResponseRedirect(f"{reverse('competitions:tournament', args=(form.instance.id,))}")
-        else:
-            for error_field, error_desc in form.errors.items():
-                form.add_error(error_field, error_desc)
-    if not form:
-        form = FORM_CLASS(competition=competition)
-    return render(request, "FORM_BASE.html", {'form_title': "Create Tournament", 'action': f"?tournament_type={tournament_type}&competition_id={competition.id}" , "form": form,  "form_submit_text": "Create"})
+#     form = None
+#     if request.method == 'POST':
+#         form = FORM_CLASS(request.POST, competition=competition)
+#         if form.is_valid():
+#             form.full_clean()
+#             instance = form.save(commit=False)
+#             instance.competition = competition
+#             instance.save()
+#             form.save() # may not work?
+#             return HttpResponseRedirect(f"{reverse('competitions:tournament', args=(form.instance.id,))}")
+#         else:
+#             for error_field, error_desc in form.errors.items():
+#                 form.add_error(error_field, error_desc)
+#     if not form:
+#         form = FORM_CLASS(competition=competition)
+#     return render(request, "FORM_BASE.html", {'form_title': "Create Tournament", 'action': f"?tournament_type={tournament_type}&competition_id={competition.id}" , "form": form,  "form_submit_text": "Create"})
 
 @login_required
 def create_tournament_htmx(request: HttpRequest):
     competition_id = request.GET.get('competition_id',None)
-    tournament_type = str(request.GET.get('tournament_type','')).lower().strip()
+    #tournament_type = str(request.GET.get('tournament_type','')).lower().strip()
 
-    if tournament_type == 'rr':
-        FORM_CLASS = RRTournamentForm
-    elif tournament_type == 'se':
-        FORM_CLASS = SETournamentForm
-    else:
-        raise SuspiciousOperation
+    # if tournament_type == 'rr':
+    #     FORM_CLASS = RRTournamentForm
+    # elif tournament_type == 'se':
+    #     FORM_CLASS = SETournamentForm
+    # else:
+    #     raise SuspiciousOperation
     
     competition = get_object_or_404(Competition, pk=competition_id)
     
@@ -409,8 +409,8 @@ def create_tournament_htmx(request: HttpRequest):
         else:
             for error_field, error_desc in form.errors.items():
                 form.add_error(error_field, error_desc)
-    if not form:
-        form = FORM_CLASS(competition=competition)
+    # if not form:
+    #     form = FORM_CLASS(competition=competition)
 
     form = TournamentTypeSelectForm(competition_id=competition.id)
     form_html = render_crispy_form(form, helper=form.helper)

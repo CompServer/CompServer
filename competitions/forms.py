@@ -148,7 +148,7 @@ class SETournamentForm(forms.ModelForm):
         self.fields['prev_tournament'].queryset = RoundRobinTournament.objects.filter(competition=competition)
         self.fields['prev_tournament'].label = "Previous Tournament"
 
-        if self.instance is None:
+        if not self.instance:
             self.helper.add_input(Submit('submit', 'Create Tournament'))
         #self.events = competition.events
         #self.fields['events'].queryset = Event.objects.filter(competition=competition)
@@ -182,7 +182,7 @@ class RRTournamentForm(forms.ModelForm):
         #self.fields['points'].help_text = "How many points should be awarded to the winner?"
         #self.events = competition.events
         #self.fields['events'].queryset = Event.objects.filter(competition=competition)
-        if self.instance is None:
+        if not self.instance:
             self.helper.add_input(Submit('submit', 'Create Tournament'))
 
     def is_valid(self):
