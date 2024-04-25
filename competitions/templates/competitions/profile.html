@@ -7,104 +7,108 @@
         <h2>{% translate "Status: " %}</h2>
         <ul>
             {% if user.is_admin %}
-                <li>{% trans "Admin"}</li>
+                <li>{% translate "Admin" %}</li>
             {% if user.is_coach %}
-                <li>{% trans "Coach" %}</li>
+                <li>{% translate "Coach" %}</li>
             {% if user.is_judge %}
-                <li>{% trans "Judge" %}</li>
+                <li>{% translate "Judge" %}</li>
             {% if user.is_competitor %}
-                <li>{% trans "Competitor" %}</li>
+                <li>{% translate "Competitor" %}</li>
             {% if user.is_spectator %}
-                <li>{% trans "Spectator" %}</li>
+                <li>{% translate "Spectator" %}</li>
             <!-- could simplify with a function for user model -->
         </ul>
         <a href="#">
-            <button>{% trans "Edit Status" %}</button>
+            <button>{% translate "Edit Status" %}</button>
         </a>
         <div class="user-info-section">
             {% if user.profile.profile_pic.exists %}
                 <img src="{{ user.profile.profile_pic }}">
             {% else %}
                 <a href="#">
-                    <button>Add Picture</button>
+                    <button>{% translate "Add Picture" %}</button>
                 </a>
             {% endif %}
             {% if user.first_name.exists %}
                 {% if user.last_name.exists %}
-                    <p>{% trans "Name: " %}{{ first_name }}{{ last_name }}</p>
-            <p>{% trans "Username: @"}{% user.username %}</p>
+                    <p>{% translate "Name: " %}{{ first_name }}{{ last_name }}</p>
+            <p>{% translate "Username: @"}{% user.username %}</p>
             {% if user.profile.bio.exists %}
-                <h2>{% trans "Biography" %}</h2>
+                <h2>{% translate "Biography" %}</h2>
                 <p>{{ user.profile.bio }}</p>
             {% endif %}
             <a href="#">
-                <button>{% trans "Edit Info" %}</button>
+                <button>{% translate "Edit Info" %}</button>
             </a>
         </div>
-        account activity
+        {% comment %} account activity {% endcomment %}
         {% if user.is_admin %}
             <h2>{% translate "Admin "%}</h2>
+            {% comment %} 
             changes they have made or mark their activity
             collection of forms
-            manage live activities
+            manage live activities 
+            {% endcomment %}
         {% endif%}
         {% if user.is_coach %}
             <div section="coach-information">
-                <h2>{% trans "Teams Coached By You %}</h2>
+                <h2>{% translate "Teams Coached By You" %}</h2>
                 <h3></h3>
                 <h3></h3>
             </div>
             <h2>{% translate "Coach " %}</h2>
+            {% comment %} 
             teams that you Coach
             team records and history
             collection of forms (attending competitions and such)
-            see current compeittions
-        {% endif%}
-        {% if user.is_judge%}
+            see current compeittions 
+            {% endcomment %}
+        {% endif %}
+        {% if user.is_judge %}
             <h2>{% translate "Competitions That You've Judged" %}</h2>
             <h2>{% translate "Tournaments That You've Judged" %}</h2>
             <h2>{% translate "Upcoming Judging" %}</h2>
             {% if upcoming_gigs.exists %}
                 {% if user.first_name %}
-                <h2>{% trans "What " %}{{ user.first_name }}{% trans "Will Be Judging" %}</h2>
+                <h2>{% translate "What " %}{{ user.first_name }}{% translate "Will Be Judging" %}</h2>
                 <ul>
                         {% for gig in upcoming_gigs %}
                             <li>{{ gig }}</li>
                         {% endfor %}
                     </ul>
                 {% else %}
-                    <h2>{% translate "What @" %}{{ user.username }}{% trans "Will Be Judging" %}</h2>
+                    <h2>{% translate "What @" %}{{ user.username }}{% translate "Will Be Judging" %}</h2>
                         {% for gig in upcoming_gigs %}
                             <li>{{ gig }}</li>
                         {% endfor %}
                 {% endif %}
             {% endif %}
             {% if current_gigs.exists %}
-                <h2>{% trans "Currently Judging" %}</h2>
+                <h2>{% translate "Currently Judging" %}</h2>
                 <ul>
                     {% for gig in current_gigs %}
                         <li>
                             <p>{{ gig }}</p>
                             <a href="#">
-                                <button>Submit Scores</button>
+                                <button>{% translate "Submit Scores" %}</button>
                             </a>
                             <a href="#">
-                                <button>Make A Report</button>
+                                <button>{% translate "Make A Report" %}</button>
                             </a>
                         </li>
                     {% endfor %}
                 </ul>
         {% endif%}
         {% if user.is_player %}
-            <h2>{% trans "Your Team: "%}</h2>
+            <h2>{% translate "Your Team: "%}</h2>
             <p></p>
-        team
+        {% comment %} team
         organization
         played tournaments, competitions
-        wins and lossses and draws you were apart of
+        wins and lossses and draws you were apart of {% endcomment %}
             <h2>{% translate "Player " %}</h2>
-            similar to team page 
-            colletion of forms
+            {% comment %} similar to team page 
+            colletion of forms {% endcomment %}
         {% endif%}
     </body>
 {% endblock %}
