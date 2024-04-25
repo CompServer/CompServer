@@ -217,11 +217,20 @@ def generate_round_robin_matches(request, tournament_id):
     teams_played = {team: set() for team in teams}
     matches_played = {team: list() for team in teams}
     num_participated = [0 for team in teams]
+    num_teams_per_match = tournament.teams_per_match
+    path = False
     while num_participated != [tournament.matches_per_team for team in teams]:
+        if sum(num_participated) >= (len(teams) * tournament.matches_per_team) - (2 * num_teams_per_match) and \
+        sum(num_participated) < (len(teams) * tournament.matches_per_team) - num_teams_per_match and path == False:
+            num_teams_per_match = int((len(teams) * tournament.matches_per_team - sum(num_participated) + 1)/2)
+            path = True
+        # elif sum(num_participated) >= (len(teams) * tournament.matches_per_team) - num_teams_per_match and path == False:
+        #     num_teams_per_match = len(teams) * tournament.matches_per_team - sum(num_participated)
+        #     path = True
         match = Match.objects.create(tournament=tournament)
         match_teams = []
         match_teams_played = set()
-        for i in range(tournament.teams_per_match):
+        for i in range(num_teams_per_match):
             teams_tested = set()
             if num_participated == [tournament.matches_per_team for team in teams]:
                 break
@@ -229,15 +238,19 @@ def generate_round_robin_matches(request, tournament_id):
             teams_tested.add(j)
             match_teams = sorted(list(match.starting_teams.all()) + [teams[j]], key=lambda x: x.id)
             #randomly selects a team for the match
-            while isPlayed(teams_played[teams[j]], match_teams_played) or \
-                num_participated[j] >= tournament.matches_per_team or \
-                match_teams in matches_played[teams[j]]:
+            #while isPlayed(teams_played[teams[j]], match_teams_played) or \
+            while teams[j] in match.starting_teams.all() or \
+            num_participated[j] >= tournament.matches_per_team or \
+            num_participated[j] > min(num_participated) or \
+            match_teams in matches_played[teams[j]]:
                 j = random.randint(0, len(teams)-1) 
                 teams_tested.add(j)
                 match_teams = sorted(list(match.starting_teams.all()) + [teams[j]], key=lambda x: x.id)
                 #if all teams are for a match tested, then the only thing we should check for is participation
                 if len(teams_tested) == len(teams):
-                    while num_participated[j] >= tournament.matches_per_team:
+                    while num_participated[j] >= tournament.matches_per_team or \
+                    num_participated[j] > min(num_participated) or \
+                    teams[j] in match.starting_teams.all():
                         j = random.randint(0, len(teams)-1)
                         match_teams = sorted(list(match.starting_teams.all()) + [teams[j]], key=lambda x: x.id)
                     break
