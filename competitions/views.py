@@ -348,6 +348,9 @@ def generate_round_robin_rankings(tournament_id: int):
 
 def swap_matches(request: HttpRequest, tournament_id: int):
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
+    if not tournament.is_in_setup:
+        messages.error(request, "Tournament is not in setup.")
+        return HttpResponseRedirect(reverse("competitions:tournament", args=(tournament_id,)))
     form = None
     if request.method == 'POST':
         form = MatchSwapForm(request.POST, tournament=tournament)
@@ -365,6 +368,15 @@ def swap_matches(request: HttpRequest, tournament_id: int):
 def swap_teams(request: HttpRequest, match1_id: int, match2_id: int):
     match1 = get_object_or_404(Match, pk=match1_id)
     match2 = get_object_or_404(Match, pk=match2_id)
+    if match1 == match2:
+        messages.error(request, "Both Matches are the same.")
+        return HttpResponseRedirect(reverse("competitions:tournament", args=(tournament_id,)))
+    elif not match1.tournament == match2.tournament:
+        messages.error(request, "Matches are not in the same tournament.")
+        return HttpResponseRedirect(reverse("competitions:tournament", args=(tournament_id,)))
+    elif not match1.tournament.is_in_setup:
+        messages.error(request, "Tournament is not in setup.")
+        return HttpResponseRedirect(reverse("competitions:tournament", args=(tournament_id,)))
     form = None
     if request.method == 'POST':
         form = TeamSwapForm(request.POST, match1=match1, match2=match2)

@@ -48,17 +48,31 @@
                 {% translate "Round" %} {{ forloop.counter }}
                 {% for match_data in round_data.match_data %}
                 <div class="match" style="height: {{ match_data.match_height }}px; width: {{ match_data.match_width }}px;">
-                    <div class="center"
+                    {% comment %} <div class="center"
                         style="height: {{ match_data.center_height }}px; margin-top: {{ match_data.center_top_margin }}px; ">
                         {{ match_data.arena }} {% if user.is_staff %} <small><small id="match_id">(ID: {{ match_data.id }})</small></small> {% endif %}
                         {% for team_data in match_data.team_data %}
                             <div class="team"
                                 style="width: {{ match_data.match_width }}px; background-color:{% if team_data.won %} #fff5a8 {% else %} {{ match_data.arena.color }} {% endif %}; cursor: pointer;"
-                                color:{% if arena.color.is_dark %} white; {% endif %} onclick="location.href='{% url 'competitions:judge_match' team_data.match.id %}';">
-                                <p style="color: white;">{{ team_data.name }}</p>
+                                onclick="location.href='{% url 'competitions:judge_match' team_data.match.id %}';">
+                                <div style="color: {% if match_data.arena.is_dark %} white; {% endif %} ">{{ team_data.name }}</div>
                             </div>
                         {% endfor %}
-                        
+                    </div> {% endcomment %}
+                    <div class="center"
+                        style="height: {{ match_data.center_height }}px; margin-top: {{ match_data.center_top_margin }}px; ">
+                        {% if match_data.team_data != None %}
+                            {% for curr_team in match_data.team_data %}
+                                <div class="team highlight-{{curr_team.team_id}} {%if curr_team.won %}won{%endif%}"
+                                    style="height: {{bracket_dict.team_height}}px; width: {{ bracket_dict.match_width }}px; cursor: pointer;
+                                    {% if forloop.first %} border-top-right-radius: 8px; border-top-left-radius: 8px; {% endif %}
+                                    {% if forloop.last %} border-bottom-right-radius: 8px; border-bottom-left-radius: 8px; {% endif %}"
+                                    onclick="location.href='{% url 'competitions:judge_match' curr_team.match_id %}';"
+                                    onmouseover="highlight({{curr_team.team_id}})" onmouseout="dehighlight({{curr_team.team_id}})">
+                                    <div style="color: {% if match_data.arena.is_dark %} white; {% endif %} ">{{ curr_team.name }}</div>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
                     </div>
                 </div>
                 {% endfor %}    
