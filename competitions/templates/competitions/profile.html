@@ -3,89 +3,168 @@
 {% block title %}{% translate "Profile" %}{% endblock %} 
 {% block content %}
     <body>
-        <h1>{% transalte "Your Profile" %}</h1>
-        <button><a href="#">{% trans "Edit Status" %}</a></button>
+        <h1>{% translate "Your Profile" %}</h1>
+        <button><a href="#">{% translate "Edit Status" %}</a></button>
         <div class="user-info-section">
             {% if user.profile.profile_pic.exists %}
                 <img src="{{ user.profile.profile_pic }}">
             {% else %}
-                <a href="#">
-                    <button>Add Picture</button>
-                </a>
+                <button><a href="#">{% translate "Add Photo" %}</a></button>
             {% endif %}
             {% if user.first_name.exists %}
                 {% if user.last_name.exists %}
-                    <p>{% trans "Name: " %}{{ first_name }}{{ last_name }}</p>
-            <p>{% trans "Username: @"}{% user.username %}</p>
+                    <p>{% transalte "Name: " %}{{ first_name }}{{ last_name }}</p>
+            <p>{% translate "Username: @"}{% user.username %}</p>
             {% if user.profile.bio.exists %}
-                <h2>{% trans "Biography" %}</h2>
+                <h2>{% translate "Biography" %}</h2>
                 <p>{{ user.profile.bio }}</p>
             {% endif %}
-            <button><a href="#">{% trans "Edit Info" %}</a></button>
+            <button><a href="#">{% translate "Edit Info" %}</a></button>
         </div>
-        {% if user.is_coach %}
+        {% if is_coach %}
             <div section="coach-information">
-                <h2>{% trans "Teams Coached By You %}</h2>
+                <h2>{% translate "Teams Coached By You %}</h2>
                 <li>
                     {% for team in coached_teams %}
-                        <li></li>
+                        <li><a href="{% competitions:team team.id %}">{{ team.name }} {% translate "From " %} {{ team.organization.name }}</a></li>
                     {% endfor %}
                 </li>
             </div>
-            <div section="current-competitions">
-                <h2>{% trans "Team Records" %]</h2>
+            <div section="team-records">
+                <h2>{% translate "Team Records" %]</h2>
+                {{ records|json_script:"team_records" }}
+                {{ records|json_script:"team_records" }}
+                {{ records|json_script:"team_records" }}
+                this needs to be edited for the data
+                    <div>
+                        <canvas id="stackedChartID" width="600" height="400"></canvas>
+                    </div>
+                    <script src="https:///cdn.jsdelivr.net/npm/chart.js"></script>
+                    <script>
+                        const team_names = JSON.parse(document.getElementById("team_names").textContent)
+                        const tournament_names = JSON.parse(document.getElementById("tournament_names").textContent)
+                        const tournament_scorings = JSON.parse(document.getElementById("tournament_scorings").textContent)
+                        new Chart("teamRecordsChart", {
+                        type: "pie",
+                        data: {
+                            labels: xValues,
+                            datasets: [{
+                            backgroundColor: barColors,
+                            data: yValues
+                            }]
+                        },
+                        options: {
+                            title: {
+                            display: true,
+                            text: "Team Records"
+                            }
+                        }
+                        });
+                        
+                        
+                        var context = document.getElementById("stackedChartID").getContext("2d");
+                        var chart = new Chart(context, {
+                            type: 'bar',
+                            data: {  
+                                labels: team_names,
+                                datasets: [{
+                                    {% for tournament_name, scores in tournament_scorings.items %}
+                                        label: tournament_name,
+                                        data: scores,
+                                    }
+                                    {% endfor%}
+                                }],
+                            },
+                            options: {
+                                plugins: {
+                                    title: {
+                                        display: true,
+                                    },
+                                    scales: {
+                                        x: {
+                                            stacked: true,
+                                        },
+                                        y: {
+                                            stacked: true,
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    </script>
             </div>
             <div section="upcoming-competitions">
-                <h2>{% trans "Team Rankings" %}</h2>
+                <h2>{% translate "Team Rankings" %}</h2>
+                <ul>
+                    {% for ranking in team_rankings %}
+                        <li>
+                            <div class="container">
+                                <h3>{{ ranking.item }} </h3>
+                                {% for rank in ranking.value %}
+                                    <p>{{ rank.0 }}, <a href="{% urls 'competitions:tournament rank.1.id %}">{% translate "See" %}</a></p>
+                                {% endfor %}
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
             </div>
-            <div section="coach-to-do-forms">
-                <h2>{% trans "Forms" %}</h2>
-                <h3>{% "Sign Up For Competitions" %}</h3>
-                <h3>{% "Sign Up For Tournaments" %}</h3>
-                <h3>{% "Sign Up To Judge" %}</h3>
-            </div>
-            <h2>{% translate "Coach " %}</h2>
         {% endif%}
-        {% if user.is_judge%}
-            <h2>{% translate "Status: Judge" %}</h2>
+        {% if is_judge%}
             <h3>{% translate "Tournaments That You've Judged" %}</h3>
             <ul>
                 {% for tournament in judged_tournaments %}
                     <li>
-                        <p><a href="{{ 'urls:tournament' tournament.id }}">Go</a> To {{ tournament.event.name }}</p>
+                        <p><a href="{{ 'urls:tournament' tournament.id }}">{% translate "Go" %}</a> {% translate "To" %} {{ tournament.event.name }}</p>
                     </li>
                 {% endfor %}
             </ul>
             <h3>{% translate "Upcoming Judging Gigs" %}</h3>
             {% if upcoming_gigs.exists %}
-                go to form to determine matches
-                {% for gig in upcoming_gigs %}
-                    upcoming gigs shold be events with tournament and if it is being setup and all that
-                        {% endfor %}
-                {% endfor %}
+                <ul>
+                    {% for gig in upcoming_gigs %}
+                        <li><p>{{ match }} {% translate "For" %} {{ gig.tournament }}, {{ gig.tournament.competition.name }}</p></li>
+                    {% endfor %}
+                </ul>
             {% endif %}
             {% if current_gigs.exists %}
                 <h3>{% trans "Current Judging Gigs" %}</h3>
                 <ul>
                     {% for gig in current_gigs %}
                         <li>
-                            <p>{{ gig }}</p>
+                            <p>{{ match }}</p>
                             <a href="#">
-                                <button>Submit Scores</button>
-                            </a>
-                            <a href="#">
-                                <button>Make A Report</button>
+                                <button>{% translate "Submit Scores" %}</button>
                             </a>
                         </li>
                     {% endfor %}
                 </ul>
         {% endif%}
-        {% if user.is_player %}
-            <h2>{% translate "Status: Player" %}</h2>
-            <h2>{% trans "Your Team: "%}</h2>
-            <h2>{% trans "Your Organization: " %}</h2>
-            <h2>{% trans "Your Track Record of Wins, Losses, and Draws" %}</h2>
-            <h2>{% Translate "Fill Out Feedback Forms "%}</h2>
-        {% endif%}
+        <div class="container">
+            <div class="container">
+                <h2>{% translate "Watch Now" %}</h2>
+                <li>
+                    {% for competition in watch_competitions %}
+                        <li>
+                            <p><a href="{% competitions:competition competition.id %}">{{ competition.name }} {% translate "Started At" %} {{ competition.start_date }}</a></p>
+                        </li>
+                    {% endfor %}
+                    {% for tournament in watch_tournaments %}
+                    <li>
+                        <p><a href="{% competitions:tournament tournament.id %}">{{ tournament.event.name }} {% translate "Started At" %} {{ tournament.start_time }}</a></p>
+                    </li>
+                    {% endfor %}
+                </li>
+            </div>
+            <div class="container">
+                <h2>{% translate "Recent Results" %}</h2>
+                <li>
+                    {% for competition in newly_ended_competitions %}
+                        <li>
+                            <p><a href="{% competitions:competition competition.id %}">{{ competition.name }}</a></p>
+                        </li>
+                    {% endfor %}
+                </li>
+            </div>
+        </div>
     </body>
 {% endblock %}

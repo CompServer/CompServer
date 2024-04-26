@@ -12,5 +12,11 @@
                 <li><a href="{% urls 'competitions:team' team.id %}">{{ team.__str__ }}</a> {% translate 'in the sport of' %} {{ team.sport.name }} {% translate 'coached by' %} {{ team.coach.name }}</li>
             {% endfor %}
         </ul>
+        <div class="container">
+            <h2>{% translate 'Overall Team Results' %}</h2>
+            {% for result in team_results %}
+                pie chart
+            {% endfor %}
+        </div>
     </body>
 {% endblock %}
