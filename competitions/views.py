@@ -676,21 +676,17 @@ def judge_match(request: HttpRequest, match_id: int):
     return render(request, 'competitions/match_judge.html', {'form': form, 'match': instance, "teams": winner_choices})
 
 def profile(request, user_id):
-    #might need a profile object
-    #make sure to add pie chart to organization page
+    #mpie charts
     #fix results page chart as well
-    # i deleted the profile model, so ill add it back after merging
-    #fix last timing for tournament
-    #make sure ordering is very efficient
-    watch_competitions = Competition.objects.filter(status=Status.OPEN).order_by("-end_date")
-    watch_tournaments = AbstractTournament.objects.filter(status=Status.OPEN).order_by("-end_by")
-    newly_ended_competitions = Competition.objects.filter(status=Status.COMPLETE, end_date=datetime.date.today()).order_by("-start_date")
+    watch_competitions = Competition.objects.filter(status=Status.OPEN).order_by("-end_date", "-start_date", "-name")
+    watch_tournaments = AbstractTournament.objects.filter(status=Status.OPEN).order_by("-start_time")
+    newly_ended_competitions = Competition.objects.filter(status=Status.COMPLETE, end_date=datetime.date.today()).order_by("-end_date", "-start_date", "-name")
     user = User.objects.filter(id=user_id).first()
     if user_id in [user.id for user in [tournament.planeary_judges for tournament in SingleEliminationTournament.objects.all()]]:
         is_judge = True
-        current_gigs = Match.objects.filter(planeary_judges__user__id == user_id, status = Status.OPEN)
-        upcoming_gigs = Match.objects.filter(planeary_judges__user__id == user_id, status = Status.SETUP)
-        judged_tournaments = AbstractTournament.ojbects.filter(Q(status = Status.COMPLETE) | Q(status = Status.CLOSED), planeary_judges__id == user_id)
+        current_gigs = Match.objects.filter(planeary_judges__user__id == user_id, status = Status.OPEN).order_by("-time")
+        upcoming_gigs = Match.objects.filter(planeary_judges__user__id == user_id, status = Status.SETUP).order_by("-status", "-time")
+        judged_tournaments = AbstractTournament.ojbects.filter(Q(status = Status.COMPLETE) | Q(status = Status.CLOSED), planeary_judges__id == user_id).order_by("-start_time", "-competition")
     else:
         is_judge = False
     if user_id in [team.coach.id for team in Team.objects.all()]:
@@ -701,12 +697,12 @@ def profile(request, user_id):
         team_wins = list()
         team_losses = list()
         for team in coached_teams:
-            wins = AbstractTournament.objects.filter(competition__teams=team, status=Status.COMPLETE, match_set__last__advancers=team)
+            wins = AbstractTournament.objects.filter(competition__teams=team, status=Status.COMPLETE, match_set__last__advancers=team).order_by("-start_time", "-competition")
             if wins:
                 wins_count = wins.count()
             else:
                 wins_count = 0
-            losses = AbstractTournament.objects.filter(competition__teams=team, status=Status.COMPLETE).exclude(match_set__last__advancers=team)
+            losses = AbstractTournament.objects.filter(competition__teams=team, status=Status.COMPLETE).exclude(match_set__last__advancers=team).order_by("-start_time", "-competition")
             if losses:
                 losses_count = losses.count()
             else:
@@ -715,7 +711,7 @@ def profile(request, user_id):
             team_losess.append(losses_count)
             team_wins.append(wins_count)
             rankings = list()
-            for ranking in Ranking.objects.filter(team=team).order_by("-tournament")
+            for ranking in Ranking.objects.filter(team=team).order_by("-tournament", "-rank"):
                 line = ""
                 line = line + "Ranked " + ranking.rank + " in " + ranking.tournament.event.name + " tournament at " + ranking.tournament.competition.name
                 rankings.append((line, ranking.tournament))
@@ -737,14 +733,14 @@ def profile(request, user_id):
         'team_wins': team_wins,
         'team_losses': team_losses,
         'team_names': team_names,
-        'user': user,#might need a profile object
+        'user': user,
     }
     return render(request, 'competitions/user_profile.html', context)
 
 
 def organization(request, organization_id):
     organization = Organization.objects.filter(id = organization_id).first()
-    associated_teams = Team.objects.filter(organization__id = organization_id)
+    associated_teams = Team.objects.filter(organization__id = organization_id).order_by("-name")
     results = dict()
     for team in associated_teams:
         wins_count = 0
@@ -764,14 +760,12 @@ def organization(request, organization_id):
 
 def results(request, competition_id):
     competition = Competition.objects.get(id = competition_id)
-    tournaments = [tournament for tournament in competition.tournament_set.order_by("points").filter(status = Status.COMPLETE)]
-    for robin_tournament in RoundRobinTournament.objects.filter(competition__id=competition_id, status = Status.COMPLETE).order_by("-end_date"):
-        #sort the round robin by points
+    tournaments = [tournament for tournament in competition.tournament_set.order_by("points", "start_time", "competition").filter(status = Status.COMPLETE)]
+    for robin_tournament in RoundRobinTournament.objects.filter(competition__id=competition_id, status = Status.COMPLETE).order_by("points", "-start_time", "-competition"):
         tournaments.append(robin_tournament)
     tournament_names = [tournament.event.name for tournament in tournaments]
     team_names = [team.name for team in competition.teams.order_by("name")]
     tournament_colors = [tournament.colors for tournament in tournaments]
-    #add tournament colors to java script chart
     for tournament_name in tournament_names:
         tournament = AbstractTournament.objects.filter(event__name=tournament_name, competition__id=competition_id, status=Status.COMPLETE)
         scores = dict()
@@ -796,8 +790,8 @@ def results(request, competition_id):
                         robin_totals[team_name] = tournament.points_per_loss
         #addd robin totals to scores
         #sum together results for each tournament team and display
-    judge_names = [plenary_judge.first_name + " " + plenary_judge.last_name for plenary_judge in competition.plenary_judges.order_by("-username")]
-    #fix the chart template
+    judge_names = ""
+    #judge_names = [plenary_judge.first_name + " " + plenary_judge.last_name for plenary_judge in competition.plenary_judges.order_by("-username")]
     context = {
         'tournament_names': tournament_names,
         'team_names': team_names,
@@ -810,7 +804,6 @@ def results(request, competition_id):
     return render(request, "competitions/results.html", context)
 
 def team(request: HttpRequest, team_id: int):
-    #order tournaments by end time now
     team = Team.objects.filter(id=team_id).first()
     today = timezone.now().date()
     upcoming_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), tournament__competition__start_date__lte=today, tournament__competition__end_date__gte=today).exclude(advancers=None).order_by("-time")
@@ -823,9 +816,9 @@ def team(request: HttpRequest, team_id: int):
     for match in past_matches:
         past_matches_dict[match] = match.time
     sorted_past_matches = {k for k, v in sorted(past_matches_dict.items(), key=lambda item: past_matches_dict[1])}
-    past_competitions = Competition.objects.filter(teams__id = team_id, status = Status.COMPLETE).order_by("end_date")
+    past_competitions = Competition.objects.filter(teams__id = team_id, status = Status.COMPLETE).order_by("end_date", "start_date", "name")
     past_tournaments_won = list()
-    past_tournaments = SingleEliminationTournament.objects.filter(teams__id = team_id, status = Status.COMPLETE).order_by("start_time")
+    past_tournaments = SingleEliminationTournament.objects.filter(teams__id = team_id, status = Status.COMPLETE).order_by("start_time", "competition")
     if past_tournaments.exists():
         for past_tournament in past_tournaments:
             if team_id in [team.id for team in past_tournament.match_set.last().advancers.all()]:

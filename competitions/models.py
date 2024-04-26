@@ -457,12 +457,13 @@ class AbstractTournament(models.Model):
         return self.match_set.last().advancers() #returns the list of winners
 
     def get_end_time(self):
-        timing_in_seconds = 0
+        time_in_seconds = 0
         if self.match_set and self.status == Status.COMPLETE:
             for match in self.match_set:
-                timing_in_seconds = timing_in_seconds + match.time
-            timing_in_hours = timing_in_seconds % 3600 #finish this and add the times together
-        return timing_in_seconds #later return the date
+                time_in_seconds = time_in_seconds + match.time
+        added_time = datetime.timedelta(seconds=time_in_seconds)
+        end_time = self.start_time + added_time
+        return end_time
 
     @property
     def is_viewable(self) -> bool:
