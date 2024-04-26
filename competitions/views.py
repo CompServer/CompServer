@@ -15,12 +15,17 @@ from django.core.exceptions import SuspiciousOperation
 from django.db.models import Count, Q
 from django.db.models import Q, QuerySet
 from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
-from django.shortcuts import get_object_or_404, render
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.exceptions import TemplateDoesNotExist
 from django.urls import reverse
 from django.utils import timezone
-
+from django.core.exceptions import SuspiciousOperation
+from django.template.exceptions import TemplateDoesNotExist
+from operator import attrgetter
+import operator
+import random
+import zoneinfo
+from typing import Union
 from .forms import *
 from .models import *
 from .utils import *
@@ -781,8 +786,8 @@ def competitions(request: HttpRequest):
     return render(request, "competitions/competitions.html", context)
 
 def competition(request: HttpRequest, competition_id: int):
-    redirect_to = request.GET.get('next', '')
-    redirect_id = request.GET.get('id', None)
+    redirect_to = request.GET.get('next', '') #redirect to next after login
+    redirect_id = request.GET.get('id', None) #redirect to page after id???
     if redirect_id:
         redirect_id = [redirect_id]
     competition = get_object_or_404(Competition, pk=competition_id)
@@ -802,14 +807,13 @@ def competition(request: HttpRequest, competition_id: int):
                 return HttpResponseRedirect(reverse(f"competitions:competition", args=[competition_id]))
     if competition.is_archived:
         return HttpResponseRedirect(reverse("competitions:competitions"))
-    if Match.objects.filter(next_matches__isnull=True).filter(tournament__competition=competition_id).exists():
-        winner = Match.objects.filter(next_matches__isnull=True).filter(tournament__competition=competition_id).first().advancers.all()
-    else:
-        winner = None
+    elimination_tournaments = SingleEliminationTournament.objects.filter(competition__id = competition_id, status=Status.COMPLETE).order_by("-status", "-start_time")
+    robin_tournaments = RoundRobinTournament.objects.filter(competition__id=competition_id).order_by("-status", "-start_time")
     context = {
         "competition": competition, 
-        "form": TournamentStatusForm(), 
-        "winner": winner,
+        "form": CompetitionStatusForm(),
+        "robin_tournaments": robin_tournaments,
+        "elimination_tournaments": elimination_tournaments,
     }
     return render(request, "competitions/competition.html", context)
 
@@ -915,77 +919,129 @@ def judge_match(request: HttpRequest, match_id: int):
     return render(request, 'competitions/match_judge.html', {'form': form, 'match': instance, "teams": winner_choices})
 
 def profile(request, user_id):
-    #check admin
-    #check coach
-    if Coach.objects.filter(id = user_id).exists():
-        teams_coached = Team.objects.filter(coach_id = user_id)
-        team_records = list()
-        wins = 0
-        losses = 0
-        for team_coached in teams_coached:
-            past_matches = Match.objects.filter(starting_teams=team_coached)#add a part about time and ordering)
-            for match in past_matches:
-                if team_coached in match.advancers:
-                    wins = wins + 1
-                else:
-                    losses = lossess + 1
-            team_records.append((team_coached, wins, losses))
-        #current coaching competitions
-        # see collection of forms
-    #admin
-    #coach
-    #judge
-    #competitors
-    #spectatotr
-    user = User.objects.filter(id = user_id).first()
+    #mpie charts
+    #fix results page chart as well
+    watch_competitions = Competition.objects.filter(status=Status.OPEN).order_by("-end_date", "-start_date", "-name")
+    watch_tournaments = AbstractTournament.objects.filter(status=Status.OPEN).order_by("-start_time")
+    newly_ended_competitions = Competition.objects.filter(status=Status.COMPLETE, end_date=datetime.date.today()).order_by("-end_date", "-start_date", "-name")
+    user = User.objects.filter(id=user_id).first()
+    if user_id in [user.id for user in [tournament.planeary_judges for tournament in SingleEliminationTournament.objects.all()]]:
+        is_judge = True
+        current_gigs = Match.objects.filter(plenary_judges__user__id=user_id, status = Status.OPEN).order_by("-time")
+        upcoming_gigs = Match.objects.filter(plenary_judges__user__id=user_id, status = Status.SETUP).order_by("-status", "-time")
+        judged_tournaments = AbstractTournament.ojbects.filter(Q(status = Status.COMPLETE) | Q(status = Status.CLOSED), planeary_judges__id == user_id).order_by("-start_time", "-competition")
+    else:
+        is_judge = False
+    if user_id in [team.coach.id for team in Team.objects.all()]:
+        is_coach = True
+        coached_teams = Team.objects.filter(coach_id = user_id).order_by("-name")
+        team_records = dict()
+        team_names = list()
+        team_wins = list()
+        team_losses = list()
+        for team in coached_teams:
+            wins = AbstractTournament.objects.filter(competition__teams=team, status=Status.COMPLETE, match_set__last__advancers=team).order_by("-start_time", "-competition")
+            if wins:
+                wins_count = wins.count()
+            else:
+                wins_count = 0
+            losses = AbstractTournament.objects.filter(competition__teams=team, status=Status.COMPLETE).exclude(match_set__last__advancers=team).order_by("-start_time", "-competition")
+            if losses:
+                losses_count = losses.count()
+            else:
+                losses_count = 0
+            team_names.append(team.name)
+            team_losess.append(losses_count)
+            team_wins.append(wins_count)
+            rankings = list()
+            for ranking in Ranking.objects.filter(team=team).order_by("-tournament", "-rank"):
+                line = ""
+                line = line + "Ranked " + ranking.rank + " in " + ranking.tournament.event.name + " tournament at " + ranking.tournament.competition.name
+                rankings.append((line, ranking.tournament))
+            team_rankings[team] = rankings
+    else:
+        is_coach = False
     context = {
+        'coached_teams': coached_teams,
+        'watch_tournaments': watch_tournaments,
+        'watch_competitions': watch_competitions,
+        'newly_ended_competitions': newly_ended_competitions,
+        'team_records': team_records,
+        'team_rankings': team_rankings,
+        'is_coach': is_coach,
+        'is_judge': is_judge,
+        'judged_tournaments': judged_tournaments,
+        'current_gigs': current_gigs,
+        'upcoming_gigs': upcoming_gigs,
+        'team_wins': team_wins,
+        'team_losses': team_losses,
+        'team_names': team_names,
         'user': user,
-        'profile': Profile.objects.filter(id = user.profile_id).first(),
     }
-    request.user.is_authenticated
     return render(request, 'competitions/user_profile.html', context)
+
+
+def organization(request, organization_id):
+    organization = Organization.objects.filter(id = organization_id).first()
+    associated_teams = Team.objects.filter(organization__id = organization_id).order_by("-name")
+    results = dict()
+    for team in associated_teams:
+        wins_count = 0
+        losses_count = 0
+        if AbstractTournament.objects.filter(competition__teams=team):
+            wins = AbstractTournament.objects.filter(competition__teams=team, match_set__last__advancers=team).order_by("-status", "-start_time")
+            losses = wins = AbstractTournament.objects.filter(competition__teams=team).exclude(match_set__last__advancers=team).order_by("-status", "-start_time")
+            wins_count = wins.count()
+            losses_count = losses.count()
+        results[team.name] = (wins_count, losses_count)
+    context = {
+        'organization': organization,
+        'associated_teams': associated_teams,
+        'results': results,
+    }
+    return render(request, 'organization.html', context)
 
 def results(request, competition_id):
     competition = Competition.objects.get(id = competition_id)
-    tournaments = competition.tournament_set.order_by("points").filter(status = Status.COMPLETE)
-    tournament_names = []
+    tournaments = [tournament for tournament in competition.tournament_set.order_by("points", "start_time", "competition").filter(status = Status.COMPLETE)]
+    for robin_tournament in RoundRobinTournament.objects.filter(competition__id=competition_id, status = Status.COMPLETE).order_by("points", "-start_time", "-competition"):
+        tournaments.append(robin_tournament)
     tournament_names = [tournament.event.name for tournament in tournaments]
-    team_names = []
     team_names = [team.name for team in competition.teams.order_by("name")]
-    totals = []
-    tournament_scorings = {}
-    for tournament in tournaments:
-        scores = []
-        last_match = Match.objects.filter(tournament__id = tournament.id, next_matches__isnull = True).first()
-        winners = last_match.advancers.all()
+    tournament_colors = [tournament.colors for tournament in tournaments]
+    for tournament_name in tournament_names:
+        tournament = AbstractTournament.objects.filter(event__name=tournament_name, competition__id=competition_id, status=Status.COMPLETE)
+        scores = dict()
         for team_name in team_names:
             team = Team.objects.filter(name=team_name).first()
-            if team in winners:
-                scores.append(float(tournament.points))
+            if is_single_elimination(tournament):
+                last_match = Match.objects.filter(tournament__id = tournament.id, next_matches__isnull = True).first()
+                if team in last_match.advancers.all():
+                    scores[tournament_name] = (team_name, tournament.points)
+                else:
+                    scores[tournament_name] = (team_name, 0)
+            #each tournament name should have a team name and a scor ein a list
             else:
-                scores.append(0)
-        tournament_scorings[tournament.event.name] = scores
-    team_scorings = []
-    for team_name in team_names:
-        team = Team.objects.filter(name=team_name).first()
-        scores = []
-        for tournament in tournaments:
-            last_match = Match.objects.filter(tournament__id = tournament.id, next_matches__isnull = True).first()
-            if team in last_match.advancers.all():
-                scores.append(tournament.points)
-            else:
-                scores.append(0)
-        score_total = sum(scores)
-        totals.append((team_name, score_total))
-        team_scorings.append((scores))
-    judge_names = [plenary_judge.first_name + " " + plenary_judge.last_name for plenary_judge in competition.plenary_judges.order_by("-username")]
+                robin_totals = dict()
+                for match in tournament.match_set.all():
+                    if team in match.advancers.all():
+                        if match.advancers.count() == 1:
+                            robin_totals[team_name] = tournament.points_per_win
+                        if match.advancers.count() > 1:
+                            robin_totals[team_name] = tournament.points_per_tie
+                    else:
+                        robin_totals[team_name] = tournament.points_per_loss
+        #addd robin totals to scores
+        #sum together results for each tournament team and display
+    judge_names = ""
+    #judge_names = [plenary_judge.first_name + " " + plenary_judge.last_name for plenary_judge in competition.plenary_judges.order_by("-username")]
     context = {
         'tournament_scorings': tournament_scorings,
         'tournament_names': tournament_names,
         'team_names': team_names,
         'competition': competition,
         'tournaments': tournaments,
-        'team_scorings': team_scorings,
+        'tournament_scorings': scores,
         'judge_names': judge_names,
         'team_and_total': totals,
     }
@@ -994,56 +1050,101 @@ def results(request, competition_id):
 def team(request: HttpRequest, team_id: int):
     team = Team.objects.filter(id=team_id).first()
     today = timezone.now().date()
-    upcoming_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), tournament__competition__start_date__lte=today, tournament__competition__end_date__gte=today, advancers=None).order_by("-time")
-    past_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id)).exclude(advancers=None).order_by("-time")
-    past_competitions = Competition.objects.filter(teams__id = team_id, status = Status.COMPLETE).order_by("end_date")
+    upcoming_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), tournament__competition__start_date__lte=today, tournament__competition__end_date__gte=today).exclude(advancers=None).order_by("-time")
+    starter_matches = Match.objects.filter(Q(starting_teams__id=team_id)).exclude(advancers=None)
+    previous_advancer_matches = Match.objects.filter(Q(prev_matches__advancers__id=team_id)).exclude(advancers=None)
+    past_matches = [match for match in starter_matches]
+    for match in previous_advancer_matches:
+        past_matches.append(match)
+    past_matches_dict = dict()
+    for match in past_matches:
+        past_matches_dict[match] = match.time
+    # sorted_past_matches = {k for k, v in sorted(past_matches_dict.items(), key=lambda item: past_matches_dict[1])}
+    past_competitions = Competition.objects.filter(teams__id = team_id, status = Status.COMPLETE).order_by("end_date", "start_date", "name")
     past_tournaments_won = list()
-    past_tournaments = SingleEliminationTournament.objects.filter(teams__id = team_id, status = Status.COMPLETE).order_by("start_time")
-    for past_tournament in past_tournaments:
-        last_match_advancers = past_tournament.match_set.last().advancers.all()
-        if team in last_match_advancers:
-            past_tournaments_won.append(past_tournament)
+    past_tournaments = SingleEliminationTournament.objects.filter(teams__id = team_id, status = Status.COMPLETE).order_by("start_time", "competition")
+    if past_tournaments.exists():
+        for past_tournament in past_tournaments:
+            if team_id in [team.id for team in past_tournament.match_set.last().advancers.all()]:
+                past_tournaments_won.append(past_tournament)
     losses = list()
     wins = list()
     draws = list()
-    for pm in past_matches:
-        first_half = " in Round " + str(pm.round_num) + " in "
-        second_half = " tournament @" + pm.tournament.competition.name
-        num_starting_teams = pm.starting_teams.count()
-        num_advancers = pm.advancers.count()
-        if num_starting_teams == 1 and pm.starting_teams.all().first().id == team_id and pm.advancers.all().first().id == team_id:
-            wins.append((("Granted a BYE" + first_half), pm.tournament, second_half))
-        else:
-            starting_teams_names = list()
-            for starting_team in pm.starting_teams.all():
-                if starting_team.id != team_id:
-                    starting_teams_names.append(starting_team.name)
-            if num_advancers == 1 and pm.advancers.all().first().id == team_id:
-                if num_starting_teams == 2:
-                    wins.append((("Won against " + starting_teams_names.__getitem__(0) + first_half), pm.tournament, second_half))
+    if past_matches:
+        for match in past_matches:
+            first_half = " in "
+            second_half = " tournament @" + match.tournament.competition.name
+            if match.starting_teams.exists():
+                starting_teams_names = ",".join([team.name for team in match.starting_teams.exclude(id=team_id)])
+            if match.prev_matches.exists():
+                prev_advancing_names = ",".join([team.name for team in match.prev_matches.last().advancers.all().exclude(id=team_id)])
+            if match.advancers.exists():
+                advancers_names = ",".join([team.name for team in match.advancers.all().exclude(id=team_id)])
+            if match.prev_matches.exists():
+                if team_id in [team.id for team in match.advancers.all()]:
+                    if match.advancers.count() == match.starting_teams.count() + len([advancer for advancer in match.prev_matches.last().advancers.all()]): 
+                        draws.append((("Drew in match against " + ",".join(starting_teams_names) + ",".join(prev_advancing_names) + first_half), match.tournament, second_half, match))
+                    else:
+                        if match.advancers.count() == 1:
+                            wins.append((("Won against " + ",".join(starting_teams_names) + ",".join(prev_advancing_names) + first_half), match.tournament, second_half, match))
+                        elif match.advancers.count() > 2: 
+                            wins.append((("Won with " + advancers_names + first_half), match.tournament, second_half, match))
                 else:
-                    wins.append((("Won against " + ",".join(starting_teams_names) + first_half), pm.tournament, second_half))
+                    if match.advancers.count() == 1:
+                        losses.append((("Lost against " + match.advancers.first().name + first_half), match.tournament, second_half, match))
+                    elif match.advancers.count() > 1: 
+                        losses.append((("Lost against " + advancers_names + first_half), match.tournament, second_half, match))
             else:
-                advancer_team_ids = list()
-                advancer_teams_names = list()
-                for advancer in pm.advancers.all():
-                    advancer_team_ids.append(advancer.id)
-                    if advancer.id != team_id:
-                        advancer_teams_names.append(advancer.name)
-                if num_advancers > 1 and team_id in advancer_team_ids:
-                    if num_advancers == 2:
-                        draws.append((("Drew with " + "".join(advancer_teams_names) + first_half), pm.tournament, second_half))
+                if team_id in [team.id for team in match.advancers.all()]:
+                    if match.advancers.count() == match.starting_teams.count():
+                        draws.append((("Drew with " + starting_teams_names + first_half), match.tournament, second_half))
                     else:
-                        draws.append((("Drew with " + ",".join(advancer_teams_names) + first_half), pm.tournament, second_half))
+                        if match.advancers.count() == 1:
+                            wins.append((("Won against " + starting_teams_names + first_half), match.tournament, second_half, match))
+                        elif match.advancers.count() > 1:
+                            wins.append((("Won with " + "," + advancers_names + first_half), match.tournament, second_half, match))
                 else:
-                    if num_advancers == 2:
-                        losses.append((("Lost against " + "".join(advancer_teams_names) + first_half), pm.tournament, second_half))
-                    else:
-                        losses.append((("Lost against " + ",".join(advancer_teams_names) + first_half), pm.tournament, second_half))
+                    if match.advancers.count() == 1: 
+                        losses.append((("Lost against " + match.advancers.first().name + first_half), match.tournament, second_half, match))
+                    elif match.advancers.count() > 1: 
+                        losses.append((("Lost against " + advancers_names + first_half), match.tournament, second_half, match))
+    loss_dict = dict()
+    for loss in losses:
+        loss_dict[loss] = loss[-1].time
+    # sorted_losses = {k for k, v in sorted(loss_dict.items(), key=lambda item: loss_dict[1])}
+    wins_dict = dict()
+    for win in wins:
+        wins_dict[win] = win[-1].time
+    sorted_wins = {k for k, v in sorted(wins_dict.items(), key=lambda item: wins_dict[1])}
+    draws_dict = dict()
+    for draw in draws:
+        draws_dict[draw] = draw[-1].time
+    sorted_draws = {k for k, v in sorted(draws_dict.items(), key=lambda item: draws_dict[1])}
+    byes = list()
+    old_upcoming_matches = list(Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), advancers=None).order_by("-time"))
+    for match in old_upcoming_matches:
+        if match.id in [match.id for match in upcoming_matches.all()]:
+            old_upcoming_matches.remove(match)
+    for match in past_matches:
+        if team_id in [team.id for team in match.advancers.all()]:
+            if match.starting_teams.all().exists():
+                if match.prev_matches.last():
+                    if team_id in [team.id for team in match.starting_teams.all()] or team_id in [team.id for team in match.prev_matches.last().starting_teams]:
+                        if match.advancers.count() == 1:
+                            if match.starting_teams.count() == 1 and match.prev_matches.last().starting_teams.count() == 1:
+                                byes.append((("BYE" + first_half), match.tournament, second_half))
+                            if match.starting_teams.count() == 0 and match.prev_matches.last().starting_teams.count() == 0:
+                                byes.append((("BYE" + first_half), match.tournament, second_half))
+    byes_dict = dict()
+    for bye in byes:
+        byes_dict[bye] = bye.time
+    sorted_byes = {k for k, v in sorted(byes_dict.items(), key=lambda item: byes_dict[1])}
     context = {
         'team': team,
         'upcoming_matches': upcoming_matches,
+        'old_upcoming_matches': old_upcoming_matches,
         'wins': wins,
+        'byes': byes,
         'past_matches': past_matches,
         'draws': draws,
         'losses': losses,

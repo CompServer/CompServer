@@ -10,6 +10,7 @@ urlpatterns = [
     path("competition/create/", views.create_competition, name="create_competition"),
     path("competition/<int:competition_id>/", RedirectView.as_view(url='competition'), name="competition_score"), # legacy so they can be hyperlinked to
     path("competition/<int:competition_id>/results", views.results, name="results"), # legacy so they can be hyperlinked to
+    path("organization/<int:organization_id>/", views.organization, name="organization"),
     path("team/<int:team_id>/", views.team, name="team"),
     #path("tournament/", views.tournaments, name="tournaments"),
     path("tournament/create/", views.create_tournament, name="create_tournament"),
