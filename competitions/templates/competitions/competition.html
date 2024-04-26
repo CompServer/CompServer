@@ -33,7 +33,7 @@
                         {% elif tournament.is_round_robin %}
                             {% translate "Preliminary Tournament:" %}
                         {% endif %}
-                        <small>You can see this archived item because you are signed in as a superuser.</small>
+                        <small>{% translate "You can see this archived item because you are signed in as a superuser." %}</small>
                     {% elif tournament.is_in_setup %}
                         <i class="bi bi-device-ssd" title="{{ tournament.status }}"></i> 
                         {% if tournament.is_single_elimination %}
@@ -119,7 +119,6 @@
     {% if user.is_superuser %}
         <hr>
         <a href="{% url "competitions:create_tournament" %}?competition_id={{ competition.id }}" class="btn btn-secondary">{% translate "Create Tournament" %}</a>
-        <br><br>
         <a href="{% url "competitions:arena_color" competition.id %}" class="btn btn-secondary">{% translate "Change Arena Colors" %}</a>
     {% endif %}
 {% endblock %}

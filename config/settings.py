@@ -1,9 +1,11 @@
 from pathlib import Path
+from urllib.parse import urlparse
 from django.utils import timezone
 import os
 from django.contrib.messages import constants as messages
 import logging, copy
 from django.utils.log import DEFAULT_LOGGING
+from environ import Env
 
 # custom logging filter to suppress certain errors (such as Forbidden and Not Found)
 
@@ -33,10 +35,35 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-2y0@hfzu761goc9!m&!#if&(vhcg=!uzre027l48r&oh_c^xcx'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DEBUG", "true").strip().lower() == "true"
+# recommended by https://cloud.google.com/python/django/appengine
+env = Env(
+    DEBUG=(bool, False),
+    PROD=(bool, False)
+)
 
-ALLOWED_HOSTS = ["*"]
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = env('DEBUG')
+
+PROD = env('PROD')
+
+# https://cloud.google.com/python/django/appengine
+# for deployment
+
+
+if PROD:
+    APPENGINE_URL = env("APPENGINE_URL", default=None)
+    if APPENGINE_URL:
+        # Ensure a scheme is present in the URL before it's processed.
+        if not urlparse(APPENGINE_URL).scheme:
+            APPENGINE_URL = f"https://{APPENGINE_URL}"
+
+        ALLOWED_HOSTS = [urlparse(APPENGINE_URL).netloc]
+        CSRF_TRUSTED_ORIGINS = [APPENGINE_URL]
+        SECURE_SSL_REDIRECT = True
+    else:
+        ALLOWED_HOSTS = ["*"]
+else:
+    ALLOWED_HOSTS = ["*"]
 
 INTERNAL_IPS = [
     "127.0.0.1",
@@ -115,13 +142,33 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
+if PROD:
+    DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': '<name>',
+        'USER': '<db_username>',
+        'PASSWORD': '<password>',
+        'HOST': '<db_hostname_or_ip>',
+        'PORT': '<db_port>',
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators

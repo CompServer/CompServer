@@ -1,17 +1,18 @@
 from datetime import datetime
 import math
 import random
-from typing import Dict, Set, Union
+from typing import Set, Union
 import zoneinfo
 
+from crispy_forms.utils import render_crispy_form
 from django.contrib import messages
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth.views import login_required
 from django.core.exceptions import SuspiciousOperation
 from django.db.models import Q, QuerySet
 from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
-from django.shortcuts import get_object_or_404, render
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template import RequestContext
 from django.template.exceptions import TemplateDoesNotExist
 from django.urls import reverse
 from django.utils import timezone
@@ -203,11 +204,10 @@ def generate_single_elimination_matches(request, tournament_id: int):
         num_matches = len(matches)
     return HttpResponseRedirect(reverse("competitions:single_elimination_tournament", args=(tournament_id,)))
 
-def isPlayed(teams_played: Dict[Team, Set], match_teams: QuerySet[Team]):
+def isPlayed(teams_played: Set[Team], match_teams: QuerySet[Team]):
     return any([team in teams_played for team in match_teams])
 
 def generate_round_robin_matches(request, tournament_id):
-    #may have to include buys, but check with schwartz first.
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
     arena_iterator = 0
     nmpt_iterator = 0
@@ -215,37 +215,40 @@ def generate_round_robin_matches(request, tournament_id):
     starting_time = tournament.start_time 
     teams = [team for team in tournament.teams.all()]
     teams_played = {team: set() for team in teams}
-    num_byes = len(teams) % tournament.teams_per_match
-    byes = [0 for _ in range(len(teams))]
-    for k in range(tournament.num_rounds):
-        if byes == [1 for _ in range(len(teams))]:
-            byes = [0 for _ in range(len(teams))]
-        nmpt_iterator = 0
-        if arena_iterator > 0:
-            arena_iterator = 0
-            starting_time += tournament.event.match_time
-        num_participated = [0 for _ in range(len(teams))]
-        temp = min(teams_played.values(), key=lambda x: len(x))
-        if temp == len(teams) - 1:
-            teams_played = {team: set() for team in teams}
-
-        #create bye match
-        match = Match.objects.create(tournament=tournament)
-        for i in range(num_byes):
-            j = random.randint(0, len(teams)-1)
-            while(byes[j] > 0 or teams[j] in match.starting_teams.all() or \
-            isPlayed(teams_played[teams[j]], match.starting_teams.all())):
-                j = random.randint(0, len(teams)-1)    
-            match.starting_teams.add(teams[j])      
-            byes[j] += 1
-            num_participated[j] += 1 
-        for team in match.starting_teams.all():
-            for team2 in match.starting_teams.all():
-                if team != team2:
-                    teams_played[team].add(team2)
-        #starting time confusion for byes (do we have them)
-        match.time = starting_time
-        match.arena = arenas[arena_iterator]
+    for team in teams:
+        if team == teams[len(teams)-1]:
+            break
+        for k in range(tournament.matches_per_team):
+            if len(teams_played[team]) >= tournament.matches_per_team:
+                break
+            match = Match.objects.create(tournament=tournament)
+            match.starting_teams.add(team)
+            for i in range(1, tournament.teams_per_match):
+                j = random.randint(0, len(teams)-1)
+                while(teams[j] in match.starting_teams.all() or \
+                isPlayed(teams_played[teams[j]], match.starting_teams.all()) or \
+                    len(teams_played[teams[j]]) >= tournament.matches_per_team):
+                    j = random.randint(0, len(teams)-1)    
+                match.starting_teams.add(teams[j])
+            for team in match.starting_teams.all():
+                for team2 in match.starting_teams.all():
+                    if team != team2:
+                        teams_played[team].add(team2)
+            match.save()
+    matches = [match for match in tournament.match_set.all()]
+    round_num = 1
+    curr_round = []
+    num_participated = [0 for _ in range(len(matches))]
+    while num_participated != [1 for _ in range(len(matches))]:
+        j = random.randint(0, len(matches)-1)
+        while num_participated[j] == 1:
+            j = random.randint(0, len(matches)-1)
+        num_participated[j] = 1    
+        matches[j].time = starting_time
+        matches[j].arena = arenas[arena_iterator]
+        matches[j].round_num = round_num
+        matches[j].save()
+        curr_round.append(matches[j])
         nmpt_iterator += 1
         if nmpt_iterator == arenas[arena_iterator].capacity:
             arena_iterator += 1
@@ -253,36 +256,8 @@ def generate_round_robin_matches(request, tournament_id):
             if arena_iterator >= len(arenas):
                 arena_iterator = 0
                 starting_time += tournament.event.match_time 
-        match.round_num = k+1
-        match.save()
-    
-        #create rest of the matches
-        while num_participated != [1 for _ in range(len(teams))]:
-            match = Match.objects.create(tournament=tournament)
-            for i in range(tournament.teams_per_match):
-                j = random.randint(0, len(teams)-1)
-                while(num_participated[j] > 0 or teams[j] in match.starting_teams.all() or \
-                isPlayed(teams_played[teams[j]], match.starting_teams.all())):
-                    j = random.randint(0, len(teams)-1)    
-                match.starting_teams.add(teams[j])      
-                num_participated[j] += 1 
-                if num_participated == [1 for _ in range(len(teams))]:
-                    break
-            for team in match.starting_teams.all():
-                for team2 in match.starting_teams.all():
-                    if team != team2:
-                        teams_played[team].add(team2)
-            match.time = starting_time
-            match.arena = arenas[arena_iterator]
-            nmpt_iterator += 1
-            if nmpt_iterator == arenas[arena_iterator].capacity:
-                arena_iterator += 1
-                nmpt_iterator = 0
-                if arena_iterator >= len(arenas):
-                    arena_iterator = 0
-                    starting_time += tournament.event.match_time 
-            match.round_num = k+1
-            match.save()
+                round_num += 1
+                curr_round = []
     return HttpResponseRedirect(reverse("competitions:round_robin_tournament", args=(tournament_id,)))
     #still have a little bit of confusion with the ordering of matches.
 
@@ -323,7 +298,7 @@ def swap_matches(request: HttpRequest, tournament_id: int):
             team1 = form.cleaned_data.get('team1')
             team2 = form.cleaned_data.get('team2')
             round_num = form.cleaned_data.get('round_num')
-            if round_num > tournament.num_rounds or round_num < 1:
+            if round_num < 1 or not Match.objects.filter(tournament=tournament, round_num=round_num).exists():
                 #print("Invalid round")
                 return HttpResponseRedirect(reverse("competitions:swap_matches", args=(tournament_id,)))
             match1 = Match.objects.filter(tournament=tournament, starting_teams__in=[team1.id], round_num=round_num).first()
@@ -365,13 +340,14 @@ def tournament(request: HttpRequest, tournament_id: int):
     raise Http404
 
 @login_required
-def create_tournament(request: HttpRequest):
+def create_tournament_legacy(request: HttpRequest):
     competition_id = request.GET.get('competition_id',None)
     tournament_type = request.GET.get('tournament_type', None)
 
     if competition_id is None:
         messages.error(request, "No competition selected.")
         return HttpResponseRedirect(reverse("competitions:competitions"))
+        
     try:
         competition = get_object_or_404(Competition, pk=int(competition_id))
     except:
@@ -406,6 +382,44 @@ def create_tournament(request: HttpRequest):
     if not form:
         form = FORM_CLASS(competition=competition)
     return render(request, "FORM_BASE.html", {'form_title': "Create Tournament", 'action': f"?tournament_type={tournament_type}&competition_id={competition.id}" , "form": form,  "form_submit_text": "Create"})
+
+@login_required
+def create_tournament_htmx(request: HttpRequest):
+    competition_id = request.GET.get('competition_id',None)
+    #tournament_type = str(request.GET.get('tournament_type','')).lower().strip()
+
+    # if tournament_type == 'rr':
+    #     FORM_CLASS = RRTournamentForm
+    # elif tournament_type == 'se':
+    #     FORM_CLASS = SETournamentForm
+    # else:
+    #     raise SuspiciousOperation
+    if competition_id:
+        competition = get_object_or_404(Competition, pk=competition_id)
+    else:
+        messages.error(request, "No competition selected.")
+        return HttpResponseRedirect(reverse("competitions:create_tournament_legacy"))
+
+    form = None
+    if request.method == 'POST':
+        form = FORM_CLASS(request.POST, competition=competition)
+        if form.is_valid():
+            form.full_clean()
+            instance = form.save(commit=False)
+            instance.competition = competition
+            instance.save()
+            form.save() # may not work?
+            return HttpResponseRedirect(f"{reverse('competitions:tournament', args=(form.instance.id,))}")
+        else:
+            for error_field, error_desc in form.errors.items():
+                form.add_error(error_field, error_desc)
+    # if not form:
+    #     form = FORM_CLASS(competition=competition)
+
+    form = TournamentTypeSelectForm(competition_id=competition.id)
+    form_html = render_crispy_form(form, helper=form.helper)
+
+    return render(request, "competitions/new_tournament_form.html", RequestContext(request, {"form_html": form_html, "action": "", "form_submit_text": "Select", "form_title": "Create"}).flatten())
 
 @login_required
 def edit_tournament(request: HttpRequest, tournament_id: int):
@@ -581,7 +595,7 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
                 bracket_array.append({})
             bracket_array[curr_round+1][base_index] = None
 
-    read_tree_from_node(Match.objects.filter(tournament=tournament_id).filter(next_matches__isnull=True).first(), 0, 0)
+    read_tree_from_node(Match.objects.filter(tournament=tournament_id, next_matches__isnull=True).first(), 0, 0)
 
     bracket_array.pop()
 
@@ -654,7 +668,7 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
                 return HttpResponseRedirect(reverse(f"competitions:{redirect_to}",args=redirect_id))
     if tournament.is_archived:
         return HttpResponseRedirect(reverse("competitions:competitions"))
-    numRounds = tournament.num_rounds
+    numRounds = tournament.match_set.order_by('-round_num').first().round_num
     bracket_array =  [{i:[]} for i in range(numRounds)]
     for i in range(numRounds):
         rounds = sorted([match for match in Match.objects.filter(tournament=tournament, round_num=i+1)], key=lambda match : (match.arena.id, match.time))
@@ -671,7 +685,7 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
                 team_data.append({'name': team.name, 'won': won, 'is_next': is_next, 'prev': prev, 'match': rounds[j], 'connector': connector})
                 won = False
                 k += 1
-            for q in range(k, tournament.teams_per_match):
+            for _ in range(k, tournament.teams_per_match):
                 team_data.append({'name': 'No Team', 'won': won, 'is_next': is_next, 'prev': prev, 'match': rounds[j], 'connector': connector})
             bracket_array[i][j] = team_data
     
@@ -689,6 +703,8 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
         match_data = []
 
         for team_data in round_matches.values():
+            if team_data == []:
+                continue
             num_teams = mostTeamsInRound if team_data else 0
             center_height = teamHeight * num_teams
             center_top_margin = (match_height - center_height) / 2
@@ -699,7 +715,8 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
                 "match_width": matchWidth,
                 "center_height": center_height,
                 "center_top_margin": center_top_margin,
-                "arena": team_data[0].get('match').arena
+                "arena": team_data[0].get('match').arena,
+                "match":  team_data[0].get('match'),
              })
 
         round_data.append({"match_data": match_data})
@@ -761,18 +778,18 @@ def competition(request: HttpRequest, competition_id: int):
 
 @login_required
 def create_competition(request: HttpRequest):
-    sport_id = request.GET.get('sport', None)
-    if sport_id is None:
-        return render(request, "competitions/create_competition.html", {"sports": Sport.objects.all()})
-    try:
-        sport_id = int(sport_id)
-    except:
-        raise Http404("Not a valid sport.")
-    sport = get_object_or_404(Sport, pk=sport_id)
+    # sport_id = request.GET.get('sport', None)
+    # if sport_id is None:
+    #     return render(request, "competitions/create_competition.html", {"sports": Sport.objects.all()})
+    # try:
+    #     sport_id = int(sport_id)
+    # except:
+    #     raise Http404("Not a valid sport.")
+    # sport = get_object_or_404(Sport, pk=sport_id)
 
     form = None
     if request.method == 'POST':
-        form = CreateCompetitionsForm(request.POST, sport=sport)
+        form = CreateCompetitionsForm(request.POST)
         if form.is_valid():
             form.save()
             messages.success(request, "Competition created successfully.")
@@ -781,8 +798,9 @@ def create_competition(request: HttpRequest):
             for error_field, error_desc in form.errors.items():
                 form.add_error(error_field, error_desc)
     if not form:
-        form = CreateCompetitionsForm(sport=sport)
-    return render(request, "competitions/create_competition_form.html", {"form": form})
+        form = CreateCompetitionsForm()
+    #form_html = render_crispy_form(form)
+    return render(request, "competitions/create_competition_form.html", {"form": form}) #{"form_html": form_html})
 
 def credits(request: HttpRequest):
     return render(request, "competitions/credits.html")
@@ -865,7 +883,7 @@ def profile(request, user_id):
     #check coach
     if Coach.objects.filter(id = user_id).exists():
         teams_coached = Team.objects.filter(coach_id = user_id)
-        team_records = list()
+        team_records = []
         wins = 0
         losses = 0
         for team_coached in teams_coached:
@@ -943,15 +961,15 @@ def team(request: HttpRequest, team_id: int):
     upcoming_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), tournament__competition__start_date__lte=today, tournament__competition__end_date__gte=today, advancers=None).order_by("-time")
     past_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id)).exclude(advancers=None).order_by("-time")
     past_competitions = Competition.objects.filter(teams__id = team_id, status = Status.COMPLETE).order_by("end_date")
-    past_tournaments_won = list()
+    past_tournaments_won = []
     past_tournaments = SingleEliminationTournament.objects.filter(teams__id = team_id, status = Status.COMPLETE).order_by("start_time")
     for past_tournament in past_tournaments:
         last_match_advancers = past_tournament.match_set.last().advancers.all()
         if team in last_match_advancers:
             past_tournaments_won.append(past_tournament)
-    losses = list()
-    wins = list()
-    draws = list()
+    losses = []
+    wins = []
+    draws = []
     for pm in past_matches:
         first_half = " in Round " + str(pm.round_num) + " in "
         second_half = " tournament @" + pm.tournament.competition.name
@@ -960,7 +978,7 @@ def team(request: HttpRequest, team_id: int):
         if num_starting_teams == 1 and pm.starting_teams.all().first().id == team_id and pm.advancers.all().first().id == team_id:
             wins.append((("Granted a BYE" + first_half), pm.tournament, second_half))
         else:
-            starting_teams_names = list()
+            starting_teams_names = []
             for starting_team in pm.starting_teams.all():
                 if starting_team.id != team_id:
                     starting_teams_names.append(starting_team.name)
@@ -970,8 +988,8 @@ def team(request: HttpRequest, team_id: int):
                 else:
                     wins.append((("Won against " + ",".join(starting_teams_names) + first_half), pm.tournament, second_half))
             else:
-                advancer_team_ids = list()
-                advancer_teams_names = list()
+                advancer_team_ids = []
+                advancer_teams_names = []
                 for advancer in pm.advancers.all():
                     advancer_team_ids.append(advancer.id)
                     if advancer.id != team_id:
@@ -1001,9 +1019,12 @@ def team(request: HttpRequest, team_id: int):
 
 def _raise_error_code(request: HttpRequest):
     try:
-        error_code = int(request.GET.get('code', 0)) # type: ignore
+        error_code = int(request.GET.get('code', 500)) # type: ignore
     except:
         raise SuspiciousOperation
+    
+    # if error_code not in range(100,600):
+    #     error_code = 500
 
     # if error_code == 403:
     #     raise PermissionDenied
