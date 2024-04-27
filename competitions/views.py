@@ -21,8 +21,6 @@ from django.urls import reverse
 from django.utils import timezone
 from django.core.exceptions import SuspiciousOperation
 from django.template.exceptions import TemplateDoesNotExist
-from operator import attrgetter
-import operator
 import random
 import zoneinfo
 from typing import Union
@@ -927,9 +925,9 @@ def profile(request, user_id):
     user = User.objects.filter(id=user_id).first()
     if user_id in [user.id for user in [tournament.planeary_judges for tournament in SingleEliminationTournament.objects.all()]]:
         is_judge = True
-        current_gigs = Match.objects.filter(plenary_judges__user__id=user_id, status = Status.OPEN).order_by("-time")
-        upcoming_gigs = Match.objects.filter(plenary_judges__user__id=user_id, status = Status.SETUP).order_by("-status", "-time")
-        judged_tournaments = AbstractTournament.ojbects.filter(Q(status = Status.COMPLETE) | Q(status = Status.CLOSED), planeary_judges__id == user_id).order_by("-start_time", "-competition")
+        current_gigs = Match.objects.filter(tournament__judges__id=user_id, status = Status.OPEN).order_by("-time")
+        upcoming_gigs = Match.objects.filter(tournament__judges__id=user_id, status = Status.SETUP).order_by("-status", "-time")
+        judged_tournaments = AbstractTournament.objects.filter(judges__id=user_id).filter(Q(status = Status.COMPLETE) | Q(status = Status.CLOSED)).order_by("-start_time", "-competition").filter()
     else:
         is_judge = False
     if user_id in [team.coach.id for team in Team.objects.all()]:
@@ -939,6 +937,7 @@ def profile(request, user_id):
         team_names = list()
         team_wins = list()
         team_losses = list()
+        team_rankings = dict()
         for team in coached_teams:
             wins = AbstractTournament.objects.filter(competition__teams=team, status=Status.COMPLETE, match_set__last__advancers=team).order_by("-start_time", "-competition")
             if wins:
@@ -951,7 +950,7 @@ def profile(request, user_id):
             else:
                 losses_count = 0
             team_names.append(team.name)
-            team_losess.append(losses_count)
+            team_losses.append(losses_count)
             team_wins.append(wins_count)
             rankings = list()
             for ranking in Ranking.objects.filter(team=team).order_by("-tournament", "-rank"):
@@ -1002,6 +1001,9 @@ def organization(request, organization_id):
     return render(request, 'organization.html', context)
 
 def results(request, competition_id):
+    #need to really fix this page
+    totals = list() #this is fake so that it cna run
+    tournament_scorings = list()#also fake
     competition = Competition.objects.get(id = competition_id)
     tournaments = [tournament for tournament in competition.tournament_set.order_by("points", "start_time", "competition").filter(status = Status.COMPLETE)]
     for robin_tournament in RoundRobinTournament.objects.filter(competition__id=competition_id, status = Status.COMPLETE).order_by("points", "-start_time", "-competition"):
@@ -1014,7 +1016,7 @@ def results(request, competition_id):
         scores = dict()
         for team_name in team_names:
             team = Team.objects.filter(name=team_name).first()
-            if is_single_elimination(tournament):
+            if tournament.is_single_elimination():
                 last_match = Match.objects.filter(tournament__id = tournament.id, next_matches__isnull = True).first()
                 if team in last_match.advancers.all():
                     scores[tournament_name] = (team_name, tournament.points)

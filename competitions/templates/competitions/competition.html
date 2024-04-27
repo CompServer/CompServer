@@ -59,7 +59,9 @@
                     {% endif %}
                     {% if tournament.points %}
                         ({{ tournament.points|floatformat:"0" }} {% translate "points" %}) 
-                        ({% translate "Winner(s): " %} {{ tournament.get_winners }})
+                    {% endif %}
+                    {% if tournament.get_winner %}
+                        ({% translate "Winner(s): " %} {{ tournament.get_winner }})
                     {% endif %}
                     {% if user.is_staff %}
                         <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/tournament/{{ tournament.id }}/?next=competition&id={{ competition.id }}" method="POST" id="status">
@@ -94,8 +96,12 @@
                         {% elif competition.is_archived %}
                             <i class="bi-archive" title="{{ tournament.status }}"></i> {{ tournament }} <small>You can see this archived item because you are signed in as a superuser.</small>
                         {% endif %}
-                        ({{ tournament.points|floatformat:"0" }} {% translate "points" %}) 
-                        ({% translate "Winner(s): " %} {{ tournament.get_winners }})
+                        {% if tournament.points %}
+                            ({{ tournament.points|floatformat:"0" }} {% translate "points" %}) 
+                        {% endif %}
+                        {% if tournament.get_winner %}
+                            ({% translate "Winner(s): " %} {{ tournament.get_winner }})
+                        {% endif %}
                         {% if user.is_staff %}
                             <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/tournament/{{ tournament.id }}/?next=competition&id={{ competition.id }}" method="POST" id="status">
                                 {% csrf_token %}

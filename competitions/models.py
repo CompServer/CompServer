@@ -342,7 +342,7 @@ class Competition(models.Model):
         return sorted_totals # a dictionary of every team and their total points
         #have to make this work with results page somehow
                 
-    def get_winners(self):
+    def get_winner(self):
         if self.status == Status.COMPLETE:
             winners = list()
             totals = self.get_results()
@@ -480,8 +480,8 @@ class AbstractTournament(models.Model):
     def __str__(self) -> str:
         return self.event.name + _(" tournament @ ") + str(self.competition) # SumoBot tournament at RoboMed 2023
 
-    def get_winner(self):
-        return self.match_set.last().advancers() #returns the list of winners
+    def get_winner(self) -> list:
+        return [advancer  for advancer in self.match_set.last().advancers().all()]
 
     def get_end_time(self):
         time_in_seconds = 0
