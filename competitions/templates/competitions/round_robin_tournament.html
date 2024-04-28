@@ -42,10 +42,12 @@
     </h1>
     <hr>
     {% if tournament.match_set.all %}
-        <div class="bracket">
+        <div class="bracket row">
             {% for round_data in bracket_dict.round_data %}
-            <div class="round">
-                {% translate "Round" %} {{ forloop.counter }}
+            <div class="round col-6 col-md-4 col-lg-3 col-xl-2">
+                <div class="round-header">
+                    <p>{% translate "Round" %} {{ forloop.counter }}</p>
+                </div>
                 {% for match_data in round_data.match_data %}
                 <div class="match" style="height: {{ match_data.match_height }}px; width: {{ match_data.match_width }}px;" id="{{ match_data.id }}">
                     <div class="center"
@@ -53,13 +55,13 @@
                         {% if match_data.team_data != None %}
                             {{ match_data.arena }} {% if user.is_staff %} <small><small id="match_id">(ID: {{ match_data.id }})</small></small> {% endif %}
                             {% for team_data in match_data.team_data %}
-                                <div class="team highlight-{{team_data.team_id}} {%if team_data.won %}won{%endif%}"
-                                    style="height: {{bracket_dict.team_height}}px; width: {{ bracket_dict.match_width }}px; cursor: pointer;
+                                <div class=" team highlight-{{ team_data.match_id }}-{{ team_data.team_id }} {%if team_data.won %}won{%endif%}"
+                                    style="height: {{ bracket_dict.team_height }}px; width: {{ bracket_dict.match_width }}px; cursor: pointer;
                                     background-color:{% if team_data.won %} #fff5a8 {% else %} {{ match_data.arena.color }} {% endif %}; 
                                     {% if forloop.first %} border-top-right-radius: 8px; border-top-left-radius: 8px; {% endif %}
                                     {% if forloop.last %} border-bottom-right-radius: 8px; border-bottom-left-radius: 8px; {% endif %}"
                                     onclick="location.href='{% url 'competitions:judge_match' team_data.match_id %}';"
-                                    onmouseover="highlight({{team_data.team_id}}, {{ team_data.match_id }})" onmouseout="dehighlight({{team_data.team_id}}, '{{ match_data.arena.color }}')">
+                                    onmouseover="highlight({{team_data.team_id}}, {{ team_data.match_id }})" onmouseout="dehighlight({{ team_data.team_id }}, {{ team_data.match_id }}, '{{ match_data.arena.color }}')">
                                     <p style="color: {% if match_data.arena.is_dark %} white; {% endif %} ">{{ team_data.name }}</p>
                                 </div>
                             {% endfor %}
@@ -67,13 +69,14 @@
                     </div> 
                 </div>
                 {% endfor %}    
+                {% if not forloop.last %} <br><br><br> {% endif %}
             </div>
             {% endfor %}
         </div>
         <div class="row d-flex justify-content-center">
             <span><b>Team Rankings</b> ({% translate "Points Per Win: "%} {{ tournament.points_per_win }}, {% translate "Points Per Tie: "%} {{ tournament.points_per_tie }}, {% translate "Points Per Loss: "%} {{ tournament.points_per_loss }})</span>
             {% for team, points in team_wins.items %}
-                <li class="nav-item">
+                <li>
                     {% if team in winning_teams %}
                         <b><font color="#ff0000">{{ team.name }}</font></b>:
                     {% else %}
@@ -99,7 +102,7 @@
     {% endif %}
     <script>
         function highlight(num, num2) {
-            document.querySelectorAll(".highlight-"+num).forEach((element)=>{
+            document.querySelectorAll(".highlight-"+num2+"-"+num).forEach((element)=>{
                 element.style.borderColor = "#2ec4b6";
                 if (element.className.includes("won")) {
                     if (element.className.includes("team")) {
@@ -114,9 +117,8 @@
                 }
             })
         }
-        function dehighlight(num, color) {
-            console.log(color);
-            document.querySelectorAll(".highlight-"+num).forEach((element)=>{
+        function dehighlight(num, num2, color) {
+            document.querySelectorAll(".highlight-"+num2+"-"+num).forEach((element)=>{
                 element.style.borderColor = "black";
                 if (element.className.includes("won")) {
                     if (element.className.includes("team")) {
@@ -130,6 +132,4 @@
             })
         }
     </script>
-    
-    {% comment %} <h3>{% translate "Matches" %}</h3> {% endcomment %}
 {% endblock %}

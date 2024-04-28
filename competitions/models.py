@@ -273,7 +273,6 @@ class Arena(models.Model):
     @property
     def is_dark(self) -> bool:
         color = str(self.color).lstrip('#')
-        print('RGB =', tuple(int(color[i:i+2], 16) for i in (0, 2, 4)))
         rgb = list(int(color[i:i+2], 16) for i in (0, 2, 4))
         hsp = math.sqrt(0.299 * (rgb[0] * rgb[0]) + 0.587 * (rgb[1] * rgb[1]) + 0.114 * (rgb[2] * rgb[2]))
         if hsp < 127.5:
