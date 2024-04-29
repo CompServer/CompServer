@@ -6,6 +6,7 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 urlpatterns = [
     path('', include("competitions.urls")), 
+    path('api/v1/', include('api.urls')),
     path('admin/', admin.site.urls),
     path('hijack/', include('hijack.urls')),
     path('__debug__/', include("debug_toolbar.urls")),

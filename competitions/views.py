@@ -1,5 +1,4 @@
 from datetime import datetime
-from logging import error
 import math
 import random
 from random import shuffle
@@ -8,14 +7,18 @@ from typing import Dict, Set, Union, List, Iterable
 import zoneinfo
 from heapq import nsmallest
 from django.db.models import Max
+from typing import Set, Union
+import zoneinfo
+
+from crispy_forms.utils import render_crispy_form
 from django.contrib import messages
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth.views import login_required
 from django.core.exceptions import SuspiciousOperation
-from django.db.models import Count, Q
 from django.db.models import Q, QuerySet
 from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template import RequestContext
 from django.template.exceptions import TemplateDoesNotExist
 from django.urls import reverse
 from django.utils import timezone
@@ -417,13 +420,14 @@ def tournament(request: HttpRequest, tournament_id: int):
     raise Http404
 
 @login_required
-def create_tournament(request: HttpRequest):
+def create_tournament_legacy(request: HttpRequest):
     competition_id = request.GET.get('competition_id',None)
     tournament_type = request.GET.get('tournament_type', None)
 
     if competition_id is None:
         messages.error(request, "No competition selected.")
         return HttpResponseRedirect(reverse("competitions:competitions"))
+        
     try:
         competition = get_object_or_404(Competition, pk=int(competition_id))
     except:
@@ -458,6 +462,44 @@ def create_tournament(request: HttpRequest):
     if not form:
         form = FORM_CLASS(competition=competition)
     return render(request, "FORM_BASE.html", {'form_title': "Create Tournament", 'action': f"?tournament_type={tournament_type}&competition_id={competition.id}" , "form": form,  "form_submit_text": "Create"})
+
+@login_required
+def create_tournament_htmx(request: HttpRequest):
+    competition_id = request.GET.get('competition_id',None)
+    #tournament_type = str(request.GET.get('tournament_type','')).lower().strip()
+
+    # if tournament_type == 'rr':
+    #     FORM_CLASS = RRTournamentForm
+    # elif tournament_type == 'se':
+    #     FORM_CLASS = SETournamentForm
+    # else:
+    #     raise SuspiciousOperation
+    if competition_id:
+        competition = get_object_or_404(Competition, pk=competition_id)
+    else:
+        messages.error(request, "No competition selected.")
+        return HttpResponseRedirect(reverse("competitions:create_tournament_legacy"))
+
+    form = None
+    if request.method == 'POST':
+        form = FORM_CLASS(request.POST, competition=competition)
+        if form.is_valid():
+            form.full_clean()
+            instance = form.save(commit=False)
+            instance.competition = competition
+            instance.save()
+            form.save() # may not work?
+            return HttpResponseRedirect(f"{reverse('competitions:tournament', args=(form.instance.id,))}")
+        else:
+            for error_field, error_desc in form.errors.items():
+                form.add_error(error_field, error_desc)
+    # if not form:
+    #     form = FORM_CLASS(competition=competition)
+
+    form = TournamentTypeSelectForm(competition_id=competition.id)
+    form_html = render_crispy_form(form, helper=form.helper)
+
+    return render(request, "competitions/new_tournament_form.html", RequestContext(request, {"form_html": form_html, "action": "", "form_submit_text": "Select", "form_title": "Create"}).flatten())
 
 @login_required
 def edit_tournament(request: HttpRequest, tournament_id: int):
@@ -634,7 +676,7 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
                 bracket_array.append({})
             bracket_array[curr_round+1][base_index] = None
 
-    championship = Match.objects.filter(tournament=tournament_id).filter(next_matches__isnull=True).first()
+    championship = Match.objects.filter(tournament=tournament_id, next_matches__isnull=True).first()
     read_tree_from_node(championship, 0, 0)
 
     bracket_array.pop()
@@ -727,7 +769,7 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
                 team_data.append({'name': team.name, 'won': won, 'is_next': is_next, 'prev': prev, 'match': rounds[j], 'connector': connector})
                 won = False
                 k += 1
-            for q in range(k, tournament.teams_per_match):
+            for _ in range(k, tournament.teams_per_match):
                 team_data.append({'name': 'No Team', 'won': won, 'is_next': is_next, 'prev': prev, 'match': rounds[j], 'connector': connector})
             bracket_array[i][j] = team_data
     
@@ -758,7 +800,8 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
                 "center_height": center_height,
                 "center_top_margin": center_top_margin,
                 "arena": team_data[0].get('match').arena,
-                "id": team_data[0].get('match').id
+                "id": team_data[0].get('match').id,
+                "match":  team_data[0].get('match'),
              })
 
         round_data.append({"match_data": match_data})
@@ -819,18 +862,18 @@ def competition(request: HttpRequest, competition_id: int):
 
 @login_required
 def create_competition(request: HttpRequest):
-    sport_id = request.GET.get('sport', None)
-    if sport_id is None:
-        return render(request, "competitions/create_competition.html", {"sports": Sport.objects.all()})
-    try:
-        sport_id = int(sport_id)
-    except:
-        raise Http404("Not a valid sport.")
-    sport = get_object_or_404(Sport, pk=sport_id)
+    # sport_id = request.GET.get('sport', None)
+    # if sport_id is None:
+    #     return render(request, "competitions/create_competition.html", {"sports": Sport.objects.all()})
+    # try:
+    #     sport_id = int(sport_id)
+    # except:
+    #     raise Http404("Not a valid sport.")
+    # sport = get_object_or_404(Sport, pk=sport_id)
 
     form = None
     if request.method == 'POST':
-        form = CreateCompetitionsForm(request.POST, sport=sport)
+        form = CreateCompetitionsForm(request.POST)
         if form.is_valid():
             form.save()
             messages.success(request, "Competition created successfully.")
@@ -839,8 +882,9 @@ def create_competition(request: HttpRequest):
             for error_field, error_desc in form.errors.items():
                 form.add_error(error_field, error_desc)
     if not form:
-        form = CreateCompetitionsForm(sport=sport)
-    return render(request, "competitions/create_competition_form.html", {"form": form})
+        form = CreateCompetitionsForm()
+    #form_html = render_crispy_form(form)
+    return render(request, "competitions/create_competition_form.html", {"form": form}) #{"form_html": form_html})
 
 def credits(request: HttpRequest):
     return render(request, "competitions/credits.html")
@@ -1156,9 +1200,12 @@ def team(request: HttpRequest, team_id: int):
 
 def _raise_error_code(request: HttpRequest):
     try:
-        error_code = int(request.GET.get('code', 0)) # type: ignore
+        error_code = int(request.GET.get('code', 500)) # type: ignore
     except:
         raise SuspiciousOperation
+    
+    # if error_code not in range(100,600):
+    #     error_code = 500
 
     # if error_code == 403:
     #     raise PermissionDenied

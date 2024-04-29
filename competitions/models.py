@@ -571,7 +571,8 @@ class RoundRobinTournament(AbstractTournament):
         return True
 
     class Meta():
-        verbose_name = "PreliminaryTournament"
+        verbose_name = "Preliminary Tournament (Round Robin)"
+        verbose_name_plural = "Preliminary Tournaments (Round Robin)"
 #     ''' Everyone plays everyone else (most points / wins, wins) 
 #         Can be used to establish rankings for an Elimination
 #         This is often used for league play (not necessarily a tournament)
@@ -697,8 +698,8 @@ class Match(models.Model):
                 self._cached_str =  res + _(" in ") + str(self.tournament) # Battlebots vs Byters in SumoBot tournament @ RoboMed 2023
             else: 
                 self._cached_str =  res # if part of another match we don't want to repeat the tournament
-        return self._cached_str
-
+        return str(self._cached_str)
+    
     def __str__(self) -> str:
         self._generate_str_recursive()
         #if self._cached_str is None:    

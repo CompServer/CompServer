@@ -1,0 +1,12 @@
+{% load static %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+<form method="POST" enctype="multipart/form-data" action={{ action }}>
+    {% if form.helper %}
+        {% crispy form form.helper %}
+    {% else %}
+        {% crispy form %}
+    {% endif %}
+    <button type="submit" class="btn btn-secondary">{% translate "Create" %}</button>
+</form>
