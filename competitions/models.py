@@ -292,6 +292,8 @@ class Competition(models.Model):
     
     def get_results(self):
         totals = dict()
+        tournaments = AbstractTournament.objects.filter(competition__id=self.id, status=Status.COMPLETE)
+        #have to filter for single elimination
         for tournament in SingleEliminationTournament.objects.filter(compeittion__id=self.id, status=Status.COMPLETE):
             if tournament.get_winner().length() > 1:
                 for winner in tournament.get_winner():
@@ -340,23 +342,22 @@ class Competition(models.Model):
                         totals[item] = item.value()
         sorted_totals = {k: v for k, v in sorted(totals.items(), key=lambda item: totals[1])}
         return sorted_totals # a dictionary of every team and their total points
-        #have to make this work with results page somehow
                 
-    def get_winner(self):
-        if self.status == Status.COMPLETE:
-            winners = list()
-            totals = self.get_results()
-            greatest_score = totals[-1].value()
-            greatest_scorer = totals[-1].key()
-            totals.pop(totals[-1])#delete the last item
-            if greatest_score in totals.values():
-                for item in totals:
-                    if item.value() == greatest_score:
-                        winners.append(item.key())
-            winners.append(greatest_scorer)
-            return winners
-        else:
-            return None
+    # def get_winner(self):
+    #     winners = list()
+    #     totals = get_results(self)
+    #     greatest_score = totals[-1].value()
+    #     greatest_scorer = totals[-1].key()
+    #     totals.pop(totals[-1])#delete the last item
+    #     if greatest_score in totals.values():
+    #         for item in totals:
+    #             if item.value() == greatest_score:
+    #                 winners.append(item.key())
+    #     winners.append(greatest_scorer)
+    #     if winners:
+    #         return winners
+    #     else:
+    #         return "Winners haven't been determined yet."
 
     def check_date(self):
         today = timezone.now().date()
@@ -569,6 +570,10 @@ class RoundRobinTournament(AbstractTournament):
     points_per_tie = models.DecimalField(max_digits=20, decimal_places=10, default=1.0)
     points_per_loss = models.DecimalField(max_digits=20, decimal_places=10, default=0.0)
 
+    def __str__(self):
+        tournament = SingleEliminationTournament.objects.filter(prev_tournament=self)
+        return "Preliminary for " + tournament.name 
+
     @property
     def is_single_elimination(self) -> bool:   
         return False
@@ -682,7 +687,7 @@ class Match(models.Model):
     def teams(self) -> List[Team]:
         return [team for team in self.starting_teams.all()] + [match.advancers.all() for match in [previous_match for previous_match in self.prev_matches.all()]]
 
-    def _generate_str_recursive(self, force: bool=False) -> str:
+    def generate_str_recursive(self, force: bool=False) -> str:
         """Recursive algorithm for generating the string representation of this match.
         This is called whenever casted, and the result is saved to a variable to avoid recalculating it.
         It can be forced to recalculate by setting the force parameter to True, or passing in other kwargs"""

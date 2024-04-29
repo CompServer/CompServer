@@ -784,8 +784,8 @@ def competitions(request: HttpRequest):
     return render(request, "competitions/competitions.html", context)
 
 def competition(request: HttpRequest, competition_id: int):
-    redirect_to = request.GET.get('next', '') #redirect to next after login
-    redirect_id = request.GET.get('id', None) #redirect to page after id???
+    redirect_to = request.GET.get('next', '') 
+    redirect_id = request.GET.get('id', None)
     if redirect_id:
         redirect_id = [redirect_id]
     competition = get_object_or_404(Competition, pk=competition_id)
@@ -801,20 +801,27 @@ def competition(request: HttpRequest, competition_id: int):
             elif redirect_to:
                 return HttpResponseRedirect(reverse(f"competitions:{redirect_to}"))
             else:
-                # if we don't know where they came from, just send them to the competition page
-                # the tournament names doesn't show nor single elimination and we need arhived for single elimination
                 return HttpResponseRedirect(reverse(f"competitions:competition", args=[competition_id]))
     if competition.is_archived:
         return HttpResponseRedirect(reverse("competitions:competitions"))
-    elimination_tournaments = SingleEliminationTournament.objects.filter(competition__id = competition_id, status=Status.COMPLETE).order_by("-status", "-start_time")
+    
+    elimination_tournaments = SingleEliminationTournament.objects.filter(competition__id = competition_id).order_by("-status", "-start_time")
     robin_tournaments = RoundRobinTournament.objects.filter(competition__id=competition_id).order_by("-status", "-start_time")
+    organizations = list()
+    for team in competition.teams.all():
+        if team.organization:
+            if team.organization not in organizations:
+                organizations.append(team.organization)
+    #resulting = competition.get_results()
+    #have to fix the competition function to get winners
     context = {
         "competition": competition, 
         "form": CompetitionStatusForm(),
         "robin_tournaments": robin_tournaments,
         "elimination_tournaments": elimination_tournaments,
+        "organizations": organizations,
     }
-    #winner isn't showing
+    #no winner isn't showing
     #add organizations for the competiton to the comp page
     #fix the links to elimination and round robin
     return render(request, "competitions/competition.html", context)
@@ -989,20 +996,24 @@ def organization(request, organization_id):
     associated_teams = Team.objects.filter(organization__id = organization_id).order_by("-name")
     results = dict()
     for team in associated_teams:
-        wins_count = 0
-        losses_count = 0
-        if AbstractTournament.objects.filter(competition__teams=team):
-            wins = AbstractTournament.objects.filter(competition__teams=team, match_set__last__advancers=team).order_by("-status", "-start_time")
-            losses = wins = AbstractTournament.objects.filter(competition__teams=team).exclude(match_set__last__advancers=team).order_by("-status", "-start_time")
-            wins_count = wins.count()
-            losses_count = losses.count()
-        results[team.name] = (wins_count, losses_count)
+        win_count = 0
+        loss_count = 0
+        tournaments = AbstractTournament.objects.filter(competition__teams=team)
+        if tournaments:
+            for tournament in tournaments:
+                win = Match.objects.filter(tournament=tournament, advancers=team)
+                if win:
+                    win_count = win_count + 1
+                else:
+                    loss_count = loss_count + 1
+        results[team.name] = (win_count, loss_count)
     context = {
         'organization': organization,
         'associated_teams': associated_teams,
         'results': results,
+        #needs a pie chart
     }
-    return render(request, 'organization.html', context)
+    return render(request, 'competitions/organization.html', context)
 
 def results(request, competition_id):
     #need to really fix this page
@@ -1053,7 +1064,7 @@ def results(request, competition_id):
     }
     return render(request, "competitions/results.html", context)
 
-def team(request: HttpRequest, team_id: int):
+def team(request: HttpRequest, team_id: int):#check the sorting and then this is done
     team = Team.objects.filter(id=team_id).first()
     today = timezone.now().date()
     upcoming_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), tournament__competition__start_date__lte=today, tournament__competition__end_date__gte=today).exclude(advancers=None).order_by("-time")

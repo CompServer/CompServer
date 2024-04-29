@@ -40,7 +40,7 @@
             <h3>{% translate "Awaiting Matches To Begin (" %}{{ old_upcoming_matches|length }}{% translate ")"%}</h3>
             <ul>
                 {% for match in old_upcoming_matches %}
-                    <li>{% translate "Previously scheduled at" %} {{ match.time }} {% translate "between" %} {{ match }} 
+                    <li>{% translate "Previously scheduled at" %} {{ match.time }} {% translate "between" %} {{ match.generate_str_recursive }} 
                     {% if match.arena %}
                         {% translate "in" %} {{ match.arena.name }}</li>
                     {% else %}
@@ -126,5 +126,7 @@
     {% endif %}
     {% if team.organization %}
         <p>This team is from an organization titled "<a href="{% url 'competitions:organization' team.organization.id %}">{{ team.organization.name }}</a>"</p>
+    {% else %}
+        <p>This team isn't listed under an organization. </p>
     {% endif %}
 {% endblock %}
