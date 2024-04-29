@@ -356,6 +356,9 @@ def generate_round_robin_rankings(tournament_id: int):
 
 def swap_matches(request: HttpRequest, tournament_id: int):
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
+    if not tournament.is_in_setup:
+        messages.error(request, "Tournament is not in setup.")
+        return HttpResponseRedirect(reverse("competitions:tournament", args=(tournament_id,)))
     form = None
     if request.method == 'POST':
         form = MatchSwapForm(request.POST, tournament=tournament)
@@ -373,6 +376,15 @@ def swap_matches(request: HttpRequest, tournament_id: int):
 def swap_teams(request: HttpRequest, match1_id: int, match2_id: int):
     match1 = get_object_or_404(Match, pk=match1_id)
     match2 = get_object_or_404(Match, pk=match2_id)
+    if match1 == match2:
+        messages.error(request, "Both Matches are the same.")
+        return HttpResponseRedirect(reverse("competitions:tournament", args=(tournament_id,)))
+    elif not match1.tournament == match2.tournament:
+        messages.error(request, "Matches are not in the same tournament.")
+        return HttpResponseRedirect(reverse("competitions:tournament", args=(tournament_id,)))
+    elif not match1.tournament.is_in_setup:
+        messages.error(request, "Tournament is not in setup.")
+        return HttpResponseRedirect(reverse("competitions:tournament", args=(tournament_id,)))
     form = None
     if request.method == 'POST':
         form = TeamSwapForm(request.POST, match1=match1, match2=match2)
@@ -766,11 +778,11 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
             for team in rounds[j].starting_teams.all():
                 if team in rounds[j].advancers.all():
                     won = True
-                team_data.append({'name': team.name, 'won': won, 'is_next': is_next, 'prev': prev, 'match': rounds[j], 'connector': connector})
+                team_data.append({'match_id': rounds[j].id, 'team_id': team.id, 'name': team.name, 'won': won, 'is_next': is_next, 'prev': prev, 'match': rounds[j], 'connector': connector})
                 won = False
                 k += 1
-            for _ in range(k, tournament.teams_per_match):
-                team_data.append({'name': 'No Team', 'won': won, 'is_next': is_next, 'prev': prev, 'match': rounds[j], 'connector': connector})
+            for q in range(k, tournament.teams_per_match):
+                team_data.append({'match_id': rounds[j].id, 'team_id': None, 'name': 'No Team', 'won': won, 'is_next': is_next, 'prev': prev, 'match': rounds[j], 'connector': connector})
             bracket_array[i][j] = team_data
     
     num_matches = len(bracket_array)/numRounds
@@ -810,11 +822,13 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
     bracket_dict = {
         "bracketWidth": bracketWidth, 
         "bracketHeight": bracketHeight, 
-        "roundWidth": roundWidth+connectorWidth, 
+        "roundWidth": roundWidth, 
         "roundHeight": bracketHeight,
         "teamHeight": teamHeight,
         "connectorWidth": connectorWidth,
+        "match_width": matchWidth,
         "round_data": round_data,
+        "team_height": teamHeight,
     }
     team_wins = get_points(tournament_id)
     winning_points = max(team_wins.values())
