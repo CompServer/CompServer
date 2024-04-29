@@ -84,7 +84,7 @@
         <div class="match" style="height: {{ match_data.match_height }}px;">
             <div class="center"
                 style="height: {{ match_data.center_height }}px; margin-top: {{ match_data.center_top_margin }}px; ">
-                {% if match_data.team_data != None%}
+                {% if match_data.team_data != None %}
                     {% with connector_height=match_data.match_height|mul:match_data.connector_data.match_offset_mult %}    
                     <div class="connector connector-front {{ match_data.connector_data.connector }} highlight-{{match_data.connector_data.winner_id}}" onclick=""
                     style=" cursor: default;
