@@ -1,6 +1,5 @@
 {% extends 'skeleton.html' %}
 {% load i18n %}
-
 {% block title %}{% translate "Competition Page" %}{% endblock %}
 {% block content %}
     <header>
@@ -19,30 +18,18 @@
     </header>
     <div class="row d-flex">
         <a href="{% url 'competitions:results' competition.id %}">See Results</a>
+        <a href="{% url 'competitions:single_elimination_tournament' 1 %}">See</a>
     </div>
     <hr>
-    {% if robin_tournaments.exists %}
+    {% if robin_tournaments %}
         <h3>{% translate "Preliminary Tournaments" %}</h3>
         {% for tournament in robin_tournaments %}
             <div class="row d-flex">
                 <div class = "col-12 tournament">
                     {% if competition.is_archived and user.is_staff %}
                         <i class="bi-archive" title="{{ tournament.status }}"></i>
-                        {% if tournament.is_single_elimination %}
-                            {% translate "Single Elimination Tournament:" %}
-                        {% elif tournament.is_round_robin %}
-                            {% translate "Preliminary Tournament:" %}
-                        {% endif %}
                         <small>You can see this archived item because you are signed in as a superuser.</small>
-                    {% elif tournament.is_in_setup %}
-                        <i class="bi bi-device-ssd" title="{{ tournament.status }}"></i> 
-                        {% if tournament.is_single_elimination %}
-                            {% translate "Single Elimination Tournament:" %}
-                        {% elif tournament.is_round_robin %}
-                            {% translate "Preliminary Tournament:" %}
-                        {% endif %}
-                        {% if user.is_staff %} <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a>{% else %}{{ tournament }}{% endif %}
-                    {% elif tournament.is_judgable or tournament.is_complete or tournament.is_closed %}
+                    {% elif tournament.is_viewable %}
                         {% if tournament.is_judgable %} 
                             <i class="bi-activity" title="{{ tournament.status }}"></i>
                         {% elif tournament.is_complete %} 
@@ -50,17 +37,10 @@
                         {% elif tournament.is_closed %} 
                             <i class="bi-x-circle" title="{{ tournament.status }}"></i>
                         {% endif %}
-                        {% if tournament.is_single_elimination %}
-                            {% translate "Single Elimination Tournament:" %} 
-                        {% elif tournament.is_round_robin %}
-                            {% translate "Preliminary Tournament:" %}
+                        <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.name }}</a>
+                        {% if tournament.points %}
+                            ({{ tournament.points|floatformat:"0" }} {% translate "points" %}) 
                         {% endif %}
-                        <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a>
-                    {% endif %}
-                    {% if tournament.points %}
-                        ({{ tournament.points|floatformat:"0" }} {% translate "points" %}) 
-                    {% endif %}
-                    {% if tournament.get_winner %}
                         ({% translate "Winner(s): " %} {{ tournament.get_winner }})
                     {% endif %}
                     {% if user.is_staff %}

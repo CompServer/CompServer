@@ -802,6 +802,7 @@ def competition(request: HttpRequest, competition_id: int):
                 return HttpResponseRedirect(reverse(f"competitions:{redirect_to}"))
             else:
                 # if we don't know where they came from, just send them to the competition page
+                # the tournament names doesn't show nor single elimination and we need arhived for single elimination
                 return HttpResponseRedirect(reverse(f"competitions:competition", args=[competition_id]))
     if competition.is_archived:
         return HttpResponseRedirect(reverse("competitions:competitions"))
@@ -813,6 +814,9 @@ def competition(request: HttpRequest, competition_id: int):
         "robin_tournaments": robin_tournaments,
         "elimination_tournaments": elimination_tournaments,
     }
+    #winner isn't showing
+    #add organizations for the competiton to the comp page
+    #fix the links to elimination and round robin
     return render(request, "competitions/competition.html", context)
 
 @login_required
@@ -1117,11 +1121,11 @@ def team(request: HttpRequest, team_id: int):
     wins_dict = dict()
     for win in wins:
         wins_dict[win] = win[-1].time
-    sorted_wins = {k for k, v in sorted(wins_dict.items(), key=lambda item: wins_dict[1])}
+    #sorted_wins = {k for k, v in sorted(wins_dict.items(), key=lambda item: wins_dict[1])}
     draws_dict = dict()
     for draw in draws:
         draws_dict[draw] = draw[-1].time
-    sorted_draws = {k for k, v in sorted(draws_dict.items(), key=lambda item: draws_dict[1])}
+    #sorted_draws = {k for k, v in sorted(draws_dict.items(), key=lambda item: draws_dict[1])}
     byes = list()
     old_upcoming_matches = list(Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), advancers=None).order_by("-time"))
     for match in old_upcoming_matches:
@@ -1140,7 +1144,9 @@ def team(request: HttpRequest, team_id: int):
     byes_dict = dict()
     for bye in byes:
         byes_dict[bye] = bye.time
-    sorted_byes = {k for k, v in sorted(byes_dict.items(), key=lambda item: byes_dict[1])}
+    #fix sorted dictionaries
+    #fix the string for awaited matches and possibly upcoming matches
+    #sorted_byes = {k for k, v in sorted(byes_dict.items(), key=lambda item: byes_dict[1])}
     context = {
         'team': team,
         'upcoming_matches': upcoming_matches,

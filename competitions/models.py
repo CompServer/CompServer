@@ -481,7 +481,13 @@ class AbstractTournament(models.Model):
         return self.event.name + _(" tournament @ ") + str(self.competition) # SumoBot tournament at RoboMed 2023
 
     def get_winner(self) -> list:
-        return [advancer  for advancer in self.match_set.last().advancers().all()]
+        advancers_qs = self.match_set.last().advancers.all()
+        if advancers_qs.count() != 0:
+            advancers = [advancer.name for advancer in advancers_qs]
+            advancers_str = ",".join(advancers)
+            return advancers_str
+        else:
+            return "Undetermined"
 
     def get_end_time(self):
         time_in_seconds = 0
