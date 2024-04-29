@@ -170,7 +170,6 @@ class RRTournamentForm(forms.ModelForm):
             self.fields['competition'].initial = kwargs['instance'].competition
         self.fields['event'].queryset = competition.events
         self.fields['teams'].queryset = competition.teams.all()
-        self.fields['points'].help_text = "How many points should be awarded to the winner?"
         #self.events = competition.events
         #self.fields['events'].queryset = Event.objects.filter(competition=competition)
 
@@ -181,6 +180,8 @@ class RRTournamentForm(forms.ModelForm):
             return False
         elif self.cleaned_data['teams_per_match'] < 2:
             self.add_error('teams_per_match', 'Teams per match must be greater than or equal to 2')
+            return False
+        elif self.cleaned_data['teams_per_match'] == 2 and self.cleaned_data['teams'].count() % 2 == 1 and self.cleaned_data['matches_per_team'] % 2 == 1:
             return False
         # elif self.cleaned_data['teams'].count() % self.cleaned_data['teams_per_match'] != 0:
         #     self.add_error('teams', 'Teams must be able to be divided evenly into matches')

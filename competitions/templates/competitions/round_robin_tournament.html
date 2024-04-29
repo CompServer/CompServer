@@ -42,10 +42,11 @@
     </h1>
     <hr>
     {% if tournament.match_set.all %}
-        <div class="bracket row">
+        <div class="bracket row" style="padding-right: 2%; padding-top: 30px; padding-bottom: 30px;">
             {% for round_data in bracket_dict.round_data %}
-            <div class="round col-6 col-md-4 col-lg-3 col-xl-2">
-                <div class="round-header">
+            <div class="round col-6 col-md-4 col-lg-3 col-xxl-2 justify-content-center">
+                <div class="round-header" style="height: {{bracket_dict.team_height}}px;
+                width: {{ bracket_dict.match_width }}px;">
                     <p>{% translate "Round" %} {{ forloop.counter }}</p>
                 </div>
                 {% for match_data in round_data.match_data %}
@@ -62,7 +63,7 @@
                                     {% if forloop.last %} border-bottom-right-radius: 8px; border-bottom-left-radius: 8px; {% endif %}"
                                     onclick="location.href='{% url 'competitions:judge_match' team_data.match_id %}';"
                                     onmouseover="highlight({{team_data.team_id}}, {{ team_data.match_id }})" onmouseout="dehighlight({{ team_data.team_id }}, {{ team_data.match_id }}, '{{ match_data.arena.color }}')">
-                                    <p style="color: {% if match_data.arena.is_dark %} white; {% endif %} ">{{ team_data.name }}</p>
+                                    <p style="color: {% if match_data.arena.is_dark and not team_data.won %} white; {% endif %} ">{{ team_data.name }}</p>
                                 </div>
                             {% endfor %}
                         {% endif %}
