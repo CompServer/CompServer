@@ -49,7 +49,6 @@ PROD = env('PROD')
 # https://cloud.google.com/python/django/appengine
 # for deployment
 
-
 if PROD:
     APPENGINE_URL = env("APPENGINE_URL", default=None)
     if APPENGINE_URL:
@@ -218,13 +217,16 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-
 STATIC_URL = f"/static/"
 
-# STATICFILES_DIRS = [
-#     os.path.join(BASE_DIR, 'static'),
-# ]
+if DEBUG:
+    # this only applies if debug=true
+    STATICFILES_DIRS = [
+        os.path.join(BASE_DIR, 'static'),
+    ]
+else:
+    # this is what whitenoise uses (for prod)
+    STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 MEDIA_URL = '/media/'
 
