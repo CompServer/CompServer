@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-04-29 21:56-0500\n"
+"POT-Creation-Date: 2024-04-30 14:24-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -41,25 +41,27 @@ msgstr "Archivado"
 msgid " from "
 msgstr " de "
 
-#: .\competitions\models.py:424
+#: .\competitions\models.py:428
 msgid " tournament @ "
 msgstr "torneo en "
 
-#: .\competitions\models.py:627
+#: .\competitions\models.py:631
 msgid " vs "
 msgstr " vs "
 
-#: .\competitions\models.py:629
+#: .\competitions\models.py:633
 msgid " in "
 msgstr " en "
 
-#: .\competitions\models.py:642
+#: .\competitions\models.py:646
 msgid "Matches"
 msgstr " Partidos "
 
 #: .\competitions\templates\ERROR_BASE.html:17
 msgid "For more information, please contact the site administrator."
-msgstr "Para obtener más información, puede comunicarse con el administrador del sitio."
+msgstr ""
+"Para obtener más información, puede comunicarse con el administrador del "
+"sitio."
 
 #: .\competitions\templates\ERROR_BASE.html:18
 msgid "Click"
@@ -133,7 +135,7 @@ msgstr " Torneos "
 
 #: .\competitions\templates\competitions\competition.html:123
 msgid "Change Arena Colors"
-msgstr ""
+msgstr "Cambiar Colores De Arena"
 
 #: .\competitions\templates\competitions\competitions.html:7
 #: .\competitions\templates\skeleton.html:76
@@ -497,7 +499,7 @@ msgstr "Tablas"
 
 #: .\competitions\templates\registration\logged_out.html:5
 msgid "Logged out!"
-msgstr ""
+msgstr "Desconectado!"
 
 #: .\competitions\templates\registration\logged_out.html:6
 msgid "Click here to login again."
