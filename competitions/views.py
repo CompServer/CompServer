@@ -550,7 +550,8 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
                 "won": team in match.advancers.all(),
                 "is_next": is_next,
                 "match_id": match.id,
-                "team_id": team.id if team else None
+                "team_id": team.id if team else None,
+                "ranking": Ranking.objects.filter(tournament=tournament, team=team).first().rank if team else None
             })
         return output
     
@@ -693,9 +694,9 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
         "championship_id": championship.id,
         "champion_id": championship.advancers.first().id if championship.advancers.first() else None
     }
-
     tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
-    context = {"tournament": tournament, "bracket_dict": bracket_dict, "form": TournamentStatusForm()}
+    rankings = {team: Ranking.objects.filter(tournament=tournament, team=team).first().rank for team in tournament.teams.all()}
+    context = {"tournament": tournament, "bracket_dict": bracket_dict, "form": TournamentStatusForm(), "rankings": rankings}
     return render(request, "competitions/bracket.html", context)
 
 def round_robin_tournament(request: HttpRequest, tournament_id: int):
