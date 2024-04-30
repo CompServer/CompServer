@@ -42,7 +42,7 @@
     </h1>
     <hr>
     {% if tournament.match_set.all %}
-        <div class="bracket row" style="padding-right: 2%; padding-top: 30px; padding-bottom: 30px;">
+        <div class="bracket row justify-content-center" style="padding-right: 2%; padding-top: 30px; padding-bottom: 30px; margin-right: 1%;">
             {% for round_data in bracket_dict.round_data %}
             <div class="round col-6 col-md-4 col-lg-3 col-xxl-2 justify-content-center">
                 <div class="round-header" style="height: {{bracket_dict.team_height}}px;
@@ -69,7 +69,8 @@
                         {% endif %}
                     </div> 
                 </div>
-                {% endfor %}    
+                {% endfor %}  
+                {{ round_data.time }}
                 {% if not forloop.last %} <br><br><br> {% endif %}
             </div>
             {% endfor %}

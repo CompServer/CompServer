@@ -765,10 +765,12 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
                 "center_height": center_height,
                 "center_top_margin": center_top_margin,
                 "arena": team_data[0].get('match').arena,
-                "id": team_data[0].get('match').id
+                "id": team_data[0].get('match').id,
+                "time": team_data[0].get('match').time
              })
 
-        round_data.append({"match_data": match_data})
+        round_data.append({"match_data": match_data,
+                            "time": match_data[0].get('time')})
 
 
     bracket_dict = {

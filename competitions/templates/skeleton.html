@@ -94,9 +94,9 @@
                             {% translate " (Superuser)" %}
                         {% endif %}
                     </span>
-                    <a class="btn btn-primary me-3" href="{% url "logout" %}" role="button">{% translate "Log Out" %}</a>
+                    <a class="btn btn-secondary me-3" href="{% url "logout" %}" role="button">{% translate "Log Out" %}</a>
                 {% else %}
-                    <a class="btn btn-primary me-3" href="{% url "login" %}{% if request.path %}?next={{ request.path }}{% endif %}" role="button">{% translate "Log In" %}</a>
+                    <a class="btn btn-secondary me-3" href="{% url "login" %}{% if request.path %}?next={{ request.path }}{% endif %}" role="button">{% translate "Log In" %}</a>
                 {% endif %}
                     
                 {% get_available_languages as LANGUAGES %} 
