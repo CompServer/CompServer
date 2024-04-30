@@ -10,9 +10,11 @@ urlpatterns = [
     path("competition/create/", views.create_competition, name="create_competition"),
     path("competition/<int:competition_id>/", RedirectView.as_view(url='competition'), name="competition_score"), # legacy so they can be hyperlinked to
     path("competition/<int:competition_id>/results", views.results, name="results"), # legacy so they can be hyperlinked to
+    path("organization/<int:organization_id>/", views.organization, name="organization"),
     path("team/<int:team_id>/", views.team, name="team"),
     #path("tournament/", views.tournaments, name="tournaments"),
-    path("tournament/create/", views.create_tournament, name="create_tournament"),
+    path("tournament/create/legacy/", views.create_tournament_legacy, name="create_tournament_legacy"), # so it passes tests
+    path("tournament/create/", views.create_tournament_htmx, name="create_tournament"),
     path("tournament/<int:tournament_id>/edit/", views.edit_tournament, name="edit_tournament"),
     path("tournament/<int:tournament_id>/", views.tournament, name="tournament"),
     path("tournament/<int:tournament_id>/", RedirectView.as_view(url='tournament'), name="round_robin_tournament"), # both legacy so they can be hyperlinked to

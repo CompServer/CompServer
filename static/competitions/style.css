@@ -1,0 +1,110 @@
+.bracket {
+    display: flex;
+    margin: 10px;
+}
+
+.round {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.match {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.center {
+    margin: 0;
+    position: absolute;
+    flex: 1;
+}
+
+.team {
+    text-align: left;
+    background-color: lightgray;
+    border: 1px black solid;
+    float: none;
+    position: relative;
+}
+
+.connector-end {
+    border-top: 2px black solid;
+    position: absolute;
+}
+
+.connector-front {
+    border-right: 2px black solid;
+    position: absolute;
+}
+
+.connector-up {
+    border-bottom: 2px black solid;
+}
+
+.connector-down {
+    border-top: 2px black solid;
+}
+
+.connector-up .connector-end {
+    top: 0px;
+}
+
+.connector-down .connector-end {
+    bottom: -1px;
+}
+
+
+div.img {
+    position: relative;
+    height:150px;
+    width: 100%;
+    /* overflow: hidden; */
+    padding-bottom: 10px;
+}
+
+img.error {
+    width: 100%;
+    height: auto;
+    /* overflow: hidden; */
+}
+
+span.with-padding {
+    padding: 5%;
+}
+
+/* from comp.css */
+/* p {
+    word-spacing: 5px;
+} */
+.bracket {
+    display: flex;
+    margin: 10px;
+    /* border: 1px red solid; */
+}
+
+.round {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.match {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.center {
+    margin: 0;
+    position: absolute;
+    flex: 1;
+}
+
+.team {
+    width: 100%;
+    text-align: left;
+    background-color: lightgray;
+    border: 1px black solid;
+}

@@ -1,19 +1,29 @@
-from typing import Any, ClassVar, List, Optional
-from django.db import models
-from django.db.models.signals import post_save
-from django.urls.base import override
-from django.utils.translation import gettext_lazy as _
+import datetime
+import math
+import math
+import random
+import string
+from typing import Any, ClassVar, List
+
 from django.contrib.auth.models import User
-from django.dispatch import receiver
-from django.utils import timezone
 from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured
+from django.db import models
 from django.db.models import CharField, signals
 from django.db.models.fields.files import ImageField
-import random, string, datetime
-from functools import lru_cache
-import math
-#from colorfield.fields import ColorField
-from .widgets import ColorPickerWidget, ColorWidget
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
+from simple_history.models import HistoricalRecords
+
+from .utils_colorfield import get_image_file_background_color
+from .validators import (
+    color_hex_validator,
+    color_hexa_validator,
+    color_rgb_validator,
+    color_rgba_validator,
+)
+from .widgets import ColorWidget
 
 ACCESS_KEY_LENGTH = 10
 # ^ should be in settings?
@@ -30,14 +40,7 @@ def get_random_access_key():
 
 # https://github.com/h3/django-colorfield/blob/master/colorfield/fields.py
 
-from .utils_colorfield import get_image_file_background_color
-from .validators import (
-    color_hex_validator,
-    color_hexa_validator,
-    color_rgb_validator,
-    color_rgba_validator,
-)
-from .widgets import ColorWidget
+
 
 
 VALIDATORS_PER_FORMAT = {
@@ -299,8 +302,75 @@ class Competition(models.Model):
     # For scheduling purposes, we need to be able to specify for this competition how many different (Event-specific) arenas are available and their capacity
     arenas = models.ManyToManyField(Arena, blank=False)
     # related: tournament_set
+    
+    def get_results(self):
+        totals = dict()
+        for tournament in SingleEliminationTournament.objects.filter(compeittion__id=self.id, status=Status.COMPLETE):
+            if tournament.get_winner().length() > 1:
+                for winner in tournament.get_winner():
+                    if winner in totals.keys():
+                        totals[winner] = totals.get(winner) + tournament.points  
+                    else:
+                        totals[winner] = tournament.points
+            if tournament.get_winner().length() == 1:
+                if tournament.get_winner().first() in totals.keys():
+                    totals[tournament.get_winner().first()] = totals.get(tournament.get_winner().first()) + tournament.points  
+                else:
+                    totals[tournament.get_winner().first()] = tournament.points
+            if tournament.prev_tournament.exists():
+                round_robin_totals = dict()
+                for tournament in tournament.prev_tournament.all():
+                    if tournament.status == Status.COMPLETE:
+                        for match in tournament.match_set.all():
+                            for team in match.advancers.all():
+                                if match.advancers.count() == 1:
+                                    if team in round_robin_totals.keys():
+                                        round_robin_totals[team] = round_robin_totals.get(team) + tournament.points_per_win
+                                    else:
+                                        round_robin_totals[team] = tournament.points_per_win
+                                if match.advancers.count() > 1:
+                                    if team in round_robin_totals.keys():
+                                        round_robin_totals[team] = round_robin_totals.get(team) + tournament.points_per_tie
+                                    else:
+                                        round_robin_totals[team] = tournament.points_per_tie
+                            losers = list()
+                            for team in match.starting_teams:
+                                    if team.id not in {team.id for team in match.advancers.all()}:
+                                        losers.append(team)
+                            if match.prev_matches.last():
+                                for advancer in match.prev_matches.last().advancers.all():
+                                    if team.id not in {team.id for team in match.advancers.all()}:
+                                        losers.append(team)
+                            for loser in losers:
+                                if loser in round_robin_totals.keys():
+                                    round_robin_totals[loser] = round_robin_totals.get(loser) + tournament.points_per_loss
+                                else:
+                                    round_robin_totals[loser] = tournament.points_per_loss
+                for item in round_robin_totals:
+                    if item in totals:
+                        totals[item] = round_robin_totals.get() + round_robin_totals[item].get()
+                    else:
+                        totals[item] = item.value()
+        sorted_totals = {k: v for k, v in sorted(totals.items(), key=lambda item: totals[1])}
+        return sorted_totals # a dictionary of every team and their total points
+        #have to make this work with results page somehow
+                
+    def get_winners(self):
+        if self.status == Status.COMPLETE:
+            winners = list()
+            totals = self.get_results()
+            greatest_score = totals[-1].value()
+            greatest_scorer = totals[-1].key()
+            totals.pop(totals[-1])#delete the last item
+            if greatest_score in totals.values():
+                for item in totals:
+                    if item.value() == greatest_score:
+                        winners.append(item.key())
+            winners.append(greatest_scorer)
+            return winners
+        else:
+            return None
 
-    #may not need the bottom function
     def check_date(self):
         today = timezone.now().date()
         return self.end_date < today
@@ -401,7 +471,6 @@ class Event(models.Model):
     def __str__(self) -> str:
         return str(self.name)
 
-
 # dwheadon: can we force this to be abstract (non-instantiable)?
 class AbstractTournament(models.Model):
     teams_per_match = models.PositiveSmallIntegerField(default=2)
@@ -411,6 +480,7 @@ class AbstractTournament(models.Model):
     status = StatusField()
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="tournament_set") # besides helpfing to identify this tournament this will change how teams advance (high or low score)
     competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name="tournament_set")
+    color = ColorField(default="#CBCBCB")
     # interpolate_points = models.BooleanField(default=False) # otherwise winner takes all: RoboMed doesn't need this but it could be generally useful
     teams = models.ManyToManyField(Team, related_name="tournament_set")
     judges = models.ManyToManyField(User, blank=True, related_name="tournament_set")  # people entrusted to judge this tournament alone (as opposed to plenary judges)
@@ -426,6 +496,18 @@ class AbstractTournament(models.Model):
 
     def __str__(self) -> str:
         return self.event.name + _(" tournament @ ") + str(self.competition) # SumoBot tournament at RoboMed 2023
+
+    def get_winner(self):
+        return self.match_set.last().advancers() #returns the list of winners
+
+    def get_end_time(self):
+        time_in_seconds = 0
+        if self.match_set and self.status == Status.COMPLETE:
+            for match in self.match_set:
+                time_in_seconds = time_in_seconds + match.time
+        added_time = datetime.timedelta(seconds=time_in_seconds)
+        end_time = self.start_time + added_time
+        return end_time
 
     @property
     def is_viewable(self) -> bool:
@@ -506,7 +588,8 @@ class RoundRobinTournament(AbstractTournament):
         return True
 
     class Meta():
-        verbose_name = "PreliminaryTournament"
+        verbose_name = "Preliminary Tournament (Round Robin)"
+        verbose_name_plural = "Preliminary Tournaments (Round Robin)"
 #     ''' Everyone plays everyone else (most points / wins, wins) 
 #         Can be used to establish rankings for an Elimination
 #         This is often used for league play (not necessarily a tournament)
@@ -590,8 +673,10 @@ class Match(models.Model):
     _cached_str = models.TextField(blank=True, null=True) # for caching the string representation
     round_num = models.PositiveIntegerField(default=1) # don't name it round, it overrides a built-in method (bad)
     """The round of the tournament that this match is in. 1 for the first round, 2 for the second, etc."""
-
     str_recursive_level: ClassVar[int] = 0
+
+    history = HistoricalRecords()
+    """History object for tracking changes to this model."""
 
     def get_competing_teams(self):
         return [
@@ -602,11 +687,6 @@ class Match(models.Model):
             for prev_match in self.prev_matches.all() 
             for team in (prev_match.advancers.all() if prev_match.advancers.exists() else [None])
         ]
-
-    # @property
-    # def next_match(self) -> Optional['Match']:
-    #     qs: models.QuerySet = self.prev_matches.all().union(self.__class__.objects.filter(id=self.id))
-    #     return self.__class__.objects.filter(prev_matches=qs).first()
 
     @property
     def teams(self) -> List[Team]:
@@ -633,8 +713,8 @@ class Match(models.Model):
                 self._cached_str =  res + _(" in ") + str(self.tournament) # Battlebots vs Byters in SumoBot tournament @ RoboMed 2023
             else: 
                 self._cached_str =  res # if part of another match we don't want to repeat the tournament
-        return self._cached_str
-
+        return str(self._cached_str)
+    
     def __str__(self) -> str:
         self._generate_str_recursive()
         #if self._cached_str is None:    

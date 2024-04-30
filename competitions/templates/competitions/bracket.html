@@ -38,9 +38,9 @@
     {% elif tournament.is_in_setup %}
         <i class="bi bi-device-ssd" title="{{ competition.status }}"></i> {{ tournament.competition.name }} {% translate "Single Elimination Tournament" %}: {{ tournament.event.name }}
     {% elif competition.is_archived %}
-        <i class="bi-archive" title="{{ competition.status }}"></i> {{ tournament.competition.name }} {% translate "Single Elimination Tournament" %}: {{ tournament.event.name }} <small>You can see this archived item because you are signed in as a superuser.</small>
+        <i class="bi-archive" title="{{ competition.status }}"></i> {{ tournament.competition.name }} {% translate "Single Elimination Tournament" %}: {{ tournament.event.name }} <small>{% translate "You can see this archived item because you are signed in as a superuser." %}</small>
     {% endif %}
-    ({{ tournament.points|floatformat:"0" }} {% translate "points" %})
+    ({{ tournament.points|floatformat:"0" }} {% if points != 1 %}{% translate "points" %} {% else %} {% translate "point" %} {% endif %})
     {% if user.is_staff %}
         <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/tournament/{{ tournament.id }}/?next=tournament&id={{ tournament.id }}" method="POST" id="status">
             {% csrf_token %}

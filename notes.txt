@@ -211,3 +211,15 @@ ERRORS
 'NoneType' object has no attribute 'next_matches' (Called single_elimination_tournament)
 generate_matches is always True for some reason (may tie in with the first error)
 I (Harry) can't solve them because they pertain to parts of the project that I have no knowledge on
+
+Notes about Deployment:
+
+we are using google cloud not heroku
+
+- Doesn't work for users marked as U18
+- Access needs to be given
+
+- Cloud SQL: MySQL or postgres
+
+For easy deployment, we should ensure our requierments are up to date and ensure we use python3.11
+Cloud has it's own secret manager but we still need secrets.yml for some secrets used in settings.py

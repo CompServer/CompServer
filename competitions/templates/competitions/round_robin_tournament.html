@@ -25,7 +25,7 @@
         {% elif tournament.is_in_setup %}
             <i class="bi bi-device-ssd" title="{{ competition.status }}"></i> {{ tournament.competition.name }} {% translate "Preliminary Tournament" %}: {{ tournament.event.name }}
         {% elif competition.is_archived %}
-            <i class="bi-archive" title="{{ competition.status }}"></i> {{ tournament.competition.name }} {% translate "Preliminary Tournament" %}: {{ tournament.event.name }} <small>You can see this archived item because you are signed in as a superuser.</small>
+            <i class="bi-archive" title="{{ competition.status }}"></i> {{ tournament.competition.name }} {% translate "Preliminary Tournament" %}: {{ tournament.event.name }} <small>{% translate "You can see this archived item because you are signed in as a superuser." %}</small>
         {% endif %}
         {% if user.is_staff %}
             <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/tournament/{{ tournament.id }}/?next=tournament&id={{ tournament.id }}" method="POST" id="status">
@@ -76,7 +76,7 @@
             {% endfor %}
         </div>
         <div class="row d-flex justify-content-center">
-            <span><b>Team Rankings</b> ({% translate "Points Per Win: "%} {{ tournament.points_per_win }}, {% translate "Points Per Tie: "%} {{ tournament.points_per_tie }}, {% translate "Points Per Loss: "%} {{ tournament.points_per_loss }})</span>
+            <span><b>{% translate "Team Rankings" %}</b> ({% translate "Points Per Win: "%} {{ tournament.points_per_win|floatformat }}, {% translate "Points Per Tie: "%} {{ tournament.points_per_tie|floatformat }}, {% translate "Points Per Loss: "%} {{ tournament.points_per_loss|floatformat }})</span>
             {% for team, points in team_wins.items %}
                 <li>
                     {% if team in winning_teams %}
@@ -84,7 +84,7 @@
                     {% else %}
                         <b>{{ team.name }}</b>:
                     {% endif %}
-                    {{ points }} {% if points == 1 %} {% translate "point" %} {% else %} {% translate "points" %} {% endif %}
+                    {{ points|floatformat:"0" }} {% if points == 1 %} {% translate "point" %} {% else %} {% translate "points" %} {% endif %}
                 </li>
             {% endfor %}
         </div>
