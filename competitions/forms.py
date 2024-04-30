@@ -228,6 +228,7 @@ class RRTournamentForm(forms.ModelForm):
         elif self.cleaned_data['teams_per_match'] < 2:
             self.add_error('teams_per_match', 'Teams per match must be greater than or equal to 2')
             return False
+        #extreme edge case
         elif self.cleaned_data['teams_per_match'] == 2 and self.cleaned_data['teams'].count() % 2 == 1 and self.cleaned_data['matches_per_team'] % 2 == 1:
             return False
         # elif self.cleaned_data['teams'].count() % self.cleaned_data['teams_per_match'] != 0:

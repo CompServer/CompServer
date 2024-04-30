@@ -460,7 +460,11 @@ class Event(models.Model):
     # score_units = ScoreUnitsField() # initially just assume scores are place values (1st, 2nd, 3rd, etc.)
     # high_score_advances = models.BooleanField(default=True) # with seconds, low scores will usually advance (unless it's a "how long can you last" situation)
     # related: tournament_set
-
+    use_units = models.BooleanField(default=False)
+    units = models.CharField(max_length=25, default="point")
+    units_verbose = models.CharField(max_length=26, default="points")
+    use_higher_score = models.BooleanField(default=True)
+    """whether the winner should win if their score is higher or lower. True=higher score wins, False=lower score wins."""
     class Meta:
         ordering = ['sport', 'name']
 
