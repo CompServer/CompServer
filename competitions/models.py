@@ -1,19 +1,29 @@
-from typing import Any, ClassVar, List, Optional
-from django.db import models
-from django.db.models.signals import post_save
-from django.urls.base import override
-from django.utils.translation import gettext_lazy as _
+import datetime
+import math
+import math
+import random
+import string
+from typing import Any, ClassVar, List
+
 from django.contrib.auth.models import User
-from django.dispatch import receiver
-from django.utils import timezone
 from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured
+from django.db import models
 from django.db.models import CharField, signals
 from django.db.models.fields.files import ImageField
-import math, random, string, datetime
-from functools import lru_cache
-import math
-#from colorfield.fields import ColorField
-from .widgets import ColorPickerWidget, ColorWidget
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
+from simple_history.models import HistoricalRecords
+
+from .utils_colorfield import get_image_file_background_color
+from .validators import (
+    color_hex_validator,
+    color_hexa_validator,
+    color_rgb_validator,
+    color_rgba_validator,
+)
+from .widgets import ColorWidget
 
 ACCESS_KEY_LENGTH = 10
 # ^ should be in settings?
@@ -30,14 +40,7 @@ def get_random_access_key():
 
 # https://github.com/h3/django-colorfield/blob/master/colorfield/fields.py
 
-from .utils_colorfield import get_image_file_background_color
-from .validators import (
-    color_hex_validator,
-    color_hexa_validator,
-    color_rgb_validator,
-    color_rgba_validator,
-)
-from .widgets import ColorWidget
+
 
 
 VALIDATORS_PER_FORMAT = {
@@ -668,6 +671,9 @@ class Match(models.Model):
     """The round of the tournament that this match is in. 1 for the first round, 2 for the second, etc."""
     str_recursive_level: ClassVar[int] = 0
 
+    history = HistoricalRecords()
+    """History object for tracking changes to this model."""
+
     def get_competing_teams(self):
         return [
             team 
@@ -677,11 +683,6 @@ class Match(models.Model):
             for prev_match in self.prev_matches.all() 
             for team in (prev_match.advancers.all() if prev_match.advancers.exists() else [None])
         ]
-
-    # @property
-    # def next_match(self) -> Optional['Match']:
-    #     qs: models.QuerySet = self.prev_matches.all().union(self.__class__.objects.filter(id=self.id))
-    #     return self.__class__.objects.filter(prev_matches=qs).first()
 
     @property
     def teams(self) -> List[Team]:

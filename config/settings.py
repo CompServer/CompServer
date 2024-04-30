@@ -85,6 +85,7 @@ INSTALLED_APPS = [
     'crispy_bootstrap5',
     'mathfilters', # pip install django-mathfilters
     'whitenoise.runserver_nostatic',
+    'simple_history',
     #'colorfield', # pip install django-colorfield
     #'easy_timezones', # pip install django-easy-timezones
 ]
@@ -103,6 +104,7 @@ MIDDLEWARE = [
     'hijack.middleware.HijackUserMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.middleware.locale.LocaleMiddleware',
+    'simple_history.middleware.HistoryRequestMiddleware',
     'config.custom.middleware.TimezoneMiddleware', # custom
 ]
 

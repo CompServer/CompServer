@@ -5,6 +5,7 @@ django-debug-toolbar
 django-environ
 django-hijack
 django-mathfilters
+django-simple-history
 pillow
 PyYAML
 typing_extensions
