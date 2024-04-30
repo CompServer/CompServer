@@ -804,16 +804,15 @@ def competition(request: HttpRequest, competition_id: int):
                 return HttpResponseRedirect(reverse(f"competitions:competition", args=[competition_id]))
     if competition.is_archived:
         return HttpResponseRedirect(reverse("competitions:competitions"))
-    
-    elimination_tournaments = SingleEliminationTournament.objects.filter(competition__id = competition_id).order_by("-status", "-start_time")
-    robin_tournaments = RoundRobinTournament.objects.filter(competition__id=competition_id).order_by("-status", "-start_time")
+    elimination_tournaments = SingleEliminationTournament.objects.filter(competition__id = competition_id).order_by("status", "start_time")
+    robin_tournaments = RoundRobinTournament.objects.filter(competition__id=competition_id).order_by("status", "start_time")
     organizations = list()
     for team in competition.teams.all():
         if team.organization:
             if team.organization not in organizations:
                 organizations.append(team.organization)
-    #resulting = competition.get_results()
-    #have to fix the competition function to get winners
+    #sort the organizations by name
+    #winner
     context = {
         "competition": competition, 
         "form": CompetitionStatusForm(),
@@ -821,9 +820,6 @@ def competition(request: HttpRequest, competition_id: int):
         "elimination_tournaments": elimination_tournaments,
         "organizations": organizations,
     }
-    #no winner isn't showing
-    #add organizations for the competiton to the comp page
-    #fix the links to elimination and round robin
     return render(request, "competitions/competition.html", context)
 
 @login_required
@@ -993,7 +989,7 @@ def profile(request, user_id):
 
 def organization(request, organization_id):
     organization = Organization.objects.filter(id = organization_id).first()
-    associated_teams = Team.objects.filter(organization__id = organization_id).order_by("-name")
+    associated_teams = Team.objects.filter(organization__id = organization_id).order_by("name")
     results = dict()
     for team in associated_teams:
         win_count = 0
@@ -1011,7 +1007,6 @@ def organization(request, organization_id):
         'organization': organization,
         'associated_teams': associated_teams,
         'results': results,
-        #needs a pie chart
     }
     return render(request, 'competitions/organization.html', context)
 
@@ -1076,7 +1071,7 @@ def team(request: HttpRequest, team_id: int):#check the sorting and then this is
     past_matches_dict = dict()
     for match in past_matches:
         past_matches_dict[match] = match.time
-    # sorted_past_matches = {k for k, v in sorted(past_matches_dict.items(), key=lambda item: past_matches_dict[1])}
+    sorted_past_matches = [k for k,v in sorted(past_matches_dict.items(), key=lambda item:item[1])]
     past_competitions = Competition.objects.filter(teams__id = team_id, status = Status.COMPLETE).order_by("end_date", "start_date", "name")
     past_tournaments_won = list()
     past_tournaments = SingleEliminationTournament.objects.filter(teams__id = team_id, status = Status.COMPLETE).order_by("start_time", "competition")
@@ -1143,10 +1138,17 @@ def team(request: HttpRequest, team_id: int):#check the sorting and then this is
         if match.id in [match.id for match in upcoming_matches.all()]:
             old_upcoming_matches.remove(match)
     for match in past_matches:
+        advancers = match.advancers.all()
+        starters = match.starting_teams.all()
         if team_id in [team.id for team in match.advancers.all()]:
             if match.starting_teams.all().exists():
+                last = Match.objects.filter(next_match__id=match.id)
+                #check
                 if match.prev_matches.last():
-                    if team_id in [team.id for team in match.starting_teams.all()] or team_id in [team.id for team in match.prev_matches.last().starting_teams]:
+                    team = Team.objects.filter(id=team_id)
+                    prev_matches = match.prev_matches.last()
+
+                    if team in match.starting_teams.all() or team in match.prev_matches.last().starting_teams:
                         if match.advancers.count() == 1:
                             if match.starting_teams.count() == 1 and match.prev_matches.last().starting_teams.count() == 1:
                                 byes.append((("BYE" + first_half), match.tournament, second_half))
@@ -1164,7 +1166,7 @@ def team(request: HttpRequest, team_id: int):#check the sorting and then this is
         'old_upcoming_matches': old_upcoming_matches,
         'wins': wins,
         'byes': byes,
-        'past_matches': past_matches,
+        'past_matches': sorted_past_matches,
         'draws': draws,
         'losses': losses,
         'won_tournaments': past_tournaments_won,

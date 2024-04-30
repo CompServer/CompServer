@@ -292,9 +292,8 @@ class Competition(models.Model):
     
     def get_results(self):
         totals = dict()
-        tournaments = AbstractTournament.objects.filter(competition__id=self.id, status=Status.COMPLETE)
-        #have to filter for single elimination
-        for tournament in SingleEliminationTournament.objects.filter(compeittion__id=self.id, status=Status.COMPLETE):
+        tournaments = SingleEliminationTournament.objects.filter(competition__id=self.id, status=Status.COMPLETE)
+        for tournament in tournaments:
             if tournament.get_winner().length() > 1:
                 for winner in tournament.get_winner():
                     if winner in totals.keys():
@@ -306,6 +305,7 @@ class Competition(models.Model):
                     totals[tournament.get_winner().first()] = totals.get(tournament.get_winner().first()) + tournament.points  
                 else:
                     totals[tournament.get_winner().first()] = tournament.points
+            #for some reason, the previous tournaments doesn't work
             if tournament.prev_tournament.exists():
                 round_robin_totals = dict()
                 for tournament in tournament.prev_tournament.all():
@@ -569,10 +569,6 @@ class RoundRobinTournament(AbstractTournament):
     points_per_win = models.DecimalField(max_digits=20, decimal_places=10, default=3.0)
     points_per_tie = models.DecimalField(max_digits=20, decimal_places=10, default=1.0)
     points_per_loss = models.DecimalField(max_digits=20, decimal_places=10, default=0.0)
-
-    def __str__(self):
-        tournament = SingleEliminationTournament.objects.filter(prev_tournament=self)
-        return "Preliminary for " + tournament.name 
 
     @property
     def is_single_elimination(self) -> bool:   

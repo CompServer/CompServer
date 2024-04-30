@@ -36,47 +36,15 @@
                         {% elif tournament.is_closed %} 
                             <i class="bi-x-circle" title="{{ tournament.status }}"></i>
                         {% endif %}
-                        <a href="{% url 'competitions:tournament' tournament.id %}">{% translate "Preliminary for" %} {{ tournament.tournament.name }}</a>
-                        {% if tournament.points %}fix this for round robins
-                            ({{ tournament.points|floatformat:"0" }} {% translate "points" %}) 
+                        <a href="{% url 'competitions:tournament' tournament.id %}">{% translate "Visit" %}</a>
+                        {% if tournament.points_per_win %}
+                            ({% translate "Points Per Win: " %}{{ tournament.points_per_win|floatformat:"0" }} ) 
                         {% endif %}
-                        ({% translate "Winner(s): " %} {{ tournament.get_winner }})
-                    {% endif %}
-                    {% if user.is_staff %}
-                        <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/tournament/{{ tournament.id }}/?next=competition&id={{ competition.id }}" method="POST" id="status">
-                            {% csrf_token %}
-                            <div class="input-group d-inline">
-                                <select name="status" onchange="this.form.submit();">
-                                    {% for value, translated_value in form.status.field.choices %}
-                                        <option value="{{ value }}" {% if tournament.status == value %}selected{% endif %}>{{ translated_value }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </form>
-                    {% endif %} 
-                </div>
-            </div>
-        {% endfor %}
-    {% endif %}
-    {% if elimination_tournaments %}
-        <h3>{% translate "Single Elimination Tournaments" %}</h3>
-        {% for tournament in robin_tournaments %}
-            <div class="row d-flex">
-                <div class = "col-12 tournament">
-                    {% if competition.is_archived and user.is_staff %}
-                        <i class="bi-archive" title="{{ tournament.status }}"></i>
-                        <small>You can see this archived item because you are signed in as a superuser.</small>
-                    {% elif tournament.is_viewable %}
-                        {% if tournament.is_judgable %} 
-                            <i class="bi-activity" title="{{ tournament.status }}"></i>
-                        {% elif tournament.is_complete %} 
-                            <i class="bi-check2-circle" title="{{ tournament.status }}"></i>
-                        {% elif tournament.is_closed %} 
-                            <i class="bi-x-circle" title="{{ tournament.status }}"></i>
+                        {% if tournament.points_per_loss %}
+                            ({% translate "Points Per Loss: " %}{{ tournament.points_per_loss|floatformat:"0" }} ) 
                         {% endif %}
-                        <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.name }}</a>
-                        {% if tournament.points %}
-                            ({{ tournament.points|floatformat:"0" }} {% translate "points" %}) 
+                        {% if tournament.points_per_tie %}
+                            ({% translate "Points Per Tie: " %}{{ tournament.points_per_tie|floatformat:"0" }} ) 
                         {% endif %}
                         ({% translate "Winner(s): " %} {{ tournament.get_winner }})
                     {% endif %}
@@ -100,40 +68,38 @@
         <h3>{% translate "Single Elimination Tournaments" %}</h3>
         {% for tournament in elimination_tournaments %}
             <div class="row d-flex">
-                {% if not tournament.is_archived or user.is_staff %}
-                    <div class = "col-12 tournament">
+                <div class = "col-12 tournament">
+                    {% if competition.is_archived and user.is_staff %}
+                        <i class="bi-archive" title="{{ tournament.status }}"></i>
+                        <small>You can see this archived item because you are signed in as a superuser.</small>
+                    {% elif tournament.is_viewable %}
                         {% if tournament.is_judgable %} 
-                            <i class="bi-activity" title="{{ tournament.status }}"></i> <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.event.name }}</a>
+                            <i class="bi-activity" title="{{ tournament.status }}"></i>
                         {% elif tournament.is_complete %} 
-                            <i class="bi-check2-circle" title="{{ tournament.status }}"></i> <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.event.name }}</a>
+                            <i class="bi-check2-circle" title="{{ tournament.status }}"></i>
                         {% elif tournament.is_closed %} 
-                            <i class="bi-x-circle" title="{{ tournament.status }}"></i> <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.event.name }}</a>
-                        {% elif tournament.is_in_setup %}
-                            <i class="bi-gear" title="{{ tournament.status }}"></i> {{ tournament.event.name }}
-                        {% elif competition.is_archived %}
-                            <i class="bi-archive" title="{{ tournament.status }}"></i> {{ tournament }} <small>You can see this archived item because you are signed in as a superuser.</small>
+                            <i class="bi-x-circle" title="{{ tournament.status }}"></i>
                         {% endif %}
+                        <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.event.name }}</a>
                         {% if tournament.points %}
                             ({{ tournament.points|floatformat:"0" }} {% translate "points" %}) 
                         {% endif %}
-                        {% if tournament.get_winner %}
-                            ({% translate "Winner(s): " %} {{ tournament.get_winner }})
-                        {% endif %}
-                        {% if user.is_staff %}
-                            <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/tournament/{{ tournament.id }}/?next=competition&id={{ competition.id }}" method="POST" id="status">
-                                {% csrf_token %}
-                                <div class="input-group d-inline">
-                                    <select name="status" onchange="this.form.submit();">
-                                        {% for value, translated_value in form.status.field.choices %}
-                                            <option value="{{ value }}" {% if tournament.status == value %}selected{% endif %}>{{ translated_value }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            </form>
-                        {% endif %} 
-                    </div>
-                {% endif %}
-            </div>      
+                        ({% translate "Winner(s): " %} {{ tournament.get_winner }})
+                    {% endif %}
+                    {% if user.is_staff %}
+                        <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/tournament/{{ tournament.id }}/?next=competition&id={{ competition.id }}" method="POST" id="status">
+                            {% csrf_token %}
+                            <div class="input-group d-inline">
+                                <select name="status" onchange="this.form.submit();">
+                                    {% for value, translated_value in form.status.field.choices %}
+                                        <option value="{{ value }}" {% if tournament.status == value %}selected{% endif %}>{{ translated_value }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </form>
+                    {% endif %} 
+                </div>
+            </div>
         {% endfor %}
     {% endif %}
     {% if organizations %}
