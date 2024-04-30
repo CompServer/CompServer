@@ -105,10 +105,10 @@
                     </div>
                     {% for curr_team in match_data.team_data %}
                         <div class="team highlight-{{curr_team.team_id}} {%if curr_team.won %}won{%endif%}"
-                            style="{% if user.is_staff %}cursor: pointer;{% else %}cursor: default;{% endif %}
+                            style="{% if user in judges %}cursor: pointer;{% else %}cursor: default;{% endif %}
                             {% if forloop.first %} border-top-right-radius: 8px; border-top-left-radius: 8px; {% endif %}
                             {% if forloop.last %} border-bottom-right-radius: 8px; border-bottom-left-radius: 8px; {% endif %}"
-                            {% if user.is_staff %} onclick="location.href='{% url 'competitions:judge_match' curr_team.match_id %}';" {% endif %}
+                            {% if user in judges %} onclick="location.href='{% url 'competitions:judge_match' curr_team.match_id %}';" {% endif %}
                             onmouseover="highlight({{curr_team.team_id}})" onmouseout="dehighlight({{curr_team.team_id}})">
                             <p>{{ curr_team.name }}</p>
                             {% if curr_team.team_id == bracket_dict.champion_id and curr_team.match_id == bracket_dict.championship_id %}
@@ -155,17 +155,9 @@
     function highlight(num) {
         document.querySelectorAll(".highlight-"+num).forEach((element)=>{
             element.style.borderColor = "#2ec4b6";
-            //if (element.className.includes("won")) {
-                if (element.className.includes("team")) {
-                    element.style.backgroundColor = "lightgreen";
-                }
-            //} else {
-                //if (element.className.includes("team")) {
-                    //element.style.borderColor = "#c9184a";
-                    //element.style.backgroundColor= "#ff4d6d"
-                //}
-                
-            //}
+            if (element.className.includes("team")) {
+                element.style.backgroundColor = "lightgreen";
+            }
         })
     }
     function dehighlight(num) {
