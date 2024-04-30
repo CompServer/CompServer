@@ -36,7 +36,7 @@
                         {% elif tournament.is_closed %} 
                             <i class="bi-x-circle" title="{{ tournament.status }}"></i>
                         {% endif %}
-                        <a href="{% url 'competitions:tournament' tournament.id %}">{% translate "Visit" %}</a>
+                        <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a>
                         {% if tournament.points_per_win %}
                             ({% translate "Points Per Win: " %}{{ tournament.points_per_win|floatformat:"0" }} ) 
                         {% endif %}
@@ -49,7 +49,7 @@
                         ({% translate "Winner(s): " %} {{ tournament.get_winner }})
                     {% endif %}
                     {% if user.is_staff %}
-                        <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/tournament/{{ tournament.id }}/?next=competition&id={{ competition.id }}" method="POST" id="status">
+                        <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/competition/{{competition.id }}/" method="POST" id="status">
                             {% csrf_token %}
                             <div class="input-group d-inline">
                                 <select name="status" onchange="this.form.submit();">

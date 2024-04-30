@@ -342,22 +342,23 @@ class Competition(models.Model):
                         totals[item] = item.value()
         sorted_totals = {k: v for k, v in sorted(totals.items(), key=lambda item: totals[1])}
         return sorted_totals # a dictionary of every team and their total points
-                
-    # def get_winner(self):
-    #     winners = list()
-    #     totals = get_results(self)
-    #     greatest_score = totals[-1].value()
-    #     greatest_scorer = totals[-1].key()
-    #     totals.pop(totals[-1])#delete the last item
-    #     if greatest_score in totals.values():
-    #         for item in totals:
-    #             if item.value() == greatest_score:
-    #                 winners.append(item.key())
-    #     winners.append(greatest_scorer)
-    #     if winners:
-    #         return winners
-    #     else:
-    #         return "Winners haven't been determined yet."
+
+    def get_winner(self):
+        winners = list()
+        totals = self.get_results()
+        if totals:
+            greatest_score = totals.get(-1).value()
+            greatest_scorer = totals.get(-1).key()
+            totals.pop(totals.get(-1))#delete the last item
+            if greatest_score in totals.values():
+                for item in totals:
+                    if item.value() == greatest_score:
+                        winners.append(item.key())
+            winners.append(greatest_scorer)
+        if winners:
+            return winners
+        else:
+            return "Winners haven't been determined yet."
 
     def check_date(self):
         today = timezone.now().date()

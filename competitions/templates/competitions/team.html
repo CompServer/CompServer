@@ -127,6 +127,6 @@
     {% if team.organization %}
         <p>This team is from an organization titled "<a href="{% url 'competitions:organization' team.organization.id %}">{{ team.organization.name }}</a>"</p>
     {% else %}
-        <p>This team isn't listed under an organization. </p>
+        <p>This team isn't listed under any organizations. </p>
     {% endif %}
 {% endblock %}
