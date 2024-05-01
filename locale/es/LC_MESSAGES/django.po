@@ -349,12 +349,12 @@ msgstr " de "
 
 #: .\competitions\templates\competitions\profile.html:34
 msgid "Team Records"
-msgstr ""
+msgstr "Récords del Equipo"
 
 #: .\competitions\templates\competitions\profile.html:96
 #: .\competitions\templates\competitions\round_robin_tournament.html:79
 msgid "Team Rankings"
-msgstr "Récords del Equipo"
+msgstr "Ranking por Equipo"
 
 #: .\competitions\templates\competitions\profile.html:103
 msgid "See"
@@ -517,7 +517,7 @@ msgstr "Calendario de Próximos Partidos"
 #: .\competitions\templates\competitions\team.html:116
 #: .\competitions\templates\competitions\team.html:124
 msgid ")"
-msgstr ""
+msgstr ")"
 
 #: .\competitions\templates\competitions\team.html:34
 #: .\competitions\templates\competitions\team.html:49
@@ -536,15 +536,15 @@ msgstr " en "
 #: .\competitions\templates\competitions\team.html:38
 #: .\competitions\templates\competitions\team.html:53
 msgid " (Location TBD)"
-msgstr ""
+msgstr "(Lugar no Disponible)"
 
 #: .\competitions\templates\competitions\team.html:46
 msgid "Awaiting Matches To Begin ("
-msgstr ""
+msgstr "Esperando que Comiencen Los Partidos ("
 
 #: .\competitions\templates\competitions\team.html:49
 msgid "Previously scheduled at"
-msgstr ""
+msgstr "Previamente Programado en"
 
 #: .\competitions\templates\competitions\team.html:61
 #, fuzzy
@@ -570,7 +570,7 @@ msgstr "Historial de Partidos"
 
 #: .\competitions\templates\competitions\team.html:100
 msgid "Byes ("
-msgstr ""
+msgstr "Equipos que se Están Saltando."
 
 #: .\competitions\templates\competitions\team.html:108
 #, fuzzy
@@ -596,63 +596,63 @@ msgstr "Desconectado!"
 
 #: .\competitions\templates\registration\logged_out.html:6
 msgid "Click here to login again."
-msgstr ""
+msgstr "Haga clic aquí para iniciar sesión nuevamente."
 
 #: .\competitions\templates\registration\login.html:8
 msgid "Your username and password didn't match. Please try again."
-msgstr ""
+msgstr "Su nombre de usuario y contraseña no coinciden."
 
 #: .\competitions\templates\registration\login.html:16
 msgid "Please login using your credentials."
-msgstr ""
+msgstr "Inicie sesión usando sus credenciales."
 
 #: .\competitions\templates\registration\login.html:37
 msgid "Login"
-msgstr ""
+msgstr "Iniciar Sesión"
 
 #: .\competitions\templates\registration\login.html:41
 msgid "Lost password?"
-msgstr ""
+msgstr "¿Contraseña perdida?"
 
 #: .\competitions\templates\registration\password_reset_complete.html:5
 msgid "The password has been changed!"
-msgstr ""
+msgstr "¡La contraseña ha sido cambiada!"
 
 #: .\competitions\templates\registration\password_reset_complete.html:6
 msgid "Log in again?"
-msgstr ""
+msgstr "¿Iniciar Sesión Nuevo?"
 
 #: .\competitions\templates\registration\password_reset_confirm.html:6
 msgid "Please enter (and confirm) your new password."
-msgstr ""
+msgstr "Ingrese (y confirme) su nueva contraseña."
 
 #: .\competitions\templates\registration\password_reset_confirm.html:12
 msgid "New password:"
-msgstr ""
+msgstr "Nueva contraseña:"
 
 #: .\competitions\templates\registration\password_reset_confirm.html:17
 msgid "Confirm password:"
-msgstr ""
+msgstr "Confirmar Contraseña:"
 
 #: .\competitions\templates\registration\password_reset_confirm.html:22
 msgid "Change my password"
-msgstr ""
+msgstr "Cambiar Contraseña"
 
 #: .\competitions\templates\registration\password_reset_confirm.html:27
 msgid "Password reset failed."
-msgstr ""
+msgstr "Error al restablecer la contraseña."
 
 #: .\competitions\templates\registration\password_reset_confirm.html:28
 msgid ""
 "The password reset link was invalid, possibly because it has already been "
 "used. Please request a new password reset."
-msgstr ""
+msgstr "El enlace para restablecer la contraseña no era válido. Solicite un nuevo restablecimiento de contraseña."
 
 #: .\competitions\templates\registration\password_reset_done.html:5
 msgid ""
 "We've emailed you instructions for setting your password. If they haven't "
 "arrived in a few minutes, check your spam folder."
-msgstr ""
+msgstr "Le hemos enviado por correo electrónico instrucciones para configurar su contraseña. Si no han llegado en unos minutos, revisa tu carpeta de spam."
 
 #: .\competitions\templates\skeleton.html:75
 msgid "Home"
@@ -664,23 +664,23 @@ msgstr "Administración"
 
 #: .\competitions\templates\skeleton.html:100
 msgid "Logged in as"
-msgstr ""
+msgstr "Conectado como"
 
 #: .\competitions\templates\skeleton.html:102
 msgid " (Superuser)"
-msgstr ""
+msgstr "(Superusuario)"
 
 #: .\competitions\templates\skeleton.html:105
 msgid "Log Out"
-msgstr ""
+msgstr "Cerrar Sesión"
 
 #: .\competitions\templates\skeleton.html:107
 msgid "Log In"
-msgstr ""
+msgstr "Iniciar Sesión"
 
 #: .\competitions\templates\skeleton.html:154
 msgid "No Content"
-msgstr ""
+msgstr "sin contenido"
 
 #: .\competitions\templates\timezones.html:5
 msgid "Set timezone"
@@ -688,27 +688,27 @@ msgstr "blah"
 
 #: .\competitions\templates\timezones.html:8
 msgid "Timezone Settings"
-msgstr ""
+msgstr "Establecer Huso Horario"
 
 #: .\competitions\templates\timezones.html:12
 msgid "Time zone:"
-msgstr ""
+msgstr "Huso Horario:"
 
 #: .\competitions\validators.py:13
 msgid "Enter a valid hex color, eg. #000000"
-msgstr ""
+msgstr "Introduzca un color hexadecimal válido, por ejemplo. #000000"
 
 #: .\competitions\validators.py:21
 msgid "Enter a valid hexa color, eg. #00000000"
-msgstr ""
+msgstr "Introduzca un color hexadecimal válido, por ejemplo. #000000"
 
 #: .\competitions\validators.py:43
 msgid "Enter a valid rgb color, eg. rgb(128, 128, 128)"
-msgstr ""
+msgstr "Introduzca un color rgb válido, por ejemplo. rgb(128, 128, 128)"
 
 #: .\competitions\validators.py:68
 msgid "Enter a valid rgba color, eg. rgba(128, 128, 128, 0.5)"
-msgstr ""
+msgstr "Introduzca un color rgb válido, por ejemplo. rgb(128, 128, 128)"
 
 #~ msgid "Tournaments"
 #~ msgstr " Torneos "
