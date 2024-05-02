@@ -44,5 +44,4 @@ def tournament_form(request: HttpRequest, competition_id: int):
 
     form = FORM_CLASS(competition=competition)
 
-
     return render(request, 'CSRF_FORM.html', {'form': form, 'action': f"?competition_id={competition_id}&tournament_type={tournament_type}"})

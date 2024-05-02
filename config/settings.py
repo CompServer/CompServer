@@ -86,6 +86,7 @@ INSTALLED_APPS = [
     'mathfilters', # pip install django-mathfilters
     'whitenoise.runserver_nostatic',
     'simple_history',
+    'social_django',
     #'colorfield', # pip install django-colorfield
     #'easy_timezones', # pip install django-easy-timezones
 ]
@@ -121,6 +122,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'social_django.context_processors.backends',
+                'social_django.context_processors.login_redirect',
                 'config.custom.context_processors.tz', # custom context processor: passes in current timezone as "TIME_ZONE"
                 'config.custom.context_processors.user', # custom context processor: passes in user as variable "user"
                 'config.custom.context_processors.current_time', # custom context processor: passes in variables "NOW", "CURRENT_TIME", "CURRENT_DATE"
@@ -135,8 +138,16 @@ STORAGES = {
     },
 }
 
+SOCIAL_AUTH_STORAGE = 'social_django_mongoengine.models.DjangoStorage'
+
 WSGI_APPLICATION = 'config.wsgi.application'
 
+AUTHENTICATION_BACKENDS = [
+    'social_core.backends.google.GoogleOpenId',
+    'social_core.backends.google.GoogleOAuth2',
+    'social_core.backends.google.GoogleOAuth',
+    'django.contrib.auth.backends.ModelBackend',
+]
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases

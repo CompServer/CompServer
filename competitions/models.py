@@ -1,4 +1,5 @@
 import datetime
+from enum import unique
 import math
 import math
 import random
@@ -169,6 +170,9 @@ class SiteConfig(models.Model):
     style_sheet = models.CharField(max_length=255, null=True, blank=True)
     """The URL to the stylesheet to use for this site. If not set, the default will be used."""
 
+    use_demo_mode = models.BooleanField(default=False)
+    """Whether to use the demo mode for this site. This will not show competitions to anyone besides the creator. """
+
     def __str__(self) -> str:
         return f"SiteConfig(name={self.name})"
 
@@ -185,9 +189,9 @@ def create_user_profile(sender, instance, created, **kwargs):
     if created:
         Profile.objects.create(user=instance)
 
-@receiver(post_save, sender=User)
+@receiver(post_save, sender=Competition)
 def save_user_profile(sender, instance, **kwargs):
-    if Profile.objects.filter(user=instance).exists():
+    if Competition.objects.filter(user=instance).exists():
         instance.profile.save()
     else:
         Profile.objects.create(user=instance)
@@ -231,13 +235,19 @@ class StatusField(models.CharField):
         kwargs['default'] = Status.SETUP
         super().__init__(*args, **kwargs)
 
-
 class Sport(models.Model):
     name = models.CharField(max_length=255, unique=True)
 
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    """The user that created this object. This is used only if DEMO mode is on."""
+
     def __str__(self) -> str:
         return str(self.name)
-    
+
+    class Meta:
+        ordering = ['name']
+        unique_together = ['name', 'owner']
+
 class Organization(models.Model): # probably mostly schools but could also be community organizations
     name = models.CharField(max_length=257) # not unique because there could be schools with the same name just in different cities
     # logo = models.ImageField()
@@ -246,6 +256,12 @@ class Organization(models.Model): # probably mostly schools but could also be co
     # address_line2 = models.CharField(max_length=255) # Pozuelo de Alarcón 28224
     # address_line3 = models.CharField(max_length=255) # Madrid, Spain
     # related: teams
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    """The user that created this object. This is used only if DEMO mode is on."""
+
+    class Meta:
+        ordering = ['name']
+        unique_together = ['name', 'owner']
 
     def __str__(self) -> str:
         return str(self.name)  # + " (" + self.address_line3 + ")"
@@ -259,12 +275,15 @@ class Team(models.Model):
     # logo = models.ImageField()
     # related: competition_set, tournament_set, round1_matches, won_matches
 
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    """The user that created this object. This is used only if DEMO mode is on."""
+
     def __str__(self) -> str:
         return self.name + (_(" from ") + str(self.organization) if self.organization else "") # type: ignore
     
     class Meta:
         ordering = ['sport', 'organization', 'name']
-        unique_together = ['organization', 'name']
+        unique_together = ['organization', 'name', 'owner']
 
 
 class Arena(models.Model):
@@ -272,6 +291,9 @@ class Arena(models.Model):
     capacity = models.PositiveSmallIntegerField()
     is_available = models.BooleanField(default=True)
     color = ColorField(default="#CBCBCB")
+    
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    """The user that created this object. This is used only if DEMO mode is on."""
 
     @property
     def is_dark(self) -> bool:
@@ -285,6 +307,9 @@ class Arena(models.Model):
     def __str__(self) -> str:
         return str(self.name)
 
+    class Meta:
+        ordering = ['name']
+        unique_together = ['name', 'owner']
 
 class Competition(models.Model):
     name = models.CharField(max_length=255, blank=True)
@@ -301,10 +326,12 @@ class Competition(models.Model):
     access_key = models.CharField(max_length=ACCESS_KEY_LENGTH, default=get_random_access_key, blank=True, null=True)
     # For scheduling purposes, we need to be able to specify for this competition how many different (Event-specific) arenas are available and their capacity
     arenas = models.ManyToManyField(Arena, blank=False)
-    # related: tournament_set
+
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    """The user that created this object. This is used only if DEMO mode is on."""
     
     def get_results(self):
-        totals = dict()
+        totals = {}
         for tournament in SingleEliminationTournament.objects.filter(compeittion__id=self.id, status=Status.COMPLETE):
             if tournament.get_winner().length() > 1:
                 for winner in tournament.get_winner():
@@ -398,6 +425,7 @@ class Competition(models.Model):
         else:
             s += f" {self.start_date.year}" # RoboMed 2023
         return str(s)
+
     @property
     def max_capacity(self) -> int:
         return sum([arena.capacity for arena in self.arenas.all()])
@@ -430,7 +458,7 @@ class Competition(models.Model):
 
     class Meta:
         ordering = ['-start_date', 'name']
-        unique_together = ['start_date', 'name'] # probably won't have 2 in the same year but you could have a quarterly / monthly / even weekly competition
+        unique_together = ['start_date', 'name', 'owner'] # probably won't have 2 in the same year but you could have a quarterly / monthly / even weekly competition
 
 
 # class ScoreUnits(models.TextChoices):
@@ -465,8 +493,12 @@ class Event(models.Model):
     units_verbose = models.CharField(max_length=26, default="points")
     use_higher_score = models.BooleanField(default=True)
     """whether the winner should win if their score is higher or lower. True=higher score wins, False=lower score wins."""
+
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    """The user that created this object. This is used only if DEMO mode is on."""
+
     class Meta:
-        ordering = ['sport', 'name']
+        ordering = ['sport', 'name', 'owner']
 
     def __str__(self) -> str:
         return str(self.name)
@@ -547,16 +579,12 @@ class AbstractTournament(models.Model):
 
     @property
     def is_single_elimination(self) -> bool:
-        if SingleEliminationTournament.objects.filter(abstracttournament_ptr_id=self.id).exists():
-            return True
-        elif RoundRobinTournament.objects.filter(abstracttournament_ptr_id=self.id).exists():
-            return False
+        return SingleEliminationTournament.objects.filter(abstracttournament_ptr_id=self.id).exists():
+    
     @property
     def is_round_robin(self) -> bool:
-        if SingleEliminationTournament.objects.filter(abstracttournament_ptr_id=self.id).exists():
-            return False
-        elif RoundRobinTournament.objects.filter(abstracttournament_ptr_id=self.id).exists():
-            return True
+        return RoundRobinTournament.objects.filter(abstracttournament_ptr_id=self.id).exists():
+
     class Meta:
         ordering = ['competition', 'event']
 
@@ -611,6 +639,7 @@ class SingleEliminationTournament(AbstractTournament):
     @property
     def is_round_robin(self) -> bool:
         return False
+
     # interpolated: winner (of the top-level match)
 
 # class DoubleEliminationTournament(AbstractTournament):
