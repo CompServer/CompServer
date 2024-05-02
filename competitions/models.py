@@ -300,9 +300,7 @@ class Arena(models.Model):
         color = str(self.color).lstrip('#')
         rgb = list(int(color[i:i+2], 16) for i in (0, 2, 4))
         hsp = math.sqrt(0.299 * (rgb[0] * rgb[0]) + 0.587 * (rgb[1] * rgb[1]) + 0.114 * (rgb[2] * rgb[2]))
-        if hsp < 127.5:
-            return True
-        return False
+        return hsp < 127.5
 
     def __str__(self) -> str:
         return str(self.name)
@@ -332,6 +330,7 @@ class Competition(models.Model):
     
     def get_results(self):
         totals = {}
+        # what about round robin tournaments?
         for tournament in SingleEliminationTournament.objects.filter(compeittion__id=self.id, status=Status.COMPLETE):
             if tournament.get_winner().length() > 1:
                 for winner in tournament.get_winner():
