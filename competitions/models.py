@@ -9,7 +9,7 @@ from django.utils import timezone
 from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured
 from django.db.models import CharField, signals
 from django.db.models.fields.files import ImageField
-import math, random, string, datetime
+import math, operator, random, string, datetime
 from functools import lru_cache
 #from colorfield.fields import ColorField
 from .widgets import ColorPickerWidget, ColorWidget
@@ -291,72 +291,74 @@ class Competition(models.Model):
     # related: tournament_set
     
     def get_results(self):
-        totals = dict()
+        totals = dict() #this will be each team’s total points
         tournaments = SingleEliminationTournament.objects.filter(competition__id=self.id, status=Status.COMPLETE)
-        for tournament in tournaments:
-            if tournament.get_winner().length() > 1:
-                for winner in tournament.get_winner():
-                    if winner in totals.keys():
-                        totals[winner] = totals.get(winner) + tournament.points  
+        if tournaments:
+            for tournament in tournaments:
+                if len(tournament.get_winner()) > 1:#multiple winners
+                    for winner in tournament.get_winner():
+                        if winner.name in totals.keys():
+                            totals[winner.name] = totals.get(winner) + tournament.points  
+                        else:
+                            totals[winner.name] = tournament.points
+                if len(tournament.get_winner()) == 1:
+                    if tournament.get_winner()[0] in totals.keys():
+                        totals[tournament.get_winner()[0]] = totals.get(tournament.get_winner()[0]) + tournament.points  
                     else:
-                        totals[winner] = tournament.points
-            if tournament.get_winner().length() == 1:
-                if tournament.get_winner().first() in totals.keys():
-                    totals[tournament.get_winner().first()] = totals.get(tournament.get_winner().first()) + tournament.points  
-                else:
-                    totals[tournament.get_winner().first()] = tournament.points
-            #for some reason, the previous tournaments doesn't work
-            if tournament.prev_tournament.exists():
-                round_robin_totals = dict()
-                for tournament in tournament.prev_tournament.all():
-                    if tournament.status == Status.COMPLETE:
-                        for match in tournament.match_set.all():
-                            for team in match.advancers.all():
+                        totals[tournament.get_winner()[0]] = tournament.points
+                robin = tournament.prev_tournament
+                if robin:
+                    if robin.status == Status.COMPLETE:
+                        ppl = robin.points_per_loss
+                        ppw = robin.points_per_win
+                        ppt = robin.points_per_tie
+                        for match in robin.match_set.all():
+                            for advancer in match.advancers.all():
+                                team = advancer.name
                                 if match.advancers.count() == 1:
-                                    if team in round_robin_totals.keys():
-                                        round_robin_totals[team] = round_robin_totals.get(team) + tournament.points_per_win
+                                    if team.name in totals.keys():
+                                        totals[team.name] = totals.get(team.name) + ppw
                                     else:
-                                        round_robin_totals[team] = tournament.points_per_win
+                                        totals[team.name] = ppw
                                 if match.advancers.count() > 1:
-                                    if team in round_robin_totals.keys():
-                                        round_robin_totals[team] = round_robin_totals.get(team) + tournament.points_per_tie
+                                    if team.name in totals.keys():
+                                        totals[team.name] = totals.get(team.name) + ppt
                                     else:
-                                        round_robin_totals[team] = tournament.points_per_tie
-                            losers = list()
-                            for team in match.starting_teams:
-                                    if team.id not in {team.id for team in match.advancers.all()}:
-                                        losers.append(team)
-                            if match.prev_matches.last():
-                                for advancer in match.prev_matches.last().advancers.all():
-                                    if team.id not in {team.id for team in match.advancers.all()}:
-                                        losers.append(team)
-                            for loser in losers:
-                                if loser in round_robin_totals.keys():
-                                    round_robin_totals[loser] = round_robin_totals.get(loser) + tournament.points_per_loss
-                                else:
-                                    round_robin_totals[loser] = tournament.points_per_loss
-                for item in round_robin_totals:
-                    if item in totals:
-                        totals[item] = round_robin_totals.get() + round_robin_totals[item].get()
-                    else:
-                        totals[item] = item.value()
-        sorted_totals = {k: v for k, v in sorted(totals.items(), key=lambda item: totals[1])}
-        return sorted_totals # a dictionary of every team and their total points
+                                        totals[team.name] = ppt
+                            starters = match.starting_teams.all()
+                            previous_starters = match.prev_matches.last().advancers.all()
+                            winning_ids = [team.id for team in match.advancers.all()]
+                            if previous_starters:
+                                for team in previous_starters:
+                                    if team.id not in winning_ids:
+                                        if team.name in totals.keys():
+                                            totals[team.name] = totals.get(team.name) + ppl
+                                        else:
+                                            totals[team.name] = ppl
+                            for team in starters:
+                                if team.id not in winning_ids:
+                                    if team.name in totals.keys():
+                                        totals[team.name] = totals.get(team.name) + ppl
+                                    else:
+                                        totals[team.name] = ppl
+            sorted_totals = {k:v for k,v in sorted(totals.items(), key=lambda item:item[1])}
+            return sorted_totals
+        else:
+            return totals
 
     def get_winner(self):
-        winners = list()
         totals = self.get_results()
+        winners = list()
         if totals:
-            greatest_score = totals.get(-1).value()
-            greatest_scorer = totals.get(-1).key()
-            totals.pop(totals.get(-1))#delete the last item
+            greatest_score = max(totals.iteritems(), key=operator.itemgetter(1))[0]#iteritems is broken
+            greatest_scorer = totals.get(greatest_score)
+            totals.pop(greatest_scorer)
             if greatest_score in totals.values():
-                for item in totals:
-                    if item.value() == greatest_score:
-                        winners.append(item.key())
-            winners.append(greatest_scorer)
-        if winners:
-            return winners
+                for key in totals.keys():
+                    if total.get(key) == greatest_score:
+                        winners.append(key)
+            sorted_winners = sorted(winners)
+            return sorted_winners
         else:
             return "Winners haven't been determined yet."
 
@@ -486,10 +488,9 @@ class AbstractTournament(models.Model):
         advancers_qs = self.match_set.last().advancers.all()
         if advancers_qs.count() != 0:
             advancers = [advancer.name for advancer in advancers_qs]
-            advancers_str = ",".join(advancers)
-            return advancers_str
+            return advancers
         else:
-            return "Undetermined"
+            return ()
 
     def get_end_time(self):
         time_in_seconds = 0
