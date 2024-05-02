@@ -1,0 +1,68 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2580
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fmodern\fcharset0 Courier;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red251\green2\blue255;\red128\green0\blue128;
+\red0\green0\blue255;\red85\green142\blue40;}
+{\*\expandedcolortbl;;\cssrgb\c0\c0\c0;\cssrgb\c100000\c25279\c100000;\cssrgb\c57919\c12801\c57269;
+\cssrgb\c1680\c19835\c100000;\cssrgb\c39975\c61335\c20601;}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\deftab720
+\pard\pardeftab720\partightenfactor0
+
+\f0\fs24 \cf2 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 def results(request, competition_id):\
+	\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 competition = Competition.objects.get(id = competition_id)\
+	tournaments = [tournament for tournament in competition.tournament_set.order_by("points", "start_time", "competition").filter(status = Status.COMPLETE)]\
+	totals = competitions.get_results()\
+	colors = [tournament.colors for tournament in tournaments]\
+	tournament_names = list()\
+	team_names = [team.name for team in competition.teams.order_by(\'93name\'94)\
+	\cf3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 tournament_scorings = list()#also fake#this might have to be a dictionary for each item #\cf2 \
+	if totals:\
+		for tournament in tournaments:\
+			if tournament.is_round_robin == True:\
+				tournament_names.append(tournament.singleeliminationtournament_set.first().event.name)\
+				\
+				for match in tournament.match_set.all():\
+					for team in match.starting_teams:\
+						if team in match.advancers.all():\
+							if match.advancers.count() == 1:\
+								#add winning points to team for trn\
+							if match.advancers.count() > 1:\
+								#add tied points to team for trn\
+						else:\
+							#add the losing points to team for tourney\
+				#the overall team totals for the tournament will list\
+				#get the list item from tournament scorings\
+			else:\
+				tournament_names.append(tournament.event.name)\
+				\cf4 scores = dict()#this might be a different type of list\cf2 \
+				for team_name in team_names:\
+					team = Team.objects.filter(name=team_name).first()\
+				last_match = tournament.match_set.last()\
+				if team in last_match.advancers.all():\
+					scores[tournament_name] = (team_name, tournament.points)\
+				else:\
+					scores[tournament_name] = (team_name, 0)\
+				#make sure to add to scores list for round robins\
+            \cf5 #each tournament name should have a team name and a score in a list\cf2 \
+	else:\
+		#should show totals for every team at the bottom page\
+		judge_names = \'93\'94\
+		if competition.plenary_judges:\
+			judge_names = [plenary_judge.first_name + " " + plenary_judge.last_name for plenary_judge in competition.plenary_judges.order_by("-username")]\
+#add colors to results page \
+#add totals to results page\
+\cf6 	context = \{\
+        'tournament_scorings': tournament_scorings,\
+        'tournament_names': tournament_names,\
+        'team_names': team_names,\
+        'competition': competition,\
+        'tournaments': tournaments,\
+        'tournament_scorings': scores,\
+        'judge_names': judge_names,\
+        'team_and_total': totals,\
+    \}\cf2 \
+    return render(request, "competitions/results.html", context)\
+}
