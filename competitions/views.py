@@ -556,6 +556,95 @@ def arena_color(request: HttpRequest, competition_id: int):
         form = ArenaColorForm(competition=competition)
     return render(request, "competitions/arena_color.html", {'form': form})
 
+## HELPERS ##
+def generate_competitor_data(match):
+    output = []
+    is_next = match.next_matches.exists()
+    curr_match_teams = match.get_competing_teams()
+    
+    for team in curr_match_teams:
+        output.append({
+            "name": team.name if team else "TBD",
+            "won": team in match.advancers.all(),
+            "is_next": is_next,
+            "match_id": match.id,
+            "team_id": team.id if team else None
+        })
+    return output
+
+def generate_connector_data(match, connectorWidth, teamHeight):
+    is_next = match.next_matches.exists()
+    if not is_next:
+        return {
+            "connector": None,
+            "team_index_offset": None,
+            "match_offset_mult": None,
+            "connector_width_actual": None,
+            "team_index_offset_mult": None,
+        }
+
+    curr_match_teams = match.get_competing_teams()
+
+    next_match = match.next_matches.all().first()
+    feed_matches = next_match.prev_matches.all()
+    num_feed_matches = feed_matches.count()
+    midpoint_index = (num_feed_matches - 1) / 2
+    match_index = list(feed_matches).index(match)
+    num_divisions = max(math.floor(num_feed_matches/2),1)
+
+    if (abs(match_index - midpoint_index) <= 1):
+        match_offset_mult = abs(match_index - midpoint_index)
+        connector_width_actual = (1*connectorWidth)/(num_divisions+1)
+    else:
+        match_offset_mult = abs(match_index - midpoint_index)
+        num_something_idk = math.floor(abs(match_index - midpoint_index) + 0.5)
+        connector_width_actual = (num_something_idk*connectorWidth)/(num_divisions+1)
+
+
+    next_match_teams = next_match.get_competing_teams()
+    from_index = len(curr_match_teams)/2
+    to_index =  match_index
+    winner = False
+    winner_id = None
+
+    for index, team in enumerate(curr_match_teams):
+        if is_next and team in match.advancers.all():
+            to_index = next_match_teams.index(team)
+            from_index = index
+            winner = True
+            winner_id = team.id
+
+    if match_index <= midpoint_index:
+        index_diff = to_index-from_index
+        len_diff = (len(curr_match_teams)-len(next_match_teams))/2 
+        vertical_margin = teamHeight*(from_index+0.5)
+        connector = "connector-down"
+        if not winner:
+            index_diff += 0.5
+            vertical_margin -= (teamHeight/2)
+    else:
+        index_diff = from_index-to_index
+        len_diff = (len(next_match_teams)-len(curr_match_teams))/2
+        vertical_margin = teamHeight*(len(curr_match_teams)-from_index-0.5)
+        connector = "connector-up"
+        if not winner:
+            index_diff += 0.5
+            vertical_margin += (teamHeight/2)
+
+    team_index_offset_mult = index_diff+len_diff
+    team_index_offset = team_index_offset_mult*teamHeight
+
+    return{
+        "connector": connector,
+        "team_index_offset": team_index_offset,
+        "match_offset_mult": match_offset_mult,
+        "connector_width_actual": connector_width_actual,
+        "team_index_offset_mult": team_index_offset_mult,
+        "vertical_margin": vertical_margin,
+        "winner_id": winner_id
+    }
+
+
 def single_elimination_tournament(request: HttpRequest, tournament_id: int):
     redirect_to = request.GET.get('next', '')
     redirect_id = request.GET.get('id', None)
@@ -575,7 +664,6 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
                 return HttpResponseRedirect(reverse(f"competitions:{redirect_to}",args=redirect_id))
     if tournament.is_archived:
         return HttpResponseRedirect(reverse("competitions:competitions"))
-
     # -----VARIABLES-----
     bracket_array = []
     matchWidth = 200
@@ -585,100 +673,12 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
     roundNames = ["Quarter Finals", "Semi Finals", "Finals"]
     # -------------------
 
-    def generate_competitor_data(match):
-        output = []
-
-        is_next = match.next_matches.exists()
-        curr_match_teams = match.get_competing_teams()
-        
-        for team in curr_match_teams:
-            output.append({
-                "name": team.name if team else "TBD",
-                "won": team in match.advancers.all(),
-                "is_next": is_next,
-                "match_id": match.id,
-                "team_id": team.id if team else None,
-                "ranking": Ranking.objects.filter(tournament=tournament, team=team).first().rank if team else None
-            })
-        return output
-    
-    def generate_connector_data(match):
-        is_next = match.next_matches.exists()
-        if not is_next:
-            return {
-                "connector": None,
-                "team_index_offset": None,
-                "match_offset_mult": None,
-                "connector_width_actual": None,
-                "team_index_offset_mult": None,
-            }
-
-        curr_match_teams = match.get_competing_teams()
-
-        next_match = match.next_matches.all().first()
-        feed_matches = next_match.prev_matches.all()
-        num_feed_matches = feed_matches.count()
-        midpoint_index = (num_feed_matches - 1) / 2
-        match_index = list(feed_matches).index(match)
-        num_divisions = max(math.floor(num_feed_matches/2),1)
-
-        if (abs(match_index - midpoint_index) <= 1):
-            match_offset_mult = abs(match_index - midpoint_index)
-            connector_width_actual = (1*connectorWidth)/(num_divisions+1)
-        else:
-            match_offset_mult = abs(match_index - midpoint_index)
-            num_something_idk = math.floor(abs(match_index - midpoint_index) + 0.5)
-            connector_width_actual = (num_something_idk*connectorWidth)/(num_divisions+1)
-
-        
-        next_match_teams = next_match.get_competing_teams()
-        from_index = len(curr_match_teams)/2
-        to_index =  match_index
-        winner = False
-        winner_id = None
-        
-        for index, team in enumerate(curr_match_teams):
-            if is_next and team in match.advancers.all():
-                to_index = next_match_teams.index(team)
-                from_index = index
-                winner = True
-                winner_id = team.id
-
-        if match_index <= midpoint_index:
-            index_diff = to_index-from_index
-            len_diff = (len(curr_match_teams)-len(next_match_teams))/2 
-            vertical_margin = teamHeight*(from_index+0.5)
-            connector = "connector-down"
-            if not winner:
-                index_diff += 0.5
-                vertical_margin -= (teamHeight/2)
-        else:
-            index_diff = from_index-to_index
-            len_diff = (len(next_match_teams)-len(curr_match_teams))/2
-            vertical_margin = teamHeight*(len(curr_match_teams)-from_index-0.5)
-            connector = "connector-up"
-            if not winner:
-                index_diff += 0.5
-                vertical_margin += (teamHeight/2)
-
-        team_index_offset_mult = index_diff+len_diff
-        team_index_offset = team_index_offset_mult*teamHeight
-
-        return{
-            "connector": connector,
-            "team_index_offset": team_index_offset,
-            "match_offset_mult": match_offset_mult,
-            "connector_width_actual": connector_width_actual,
-            "team_index_offset_mult": team_index_offset_mult,
-            "vertical_margin": vertical_margin,
-            "winner_id": winner_id
-        }
-    
+    # recursive mutator
     def read_tree_from_node(curr_match, curr_round, base_index):
         if len(bracket_array) <= curr_round:
             bracket_array.append({})
 
-        bracket_array[curr_round][base_index] = [generate_competitor_data(curr_match), generate_connector_data(curr_match)]
+        bracket_array[curr_round][base_index] = [generate_competitor_data(curr_match), generate_connector_data(curr_match, connectorWidth, teamHeight)]
         
         prevs = curr_match.prev_matches.all()
         if prevs:
@@ -739,7 +739,7 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
         "round_data": round_data,
         "team_height": teamHeight,
         "championship_id": championship.id,
-        "champion_id": championship.advancers.first().id if championship.advancers.first() else None
+        "champion_id": championship.advancers.first().id if championship.advancers.first() else None,
     }
     tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
     rankings = {team: Ranking.objects.filter(tournament=tournament, team=team).first().rank for team in tournament.teams.all()}
@@ -866,7 +866,7 @@ def competition(request: HttpRequest, competition_id: int):
                 return HttpResponseRedirect(reverse(f"competitions:competition", args=[competition_id]))
     if competition.is_archived:
         return HttpResponseRedirect(reverse("competitions:competitions"))
-    elimination_tournaments = SingleEliminationTournament.objects.filter(competition__id = competition_id, status=Status.COMPLETE).order_by("-status", "-start_time")
+    elimination_tournaments = SingleEliminationTournament.objects.filter(competition__id = competition_id).order_by("-status", "-start_time")
     robin_tournaments = RoundRobinTournament.objects.filter(competition__id=competition_id).order_by("-status", "-start_time")
     context = {
         "competition": competition, 

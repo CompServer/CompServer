@@ -104,7 +104,7 @@
                         height: 3px;"></div>
                     </div>
                     {% for curr_team in match_data.team_data %}
-                        {% comment %} <div class="team highlight-{{curr_team.team_id}} {%if curr_team.won %}won{%endif%}"
+                        <div class="team highlight-{{curr_team.team_id}} {%if curr_team.won %}won{%endif%}"
                             style="{% if user in judges %}cursor: pointer;{% else %}cursor: default;{% endif %}
                             {% if forloop.first %} border-top-right-radius: 8px; border-top-left-radius: 8px; {% endif %}
                             {% if forloop.last %} border-bottom-right-radius: 8px; border-bottom-left-radius: 8px; {% endif %}"
@@ -173,16 +173,8 @@
     function highlight(num, num2) {
         document.querySelectorAll(".highlight-"+num2+"-"+num).forEach((element)=>{
             element.style.borderColor = "#2ec4b6";
-            if (element.className.includes("won")) {
-                if (element.className.includes("team")) {
-                    element.style.backgroundColor = "lightgreen";
-                }
-            } else {
-                if (element.className.includes("team")) {
-                    element.style.borderColor = "#c9184a";
-                    element.style.backgroundColor= "#ff4d6d"
-                }
-                
+            if (element.className.includes("team")) {
+                element.style.backgroundColor = "lightgreen";
             }
         })
     }
