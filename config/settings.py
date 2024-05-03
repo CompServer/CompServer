@@ -141,8 +141,6 @@ STORAGES = {
     },
 }
 
-SOCIAL_AUTH_STORAGE = 'social_django_mongoengine.models.DjangoStorage'
-
 WSGI_APPLICATION = 'config.wsgi.application'
 
 AUTHENTICATION_BACKENDS = [

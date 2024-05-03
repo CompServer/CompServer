@@ -479,14 +479,15 @@ def create_tournament_legacy(request: HttpRequest):
 @login_required
 def create_tournament_htmx(request: HttpRequest):
     competition_id = request.GET.get('competition_id',None)
-    #tournament_type = str(request.GET.get('tournament_type','')).lower().strip()
+    tournament_type = str(request.GET.get('tournament_type','')).lower().strip()
 
-    # if tournament_type == 'rr':
-    #     FORM_CLASS = RRTournamentForm
-    # elif tournament_type == 'se':
-    #     FORM_CLASS = SETournamentForm
-    # else:
-    #     raise SuspiciousOperation
+    if tournament_type == 'rr':
+        FORM_CLASS = RRTournamentForm
+    elif tournament_type == 'se':
+        FORM_CLASS = SETournamentForm
+    else:
+        FORM_CLASS = None
+
     if competition_id:
         competition = get_object_or_404(Competition, pk=competition_id)
     else:
@@ -495,6 +496,8 @@ def create_tournament_htmx(request: HttpRequest):
 
     form = None
     if request.method == 'POST':
+        if not FORM_CLASS:
+            raise SuspiciousOperation
         form = FORM_CLASS(request.POST, competition=competition)
         if form.is_valid():
             form.full_clean()
