@@ -212,6 +212,15 @@ back to the old forms
 
 Error Pages say that you're not logged in for some reason.
 
+db-24-04-26.sqlite3 does not work (keep getting 500 server errors for some reason).
+
+(Harry here) I was originally trying to alter matt's SET bracket code to fit the format 
+of my RR Tournament Code, but I keep running into these 500 server errors, and 
+according to google, "t means that the server encountered an unexpected condition that 
+prevented it from fulfilling the request." I have no idea what to do about this, as I'm not
+getting any errors in my code from the terminal, and without any idea what I need to fix, 
+I can't fix anything. That is why most of my edits are going to be in notes.txt, since 
+I literally can't do anything until these errors get fixed.
 
 'CreateSETournamentForm' object has no attribute 'generate_matches'
 'NoneType' object has no attribute 'next_matches' (Called single_elimination_tournament)
