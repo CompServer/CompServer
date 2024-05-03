@@ -478,14 +478,15 @@ def create_tournament_legacy(request: HttpRequest):
 @login_required
 def create_tournament_htmx(request: HttpRequest):
     competition_id = request.GET.get('competition_id',None)
-    #tournament_type = str(request.GET.get('tournament_type','')).lower().strip()
+    tournament_type = str(request.GET.get('tournament_type','')).lower().strip()
 
-    # if tournament_type == 'rr':
-    #     FORM_CLASS = RRTournamentForm
-    # elif tournament_type == 'se':
-    #     FORM_CLASS = SETournamentForm
-    # else:
-    #     raise SuspiciousOperation
+    if tournament_type == 'rr':
+        FORM_CLASS = RRTournamentForm
+    elif tournament_type == 'se':
+        FORM_CLASS = SETournamentForm
+    else:
+        FORM_CLASS = None
+
     if competition_id:
         competition = get_object_or_404(Competition, pk=competition_id)
     else:
@@ -494,6 +495,8 @@ def create_tournament_htmx(request: HttpRequest):
 
     form = None
     if request.method == 'POST':
+        if not FORM_CLASS:
+            raise SuspiciousOperation
         form = FORM_CLASS(request.POST, competition=competition)
         if form.is_valid():
             form.full_clean()
@@ -568,7 +571,9 @@ def generate_competitor_data(match):
             "won": team in match.advancers.all(),
             "is_next": is_next,
             "match_id": match.id,
-            "team_id": team.id if team else None
+            "team_id": team.id if team else None,
+            "match": match,
+            "color": match.arena.color
         })
     return output
 
@@ -722,6 +727,7 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
                 "match_height": match_height,
                 "center_height": center_height,
                 "center_top_margin": (match_height - center_height) / 2,
+                
             })
 
         label = "Round " + str(round+1) if round < namedRoundCutoff else roundNames[round - namedRoundCutoff]
