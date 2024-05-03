@@ -1011,41 +1011,46 @@ def organization(request, organization_id):
     return render(request, 'competitions/organization.html', context)
 
 def results(request, competition_id):
-    #need to really fix this page
-    totals = list() #this is fake so that it cna run
-    tournament_scorings = list()#also fake
+    #check judge names
+    #use the get_results tool later but just check functionality
+    #maybe there should be an error message for when there aren't any results
+    #totals = list() #this is fake so that it cna run
+    #tournament_scorings = list()#also fake
+    tournament_scorings = dict()
     competition = Competition.objects.get(id = competition_id)
     tournaments = [tournament for tournament in competition.tournament_set.order_by("points", "start_time", "competition").filter(status = Status.COMPLETE)]
     for robin_tournament in RoundRobinTournament.objects.filter(competition__id=competition_id, status = Status.COMPLETE).order_by("points", "-start_time", "-competition"):
         tournaments.append(robin_tournament)
     tournament_names = [tournament.event.name for tournament in tournaments]
     team_names = [team.name for team in competition.teams.order_by("name")]
-    tournament_colors = [tournament.colors for tournament in tournaments]
-    for tournament_name in tournament_names:
+    #tournament_colors = [tournament.color for tournament in tournaments]
+    for tournament_name in tournament_names:#this could just be a list of tournaments, fix later
         tournament = AbstractTournament.objects.filter(event__name=tournament_name, competition__id=competition_id, status=Status.COMPLETE)
-        scores = dict()
+        scores_per_tournament = list()
+        robin_scores = dict()
         for team_name in team_names:
             team = Team.objects.filter(name=team_name).first()
-            if tournament.is_single_elimination():
-                last_match = Match.objects.filter(tournament__id = tournament.id, next_matches__isnull = True).first()
+            if tournament.first().is_single_elimination == True:
+                last_match = Match.objects.filter(tournament__id = tournament.first().id, next_matches__isnull = True).first()
                 if team in last_match.advancers.all():
-                    scores[tournament_name] = (team_name, tournament.points)
+                    scores_per_tournament.append(float(tournament.first().points))
                 else:
-                    scores[tournament_name] = (team_name, 0)
-            #each tournament name should have a team name and a scor ein a list
+                    scores_per_tournament.append(0)
             else:
-                robin_totals = dict()
-                for match in tournament.match_set.all():
+                robin_scores = dict()
+                for match in tournament.first().match_set.all():
                     if team in match.advancers.all():
                         if match.advancers.count() == 1:
-                            robin_totals[team_name] = tournament.points_per_win
+                            robin_scores[team_name] = float(tournament.first().points_per_win)
                         if match.advancers.count() > 1:
-                            robin_totals[team_name] = tournament.points_per_tie
+                            robin_scores[team_name] = float(tournament.first().points_per_tie)
                     else:
-                        robin_totals[team_name] = tournament.points_per_loss
-        #addd robin totals to scores
-        #sum together results for each tournament team and display
+                        robin_scores[team_name] = float(tournament.first().points_per_loss)
+                for k, v in robin_scores:
+                    scores_per_tournament.append(v)        
+        tournament_scorings[tournament_name] = scores_per_tournament
     judge_names = ""
+    #add document edits from gitlab
     #judge_names = [plenary_judge.first_name + " " + plenary_judge.last_name for plenary_judge in competition.plenary_judges.order_by("-username")]
     context = {
         'tournament_scorings': tournament_scorings,
@@ -1053,9 +1058,9 @@ def results(request, competition_id):
         'team_names': team_names,
         'competition': competition,
         'tournaments': tournaments,
-        'tournament_scorings': scores,
         'judge_names': judge_names,
-        'team_and_total': totals,
+        #'team_and_total': totals,
+        #add the tournament colors later
     }
     return render(request, "competitions/results.html", context)
 

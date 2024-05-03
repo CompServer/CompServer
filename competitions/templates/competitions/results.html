@@ -4,7 +4,7 @@
 {% block content %}
 <body>
     <header>
-        {% if tournaments.exists %}
+        {% if tournaments %}
             <h1>{% trans "Results For " %} {{ competition.name }}: {{ competition.start_date }} - {{ competition.end_date }}</h1>
             {% if judge_names %}
                 <h2>{% trans "Judged by " %}</h2>
@@ -14,19 +14,19 @@
                     {% endfor %}
                 </ul>
             {% endif %}
-    </header>
-    {% else %}
-        <h1>{% trans "Awaiting Results For " %} {{ competition.name }}: {{ competition.start_date }} - {{ competition.end_date }}</h1>
-        {% if judge_names %}
-                <h2>{% trans "Judged by " %}</h2>
-                <ul>
-                    {% for judge_name in judge_names %}
-                        <li> {{ judge_name }} </li>
-                    {% endfor %}
-                </ul>
+        {% else %}
+            <h1>{% trans "Awaiting Results For " %} {{ competition.name }}: {{ competition.start_date }} - {{ competition.end_date }}</h1>
+            {% if judge_names %}
+                    <h2>{% trans "Judged by " %}</h2>
+                    <ul>
+                        {% for judge_name in judge_names %}
+                            <li> {{ judge_name }} </li>
+                        {% endfor %}
+                    </ul>
+            {% endif %}
         {% endif %}
-    {% endif %}
-    {% if tournaments.exists %}
+    </header>
+    {% if tournaments %}
     {{ tournament_names|json_script:"tournament_names" }}
     {{ team_names|json_script:"team_names" }}
     {{ tournament_scorings|json_script:"tournament_scorings" }}

@@ -347,12 +347,13 @@ class Competition(models.Model):
             return totals
 
     def get_winner(self):
+        #if the competition is completed
         totals = self.get_results()
         winners = list()
         if totals:
-            greatest_score = max(totals.iteritems(), key=operator.itemgetter(1))[0]#iteritems is broken
+            greatest_score = max(totals.items(), key=operator.itemgetter(1))[0]
             greatest_scorer = totals.get(greatest_score)
-            totals.pop(greatest_scorer)
+            totals.pop(greatest_score)
             if greatest_score in totals.values():
                 for key in totals.keys():
                     if total.get(key) == greatest_score:

@@ -46,7 +46,9 @@
                         {% if tournament.points_per_tie %}
                             ({% translate "Points Per Tie: " %}{{ tournament.points_per_tie|floatformat:"0" }} ) 
                         {% endif %}
-                        ({% translate "Winner(s): " %} {{ tournament.get_winner }})
+                        {% if tournament.get_winner %}
+                            ({% translate "Winner(s): " %} {{ tournament.get_winner|join:", " }})
+                        {% endif %}
                     {% endif %}
                     {% if user.is_staff %}
                         <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/competition/{{competition.id }}/" method="POST" id="status">
@@ -84,7 +86,9 @@
                         {% if tournament.points %}
                             ({{ tournament.points|floatformat:"0" }} {% translate "points" %}) 
                         {% endif %}
-                        ({% translate "Winner(s): " %} {{ tournament.get_winner }})
+                        {% if tournament.get_winner %}
+                            ({% translate "Winner(s): " %} {{ tournament.get_winner|join:", " }})
+                        {% endif %}
                     {% endif %}
                     {% if user.is_staff %}
                         <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/tournament/{{ tournament.id }}/?next=competition&id={{ competition.id }}" method="POST" id="status">
