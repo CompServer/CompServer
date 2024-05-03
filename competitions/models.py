@@ -17,6 +17,8 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
 
+from config.settings import DEMO
+
 from .utils_colorfield import get_image_file_background_color
 from .validators import (
     color_hex_validator,
@@ -382,8 +384,8 @@ class Competition(models.Model):
         #have to make this work with results page somehow
                 
     def get_winners(self):
-        if self.status == Status.COMPLETE:
-            winners = list()
+        if self.is_complete:
+            winners = []
             totals = self.get_results()
             greatest_score = totals[-1].value()
             greatest_scorer = totals[-1].key()
@@ -407,12 +409,17 @@ class Competition(models.Model):
     @property
     def events(self):
         """Returns the events associated with this competition."""
+        if DEMO:
+            return Event.objects.filter(sport=self.sport, owner=self.owner)
         return Event.objects.filter(sport=self.sport)
 
     def __str__(self) -> str:
         # dwheadon: check if the name is unique for this year, otherwise add the month/day as well
         s: str = self.name # type: ignore
-        if (qs := (Competition.objects.filter(name=self.name))).count() > 1: # saves the queryset to a variable to avoid running the same query twice
+        qs = Competition.objects.filter(name=self.name)
+        if DEMO: qs = qs.filter(owner=self.owner)
+
+        if qs.count() > 1: # saves the queryset to a variable to avoid running the same query twice
             if (qs2 := (qs.filter(start_date__year=self.start_date.year))).count() > 1:
                 if qs2.filter(start_date__month=self.start_date.month).exists():
                     # if you have two on the same day, good luck
@@ -525,6 +532,10 @@ class AbstractTournament(models.Model):
     # dwheadon: what about tie_breakers? should we have a field for that?
     # related: match_set, ranking_set
 
+    @property
+    def owner(self):
+        return self.competition.owner
+
     def __str__(self) -> str:
         return self.event.name + _(" tournament @ ") + str(self.competition) # SumoBot tournament at RoboMed 2023
 
@@ -533,7 +544,7 @@ class AbstractTournament(models.Model):
 
     def get_end_time(self):
         time_in_seconds = 0
-        if self.match_set and self.status == Status.COMPLETE:
+        if self.match_set and self.is_complete:
             for match in self.match_set:
                 time_in_seconds = time_in_seconds + match.time
         added_time = datetime.timedelta(seconds=time_in_seconds)
@@ -578,11 +589,11 @@ class AbstractTournament(models.Model):
 
     @property
     def is_single_elimination(self) -> bool:
-        return SingleEliminationTournament.objects.filter(abstracttournament_ptr_id=self.id).exists():
+        return SingleEliminationTournament.objects.filter(abstracttournament_ptr_id=self.id).exists()
     
     @property
     def is_round_robin(self) -> bool:
-        return RoundRobinTournament.objects.filter(abstracttournament_ptr_id=self.id).exists():
+        return RoundRobinTournament.objects.filter(abstracttournament_ptr_id=self.id).exists()
 
     class Meta:
         ordering = ['competition', 'event']

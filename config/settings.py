@@ -38,13 +38,16 @@ SECRET_KEY = 'django-insecure-2y0@hfzu761goc9!m&!#if&(vhcg=!uzre027l48r&oh_c^xcx
 # recommended by https://cloud.google.com/python/django/appengine
 env = Env(
     DEBUG=(bool, False),
-    PROD=(bool, False)
+    PROD=(bool, False),
+    DEMO=(bool, False),
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
 PROD = env('PROD')
+
+DEMO = env('DEMO')
 
 # https://cloud.google.com/python/django/appengine
 # for deployment
