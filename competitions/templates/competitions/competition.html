@@ -36,7 +36,7 @@
                         {% elif tournament.is_closed %} 
                             <i class="bi-x-circle" title="{{ tournament.status }}"></i>
                         {% endif %}
-                        <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a>
+                        <a href="{% url 'competitions:tournament' tournament.id %}">{% translate "Preliminary for" %} {{ tournament.event.name }}</a>
                         {% if tournament.points_per_win %}
                             ({% translate "Points Per Win: " %}{{ tournament.points_per_win|floatformat:"0" }} ) 
                         {% endif %}
@@ -51,7 +51,7 @@
                         {% endif %}
                     {% endif %}
                     {% if user.is_staff %}
-                        <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/competition/{{competition.id }}/" method="POST" id="status">
+                        <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/tournament/{{ tournament.id }}/?next=competitions" method="POST" id="status">
                             {% csrf_token %}
                             <div class="input-group d-inline">
                                 <select name="status" onchange="this.form.submit();">
@@ -61,7 +61,7 @@
                                 </select>
                             </div>
                         </form>
-                    {% endif %} 
+                    {% endif %}
                 </div>
             </div>
         {% endfor %}
@@ -126,6 +126,16 @@
             </div>
         {% endfor %}
     {% endif %}
+    {% if winners %}
+        <h3>{% translate "Winner(s):" %}</h3>
+        {% for team in winners %}
+            <div class="row d-flex">
+                <div class = "col-12">
+                    <a href="{% url 'competitions:team' team.id %}">{{ team.name }}</a>
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
     {% if user.is_staff %}
         {% comment %} <hr>
         <h3>Change Status</h3>
@@ -142,16 +152,6 @@
             </div>
         </form> {% endcomment %}
     {% endif %}
-    <!-- {% if competition.get_winners %}
-        <h3>{% translate "Winners:" %}</h3>
-        {% for team in competition.get_winners %}
-        <div class="row d-flex">
-            <div class = "col-12">
-                <a href="{% url 'competitions:team' team.id %}">{{ team.name }}</a>
-            </div>
-        </div>
-        {% endfor %}
-    {% endif %} -->
     {% if user.is_superuser %}
         <hr>
         <a href="{% url "competitions:create_tournament" %}?competition_id={{ competition.id }}" class="btn btn-secondary">{% translate "Create Tournament" %}</a>
