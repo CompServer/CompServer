@@ -64,7 +64,7 @@
                         {% endif %}
                     {% endif %}
                     {% if user.is_staff %}
-                        <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/tournament/{{ tournament.id }}/?next=competitions" method="POST" id="status">
+                        <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/tournament/{{ tournament.id }}/?next=competition&id={{ tournament.competition.id }}" method="POST" id="status">
                             {% csrf_token %}
                             <div class="input-group d-inline">
                                 <select name="status" onchange="this.form.submit();">
@@ -104,7 +104,7 @@
                         {% endif %}
                     {% endif %}
                     {% if user.is_staff %}
-                        <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/tournament/{{ tournament.id }}/?next=competition&id={{ competition.id }}" method="POST" id="status">
+                        <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/tournament/{{ tournament.id }}/?next=competition&id={{ tournament.competition.id }}" method="POST" id="status">
                             {% csrf_token %}
                             <div class="input-group d-inline">
                                 <select name="status" onchange="this.form.submit();">
