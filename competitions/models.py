@@ -790,7 +790,7 @@ class PointsEarned(models.Model):
         """
         try:
             return PointsEarned.objects.get(match=match, team=team).points
-        except PointsEarned.DoesNotExist:
+        except:
             return -1
 
 @receiver(post_save, sender=Match)
