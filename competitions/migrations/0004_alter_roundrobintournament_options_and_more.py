@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name='roundrobintournament',
-            options={'verbose_name': 'PreliminaryTournament'},
+            options={'verbose_name': 'PreliminaryTournaments'},
         ),
         migrations.RemoveField(
             model_name='abstracttournament',

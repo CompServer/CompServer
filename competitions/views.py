@@ -1,5 +1,4 @@
 from datetime import datetime
-from logging import error
 import math
 import random
 from random import shuffle
@@ -8,14 +7,18 @@ from typing import Dict, Set, Union, List, Iterable
 import zoneinfo
 from heapq import nsmallest
 from django.db.models import Max
+from typing import Set, Union
+import zoneinfo
+
+from crispy_forms.utils import render_crispy_form
 from django.contrib import messages
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth.views import login_required
 from django.core.exceptions import SuspiciousOperation
-from django.db.models import Count, Q
 from django.db.models import Q, QuerySet
 from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template import RequestContext
 from django.template.exceptions import TemplateDoesNotExist
 from django.urls import reverse
 from django.utils import timezone
@@ -351,6 +354,9 @@ def generate_round_robin_rankings(tournament_id: int):
 
 def swap_matches(request: HttpRequest, tournament_id: int):
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
+    if not tournament.is_in_setup:
+        messages.error(request, "Tournament is not in setup.")
+        return HttpResponseRedirect(reverse("competitions:tournament", args=(tournament_id,)))
     form = None
     if request.method == 'POST':
         form = MatchSwapForm(request.POST, tournament=tournament)
@@ -368,6 +374,15 @@ def swap_matches(request: HttpRequest, tournament_id: int):
 def swap_teams(request: HttpRequest, match1_id: int, match2_id: int):
     match1 = get_object_or_404(Match, pk=match1_id)
     match2 = get_object_or_404(Match, pk=match2_id)
+    if match1 == match2:
+        messages.error(request, "Both Matches are the same.")
+        return HttpResponseRedirect(reverse("competitions:tournament", args=(tournament_id,)))
+    elif not match1.tournament == match2.tournament:
+        messages.error(request, "Matches are not in the same tournament.")
+        return HttpResponseRedirect(reverse("competitions:tournament", args=(tournament_id,)))
+    elif not match1.tournament.is_in_setup:
+        messages.error(request, "Tournament is not in setup.")
+        return HttpResponseRedirect(reverse("competitions:tournament", args=(tournament_id,)))
     form = None
     if request.method == 'POST':
         form = TeamSwapForm(request.POST, match1=match1, match2=match2)
@@ -415,13 +430,14 @@ def tournament(request: HttpRequest, tournament_id: int):
     raise Http404
 
 @login_required
-def create_tournament(request: HttpRequest):
+def create_tournament_legacy(request: HttpRequest):
     competition_id = request.GET.get('competition_id',None)
     tournament_type = request.GET.get('tournament_type', None)
 
     if competition_id is None:
         messages.error(request, "No competition selected.")
         return HttpResponseRedirect(reverse("competitions:competitions"))
+        
     try:
         competition = get_object_or_404(Competition, pk=int(competition_id))
     except:
@@ -456,6 +472,44 @@ def create_tournament(request: HttpRequest):
     if not form:
         form = FORM_CLASS(competition=competition)
     return render(request, "FORM_BASE.html", {'form_title': "Create Tournament", 'action': f"?tournament_type={tournament_type}&competition_id={competition.id}" , "form": form,  "form_submit_text": "Create"})
+
+@login_required
+def create_tournament_htmx(request: HttpRequest):
+    competition_id = request.GET.get('competition_id',None)
+    #tournament_type = str(request.GET.get('tournament_type','')).lower().strip()
+
+    # if tournament_type == 'rr':
+    #     FORM_CLASS = RRTournamentForm
+    # elif tournament_type == 'se':
+    #     FORM_CLASS = SETournamentForm
+    # else:
+    #     raise SuspiciousOperation
+    if competition_id:
+        competition = get_object_or_404(Competition, pk=competition_id)
+    else:
+        messages.error(request, "No competition selected.")
+        return HttpResponseRedirect(reverse("competitions:create_tournament_legacy"))
+
+    form = None
+    if request.method == 'POST':
+        form = FORM_CLASS(request.POST, competition=competition)
+        if form.is_valid():
+            form.full_clean()
+            instance = form.save(commit=False)
+            instance.competition = competition
+            instance.save()
+            form.save() # may not work?
+            return HttpResponseRedirect(f"{reverse('competitions:tournament', args=(form.instance.id,))}")
+        else:
+            for error_field, error_desc in form.errors.items():
+                form.add_error(error_field, error_desc)
+    # if not form:
+    #     form = FORM_CLASS(competition=competition)
+
+    form = TournamentTypeSelectForm(competition_id=competition.id)
+    form_html = render_crispy_form(form, helper=form.helper)
+
+    return render(request, "competitions/new_tournament_form.html", RequestContext(request, {"form_html": form_html, "action": "", "form_submit_text": "Select", "form_title": "Create"}).flatten())
 
 @login_required
 def edit_tournament(request: HttpRequest, tournament_id: int):
@@ -500,6 +554,95 @@ def arena_color(request: HttpRequest, competition_id: int):
         form = ArenaColorForm(competition=competition)
     return render(request, "competitions/arena_color.html", {'form': form})
 
+## HELPERS ##
+def generate_competitor_data(match):
+    output = []
+    is_next = match.next_matches.exists()
+    curr_match_teams = match.get_competing_teams()
+    
+    for team in curr_match_teams:
+        output.append({
+            "name": team.name if team else "TBD",
+            "won": team in match.advancers.all(),
+            "is_next": is_next,
+            "match_id": match.id,
+            "team_id": team.id if team else None
+        })
+    return output
+
+def generate_connector_data(match, connectorWidth, teamHeight):
+    is_next = match.next_matches.exists()
+    if not is_next:
+        return {
+            "connector": None,
+            "team_index_offset": None,
+            "match_offset_mult": None,
+            "connector_width_actual": None,
+            "team_index_offset_mult": None,
+        }
+
+    curr_match_teams = match.get_competing_teams()
+
+    next_match = match.next_matches.all().first()
+    feed_matches = next_match.prev_matches.all()
+    num_feed_matches = feed_matches.count()
+    midpoint_index = (num_feed_matches - 1) / 2
+    match_index = list(feed_matches).index(match)
+    num_divisions = max(math.floor(num_feed_matches/2),1)
+
+    if (abs(match_index - midpoint_index) <= 1):
+        match_offset_mult = abs(match_index - midpoint_index)
+        connector_width_actual = (1*connectorWidth)/(num_divisions+1)
+    else:
+        match_offset_mult = abs(match_index - midpoint_index)
+        num_something_idk = math.floor(abs(match_index - midpoint_index) + 0.5)
+        connector_width_actual = (num_something_idk*connectorWidth)/(num_divisions+1)
+
+
+    next_match_teams = next_match.get_competing_teams()
+    from_index = len(curr_match_teams)/2
+    to_index =  match_index
+    winner = False
+    winner_id = None
+
+    for index, team in enumerate(curr_match_teams):
+        if is_next and team in match.advancers.all():
+            to_index = next_match_teams.index(team)
+            from_index = index
+            winner = True
+            winner_id = team.id
+
+    if match_index <= midpoint_index:
+        index_diff = to_index-from_index
+        len_diff = (len(curr_match_teams)-len(next_match_teams))/2 
+        vertical_margin = teamHeight*(from_index+0.5)
+        connector = "connector-down"
+        if not winner:
+            index_diff += 0.5
+            vertical_margin -= (teamHeight/2)
+    else:
+        index_diff = from_index-to_index
+        len_diff = (len(next_match_teams)-len(curr_match_teams))/2
+        vertical_margin = teamHeight*(len(curr_match_teams)-from_index-0.5)
+        connector = "connector-up"
+        if not winner:
+            index_diff += 0.5
+            vertical_margin += (teamHeight/2)
+
+    team_index_offset_mult = index_diff+len_diff
+    team_index_offset = team_index_offset_mult*teamHeight
+
+    return{
+        "connector": connector,
+        "team_index_offset": team_index_offset,
+        "match_offset_mult": match_offset_mult,
+        "connector_width_actual": connector_width_actual,
+        "team_index_offset_mult": team_index_offset_mult,
+        "vertical_margin": vertical_margin,
+        "winner_id": winner_id
+    }
+
+
 def single_elimination_tournament(request: HttpRequest, tournament_id: int):
     redirect_to = request.GET.get('next', '')
     redirect_id = request.GET.get('id', None)
@@ -529,99 +672,12 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
     roundNames = ["Quarter Finals", "Semi Finals", "Finals"]
     # -------------------
 
-    def generate_competitor_data(match):
-        output = []
-
-        is_next = match.next_matches.exists()
-        curr_match_teams = match.get_competing_teams()
-        
-        for team in curr_match_teams:
-            output.append({
-                "name": team.name if team else "TBD",
-                "won": team in match.advancers.all(),
-                "is_next": is_next,
-                "match_id": match.id,
-                "team_id": team.id if team else None
-            })
-        return output
-    
-    def generate_connector_data(match):
-        is_next = match.next_matches.exists()
-        if not is_next:
-            return {
-                "connector": None,
-                "team_index_offset": None,
-                "match_offset_mult": None,
-                "connector_width_actual": None,
-                "team_index_offset_mult": None,
-            }
-
-        curr_match_teams = match.get_competing_teams()
-
-        next_match = match.next_matches.all().first()
-        feed_matches = next_match.prev_matches.all()
-        num_feed_matches = feed_matches.count()
-        midpoint_index = (num_feed_matches - 1) / 2
-        match_index = list(feed_matches).index(match)
-        num_divisions = max(math.floor(num_feed_matches/2),1)
-
-        if (abs(match_index - midpoint_index) <= 1):
-            match_offset_mult = abs(match_index - midpoint_index)
-            connector_width_actual = (1*connectorWidth)/(num_divisions+1)
-        else:
-            match_offset_mult = abs(match_index - midpoint_index)
-            num_something_idk = math.floor(abs(match_index - midpoint_index) + 0.5)
-            connector_width_actual = (num_something_idk*connectorWidth)/(num_divisions+1)
-
-        
-        next_match_teams = next_match.get_competing_teams()
-        from_index = len(curr_match_teams)/2
-        to_index =  match_index
-        winner = False
-        winner_id = None
-        
-        for index, team in enumerate(curr_match_teams):
-            if is_next and team in match.advancers.all():
-                to_index = next_match_teams.index(team)
-                from_index = index
-                winner = True
-                winner_id = team.id
-
-        if match_index <= midpoint_index:
-            index_diff = to_index-from_index
-            len_diff = (len(curr_match_teams)-len(next_match_teams))/2 
-            vertical_margin = teamHeight*(from_index+0.5)
-            connector = "connector-down"
-            if not winner:
-                index_diff += 0.5
-                vertical_margin -= (teamHeight/2)
-        else:
-            index_diff = from_index-to_index
-            len_diff = (len(next_match_teams)-len(curr_match_teams))/2
-            vertical_margin = teamHeight*(len(curr_match_teams)-from_index-0.5)
-            connector = "connector-up"
-            if not winner:
-                index_diff += 0.5
-                vertical_margin += (teamHeight/2)
-
-        team_index_offset_mult = index_diff+len_diff
-        team_index_offset = team_index_offset_mult*teamHeight
-
-        return{
-            "connector": connector,
-            "team_index_offset": team_index_offset,
-            "match_offset_mult": match_offset_mult,
-            "connector_width_actual": connector_width_actual,
-            "team_index_offset_mult": team_index_offset_mult,
-            "vertical_margin": vertical_margin,
-            "winner_id": winner_id
-        }
-    
+    # recursive mutator
     def read_tree_from_node(curr_match, curr_round, base_index):
         if len(bracket_array) <= curr_round:
             bracket_array.append({})
 
-        bracket_array[curr_round][base_index] = [generate_competitor_data(curr_match), generate_connector_data(curr_match)]
+        bracket_array[curr_round][base_index] = [generate_competitor_data(curr_match), generate_connector_data(curr_match, connectorWidth, teamHeight)]
         
         prevs = curr_match.prev_matches.all()
         if prevs:
@@ -632,7 +688,7 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
                 bracket_array.append({})
             bracket_array[curr_round+1][base_index] = None
 
-    championship = Match.objects.filter(tournament=tournament_id).filter(next_matches__isnull=True).first()
+    championship = Match.objects.filter(tournament=tournament_id, next_matches__isnull=True).first()
     read_tree_from_node(championship, 0, 0)
 
     bracket_array.pop()
@@ -682,11 +738,10 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
         "round_data": round_data,
         "team_height": teamHeight,
         "championship_id": championship.id,
-        "champion_id": championship.advancers.first().id if championship.advancers.first() else None
+        "champion_id": championship.advancers.first().id if championship.advancers.first() else None,
     }
 
-    tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
-    context = {"tournament": tournament, "bracket_dict": bracket_dict, "form": TournamentStatusForm()}
+    context = {"tournament": tournament, "judges": tournament.judges.all(), "bracket_dict": bracket_dict, "form": TournamentStatusForm()}
     return render(request, "competitions/bracket.html", context)
 
 def round_robin_tournament(request: HttpRequest, tournament_id: int):
@@ -722,11 +777,11 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
             for team in rounds[j].starting_teams.all():
                 if team in rounds[j].advancers.all():
                     won = True
-                team_data.append({'name': team.name, 'won': won, 'is_next': is_next, 'prev': prev, 'match': rounds[j], 'connector': connector})
+                team_data.append({'match_id': rounds[j].id, 'team_id': team.id, 'name': team.name, 'won': won, 'is_next': is_next, 'prev': prev, 'match': rounds[j], 'connector': connector})
                 won = False
                 k += 1
             for q in range(k, tournament.teams_per_match):
-                team_data.append({'name': 'No Team', 'won': won, 'is_next': is_next, 'prev': prev, 'match': rounds[j], 'connector': connector})
+                team_data.append({'match_id': rounds[j].id, 'team_id': None, 'name': 'No Team', 'won': won, 'is_next': is_next, 'prev': prev, 'match': rounds[j], 'connector': connector})
             bracket_array[i][j] = team_data
     
     num_matches = len(bracket_array)/numRounds
@@ -756,7 +811,8 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
                 "center_height": center_height,
                 "center_top_margin": center_top_margin,
                 "arena": team_data[0].get('match').arena,
-                "id": team_data[0].get('match').id
+                "id": team_data[0].get('match').id,
+                "match":  team_data[0].get('match'),
              })
 
         round_data.append({"match_data": match_data})
@@ -765,11 +821,13 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
     bracket_dict = {
         "bracketWidth": bracketWidth, 
         "bracketHeight": bracketHeight, 
-        "roundWidth": roundWidth+connectorWidth, 
+        "roundWidth": roundWidth, 
         "roundHeight": bracketHeight,
         "teamHeight": teamHeight,
         "connectorWidth": connectorWidth,
+        "match_width": matchWidth,
         "round_data": round_data,
+        "team_height": teamHeight,
     }
     team_wins = get_points(tournament_id)
     winning_points = max(team_wins.values())
@@ -826,18 +884,18 @@ def competition(request: HttpRequest, competition_id: int):
 
 @login_required
 def create_competition(request: HttpRequest):
-    sport_id = request.GET.get('sport', None)
-    if sport_id is None:
-        return render(request, "competitions/create_competition.html", {"sports": Sport.objects.all()})
-    try:
-        sport_id = int(sport_id)
-    except:
-        raise Http404("Not a valid sport.")
-    sport = get_object_or_404(Sport, pk=sport_id)
+    # sport_id = request.GET.get('sport', None)
+    # if sport_id is None:
+    #     return render(request, "competitions/create_competition.html", {"sports": Sport.objects.all()})
+    # try:
+    #     sport_id = int(sport_id)
+    # except:
+    #     raise Http404("Not a valid sport.")
+    # sport = get_object_or_404(Sport, pk=sport_id)
 
     form = None
     if request.method == 'POST':
-        form = CreateCompetitionsForm(request.POST, sport=sport)
+        form = CreateCompetitionsForm(request.POST)
         if form.is_valid():
             form.save()
             messages.success(request, "Competition created successfully.")
@@ -846,8 +904,9 @@ def create_competition(request: HttpRequest):
             for error_field, error_desc in form.errors.items():
                 form.add_error(error_field, error_desc)
     if not form:
-        form = CreateCompetitionsForm(sport=sport)
-    return render(request, "competitions/create_competition_form.html", {"form": form})
+        form = CreateCompetitionsForm()
+    #form_html = render_crispy_form(form)
+    return render(request, "competitions/create_competition_form.html", {"form": form}) #{"form_html": form_html})
 
 def credits(request: HttpRequest):
     return render(request, "competitions/credits.html")
@@ -1193,9 +1252,12 @@ def team(request: HttpRequest, team_id: int):
 
 def _raise_error_code(request: HttpRequest):
     try:
-        error_code = int(request.GET.get('code', 0)) # type: ignore
+        error_code = int(request.GET.get('code', 500)) # type: ignore
     except:
         raise SuspiciousOperation
+    
+    # if error_code not in range(100,600):
+    #     error_code = 500
 
     # if error_code == 403:
     #     raise PermissionDenied

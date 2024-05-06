@@ -1,20 +1,27 @@
 {% extends "skeleton.html" %}
 {% load i18n %}
+{% load crispy_forms_tags %}
 
 {% block title %} {% translate "Judge a Match Form" %} {% endblock %}
 
 {% block content %}
-    <h1>{% translate "Judge a Match" %}</h1>
-    <h2>{% translate "Matchup of " %}
-        {% for team in teams %}
-            {{ team }}
-            {% if not forloop.last %} {% translate "vs" %} {% endif %}
-        {% endfor%}
-        {% translate "for Tournament" %} {{ match.tournament }}
-    </h2>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">{% translate "Judge" %}</button>
-    </form>
+    <div class='container'>
+        <div class='col-md-4'>
+        <h1>{% translate "Judge a Match" %}</h1>
+        <h2>{% translate "Matchup of " %}
+            {% for team in teams %}
+                {{ team }}
+                {% if not forloop.last %} {% translate "vs" %} {% endif %}
+            {% endfor%}
+            {% translate "for Tournament" %} {{ match.tournament }}
+        </h2></div>
+        <div class="row">
+            <div class="col">
+                <form method="post" action="">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <button type="submit" class="btn btn-secondary">{% translate "Judge" %}</button>
+                </form>
+            </div>
+        </div>
 {% endblock %}

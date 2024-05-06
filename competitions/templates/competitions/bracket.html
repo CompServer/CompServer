@@ -20,6 +20,21 @@
     width: {{ bracket_dict.match_width }}px;
 }
 
+.match {
+    width: {{ bracket_dict.match_width }}px;
+}
+
+.team {
+    height: {{bracket_dict.team_height}}px; 
+    width: {{ bracket_dict.match_width }}px;
+}
+
+@media only screen and (max-width: 480px) and (orientation: portrait) {
+    .bracket {
+        width:{{bracket_dict.roundWidth}}px;
+    }
+}
+
 </style>
 
 {% endblock %}
@@ -27,7 +42,7 @@
 {% block content %}
 
 
-
+<div class="center-content-container">
 <h2>
     {% if tournament.is_judgable %} 
         <i class="bi-activity" title="{{ competition.status }}"></i> {{ tournament.competition.name }} {% translate "Single Elimination Tournament" %}: {{ tournament.event.name }}
@@ -38,9 +53,9 @@
     {% elif tournament.is_in_setup %}
         <i class="bi bi-device-ssd" title="{{ competition.status }}"></i> {{ tournament.competition.name }} {% translate "Single Elimination Tournament" %}: {{ tournament.event.name }}
     {% elif competition.is_archived %}
-        <i class="bi-archive" title="{{ competition.status }}"></i> {{ tournament.competition.name }} {% translate "Single Elimination Tournament" %}: {{ tournament.event.name }} <small>You can see this archived item because you are signed in as a superuser.</small>
+        <i class="bi-archive" title="{{ competition.status }}"></i> {{ tournament.competition.name }} {% translate "Single Elimination Tournament" %}: {{ tournament.event.name }} <small>{% translate "You can see this archived item because you are signed in as a superuser." %}</small>
     {% endif %}
-    ({{ tournament.points|floatformat:"0" }} {% translate "points" %})
+    ({{ tournament.points|floatformat:"0" }} {% if points != 1 %}{% translate "points" %} {% else %} {% translate "point" %} {% endif %})
     {% if user.is_staff %}
         <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/tournament/{{ tournament.id }}/?next=tournament&id={{ tournament.id }}" method="POST" id="status">
             {% csrf_token %}
@@ -54,22 +69,24 @@
         </form>
     {% endif %} 
 </h2>
+</div>
 {% comment %} not sure how to show match times here, bc I need to know exactly how they work {% endcomment %}
 
 {% if tournament.match_set.exists %}
-<div class="bracket ">
+<div class="center-content-container">
+<div class="bracket">
     {% for round_data in bracket_dict.round_data %}
-    <div class="round">
+    <div class="round round-{{forloop.counter}}">
         <div class="round-header">
             <p>{{round_data.label}}</p>
         </div>
         {% for match_data in round_data.match_data %}
-        <div class="match" style="height: {{ match_data.match_height }}px; width: {{ bracket_dict.match_width }}px;">
+        <div class="match" style="height: {{ match_data.match_height }}px;">
             <div class="center"
                 style="height: {{ match_data.center_height }}px; margin-top: {{ match_data.center_top_margin }}px; ">
-                {% if match_data.team_data != None%}
+                {% if match_data.team_data != None %}
                     {% with connector_height=match_data.match_height|mul:match_data.connector_data.match_offset_mult %}    
-                    <div class="connector-front {{ match_data.connector_data.connector }} highlight-{{match_data.connector_data.winner_id}}" onclick=""
+                    <div class="connector connector-front {{ match_data.connector_data.connector }} highlight-{{match_data.connector_data.winner_id}}" onclick=""
                     style=" cursor: default;
                     height: {{connector_height|add:match_data.connector_data.team_index_offset|abs}}px;
                     width: {{match_data.connector_data.connector_width_actual}}px;
@@ -88,16 +105,16 @@
                     </div>
                     {% for curr_team in match_data.team_data %}
                         <div class="team highlight-{{curr_team.team_id}} {%if curr_team.won %}won{%endif%}"
-                            style="height: {{bracket_dict.team_height}}px; width: {{ bracket_dict.match_width }}px; cursor: pointer;
+                            style="{% if user in judges %}cursor: pointer;{% else %}cursor: default;{% endif %}
                             {% if forloop.first %} border-top-right-radius: 8px; border-top-left-radius: 8px; {% endif %}
                             {% if forloop.last %} border-bottom-right-radius: 8px; border-bottom-left-radius: 8px; {% endif %}"
-                            onclick="location.href='{% url 'competitions:judge_match' curr_team.match_id %}';"
+                            {% if user in judges %} onclick="location.href='{% url 'competitions:judge_match' curr_team.match_id %}';" {% endif %}
                             onmouseover="highlight({{curr_team.team_id}})" onmouseout="dehighlight({{curr_team.team_id}})">
                             <p>{{ curr_team.name }}</p>
                             {% if curr_team.team_id == bracket_dict.champion_id and curr_team.match_id == bracket_dict.championship_id %}
                                 {% comment %} because team elements dont have a definied position style, these offsets are relative to the center div, so no matter which team wins, the crown is in the same place {% endcomment %}
                                 {%with svg_height="30" %}
-                                <svg style="position: absolute; top: {{match_data.center_height|sub:svg_height|div:2|sub:2}}px; right: -35px;"xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" fill= "#444444" height="{{svg_height}}px" width="{{svg_height}}px"version="1.1" id="Capa_1" viewBox="0 0 267.5 267.5" xml:space="preserve">
+                                <svg class="connector" style="position: absolute; top: {{match_data.center_height|sub:svg_height|div:2|sub:2}}px; right: -35px;"xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" fill= "#444444" height="{{svg_height}}px" width="{{svg_height}}px"version="1.1" id="Capa_1" viewBox="0 0 267.5 267.5" xml:space="preserve">
                                     <path d="M256.975,100.34c0.041,0.736-0.013,1.485-0.198,2.229l-16.5,66c-0.832,3.325-3.812,5.663-7.238,5.681l-99,0.5  c-0.013,0-0.025,0-0.038,0H35c-3.444,0-6.445-2.346-7.277-5.688l-16.5-66.25c-0.19-0.764-0.245-1.534-0.197-2.289  C4.643,98.512,0,92.539,0,85.5c0-8.685,7.065-15.75,15.75-15.75S31.5,76.815,31.5,85.5c0,4.891-2.241,9.267-5.75,12.158  l20.658,20.814c5.221,5.261,12.466,8.277,19.878,8.277c8.764,0,17.12-4.162,22.382-11.135l33.95-44.984  C119.766,67.78,118,63.842,118,59.5c0-8.685,7.065-15.75,15.75-15.75s15.75,7.065,15.75,15.75c0,4.212-1.672,8.035-4.375,10.864  c0.009,0.012,0.02,0.022,0.029,0.035l33.704,45.108c5.26,7.04,13.646,11.243,22.435,11.243c7.48,0,14.514-2.913,19.803-8.203  l20.788-20.788C238.301,94.869,236,90.451,236,85.5c0-8.685,7.065-15.75,15.75-15.75s15.75,7.065,15.75,15.75  C267.5,92.351,263.095,98.178,256.975,100.34z M238.667,198.25c0-4.142-3.358-7.5-7.5-7.5h-194c-4.142,0-7.5,3.358-7.5,7.5v18  c0,4.142,3.358,7.5,7.5,7.5h194c4.142,0,7.5-3.358,7.5-7.5V198.25z"/>
                                 </svg>
                                 {%endwith%}
@@ -112,6 +129,19 @@
     </div>
     {% endfor %}
 </div>
+</div>
+
+<div class="center-content-container">
+<label class="round-select" style="margin-left: 10px; margin-right: 5px; float: left;" for="rounds">Shown round: </label>
+
+<select class="round-select" id="rounds" onchange="changeShownRound(this)">
+    {% for round_data in bracket_dict.round_data %}
+    <option value="{{forloop.counter}}">{{round_data.label}}</option>
+    {% endfor %}
+</select>
+</div>
+
+
 {% else %}
     {% if user.is_superuser %}
         <form class="form-inline my-2 my-md-0 justify-content-end" action="/tournament/{{ tournament.id }}/generate/" method="POST" id="status">
@@ -125,16 +155,8 @@
     function highlight(num) {
         document.querySelectorAll(".highlight-"+num).forEach((element)=>{
             element.style.borderColor = "#2ec4b6";
-            if (element.className.includes("won")) {
-                if (element.className.includes("team")) {
-                    element.style.backgroundColor = "lightgreen";
-                }
-            } else {
-                if (element.className.includes("team")) {
-                    element.style.borderColor = "#c9184a";
-                    element.style.backgroundColor= "#ff4d6d"
-                }
-                
+            if (element.className.includes("team")) {
+                element.style.backgroundColor = "lightgreen";
             }
         })
     }
@@ -151,6 +173,11 @@
                 }
             }
         })
+    }
+    function changeShownRound(selectObject) {
+        const roundsElements = Array.from(document.getElementsByClassName("bracket")[0].children);
+        roundsElements.forEach((x)=>{x.style.display = "none"});
+        roundsElements[selectObject.value-1].style.display = "block";
     }
 </script>
 

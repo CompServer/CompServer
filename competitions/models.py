@@ -11,6 +11,7 @@ from django.db.models import CharField, signals
 from django.db.models.fields.files import ImageField
 import math, operator, random, string, datetime
 from functools import lru_cache
+import math
 #from colorfield.fields import ColorField
 from .widgets import ColorPickerWidget, ColorWidget
 
@@ -268,6 +269,15 @@ class Arena(models.Model):
     capacity = models.PositiveSmallIntegerField()
     is_available = models.BooleanField(default=True)
     color = ColorField(default="#CBCBCB")
+
+    @property
+    def is_dark(self) -> bool:
+        color = str(self.color).lstrip('#')
+        rgb = list(int(color[i:i+2], 16) for i in (0, 2, 4))
+        hsp = math.sqrt(0.299 * (rgb[0] * rgb[0]) + 0.587 * (rgb[1] * rgb[1]) + 0.114 * (rgb[2] * rgb[2]))
+        if hsp < 127.5:
+            return True
+        return False
 
     def __str__(self) -> str:
         return str(self.name)
@@ -592,7 +602,8 @@ class RoundRobinTournament(AbstractTournament):
         return True
 
     class Meta():
-        verbose_name = "PreliminaryTournament"
+        verbose_name = "Preliminary Tournament (Round Robin)"
+        verbose_name_plural = "Preliminary Tournaments (Round Robin)"
 #     ''' Everyone plays everyone else (most points / wins, wins) 
 #         Can be used to establish rankings for an Elimination
 #         This is often used for league play (not necessarily a tournament)
@@ -697,7 +708,7 @@ class Match(models.Model):
     def teams(self) -> List[Team]:
         return [team for team in self.starting_teams.all()] + [match.advancers.all() for match in [previous_match for previous_match in self.prev_matches.all()]]
 
-    def generate_str_recursive(self, force: bool=False) -> str:
+    def _generate_str_recursive(self, force: bool=False) -> str:
         """Recursive algorithm for generating the string representation of this match.
         This is called whenever casted, and the result is saved to a variable to avoid recalculating it.
         It can be forced to recalculate by setting the force parameter to True, or passing in other kwargs"""
@@ -718,8 +729,8 @@ class Match(models.Model):
                 self._cached_str =  res + _(" in ") + str(self.tournament) # Battlebots vs Byters in SumoBot tournament @ RoboMed 2023
             else: 
                 self._cached_str =  res # if part of another match we don't want to repeat the tournament
-        return self._cached_str
-
+        return str(self._cached_str)
+    
     def __str__(self) -> str:
         self._generate_str_recursive()
         #if self._cached_str is None:    

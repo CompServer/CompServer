@@ -40,9 +40,10 @@
     padding-left: 5px;
 }
 
-.connector-end {
+.connector-back {
     border-top: 2px black solid;
     position: absolute;
+    height: 0px;
 }
 
 .connector-front {
@@ -58,24 +59,8 @@
     border-top: 2px black solid;
 }
 
-.connector-up .connector-end {
-    top: 0px;
-}
-
-.connector-down .connector-end {
-    bottom: -1px;
-}
-
-.round-header {
-    background-color: #DDDDDD;
-    border: 1px black solid;
-    border-radius: 8px;
-}
-
-.round-header p{
-    margin-bottom: 0px;
-    text-align: center;
-    vertical-align: middle;
+.connector-straight {
+    border-top: 2px black solid;
 }
 
 div.img {
@@ -100,4 +85,3 @@ span.with-padding {
 /* p {
     word-spacing: 5px;
 } */
- 
