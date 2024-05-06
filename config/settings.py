@@ -1,11 +1,13 @@
+import copy
+import logging
+import os
 from pathlib import Path
 from urllib.parse import urlparse
-from django.utils import timezone
-import os
+
 from django.contrib.messages import constants as messages
-import logging, copy
 from django.utils.log import DEFAULT_LOGGING
 from environ import Env
+import yaml
 
 # custom logging filter to suppress certain errors (such as Forbidden and Not Found)
 
@@ -36,6 +38,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-2y0@hfzu761goc9!m&!#if&(vhcg=!uzre027l48r&oh_c^xcx'
 
+if os.path.exists('secrets.yml'):
+    with open('secrets.yml') as f:
+        config = dict(yaml.safe_load(f))
+        SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = config['GOOGLE_CLIENT_ID']
+        SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = config['GOOGLE_CLIENT_SECRET']
 # recommended by https://cloud.google.com/python/django/appengine
 env = Env(
     DEBUG=(bool, False),
@@ -145,7 +152,6 @@ STORAGES = {
 WSGI_APPLICATION = 'config.wsgi.application'
 
 AUTHENTICATION_BACKENDS = [
-    'social_core.backends.google.GoogleOpenId',
     'social_core.backends.google.GoogleOAuth2',
     'social_core.backends.google.GoogleOAuth',
     'django.contrib.auth.backends.ModelBackend',
@@ -259,3 +265,7 @@ SHOW_TOOLBAR_CALLBACK = lambda request: DEBUG
 LOGIN_REDIRECT_URL = '/'
 
 LOGIN_URL = '/accounts/login/'
+
+# SOCIAL_AUTH_GOOGLE_OAUTH_KEY = ''
+# SOCIAL_AUTH_GOOGLE_OAUTH_SECRET = ''
+SOCIAL_AUTH_URL_NAMESPACE = 'social'
