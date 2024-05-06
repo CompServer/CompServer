@@ -903,7 +903,7 @@ def create_competition(request: HttpRequest):
 
     form = None
     if request.method == 'POST':
-        form = CreateCompetitionsForm(request.POST)
+        form = CreateCompetitionsForm(request.POST, owner=request.user)
         if form.is_valid():
             form.save()
             messages.success(request, "Competition created successfully.")
@@ -912,7 +912,7 @@ def create_competition(request: HttpRequest):
             for error_field, error_desc in form.errors.items():
                 form.add_error(error_field, error_desc)
     if not form:
-        form = CreateCompetitionsForm()
+        form = CreateCompetitionsForm(owner=request.user)
     #form_html = render_crispy_form(form)
     return render(request, "competitions/create_competition_form.html", {"form": form}) #{"form_html": form_html})
 
