@@ -789,7 +789,9 @@ class PointsEarned(models.Model):
             int: The points earned by the team in the match.
         """
         try:
-            return PointsEarned.objects.get(match=match, team=team).points
+            points = PointsEarned.objects.get(match=match, team=team).points
+            assert points is not None
+            return points
         except:
             return -1
 
