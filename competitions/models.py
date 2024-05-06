@@ -777,6 +777,21 @@ class PointsEarned(models.Model):
     #and show it in the match bubbles.
     match = models.ForeignKey(Match, related_name="points_earned_set", on_delete=models.CASCADE)
 
+    @staticmethod
+    def get_points_for(match: Match, team: Team) -> int:
+        """Gets the points for a given team and match. Returns -1 if no points are found.
+
+        Args:
+            match (Match): The match to get the points for.
+            team (Team): The team to get the points for.
+
+        Returns:
+            int: The points earned by the team in the match.
+        """
+        try:
+            return PointsEarned.objects.get(match=match, team=team).points
+        except PointsEarned.DoesNotExist:
+            return -1
 
 @receiver(post_save, sender=Match)
 def update_str_match(sender, instance, **kwargs):#
