@@ -2,6 +2,7 @@
 *.sqlite3
 media/
 #static/
+staticfiles/
 # ^ the style.css and others should be checked in to avoid merge conflicts
 
 # Python

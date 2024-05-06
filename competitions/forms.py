@@ -8,6 +8,7 @@ from django.forms.widgets import TextInput
 from django.urls import reverse_lazy
 from competitions.models import AbstractTournament, Competition, SingleEliminationTournament, Sport, Team, Match, RoundRobinTournament, Arena, ColorField
 from .widgets import ColorPickerWidget, ColorWidget
+from .utils import *
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from .models import Team
@@ -49,10 +50,10 @@ class TournamentStatusForm(forms.ModelForm):
         model = AbstractTournament
         fields = ['status']
 
-class TournamentSwapForm(forms.Form):
-    round_num = forms.IntegerField(label="Round")
-    team1 = forms.ModelChoiceField(queryset=None, label="Team 1")
-    team2 = forms.ModelChoiceField(queryset=None, label="Team 2")
+# class TournamentSwapForm(forms.Form):
+#     round_num = forms.IntegerField(label="Round")
+#     team1 = forms.ModelChoiceField(queryset=None, label="Team 1")
+#     team2 = forms.ModelChoiceField(queryset=None, label="Team 2")
 
     def __init__(self, *args, tournament: AbstractTournament, **kwargs):
         super().__init__(*args, **kwargs)
@@ -61,11 +62,44 @@ class TournamentSwapForm(forms.Form):
         self.fields['team1'].queryset = tournament.teams.all()
         self.fields['team2'].queryset = tournament.teams.all()
 
+#     def is_valid(self):
+#         self.full_clean()
+#         if self.cleaned_data['team1'] == self.cleaned_data['team2']:
+#             return False
+#         if self.cleaned_data['team1'] not in self.tournament.teams.all() or self.cleaned_data['team2'] not in self.tournament.teams.all():
+#             return False
+#         return super().is_valid()
+
+class MatchSwapForm(forms.Form):
+    match1 = forms.ModelChoiceField(queryset=None, label="Match 1")
+    match2 = forms.ModelChoiceField(queryset=None, label="Match 2")
+
+    def __init__(self, *args, tournament: AbstractTournament, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.tournament = tournament
+        self.fields['match1'].queryset = tournament.match_set.all()
+        self.fields['match2'].queryset = tournament.match_set.all()
+
     def is_valid(self):
         self.full_clean()
-        if self.cleaned_data['team1'] == self.cleaned_data['team2']:
+        if self.cleaned_data['match1'] == self.cleaned_data['match2']:
             return False
-        if self.cleaned_data['team1'] not in self.tournament.teams.all() or self.cleaned_data['team2'] not in self.tournament.teams.all():
+        if self.cleaned_data['match1'] not in self.tournament.match_set.all() or self.cleaned_data['match2'] not in self.tournament.match_set.all():
+            return False
+        return super().is_valid()
+
+class TeamSwapForm(forms.Form):
+    teams1 = forms.ModelMultipleChoiceField(queryset=None, label="Teams 1")
+    teams2 = forms.ModelMultipleChoiceField(queryset=None, label="Teams 2")
+
+    def __init__(self, *args, match1: Match, match2: Match, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['teams1'].queryset = match1.starting_teams.all()
+        self.fields['teams2'].queryset = match2.starting_teams.all()
+
+    def is_valid(self):
+        self.full_clean()
+        if self.cleaned_data['teams1'] == self.cleaned_data['teams2']:
             return False
         return super().is_valid()
 
@@ -193,6 +227,9 @@ class RRTournamentForm(forms.ModelForm):
             return False
         elif self.cleaned_data['teams_per_match'] < 2:
             self.add_error('teams_per_match', 'Teams per match must be greater than or equal to 2')
+            return False
+        #extreme edge case
+        elif self.cleaned_data['teams_per_match'] == 2 and self.cleaned_data['teams'].count() % 2 == 1 and self.cleaned_data['matches_per_team'] % 2 == 1:
             return False
         # elif self.cleaned_data['teams'].count() % self.cleaned_data['teams_per_match'] != 0:
         #     self.add_error('teams', 'Teams must be able to be divided evenly into matches')

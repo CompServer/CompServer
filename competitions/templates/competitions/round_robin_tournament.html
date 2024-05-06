@@ -1,37 +1,18 @@
 {% extends 'skeleton.html' %}
 {% load i18n %}
 <style>
-    .team {
-        margin: 0px {{ bracket_dict.connectorWidth }}px 0px {{ bracket_dict.connectorWidth }}px;
-      }
-    
-    .connector-back {
-        width: {{ bracket_dict.connectorWidth }}px;
-        left: -{{ bracket_dict.connectorWidth }}px;
-        top: {% widthratio bracket_dict.teamHeight 2 1 %}px
-    }
-    
-    .connector-front {
-        width: {{ bracket_dict.connectorWidth|add:3 }}px;
-        right: -{{ bracket_dict.connectorWidth|add:3 }}px;
-    }
-    
-    .connector-up {
-        bottom: {% widthratio bracket_dict.teamHeight 2 1 %}px;
-    }
-    
-    .connector-down {
-        top: {% widthratio bracket_dict.teamHeight 2 1 %}px;
-    }
-    
     .bracket {
-        height:{{ bracket_dict.bracketHeight }}px; 
-        width:{{ bracket_dict.bracketWidth }}px;
+        width:{{bracket_dict.bracketWidth}}px;
     }
     
     .round {
-        height: {{ bracket_dict.roundHeight }}px; 
+        height: {{ bracket_dict.roundHeight|add:30 }}px; 
         width: {{ bracket_dict.roundWidth }}px;
+    }
+    
+    .round-header {
+        height: {{bracket_dict.team_height}}px;
+        width: {{ bracket_dict.match_width }}px;
     }
 </style>
 {% block content %}
@@ -61,32 +42,43 @@
     </h1>
     <hr>
     {% if tournament.match_set.all %}
-        <div class="bracket">
+        <div class="bracket row justify-content-center" style="padding-right: 2%; padding-top: 30px; padding-bottom: 30px; margin-right: 1%;">
             {% for round_data in bracket_dict.round_data %}
-            <div class="round">
-                {% translate "Round" %} {{ forloop.counter }}
+            <div class="round col-6 col-md-4 col-lg-3 col-xxl-2 justify-content-center">
+                <div class="round-header" style="height: {{bracket_dict.team_height}}px;
+                width: {{ bracket_dict.match_width }}px;">
+                    <p>{% translate "Round" %} {{ forloop.counter }}</p>
+                </div>
                 {% for match_data in round_data.match_data %}
-                <div class="match" style="height: {{ match_data.match_height }}px; width: {{ match_data.match_width }}px;">
+                <div class="match" style="height: {{ match_data.match_height }}px; width: {{ match_data.match_width }}px;" id="{{ match_data.id }}">
                     <div class="center"
                         style="height: {{ match_data.center_height }}px; margin-top: {{ match_data.center_top_margin }}px; ">
-                        {{ match_data.arena }}
-                        {% for team_data in match_data.team_data %}
-                            <div class="team"
-                                style="width: {{ match_data.match_width }}px; background-color:{% if team_data.won %} #fff5a8 {% else %} {{ match_data.arena.color }} {% endif %}; cursor: pointer;"
-                                onclick="location.href='{% url 'competitions:judge_match' team_data.match.id %}';">
-                                {{ team_data.name }} 
-                            </div>
-                        {% endfor %}
-                    </div>
+                        {% if match_data.team_data != None %}
+                            {{ match_data.arena }} {% if user.is_staff %} <small><small id="match_id">(ID: {{ match_data.id }})</small></small> {% endif %}
+                            {% for team_data in match_data.team_data %}
+                                <div class=" team highlight-{{ team_data.match_id }}-{{ team_data.team_id }} {%if team_data.won %}won{%endif%}"
+                                    style="height: {{ bracket_dict.team_height }}px; width: {{ bracket_dict.match_width }}px; cursor: pointer;
+                                    background-color:{% if team_data.won %} #fff5a8 {% else %} {{ match_data.arena.color }} {% endif %}; 
+                                    {% if forloop.first %} border-top-right-radius: 8px; border-top-left-radius: 8px; {% endif %}
+                                    {% if forloop.last %} border-bottom-right-radius: 8px; border-bottom-left-radius: 8px; {% endif %}"
+                                    onclick="location.href='{% url 'competitions:judge_match' team_data.match_id %}';"
+                                    onmouseover="highlight({{team_data.team_id}}, {{ team_data.match_id }})" onmouseout="dehighlight({{ team_data.team_id }}, {{ team_data.match_id }}, '{{ match_data.arena.color }}')">
+                                    <p style="color: {% if match_data.arena.is_dark and not team_data.won %} white; {% endif %} ">{{ team_data.name }}</p>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div> 
                 </div>
-                {% endfor %}    
+                {% endfor %}  
+                {{ round_data.time }}
+                {% if not forloop.last %} <br><br><br> {% endif %}
             </div>
             {% endfor %}
         </div>
         <div class="row d-flex justify-content-center">
             <span><b>{% translate "Team Rankings" %}</b> ({% translate "Points Per Win: "%} {{ tournament.points_per_win|floatformat }}, {% translate "Points Per Tie: "%} {{ tournament.points_per_tie|floatformat }}, {% translate "Points Per Loss: "%} {{ tournament.points_per_loss|floatformat }})</span>
             {% for team, points in team_wins.items %}
-                <li class="nav-item">
+                <li>
                     {% if team in winning_teams %}
                         <b><font color="#ff0000">{{ team.name }}</font></b>:
                     {% else %}
@@ -96,19 +88,50 @@
                 </li>
             {% endfor %}
         </div>
-        {% if user.is_superuser %}
-            <hr>
-            <a href="{% url 'competitions:swap_matches' tournament.id %}" class="btn btn-secondary">{% translate "Swap Teams" %}</a>
+        <hr>
+        {% if user.is_superuser and tournament.is_in_setup %}
+            <a href="{% url 'competitions:swap_matches' tournament.id %}" class="btn btn-secondary">{% translate "Swap Match Teams" %}</a>
             <a href="{% url 'competitions:edit_tournament' tournament.id %}" class="btn btn-secondary">{% translate "Edit Tournament" %}</a>
-            <a href="{% url 'competitions:competition' tournament.competition.id %}" class="btn btn-secondary">{% translate "Go Back To Competition" %}</a>
             {% comment %} <br><r>
             <a href="{% url "competitions:arena_color" tournament.competition.id %}" class="btn btn-secondary">{% translate "Change Arena Colors" %}</a> {% endcomment %}
         {% endif %}
+        <a href="{% url 'competitions:competition' tournament.competition.id %}" class="btn btn-secondary">{% translate "Go Back To Competition" %}</a>
     {% else %}
         <form class="form-inline my-2 my-md-0 justify-content-end" action="/tournament/{{ tournament.id }}/generate/" method="POST" id="status">
             {% csrf_token %}
             <input type="submit" value={% translate "Generate Matches" %}>
         </form>
     {% endif %}
-    {% comment %} <h3>{% translate "Matches" %}</h3> {% endcomment %}
+    <script>
+        function highlight(num, num2) {
+            document.querySelectorAll(".highlight-"+num2+"-"+num).forEach((element)=>{
+                element.style.borderColor = "#2ec4b6";
+                if (element.className.includes("won")) {
+                    if (element.className.includes("team")) {
+                        element.style.backgroundColor = "lightgreen";
+                    }
+                } else {
+                    if (element.className.includes("team")) {
+                        element.style.borderColor = "#c9184a";
+                        element.style.backgroundColor= "#ff4d6d"
+                    }
+                    
+                }
+            })
+        }
+        function dehighlight(num, num2, color) {
+            document.querySelectorAll(".highlight-"+num2+"-"+num).forEach((element)=>{
+                element.style.borderColor = "black";
+                if (element.className.includes("won")) {
+                    if (element.className.includes("team")) {
+                        element.style.backgroundColor = "#fff5a8";
+                    }
+                } else {
+                    if (element.className.includes("team")) {
+                        element.style.backgroundColor = color;
+                    }
+                }
+            })
+        }
+    </script>
 {% endblock %}

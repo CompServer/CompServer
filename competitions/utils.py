@@ -148,38 +148,7 @@ class RequestType(Enum):
     def __str__(self):
         return self.value.upper()
 
-# https://github.com/fabiocaccamo/django-colorfield/blob/main/colorfield/utils.py
-
-from PIL import Image, UnidentifiedImageError
-
-
-def get_image_background_color(img, img_format: str):
-    has_alpha = img_format in {"hexa", "rgba"}
-    img = img.convert("RGBA" if has_alpha else "RGB")
-    pixel_color = img.getpixel((1, 1))
-    if img_format in {"hex", "hexa"}:
-        color_format = "#" + "%02x" * len(pixel_color)
-        color = color_format % pixel_color
-        color = color.upper()
-    elif img_format in {"rgb", "rgba"}:
-        if has_alpha:
-            # Normalize alpha channel to be between 0 and 1
-            pixel_color = (
-                *pixel_color[:3],
-                round(pixel_color[3] / 255, 2),
-            )
-        # Should look like `rgb(1, 2, 3) or rgba(1, 2, 3, 1.0)
-        color = f"{img_format}{pixel_color}"
-    else:  # pragma: no cover
-        raise NotImplementedError(f"Unsupported color format: {img_format}")
-    return color
-
-
-def get_image_file_background_color(img_file, img_format: str):
-    color = ""
-    try:
-        with Image.open(img_file) as image:
-            color = get_image_background_color(image, img_format)
-    except UnidentifiedImageError:
-        pass
-    return color
+from typing import Iterable
+from .models import Team
+def isPlayed(teams_played: Iterable[Team], match_teams: Iterable[Team]):
+    return any([team in teams_played for team in match_teams])

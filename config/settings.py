@@ -38,7 +38,8 @@ SECRET_KEY = 'django-insecure-2y0@hfzu761goc9!m&!#if&(vhcg=!uzre027l48r&oh_c^xcx
 # recommended by https://cloud.google.com/python/django/appengine
 env = Env(
     DEBUG=(bool, False),
-    PROD=(bool, False)
+    PROD=(bool, False),
+    DEMO=(bool, False),
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -46,9 +47,10 @@ DEBUG = env('DEBUG')
 
 PROD = env('PROD')
 
+DEMO = env('DEMO')
+
 # https://cloud.google.com/python/django/appengine
 # for deployment
-
 
 if PROD:
     APPENGINE_URL = env("APPENGINE_URL", default=None)
@@ -88,6 +90,8 @@ INSTALLED_APPS = [
     'whitenoise.runserver_nostatic',
     'compressor',
     'sass_processor',
+    'simple_history',
+    'social_django',
     #'colorfield', # pip install django-colorfield
     #'easy_timezones', # pip install django-easy-timezones
 ]
@@ -106,6 +110,7 @@ MIDDLEWARE = [
     'hijack.middleware.HijackUserMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.middleware.locale.LocaleMiddleware',
+    'simple_history.middleware.HistoryRequestMiddleware',
     'config.custom.middleware.TimezoneMiddleware', # custom
 ]
 
@@ -122,6 +127,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'social_django.context_processors.backends',
+                'social_django.context_processors.login_redirect',
                 'config.custom.context_processors.tz', # custom context processor: passes in current timezone as "TIME_ZONE"
                 'config.custom.context_processors.user', # custom context processor: passes in user as variable "user"
                 'config.custom.context_processors.current_time', # custom context processor: passes in variables "NOW", "CURRENT_TIME", "CURRENT_DATE"
@@ -138,6 +145,12 @@ STORAGES = {
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
+AUTHENTICATION_BACKENDS = [
+    'social_core.backends.google.GoogleOpenId',
+    'social_core.backends.google.GoogleOAuth2',
+    'social_core.backends.google.GoogleOAuth',
+    'django.contrib.auth.backends.ModelBackend',
+]
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -222,17 +235,18 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 STATIC_URL = f"/static/"
 
-STATIC_ROOT = "static/"
+if DEBUG:
+    # this only applies if debug=true
+    STATICFILES_DIRS = [
+        os.path.join(BASE_DIR, 'static'),
+    ]
+else:
+    # this is what whitenoise uses (for prod)
+    STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
-MEDIA_ROOT = "media"
+MEDIA_URL = '/media/'
 
-MEDIA_URL = 'media/'
-
-SASS_PROCESSOR_ROOT = STATIC_ROOT
-
-# STATICFILES_DIRS = [
-#     os.path.join(BASE_DIR, 'static'),
-# ]
+MEDIA_ROOT = BASE_DIR / '/uploads/'
 
 STATICFILES_FINDERS = [
     'compressor.finders.CompressorFinder',
