@@ -67,6 +67,7 @@
                                     onclick="location.href='{% url 'competitions:judge_match' team_data.match_id %}';"
                                     onmouseover="highlight({{team_data.team_id}}, {{ team_data.match_id }})" onmouseout="dehighlight({{ team_data.team_id }}, {{ team_data.match_id }}, '{{ match_data.arena.color }}')">
                                     <p style="color: {% if match_data.arena.is_dark and not team_data.won %} white; {% endif %} ">{{ team_data.name }}</p>
+                                    {% comment %} {% if team_data.points %} {{ team_data.points }} {% endif %} {% endcomment %}
                                 </div>
                             {% endfor %}
                         {% endif %}

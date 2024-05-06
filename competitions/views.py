@@ -13,7 +13,7 @@ from typing import Union
 import zoneinfo
 import zoneinfo
 import zoneinfo
-
+import traceback
 from crispy_forms.utils import render_crispy_form
 from django.contrib import messages
 from django.contrib.auth import PermissionDenied
@@ -789,15 +789,18 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
             is_next = True
             prev = False
             connector = None
+            points = -100000
             k = 0
             for team in rounds[j].starting_teams.all():
                 if team in rounds[j].advancers.all():
                     won = True
-                team_data.append({'match_id': rounds[j].id, 'team_id': team.id, 'name': team.name, 'won': won, 'is_next': is_next, 'prev': prev, 'match': rounds[j], 'connector': connector, 'points': team.points_earned_set.filter(match=rounds[j])})
+                # if rounds[j].advancers.exists() and team.points_earned_set.filter(match=rounds[j]).exists():
+                #     points = team.points_earned_set.filter(match=rounds[j])
+                team_data.append({'match_id': rounds[j].id, 'team_id': team.id, 'name': team.name, 'won': won, 'is_next': is_next, 'prev': prev, 'match': rounds[j], 'connector': connector, 'points': points})
                 won = False
                 k += 1
             for q in range(k, tournament.teams_per_match):
-                team_data.append({'match_id': rounds[j].id, 'team_id': None, 'name': 'No Team', 'won': won, 'is_next': is_next, 'prev': prev, 'match': rounds[j], 'connector': connector})
+                team_data.append({'match_id': rounds[j].id, 'team_id': None, 'name': 'No Team', 'won': won, 'is_next': is_next, 'prev': prev, 'match': rounds[j], 'connector': connector, 'points': points})
             bracket_array[i][j] = team_data
     
     num_matches = len(bracket_array)/numRounds
