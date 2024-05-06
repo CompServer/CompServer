@@ -81,8 +81,14 @@ def generate_single_elimination_matches(request, tournament_id: int):
             team_ranks = sorted([(rank.team, rank.rank) for rank in tournament.ranking_set.all()], key=lambda x: x[1])
     elif not tournament.prev_tournament.ranking_set.exists():
         generate_round_robin_rankings(tournament.prev_tournament.id)
+        for ranking in tournament.prev_tournament.ranking_set.all():
+            rank = Ranking.objects.create(tournament=tournament, team=ranking.team, rank=ranking.rank)
+            rank.save()
         team_ranks = sorted([(rank.team, rank.rank) for rank in tournament.prev_tournament.ranking_set.all()], key=lambda x: x[1])
     elif  tournament.prev_tournament.ranking_set.exists():
+        for ranking in tournament.prev_tournament.ranking_set.all():
+            rank = Ranking.objects.create(tournament=tournament, team=ranking.team, rank=ranking.rank)
+            rank.save()
         team_ranks = sorted([(rank.team, rank.rank) for rank in tournament.prev_tournament.ranking_set.all()], key=lambda x: x[1])
     #sort_list(teams, ranks)
     rank_teams = {i+1: team_ranks[i][0] for i in range(len(team_ranks))}
@@ -573,7 +579,8 @@ def generate_competitor_data(match):
             "match_id": match.id,
             "team_id": team.id if team else None,
             "match": match,
-            "color": match.arena.color
+            "color": match.arena.color,
+            "rank": Ranking.objects.filter(tournament=match.tournament, team=team).first().rank if team else None
         })
     return output
 
@@ -748,8 +755,7 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
         "champion_id": championship.advancers.first().id if championship.advancers.first() else None,
     }
     tournament = get_object_or_404(SingleEliminationTournament, pk=tournament_id)
-    rankings = {team: Ranking.objects.filter(tournament=tournament, team=team).first().rank for team in tournament.teams.all()}
-    context = {"tournament": tournament, "bracket_dict": bracket_dict, "form": TournamentStatusForm(), "rankings": rankings}
+    context = {"tournament": tournament, "bracket_dict": bracket_dict, "form": TournamentStatusForm()}
     return render(request, "competitions/bracket.html", context)
 
 def round_robin_tournament(request: HttpRequest, tournament_id: int):

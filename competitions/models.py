@@ -725,9 +725,22 @@ class Match(models.Model):
         ordering = ['tournament']
         verbose_name_plural = _('Matches')
 
+class PointsEarned(models.Model):
+    points = models.IntegerField()
+    team = models.ForeignKey(Team, related_name="points_earned_set", on_delete=models.CASCADE)
+    #(Harry) don't have time to implement this right now but here's the plan
+    #using this system, you can filter by match and by team with something like
+    #team.points_earned_set.filter(match=match)
+    #since we can't do this into the html, we have to do it in the view functions
+    #in the team data of each match, we check if the match has points or has been played
+    #if both are true, we put the aforementioned function in the dictionary in some way
+    #if not, then we put none, and this way, we can access the points earned in the html
+    #and show it in the match bubbles.
+    match = models.ForeignKey(Match, related_name="points_earned_set", on_delete=models.CASCADE)
+
 
 @receiver(post_save, sender=Match)
-def update_str_match(sender, instance, **kwargs):
+def update_str_match(sender, instance, **kwargs):#
     instance._generate_str_recursive(force=True) # because kwargs are different, cache will not be used and we force it to recalculate
 
 # https://github.com/h3/django-colorfield/blob/master/colorfield/fields.py 
