@@ -1,13 +1,17 @@
 from datetime import datetime
+from heapq import nsmallest
 import math
+from operator import attrgetter
+import operator
 import random
 from random import shuffle
+import random
 from typing import Union
-from typing import Dict, Set, Union, List, Iterable
-import zoneinfo
-from heapq import nsmallest
-from django.db.models import Max
+from typing import Dict, Iterable, List, Set, Union
 from typing import Set, Union
+from typing import Union
+import zoneinfo
+import zoneinfo
 import zoneinfo
 
 from crispy_forms.utils import render_crispy_form
@@ -15,20 +19,17 @@ from django.contrib import messages
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth.views import login_required
 from django.core.exceptions import SuspiciousOperation
+from django.core.exceptions import SuspiciousOperation
+from django.db.models import Max
 from django.db.models import Q, QuerySet
 from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template import RequestContext
 from django.template.exceptions import TemplateDoesNotExist
+from django.template.exceptions import TemplateDoesNotExist
 from django.urls import reverse
 from django.utils import timezone
-from django.core.exceptions import SuspiciousOperation
-from django.template.exceptions import TemplateDoesNotExist
-from operator import attrgetter
-import operator
-import random
-import zoneinfo
-from typing import Union
+
 from .forms import *
 from .models import *
 from .utils import *
@@ -70,6 +71,7 @@ def generate_single_elimination_matches(request, tournament_id: int):
     arena_iterator = 0
     nmpt_iterator = 0
     arenas = [i for i in tournament.competition.arenas.filter(is_available=True)]
+    if DEMO: arenas = [x for x in arenas if x.owner == request.user]
     if not arenas:
         raise SuspiciousOperation("No arenas available for this competition.")
     starting_time = tournament.start_time 
@@ -954,6 +956,7 @@ def judge_match(request: HttpRequest, match_id: int):
                 #return HttpResponse(, reason="One or more previous matches have not been judged.")
         winner_choice_ids.extend([x.id for x in instance.starting_teams.all()])
         winner_choices = Team.objects.filter(id__in=winner_choice_ids)
+        if DEMO: winner_choices = winner_choices.filter(owner=request.user)
     elif instance.prev_matches.exists():
         winner_choice_ids = []
         for match in instance.prev_matches.all():
@@ -964,7 +967,8 @@ def judge_match(request: HttpRequest, match_id: int):
                 #print("One or more previous matches have not been judged.")r
                 raise SuspiciousOperation("One or more previous matches have not been judged.")
                 #return HttpResponse(, reason="One or more previous matches have not been judged.")
-        winner_choices = Team.objects.filter(id__in=winner_choice_ids)
+        winner_choices = Team.objects.filter(id__in=winner_choice_ids) 
+        if DEMO: winner_choices = winner_choices.filter(owner=request.user)
     elif instance.starting_teams.exists():
         winner_choices = instance.starting_teams.all()
     else:
@@ -994,10 +998,12 @@ def judge_match(request: HttpRequest, match_id: int):
 def profile(request, user_id):
     #mpie charts
     #fix results page chart as well
+    user = get_object_or_404(User, pk=user_id)
+    if DEMO and user != request.user:
+        raise PermissionDenied("You do not have permission to view this page.")
     watch_competitions = Competition.objects.filter(status=Status.OPEN).order_by("-end_date", "-start_date", "-name")
     watch_tournaments = AbstractTournament.objects.filter(status=Status.OPEN).order_by("-start_time")
     newly_ended_competitions = Competition.objects.filter(status=Status.COMPLETE, end_date=datetime.date.today()).order_by("-end_date", "-start_date", "-name")
-    user = User.objects.filter(id=user_id).first()
     if user_id in [user.id for user in [tournament.planeary_judges for tournament in SingleEliminationTournament.objects.all()]]:
         is_judge = True
         current_gigs = Match.objects.filter(plenary_judges__user__id=user_id, status = Status.OPEN).order_by("-time")
@@ -1008,25 +1014,27 @@ def profile(request, user_id):
     if user_id in [team.coach.id for team in Team.objects.all()]:
         is_coach = True
         coached_teams = Team.objects.filter(coach_id = user_id).order_by("-name")
-        team_records = dict()
-        team_names = list()
-        team_wins = list()
-        team_losses = list()
+        team_records = {}
+        team_names = []
+        team_wins = []
+        team_losses = []
         for team in coached_teams:
             wins = AbstractTournament.objects.filter(competition__teams=team, status=Status.COMPLETE, match_set__last__advancers=team).order_by("-start_time", "-competition")
+            if DEMO: wins = wins.filter(competition__owner=request.user)
             if wins:
                 wins_count = wins.count()
             else:
                 wins_count = 0
             losses = AbstractTournament.objects.filter(competition__teams=team, status=Status.COMPLETE).exclude(match_set__last__advancers=team).order_by("-start_time", "-competition")
+            if DEMO: losses = losses.filter(competition__owner=request.user)
             if losses:
                 losses_count = losses.count()
             else:
                 losses_count = 0
             team_names.append(team.name)
-            team_losess.append(losses_count)
+            team_losses.append(losses_count)
             team_wins.append(wins_count)
-            rankings = list()
+            rankings = []
             for ranking in Ranking.objects.filter(team=team).order_by("-tournament", "-rank"):
                 line = ""
                 line = line + "Ranked " + ranking.rank + " in " + ranking.tournament.event.name + " tournament at " + ranking.tournament.competition.name
@@ -1055,17 +1063,29 @@ def profile(request, user_id):
 
 
 def organization(request, organization_id):
-    organization = Organization.objects.filter(id = organization_id).first()
+    organization = Organization.objects.filter(id = organization_id)
+    if DEMO: organization = organization.filter(owner=request.user)
+    organization = organization.first()
+
     associated_teams = Team.objects.filter(organization__id = organization_id).order_by("-name")
-    results = dict()
+    if DEMO: associated_teams = associated_teams.filter(organization__owner=request.user)
+    
+    results = {}
     for team in associated_teams:
         wins_count = 0
         losses_count = 0
-        if AbstractTournament.objects.filter(competition__teams=team):
+        tournament_query_set = AbstractTournament.objects.filter(competition__teams=team)
+        if DEMO: tournament_query_set = tournament_query_set.filter(competition__owner=request.user)
+        if tournament_query_set:
             wins = AbstractTournament.objects.filter(competition__teams=team, match_set__last__advancers=team).order_by("-status", "-start_time")
+            if DEMO: wins = wins.filter(competition__owner=request.user)
+
             losses = wins = AbstractTournament.objects.filter(competition__teams=team).exclude(match_set__last__advancers=team).order_by("-status", "-start_time")
+            if DEMO: losses = losses.filter(competition__owner=request.user)
+
             wins_count = wins.count()
             losses_count = losses.count()
+
         results[team.name] = (wins_count, losses_count)
     context = {
         'organization': organization,
@@ -1075,18 +1095,25 @@ def organization(request, organization_id):
     return render(request, 'organization.html', context)
 
 def results(request, competition_id):
-    competition = Competition.objects.get(id = competition_id)
+    competition = get_object_or_404(Competition, pk=competition_id)
+    if DEMO: competition = get_object_or_404(Competition, pk=competition_id, owner=request.user)
+
     tournaments = [tournament for tournament in competition.tournament_set.order_by("points", "start_time", "competition").filter(status = Status.COMPLETE)]
-    for robin_tournament in RoundRobinTournament.objects.filter(competition__id=competition_id, status = Status.COMPLETE).order_by("points", "-start_time", "-competition"):
+    rr_tourneys = RoundRobinTournament.objects.filter(competition__id=competition_id, status = Status.COMPLETE).order_by("points", "-start_time", "-competition")
+    if DEMO: rr_tourneys = rr_tourneys.filter(competition__owner=request.user)
+    for robin_tournament in rr_tourneys:
         tournaments.append(robin_tournament)
     tournament_names = [tournament.event.name for tournament in tournaments]
     team_names = [team.name for team in competition.teams.order_by("name")]
     tournament_colors = [tournament.colors for tournament in tournaments]
     for tournament_name in tournament_names:
         tournament = AbstractTournament.objects.filter(event__name=tournament_name, competition__id=competition_id, status=Status.COMPLETE)
+        if DEMO: tournament = tournament.filter(competition__owner=request.user)
         scores = dict()
         for team_name in team_names:
-            team = Team.objects.filter(name=team_name).first()
+            team = Team.objects.filter(name=team_name)
+            if DEMO: team = team.filter(owner=request.user)
+            team = team.first()
             if is_single_elimination(tournament):
                 last_match = Match.objects.filter(tournament__id = tournament.id, next_matches__isnull = True).first()
                 if team in last_match.advancers.all():
@@ -1121,7 +1148,9 @@ def results(request, competition_id):
     return render(request, "competitions/results.html", context)
 
 def team(request: HttpRequest, team_id: int):
-    team = Team.objects.filter(id=team_id).first()
+    team = Team.objects.filter(id=team_id)
+    if DEMO: team = team.filter(owner=request.user)
+    team = team.first()
     today = timezone.now().date()
     upcoming_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), tournament__competition__start_date__lte=today, tournament__competition__end_date__gte=today).exclude(advancers=None).order_by("-time")
     starter_matches = Match.objects.filter(Q(starting_teams__id=team_id)).exclude(advancers=None)
@@ -1134,8 +1163,10 @@ def team(request: HttpRequest, team_id: int):
         past_matches_dict[match] = match.time
     # sorted_past_matches = {k for k, v in sorted(past_matches_dict.items(), key=lambda item: past_matches_dict[1])}
     past_competitions = Competition.objects.filter(teams__id = team_id, status = Status.COMPLETE).order_by("end_date", "start_date", "name")
+    if DEMO: past_competitions = past_competitions.filter(owner=request.user)
     past_tournaments_won = list()
     past_tournaments = SingleEliminationTournament.objects.filter(teams__id = team_id, status = Status.COMPLETE).order_by("start_time", "competition")
+    if DEMO: past_tournaments = past_tournaments.filter(competition__owner=request.user)
     if past_tournaments.exists():
         for past_tournament in past_tournaments:
             if team_id in [team.id for team in past_tournament.match_set.last().advancers.all()]:

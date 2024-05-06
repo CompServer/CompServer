@@ -92,7 +92,9 @@
                 {% if user.is_authenticated %}
                     <span class="navbar-text me-3">
                     {% translate "Logged in as" %} {{ user.username }}
-                        {% if user.is_superuser %}
+                        {% if user.is_staff and not user.is_superuser %}
+                            {% translate " (Staff)" %}
+                        {% elif user.is_superuser %}
                             {% translate " (Superuser)" %}
                         {% endif %}
                     </span>
