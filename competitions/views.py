@@ -791,7 +791,7 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
             for team in rounds[j].starting_teams.all():
                 if team in rounds[j].advancers.all():
                     won = True
-                team_data.append({'match_id': rounds[j].id, 'team_id': team.id, 'name': team.name, 'won': won, 'is_next': is_next, 'prev': prev, 'match': rounds[j], 'connector': connector})
+                team_data.append({'match_id': rounds[j].id, 'team_id': team.id, 'name': team.name, 'won': won, 'is_next': is_next, 'prev': prev, 'match': rounds[j], 'connector': connector, 'points': team.points_earned_set.filter(match=rounds[j])})
                 won = False
                 k += 1
             for q in range(k, tournament.teams_per_match):
@@ -844,6 +844,7 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
         "round_data": round_data,
         "team_height": teamHeight,
     }
+
     team_wins = get_points(tournament_id)
     winning_points = max(team_wins.values())
     winning_teams = [team for team in team_wins if team_wins[team] == winning_points]

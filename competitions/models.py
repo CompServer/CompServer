@@ -726,7 +726,7 @@ class Match(models.Model):
         verbose_name_plural = _('Matches')
 
 class PointsEarned(models.Model):
-    points = models.IntegerField()
+    points = models.IntegerField(null=True)
     team = models.ForeignKey(Team, related_name="points_earned_set", on_delete=models.CASCADE)
     #(Harry) don't have time to implement this right now but here's the plan
     #using this system, you can filter by match and by team with something like
