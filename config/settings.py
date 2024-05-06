@@ -24,6 +24,7 @@ class SuppressErrors(logging.Filter):
         # Return false to suppress message.
         return not any([warn in record.getMessage() for warn in WARNINGS_TO_SUPPRESS])
 
+#logging.basicConfig(level=logging.DEBUG)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
