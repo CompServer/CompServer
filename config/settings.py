@@ -37,7 +37,7 @@ SECRET_KEY = 'django-insecure-2y0@hfzu761goc9!m&!#if&(vhcg=!uzre027l48r&oh_c^xcx
 
 # recommended by https://cloud.google.com/python/django/appengine
 env = Env(
-    DEBUG=(bool, False),
+    DEBUG=(bool, True),
     PROD=(bool, False)
 )
 
