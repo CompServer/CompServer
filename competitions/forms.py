@@ -102,6 +102,55 @@ class TeamSwapForm(forms.Form):
             return False
         return super().is_valid()
 
+# class CreateArenasForm(forms.ModelForm):
+
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         self.helper = FormHelper()
+#         self.helper.form_id = 'create_arena_form'
+#         self.helper.attrs = {
+#             'hx-post': reverse_lazy('competitions:create_arena'),
+#             'hx-target': '#arenas',
+#             'hx-swap': 'outerHTML',
+#         }
+#         self.helper.add_input(Submit('submit', 'Create Arena'))
+#         self.fields['name'].queryset = Arena.objects.all()
+#         #self.fields['capacity'].queryset = 
+#         #self.fields['is_available'].queryset =
+#         #self.fields['color'].queryset = #color wheel
+#         # self.fields[''].widget.attrs = {
+#         #     'hx-get': '/api/v1/teams/',
+#         #     'hx-trigger': 'change',
+#         #     'hx-target': '#id_teams',
+#         # }
+
+#     def is_valid(self):
+#         self.full_clean()
+#         #check the color, boolean statement, integer
+#         if self.cleaned_data['start_date'] > self.cleaned_data['end_date']:
+#             self.add_error('start_date', 'Start date must be before end date')
+#             self.add_error('end_date', 'End date must be after start date')
+#             return False
+#         for team in self.cleaned_data['teams']:
+#             if team.sport != self.cleaned_data['sport']:
+#                 self.add_error('teams', 'All teams must be for the same sport.')
+#                 return False
+#         # if self.cleaned_data['plenary_judges'].count() < 1:
+#         #     self.add_error('plenary_judges', 'You must select at least one plenary judge')
+#         #     return False
+#         return super().is_valid()
+
+#     class Meta:
+#         model = Arena
+#         fields = ['name', 'is_available', 'capacity', 'color']
+#         widgets = {
+#             #here is where you add widgets
+#             #and a counter for the capacity
+#             #select from a dropdown for true or false
+#             'start_date': forms.DateInput(attrs={'format': 'yyyy-mm-dd','type':'date'}),
+#             'end_date': forms.DateInput(attrs={'format': 'yyyy-mm-dd','type':'date'}),
+#         }
+
 class CreateCompetitionsForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
@@ -146,26 +195,11 @@ class CreateCompetitionsForm(forms.ModelForm):
             'end_date': forms.DateInput(attrs={'format': 'yyyy-mm-dd','type':'date'}),
         }
 
-# class TournamentForm(forms.Form):
-#     tournament_type = forms.ChoiceField(choices=[('rr', 'Round Robin'), ('se', 'Single Elimination')], label="Tournament Type")
-
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         self.helper = FormHelper()
-#         self.helper.form_id = 'create_tournament_form'
-#         self.helper.attrs = {
-#             'hx-post': reverse_lazy('competitions:create_tournament'),
-#             'hx-target': '#competitions',
-#             'hx-swap': 'outerHTML',
-#         }
-#         self.helper.add_input(Submit('submit', 'Create Tournament'))
-
 class SETournamentForm(forms.ModelForm):
     def __init__(self, *args, competition: Optional[Competition]=None, **kwargs):
         super().__init__(*args, **kwargs)
         #self.fields['competition_field'].queryset = Competition.objects.filter(id=competition.id)
         self.helper = FormHelper(self)
-
         self.helper.form_id = 'create_setournament_form'
         self.fields['competition'].disabled = True
         if not kwargs.get('instance',None):
@@ -174,14 +208,14 @@ class SETournamentForm(forms.ModelForm):
         else:
             self.fields['competition'].initial = kwargs['instance'].competition
             competition = kwargs['instance'].competition
-
         self.fields['event'].queryset = competition.events
         self.fields['teams'].queryset = competition.teams.all()
         self.fields['teams'].initial = competition.teams.all()
         self.fields['points'].help_text = "How many points should be awarded to the winner?"
         self.fields['prev_tournament'].queryset = RoundRobinTournament.objects.filter(competition=competition)
         self.fields['prev_tournament'].label = "Previous Tournament"
-
+        #self.fields['color'].help_text = "Select a color from the color wheel" #list of colors
+        #add color wheel to form
         if not self.instance:
             self.helper.add_input(Submit('submit', 'Create Tournament'))
         #self.events = competition.events

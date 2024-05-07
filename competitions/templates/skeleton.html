@@ -75,11 +75,6 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'competitions:credits' %}">{% translate "Credits" %}</a>
                     </li>
-                    <!-- {% if user.is_logged_in %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'competitions:profile' %}">{% translate "Profile"%}</a>
-                        </li>
-                    {% endif %} -->
                     {% comment %} only implemented for home page {% endcomment %}
                     {% if user.is_staff %}
                         <li class="nav-item">
@@ -96,8 +91,7 @@
                             {% translate " (Superuser)" %}
                         {% endif %}
                     </span>
-                    <!-- <a class="btn btn-primary me-3" href="{% url "logout" %}" role="button">{% translate "Log Out" %}</a> -->
-                    <div class="dropdown text-end">
+                    <!-- <div class="dropdown text-end">
                         <a href="#" class="d-block link-body-emphasis text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
                             <i class="bi bi-person-circle" width="32"></i>
                         </a>
@@ -109,10 +103,10 @@
                                 <hr class="dropdown-divider">
                             </li>
                             <li>
-                                <a class="dropdown-item" href="{% url "logout" %}">{% translate "Log out" %}</a>
+                                <a class="dropdown-item" href="#">{% translate "Log out" %}</a>
                             </li>
                         </ul>
-                    </div>
+                    </div> -->
                 {% else %}
                     <a class="btn btn-primary me-3" href="{% url "login" %}{% if request.path %}?next={{ request.path }}{% endif %}" role="button">{% translate "Log In" %}</a>
                 {% endif %}

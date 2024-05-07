@@ -839,6 +839,13 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
 def competitions(request: HttpRequest):
     competition_list = Competition.objects.all().order_by("-status", "start_date")
     context = {"competition_list": competition_list, "form": CompetitionStatusForm()}
+    # if competition_list:
+    # else:
+    #     #trying to figure out how to redirect to login page if no competitions
+    #     url(r'^.*$', RedirectView.as_view(url='<url_to_home_view>', permanent=False), name='index')
+    #     redirect_to = request.GET.get('next', '') 
+    #     return HttpResponseRedirect(reverse(f"competitions:{redirect_to}",args=redirect_id))
+    #     return HttpResponseRedirect(reverse(f"competitions:{redirect_to}"))
     return render(request, "competitions/competitions.html", context)
 
 def competition(request: HttpRequest, competition_id: int):
