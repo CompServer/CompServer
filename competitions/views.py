@@ -299,10 +299,16 @@ def generate_round_robin_matches(request, tournament_id):
     round_num = 1
     curr_round = set()
     num_participated = [0 for _ in range(len(matches))]
+    most_recent_round = [-1 for _ in range(len(teams))]
     while num_participated != [1 for _ in range(len(matches))]:  
         j = random.randint(0, len(matches)-1)
         checkFull = set()
         isFull = False
+        #don't have time rn, but here's how I'll implement checking if a team has played twice in a row
+        #if round_num - most_recent_round[j] == 1, them we know that the team has played twice in a row
+        #then we can skip it and try to find a new team
+        #if we can't find a new team, then we get rid of this requirement and just check if the team has played in the match
+        #this solution isn't perfect, but it should get the job done 90% of the time.
         while num_participated[j] == 1 or \
         isPlayed(curr_round, matches[j].starting_teams.all()):
             checkFull.add(j)
@@ -582,7 +588,8 @@ def generate_competitor_data(match):
             "team_id": team.id if team else None,
             "match": match,
             "color": match.arena.color,
-            "rank": Ranking.objects.filter(tournament=match.tournament, team=team).first().rank if team else None
+            "rank": Ranking.objects.filter(tournament=match.tournament, team=team).first().rank if team else None,
+            "points": team.points_earned_set.filter(match=match).first().points if team and team.points_earned_set.filter(match=match).exists() else None
         })
     return output
 
@@ -789,7 +796,7 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
             is_next = True
             prev = False
             connector = None
-            points = -100000
+            points = None
             k = 0
             for team in rounds[j].starting_teams.all():
                 if team in rounds[j].advancers.all():
@@ -848,6 +855,7 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
         "match_width": matchWidth,
         "round_data": round_data,
         "team_height": teamHeight,
+        "num_rounds": len(round_data),
     }
 
     team_wins = get_points(tournament_id)

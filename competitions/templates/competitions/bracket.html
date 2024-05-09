@@ -137,7 +137,7 @@
                             {% if forloop.last %} border-bottom-right-radius: 8px; border-bottom-left-radius: 8px; {% endif %}"
                             onclick="location.href='{% url 'competitions:judge_match' curr_team.match_id %}';"
                             onmouseover="highlight({{curr_team.team_id}}, {{ curr_team.match_id }})" onmouseout="dehighlight({{ curr_team.team_id }}, {{ curr_team.match_id }}, '{{ match_data.arena.color }}')">
-                            <p style="color: {% if match_data.arena.is_dark and not team_data.won %} white; {% endif %} ">{% if curr_team.rank %} ({{ curr_team.rank }}) {% endif %}{{ curr_team.name }}</p>
+                            <p style="color: {% if match_data.arena.is_dark and not team_data.won %} white; {% endif %} ">{% if curr_team.rank %} ({{ curr_team.rank }}) {% endif %}{{ curr_team.name }}{% if curr_team.points %}: <small><small><small>{{ curr_team.points }}</small></small></small>{% endif %}</p>
                             {% if curr_team.team_id == bracket_dict.champion_id and curr_team.match_id == bracket_dict.championship_id %}
                                 {% comment %} because team elements dont have a definied position style, these offsets are relative to the center div, so no matter which team wins, the crown is in the same place {% endcomment %}
                                 {%with svg_height="30" %}
