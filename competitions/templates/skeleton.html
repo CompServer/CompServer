@@ -69,9 +69,11 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'competitions:home' %}">{% translate "Home" %}</a>
                     </li>
+                    {% if settings_DEMO %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'competitions:competitions' %}">{% translate "Competitions" %}</a>
                     </li>
+                    {% endif %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'competitions:credits' %}">{% translate "Credits" %}</a>
                     </li>

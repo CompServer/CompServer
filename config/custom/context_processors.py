@@ -24,3 +24,9 @@ def current_time(request):
         "CURRENT_TIME": timezone.now().time(),
         "CURRENT_DATE": timezone.now().date(),
     }
+
+def settings_values(request):
+    import config.settings
+    return {
+        "settings_DEMO": config.settings.DEMO, 
+    }
