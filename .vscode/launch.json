@@ -23,6 +23,9 @@
             "args": [
                 "runserver"
             ],
+            "env": {
+                "DEBUG": "true",
+            },
             "django": true,
             "justMyCode": false
         },
@@ -32,7 +35,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/manage.py",
             "args": [
-                "runserver", 
+                "runserver",
                 "0.0.0.0:80"
             ],
             "env": {
@@ -42,4 +45,4 @@
             "justMyCode": false
         }
     ]
-}
+} 

@@ -37,5 +37,6 @@
   <br>
   {# Assumes you set up the password_reset view in your URLconf #}
   <p><a class='btn btn-secondary' href="{% url 'password_reset' %}">{% translate "Lost password?" %}</a></p>
-
+  <br>
+  <a class='btn btn-secondary' href="{% url "social:begin" "google-oauth2" %}">{% translate "Login with Google" %}</a>
 {% endblock %}

@@ -1,11 +1,13 @@
 crispy-bootstrap5
-Django==4.2.7
 django-crispy-forms
 django-debug-toolbar
 django-environ
 django-hijack
 django-mathfilters
+django-simple-history
+Django==4.2.7
 pillow
 PyYAML
+social-auth-app-django
 typing_extensions
 whitenoise
