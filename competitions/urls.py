@@ -1,10 +1,12 @@
 from django.urls import path
 from . import views
 from django.views.generic.base import RedirectView
+from config.settings import DEMO
+from django.views.generic.base import RedirectView
+from django.urls import reverse_lazy
 
 app_name = "competitions"
 urlpatterns = [
-    path('', views.home, name="home"),
     path("competition/", views.competitions, name="competitions"),
     path("competition/<int:competition_id>/", views.competition, name="competition"),
     path("competition/create/", views.create_competition, name="create_competition"),
@@ -29,3 +31,10 @@ urlpatterns = [
     path('_error/', views._raise_error_code, name="_error"), # for testing error pages
     path('settings/timezone/',views.set_timezone_view, name='set_timezone'),
 ]
+
+if DEMO:
+    # show information about this webapp
+    urlpatterns += [path('', views.home, name="home")]
+else:
+    # go directly to the competitions page
+    urlpatterns += [path('', RedirectView.as_view(url=reverse_lazy("competitions:competitions")), name="home")]

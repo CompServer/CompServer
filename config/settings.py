@@ -47,7 +47,7 @@ if os.path.exists('secrets.yml'):
 env = Env(
     DEBUG=(bool, False),
     PROD=(bool, False),
-    DEMO=(bool, False),
+    DEMO=(bool, True),
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
