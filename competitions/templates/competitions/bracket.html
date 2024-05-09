@@ -103,6 +103,7 @@
                         right: -{{bracket_dict.connectorWidth|sub:match_data.connector_data.connector_width_actual|add:4}}px;
                         height: 3px;"></div>
                     </div>
+                    {{ match_data.arena }} {% if user.is_staff %} <small><small id="match_id">(ID: {{ match_data.id }})</small></small> {% endif %}
                     {% for curr_team in match_data.team_data %}
                         {% comment %} <div class="team highlight-{{curr_team.team_id}} {%if curr_team.won %}won{%endif%}"
                             style="{% if user in judges %}cursor: pointer;{% else %}cursor: default;{% endif %}
@@ -130,14 +131,14 @@
                             onmouseover="highlight({{team_data.team_id}}, {{ team_data.match_id }})" onmouseout="dehighlight({{ team_data.team_id }}, {{ team_data.match_id }}, '{{ match_data.arena.color }}')">
                             <p style="color: {% if match_data.arena.is_dark and not team_data.won %} white; {% endif %} ">{{ team_data.name }}</p>
                         </div> {% endcomment %}
-                        <div class="team highlight-{{curr_team.team_id}}-{{ curr_team.team_id }} {%if curr_team.won %}won{%endif%}"
+                        <div class="team highlight-{{ curr_team.team_id }} {%if curr_team.won %}won{%endif%}"
                             style="height: {{ bracket_dict.team_height }}px; width: {{ bracket_dict.match_width }}px; cursor: pointer;
-                            background-color:{% if team_data.won %} #fff5a8 {% else %} {{ match_data.arena.color }} {% endif %}; 
+                            background-color:{% if team_data.won %} #fff5a8 {% endif %}; 
                             {% if forloop.first %} border-top-right-radius: 8px; border-top-left-radius: 8px; {% endif %}
                             {% if forloop.last %} border-bottom-right-radius: 8px; border-bottom-left-radius: 8px; {% endif %}"
                             onclick="location.href='{% url 'competitions:judge_match' curr_team.match_id %}';"
-                            onmouseover="highlight({{curr_team.team_id}}, {{ curr_team.match_id }})" onmouseout="dehighlight({{ curr_team.team_id }}, {{ curr_team.match_id }}, '{{ match_data.arena.color }}')">
-                            <p style="color: {% if match_data.arena.is_dark and not team_data.won %} white; {% endif %} ">{% if curr_team.rank %} ({{ curr_team.rank }}) {% endif %}{{ curr_team.name }}{% if curr_team.points %}: <small><small><small>{{ curr_team.points }}</small></small></small>{% endif %}</p>
+                            onmouseover="highlight({{curr_team.team_id}})" onmouseout="dehighlight({{ curr_team.team_id }})">
+                            <p>{% if curr_team.rank %} ({{ curr_team.rank }}) {% endif %}{{ curr_team.name }}{% if curr_team.points %}: <small><small><small>{{ curr_team.points }}</small></small></small>{% endif %}</p>
                             {% if curr_team.team_id == bracket_dict.champion_id and curr_team.match_id == bracket_dict.championship_id %}
                                 {% comment %} because team elements dont have a definied position style, these offsets are relative to the center div, so no matter which team wins, the crown is in the same place {% endcomment %}
                                 {%with svg_height="30" %}
@@ -179,16 +180,22 @@
 {% endif %}
 
 <script>
-    function highlight(num, num2) {
-        document.querySelectorAll(".highlight-"+num2+"-"+num).forEach((element)=>{
+    function highlight(num) {
+        document.querySelectorAll(".highlight-"+num).forEach((element)=>{
             element.style.borderColor = "#2ec4b6";
             if (element.className.includes("team")) {
                 element.style.backgroundColor = "lightgreen";
             }
+            else {
+                if (element.className.includes("team")) {
+                    element.style.borderColor = "#c9184a";
+                    element.style.backgroundColor= "#ff4d6d";
+                }
+            }
         })
     }
-    function dehighlight(num, num2, color) {
-        document.querySelectorAll(".highlight-"+num2+"-"+num).forEach((element)=>{
+    function dehighlight(num) {
+        document.querySelectorAll(".highlight-"+num).forEach((element)=>{
             element.style.borderColor = "black";
             if (element.className.includes("won")) {
                 if (element.className.includes("team")) {
@@ -196,10 +203,15 @@
                 }
             } else {
                 if (element.className.includes("team")) {
-                    element.style.backgroundColor = color;
+                    element.style.backgroundColor= "lightgrey"
                 }
             }
         })
+    }
+    function changeShownRound(selectObject) {
+        const roundsElements = Array.from(document.getElementsByClassName("bracket")[0].children);
+        roundsElements.forEach((x)=>{x.style.display = "none"});
+        roundsElements[selectObject.value-1].style.display = "block";
     }
 </script>
 

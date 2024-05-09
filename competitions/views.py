@@ -593,7 +593,7 @@ def generate_competitor_data(match):
         })
     return output
 
-def generate_connector_data(match, connectorWidth, teamHeight):
+def generate_connector_data(match, connectorWidth, teamHeight, arenaHeight):
     is_next = match.next_matches.exists()
     if not is_next:
         return {
@@ -642,7 +642,9 @@ def generate_connector_data(match, connectorWidth, teamHeight):
         connector = "connector-down"
         if not winner:
             index_diff += 0.5
-            vertical_margin -= (teamHeight/2)
+            vertical_margin = teamHeight*(from_index+0.5) - (teamHeight/2)
+        if match.arena:
+            vertical_margin += arenaHeight
     else:
         index_diff = from_index-to_index
         len_diff = (len(next_match_teams)-len(curr_match_teams))/2
@@ -650,7 +652,9 @@ def generate_connector_data(match, connectorWidth, teamHeight):
         connector = "connector-up"
         if not winner:
             index_diff += 0.5
-            vertical_margin += (teamHeight/2)
+            vertical_margin = teamHeight*(len(curr_match_teams)-from_index-0.5) + (teamHeight/2)
+        if match.arena:
+            vertical_margin -= arenaHeight
 
     team_index_offset_mult = index_diff+len_diff
     team_index_offset = team_index_offset_mult*teamHeight
@@ -690,6 +694,7 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
     matchWidth = 200
     connectorWidth = 50
     teamHeight = 25
+    arenaHeight = 25
     roundWidth = matchWidth + connectorWidth
     roundNames = ["Quarter Finals", "Semi Finals", "Finals"]
     # -------------------
@@ -699,7 +704,7 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
         if len(bracket_array) <= curr_round:
             bracket_array.append({})
 
-        bracket_array[curr_round][base_index] = [generate_competitor_data(curr_match), generate_connector_data(curr_match, connectorWidth, teamHeight)]
+        bracket_array[curr_round][base_index] = [generate_competitor_data(curr_match), generate_connector_data(curr_match, connectorWidth, teamHeight, arenaHeight)]
         
         prevs = curr_match.prev_matches.all()
         if prevs:
@@ -736,14 +741,16 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
             if num_teams > tournament.teams_per_match:
                 messages.error(request, "Invalid number of teams per match.")
             center_height = teamHeight * num_teams
-
+            team_data = generated_match_data[0] if generated_match_data else None
             final_match_data.append({
-                "team_data": generated_match_data[0] if generated_match_data else None,
+                "team_data": team_data,
                 "connector_data": generated_match_data[1] if generated_match_data else None,
                 "match_height": match_height,
                 "center_height": center_height,
                 "center_top_margin": (match_height - center_height) / 2,
-                
+                "arena": team_data[0].get('match').arena if team_data else None,
+                "id": team_data[0].get('match').id if team_data else None,
+                "time": team_data[0].get('match').time if team_data else None,
             })
 
         label = "Round " + str(round+1) if round < namedRoundCutoff else roundNames[round - namedRoundCutoff]
