@@ -1,5 +1,3 @@
-
-
 from typing import Optional
 from django import forms
 from django.contrib import messages
@@ -150,6 +148,98 @@ class TeamSwapForm(forms.Form):
 #             'start_date': forms.DateInput(attrs={'format': 'yyyy-mm-dd','type':'date'}),
 #             'end_date': forms.DateInput(attrs={'format': 'yyyy-mm-dd','type':'date'}),
 #         }
+
+# class CreateEventsForm(forms.ModelForm):
+#     #name, match time, sport
+
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         self.helper = FormHelper()
+#         self.helper.form_id = 'create_event_form'
+#         self.helper.attrs = {
+#             'hx-post': reverse_lazy('competitions:create_event'),
+#             'hx-target': '#events',
+#             'hx-swap': 'outerHTML',
+#         }
+#         self.helper.add_input(Submit('submit', 'Create Event'))
+#         self.fields['sport'].queryset = Sport.objects.all()
+#         self.fields['sport'].widget.attrs = {
+#             'hx-get': '/api/v1/teams/',#have to change these
+#             'hx-trigger': 'change',
+#             'hx-target': '#id_teams',
+#         }
+#         def is_valid(self):
+#             self.full_clean()
+#             if isinstance(self.cleaned_data['name'], str):
+#                 self.add_error('name', 'Event name must be a string')
+#                 return False
+#             for sport in self.cleaned_data['sport']:
+#                 if team.sport != self.cleaned_data['sport']:
+#                     self.add_error('sport', 'You must select a valid sport.')
+#                     return False
+#             #add a number widget
+#             #if self.cleaned_data['time']:
+#             #get the date time for today
+#             #check the date time of the competition to be later
+#             return super().is_valid()
+
+#         class Meta:
+#             model = Event
+#             fields = ['sport', 'name', 'match_time']
+#             widgets = {#change these for match_time
+#                 'start_date': forms.DateInput(attrs={'format': 'yyyy-mm-dd','type':'date'}),
+#                 'end_date': forms.DateInput(attrs={'format': 'yyyy-mm-dd','type':'date'}),
+#             }
+
+
+# class CreateOrganizationsForm(forms.ModelForm):
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         self.helper = FormHelper()
+#         self.helper.form_id = 'create_organization_form'
+#         self.helper.attrs = {
+#             'hx-post': reverse_lazy('competitions:create_organization'),
+#             'hx-target': '#organizations',
+#             'hx-swap': 'outerHTML',
+#         }
+#         self.helper.add_input(Submit('submit', 'Create Organization'))
+
+#         def is_valid(self):
+#             self.full_clean()
+#             if not isinstance(self.cleaned_data['name'], str):
+#                 self.add_error('name', 'Organization name must be a string.')
+#                 return False
+#             return super().is_valid()
+
+#         class Meta:
+#             model = Organization
+#             fields = ['name']
+
+# class CreateSportsForm(forms.ModelFOrm):
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         self.helper = FormHelper()
+#         self.helper.form_id = 'create_sport_form'
+#         self.helper.attrs = {
+#             'hx-post': reverse_lazy('competitions:create_sport'),
+#             'hx-target': '#sports',
+#             'hx-swap': 'outerHTML',
+#         }
+#         self.helper.add_input(Submit('submit', 'Create Sport'))
+#         def is_valid(self):
+#             self.full_clean()
+#             if isinstance(self.cleaned_data['name'], str):
+#                 self.add_error('name', 'Sport name must be a string')
+#                 return False
+#             return super().is_valid()
+
+#         class Meta:
+#             model = Sport
+#             fields = ['name']
+
+#class CreateTeamsForm(forms.ModelForm):
+
+#need to finish tournament and arena creation forms
 
 class CreateCompetitionsForm(forms.ModelForm):
 
