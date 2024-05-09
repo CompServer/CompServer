@@ -469,6 +469,7 @@ class Event(models.Model):
     name = models.CharField(max_length=255, unique=True)  # sumo bots, speed race, etc.
     match_time = models.DurationField()
     sport = models.ForeignKey(Sport, blank=True, null=True, on_delete=models.SET_NULL)
+    color = ColorField(default="#CBCBCB")
     # score_units = ScoreUnitsField() # initially just assume scores are place values (1st, 2nd, 3rd, etc.)
     # high_score_advances = models.BooleanField(default=True) # with seconds, low scores will usually advance (unless it's a "how long can you last" situation)
     # related: tournament_set
@@ -488,7 +489,6 @@ class AbstractTournament(models.Model):
     status = StatusField()
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="tournament_set") # besides helpfing to identify this tournament this will change how teams advance (high or low score)
     competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name="tournament_set")
-    color = ColorField(default="#CBCBCB")
     # interpolate_points = models.BooleanField(default=False) # otherwise winner takes all: RoboMed doesn't need this but it could be generally useful
     teams = models.ManyToManyField(Team, related_name="tournament_set")
     judges = models.ManyToManyField(User, blank=True, related_name="tournament_set")  # people entrusted to judge this tournament alone (as opposed to plenary judges)

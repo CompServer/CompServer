@@ -849,7 +849,6 @@ def competitions(request: HttpRequest):
     return render(request, "competitions/competitions.html", context)
 
 def competition(request: HttpRequest, competition_id: int):
-    #the only bug is that it will send you to competitions page instead of the specific comp page
     redirect_to = request.GET.get('next', '') 
     redirect_id = request.GET.get('id', None)
     if redirect_id:
@@ -991,14 +990,22 @@ def judge_match(request: HttpRequest, match_id: int):
         form = JudgeForm(instance=instance, possible_advancers=winner_choices)
     return render(request, 'competitions/match_judge.html', {'form': form, 'match': instance, "teams": winner_choices})
 
-def profile(request, user_id):
-    #mpie charts
-    #fix results page chart as well
+def profile(request, profile_id):
+    #tonight: debug the profile page
+    #extension: add pie charts
     watch_competitions = Competition.objects.filter(status=Status.OPEN).order_by("-end_date", "-start_date", "-name")
     watch_tournaments = AbstractTournament.objects.filter(status=Status.OPEN).order_by("-start_time")
     newly_ended_competitions = Competition.objects.filter(status=Status.COMPLETE, end_date=datetime.date.today()).order_by("-end_date", "-start_date", "-name")
-    user = User.objects.filter(id=user_id).first()
-    if user_id in [user.id for user in [tournament.planeary_judges for tournament in SingleEliminationTournament.objects.all()]]:
+    user = User.objects.filter(profile__id=profile_id).get()
+    user_id = user.id
+    #only competitinos have judges
+    #should first get the judge list ofr each competition, then a list of ids for each judge list
+    lists_of_judges = [competition.plenary_judges for competition in Competition.objects.all()]
+    ids = []
+    for list_of_judges in lists_of_judges:
+        for judge in list_of_judges:
+            ids.append(judge.id) #extension: simplify this
+    if user_id in ids:
         is_judge = True
         current_gigs = Match.objects.filter(tournament__judges__id=user_id, status = Status.OPEN).order_by("-time")
         upcoming_gigs = Match.objects.filter(tournament__judges__id=user_id, status = Status.SETUP).order_by("-status", "-time")
@@ -1074,13 +1081,12 @@ def organization(request, organization_id):
     context = {
         'organization': organization,
         'associated_teams': associated_teams,
-        'results': results,
+        'results': results,#results is an extension
     }
     return render(request, 'competitions/organization.html', context)
 
 def results(request, competition_id):
-    #maybe there should be an error message for when there aren't any results
-    #should the judge with their judged tournametn be displayed?
+    #extension: add a redirect with a message when there are no results
     tournament_scorings = dict()
     competition = Competition.objects.get(id = competition_id)
     totals = competition.get_results()
@@ -1090,34 +1096,53 @@ def results(request, competition_id):
         tournaments.append(robin_tournament)
         tournament_names.append("Preliminary for " + robin_tournament.event.name)
     team_names = [team.name for team in competition.teams.order_by("name")]
-    #tournament_colors = [tournament.color for tournament in tournaments]
-    for tournament in tournaments:
-        scores_per_tournament = list()
-        robin_scores = dict()
-        for team_name in team_names:
-            team = Team.objects.filter(name=team_name).first()
-            if tournament.is_single_elimination == True:
-                last_match = Match.objects.filter(tournament__id = tournament.id, next_matches__isnull = True).first()
-                if team in last_match.advancers.all():
-                    scores_per_tournament.append(float(tournament.points))
-                else:
-                    scores_per_tournament.append(0)
+    tournament_colors = [tournament.event.color for tournament in tournaments]
+    background_tuples = []
+    border_tuples = []
+    if tournaments:
+        for color in tournament_colors:
+            background = "rgba"
+            tup = tuple(int(color.lstrip("#")[i:i+2], 16) for i in (0, 2, 4))
+            if background in background_tuples:
+                rgbl=[255,0,0]
+                random.shuffle(rgbl)
+                tup = tuple(rgbl)
+                background = background + str(tup).replace(str(tup)[-1], ", 0.2)")
+                background_tuples.append(background)
             else:
-                robin_scores = dict()
-                for match in tournament.match_set.all():
-                    if team in match.advancers.all():
-                        if match.advancers.count() == 1:
-                            robin_scores[team_name] = float(tournament.points_per_win)
-                        if match.advancers.count() > 1:
-                            robin_scores[team_name] = float(tournament.points_per_tie)
+                background = background + str(tup).replace(str(tup)[-1], ", 0.2)")
+                background_tuples.append(background)
+            #create an efficient way to never get the same color
+            #change the border_tuple
+            border_tuple = "rgb" + str(tup)
+            border_tuples.append(border_tuple)
+        for tournament in tournaments:
+            scores_per_tournament = list()
+            robin_scores = dict()
+            for team_name in team_names:
+                team = Team.objects.filter(name=team_name).first()
+                if tournament.is_single_elimination == True:
+                    last_match = Match.objects.filter(tournament__id = tournament.id, next_matches__isnull = True).first()
+                    if team in last_match.advancers.all():
+                        scores_per_tournament.append(float(tournament.points))
                     else:
-                        robin_scores[team_name] = float(tournament.points_per_loss)
-                for k, v in robin_scores.items():
-                    scores_per_tournament.append(v)
-        if tournament.is_single_elimination == True:   
-            tournament_scorings[tournament.event.name] = scores_per_tournament
-        else:
-            tournament_scorings["Preliminary for " + tournament.event.name] = scores_per_tournament
+                        scores_per_tournament.append(0)
+                else:
+                    robin_scores = dict()
+                    for match in tournament.match_set.all():
+                        if team in match.advancers.all():
+                            if match.advancers.count() == 1:
+                                robin_scores[team_name] = float(tournament.points_per_win)
+                            if match.advancers.count() > 1:
+                                robin_scores[team_name] = float(tournament.points_per_tie)
+                        else:
+                            robin_scores[team_name] = float(tournament.points_per_loss)
+                    for k, v in robin_scores.items():
+                        scores_per_tournament.append(v)
+            if tournament.is_single_elimination == True:   
+                tournament_scorings[tournament.event.name] = scores_per_tournament
+            else:
+                tournament_scorings["Preliminary for " + tournament.event.name] = scores_per_tournament
     judges = competition.plenary_judges.order_by("-username")
     judge_names = []
     if judges:
@@ -1135,12 +1160,13 @@ def results(request, competition_id):
         'competition': competition,
         'tournaments': tournaments,
         'judge_names': judge_names,
-        #add the tournament colors later
+        'tournament_colors': tournament_colors,
+        'background_tuples': background_tuples,
+        'border_tuples': border_tuples,#fix these colors
     }
     return render(request, "competitions/results.html", context)
 
 def team(request: HttpRequest, team_id: int):
-    #slight bug with wildcat coders name
     team = Team.objects.filter(id=team_id).get()
     today = timezone.now().date()
     upcoming_matches = Match.objects.filter(Q(starting_teams__id=team_id) | Q(prev_matches__advancers__id=team_id), tournament__competition__start_date__lte=today, tournament__competition__end_date__gte=today).exclude(advancers=None).order_by("-time")
