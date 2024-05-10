@@ -5,8 +5,12 @@ django-environ
 django-hijack
 django-mathfilters
 django-simple-history
+django-storages[google]==1.14.2
 Django==4.2.7
+google-cloud-secret-manager==2.16.1
+gunicorn==22.0.0
 pillow
+psycopg2-binary==2.9.9
 PyYAML
 social-auth-app-django
 typing_extensions
