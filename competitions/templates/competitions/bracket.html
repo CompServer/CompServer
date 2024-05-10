@@ -150,9 +150,21 @@
                             {% endif %}
                         </div>
                     {% endfor %}
+                    <small><p style="margin-top: -3px; font-size: smaller;">{{ match_data.time }}</p></small>
                 {% endif %}
             </div>
         </div>
+        {% if LANGUAGE_CODE == "es" %}
+            {% if forloop.last %}
+                <br><br><br>
+            {% else %}
+                <br><br><br><br>
+            {% endif %}
+        {% endif %} 
+        {% comment %} I literally have no idea why localization doesn't work. 
+        I tried doing some research, and there's literally nothing like the 
+        issues occuring here.
+        {% endcomment %}
         {% endfor %}
     </div>
     {% endfor %}

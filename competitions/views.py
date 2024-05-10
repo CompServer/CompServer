@@ -224,6 +224,12 @@ def generate_single_elimination_matches(request, tournament_id: int):
         num_matches = len(matches)
     return HttpResponseRedirect(reverse("competitions:single_elimination_tournament", args=(tournament_id,)))
 
+def is_recent(teams, round_num, most_recent_round):
+    for team in teams:
+        if round_num - most_recent_round[team] <= 1:
+            return True
+    return False
+
 def generate_round_robin_matches(request, tournament_id):
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
     arena_iterator = 0
@@ -299,45 +305,45 @@ def generate_round_robin_matches(request, tournament_id):
     round_num = 1
     curr_round = set()
     num_participated = [0 for _ in range(len(matches))]
-    most_recent_round = [-1 for _ in range(len(teams))]
+    most_recent_round = {team: -1 for team in teams}
     while num_participated != [1 for _ in range(len(matches))]:  
         j = random.randint(0, len(matches)-1)
         checkFull = set()
         isFull = False
-        #don't have time rn, but here's how I'll implement checking if a team has played twice in a row
-        #if round_num - most_recent_round[j] == 1, them we know that the team has played twice in a row
-        #then we can skip it and try to find a new team
-        #if we can't find a new team, then we get rid of this requirement and just check if the team has played in the match
-        #this solution isn't perfect, but it should get the job done 90% of the time.
         while num_participated[j] == 1 or \
-        isPlayed(curr_round, matches[j].starting_teams.all()):
+        isPlayed(matches[j].starting_teams.all(), curr_round) or \
+        is_recent(matches[j].starting_teams.all(), round_num, most_recent_round):
             checkFull.add(j)
             if len(checkFull) == len(matches):
                 isFull = True
                 break
-            j = random.randint(0, len(matches)-1)
+            j = random.randint(0, len(matches)-1) 
         if isFull:
             arena_iterator = 0
+            nmpt_iterator = 0
             starting_time += tournament.event.match_time 
             round_num += 1
             curr_round = set()
             continue
-        num_participated[j] = 1    
-        matches[j].time = starting_time
-        matches[j].arena = arenas[arena_iterator]
-        matches[j].round_num = round_num
-        matches[j].save()
-        for team in matches[j].starting_teams.all():
-            curr_round.add(team)
-        nmpt_iterator += 1
-        if nmpt_iterator == arenas[arena_iterator].capacity:
-            arena_iterator += 1
-            nmpt_iterator = 0
-            if arena_iterator >= len(arenas):
-                arena_iterator = 0
-                starting_time += tournament.event.match_time 
-                round_num += 1
-                curr_round = set()
+        else:
+            for team in matches[j].starting_teams.all():
+                most_recent_round[team] = round_num    
+            num_participated[j] = 1    
+            matches[j].time = starting_time
+            matches[j].arena = arenas[arena_iterator]
+            matches[j].round_num = round_num
+            matches[j].save()
+            for team in matches[j].starting_teams.all():
+                curr_round.add(team)
+            nmpt_iterator += 1
+            if nmpt_iterator == arenas[arena_iterator].capacity:
+                arena_iterator += 1
+                nmpt_iterator = 0
+                if arena_iterator >= len(arenas):
+                    arena_iterator = 0
+                    starting_time += tournament.event.match_time 
+                    round_num += 1
+                    curr_round = set()
     return HttpResponseRedirect(reverse("competitions:round_robin_tournament", args=(tournament_id,)))
     #still have a little bit of confusion with the ordering of matches.
 
