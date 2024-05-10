@@ -1003,23 +1003,29 @@ def profile(request, profile_id):
     lists_of_judges = [competition.plenary_judges for competition in Competition.objects.all()]
     ids = []
     for list_of_judges in lists_of_judges:
-        for judge in list_of_judges:
+        for judge in list_of_judges.all():
             ids.append(judge.id) #extension: simplify this
     if user_id in ids:
         is_judge = True
-        current_gigs = Match.objects.filter(tournament__judges__id=user_id, status = Status.OPEN).order_by("-time")
-        upcoming_gigs = Match.objects.filter(tournament__judges__id=user_id, status = Status.SETUP).order_by("-status", "-time")
-        judged_tournaments = AbstractTournament.objects.filter(judges__id=user_id).filter(Q(status = Status.COMPLETE) | Q(status = Status.CLOSED)).order_by("-start_time", "-competition").filter()
+        current_gigs = Match.objects.filter(tournament__competition__plenary_judges__id=user_id, tournament__competition__status = Status.OPEN).order_by("-time")
+        upcoming_gigs = Match.objects.filter(tournament__competition__plenary_judges__id=user_id, tournament__competition__status = Status.SETUP).order_by("-time")
+        judged_tournaments = AbstractTournament.objects.filter(competition__plenary_judges__id=user_id).filter(Q(competition__status = Status.COMPLETE) | Q(competition__status = Status.CLOSED)).order_by("-start_time", "-competition").filter()
     else:
         is_judge = False
-    if user_id in [team.coach.id for team in Team.objects.all()]:
+    coaches = list()
+    if Team.objects.all():
+        for team in Team.objects.all():
+            if team.coach:
+                coaches.append(team.coach.id)
+    coached_teams = list()
+    team_records = dict()
+    team_names = list()
+    team_wins = list()
+    team_losses = list()
+    team_rankings = dict()
+    if coaches and user_id in coaches:
         is_coach = True
         coached_teams = Team.objects.filter(coach_id = user_id).order_by("-name")
-        team_records = dict()
-        team_names = list()
-        team_wins = list()
-        team_losses = list()
-        team_rankings = dict()
         for team in coached_teams:
             wins = AbstractTournament.objects.filter(competition__teams=team, status=Status.COMPLETE, match_set__last__advancers=team).order_by("-start_time", "-competition")
             if wins:
@@ -1057,9 +1063,11 @@ def profile(request, profile_id):
         'team_wins': team_wins,
         'team_losses': team_losses,
         'team_names': team_names,
-        'user': user,
+        'user': user,#extension: add pie charts
+        #class:add bootstrap
+        #find urls for se and rr
     }
-    return render(request, 'competitions/user_profile.html', context)
+    return render(request, 'competitions/profile.html', context)
 
 
 def organization(request, organization_id):
