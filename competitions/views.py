@@ -235,115 +235,187 @@ def generate_round_robin_matches(request, tournament_id):
     arena_iterator = 0
     nmpt_iterator = 0
     arenas = [i for i in tournament.competition.arenas.filter(is_available=True)]
+    max_capacity = sum([arena.capacity for arena in arenas])
+    num_sub_rounds = 0
     starting_time = tournament.start_time 
     teams = [team for team in tournament.teams.all()]
     shuffle(teams)
+    if len(teams)/tournament.teams_per_match >= 2 * max_capacity:
+        num_sub_rounds = max_capacity
+    elif len(teams)/tournament.teams_per_match >= max_capacity:
+        num_sub_rounds = int(len(teams)/(2 * tournament.teams_per_match))
+    else:
+        num_sub_rounds = int(len(teams)/tournament.teams_per_match)
+    if num_sub_rounds == 0:
+        return Exception("Not enough teams for a round robin tournament.")
+    teams_in_round = [[] for i in range(num_sub_rounds)]
+    for i in range(len(teams)):
+        teams_in_round[i % num_sub_rounds].add(teams[i])
     teams_played = {team: set() for team in teams}
     matches_played = {team: list() for team in teams}
     num_participated = [0 for team in teams]
     num_teams_per_match = tournament.teams_per_match
     path = False
-    while num_participated != [tournament.matches_per_team for team in teams]:
-        if sum(num_participated) >= (len(teams) * tournament.matches_per_team) - (2 * num_teams_per_match) and \
-        sum(num_participated) < (len(teams) * tournament.matches_per_team) - num_teams_per_match and path == False:
-            num_teams_per_match = int((len(teams) * tournament.matches_per_team - sum(num_participated) + 1)/2)
-            path = True
-        # elif sum(num_participated) >= (len(teams) * tournament.matches_per_team) - num_teams_per_match and path == False:
-        #     num_teams_per_match = len(teams) * tournament.matches_per_team - sum(num_participated)
-        #     path = True
-        match = Match.objects.create(tournament=tournament)
-        match_teams = []
-        match_teams_played = set()
-        for i in range(num_teams_per_match):
-            teams_tested = set()
-            if num_participated == [tournament.matches_per_team for team in teams]:
-                break
-            j = random.randint(0, len(teams)-1)
-            teams_tested.add(j)
-            match_teams = sorted(list(match.starting_teams.all()) + [teams[j]], key=lambda x: x.id)
-            #randomly selects a team for the match
-            #while isPlayed(teams_played[teams[j]], match_teams_played) or \
-            while teams[j] in match.starting_teams.all() or \
-            num_participated[j] >= tournament.matches_per_team or \
-            num_participated[j] > min(num_participated) or \
-            match_teams in matches_played[teams[j]]:
-                j = random.randint(0, len(teams)-1) 
-                teams_tested.add(j)
-                match_teams = sorted(list(match.starting_teams.all()) + [teams[j]], key=lambda x: x.id)
-                #if all teams are for a match tested, then the only thing we should check for is participation
-                if len(teams_tested) == len(teams):
-                    while num_participated[j] >= tournament.matches_per_team or \
-                    num_participated[j] > min(num_participated) or \
-                    teams[j] in match.starting_teams.all():
-                        j = random.randint(0, len(teams)-1)
-                        match_teams = sorted(list(match.starting_teams.all()) + [teams[j]], key=lambda x: x.id)
-                    break
-            match.starting_teams.add(teams[j])
-            num_participated[j] += 1
-            for team in match.starting_teams.all():
-                for team2 in match.starting_teams.all():
-                    if team != team2:
-                        teams_played[team].add(team2)
-                for tem in teams_played[team]:
-                    match_teams_played.add(tem)
-            if len(match_teams_played) == len(teams):
-                for team in match_teams_played:
-                    for tem in teams_played[team]:
-                        if team in teams_played[tem]:
-                            teams_played[tem].remove(team)
-                    teams_played[team] = set()
-                match_teams_played = {team for team in match.starting_teams.all()}
-            for team in match.starting_teams.all():
-                if len(teams_played[team]) == len(teams) - 1:
-                    for tem in teams_played[team]:
-                        teams_played[tem].remove(team)
-                    teams_played[team] = set()
-        for team in match.starting_teams.all():
-            matches_played[team].append(match_teams)
-        match.save()
-    matches = [match for match in tournament.match_set.all()]
-    round_num = 1
-    curr_round = set()
-    num_participated = [0 for _ in range(len(matches))]
-    most_recent_round = {team: -1 for team in teams}
-    while num_participated != [1 for _ in range(len(matches))]:  
-        j = random.randint(0, len(matches)-1)
-        checkFull = set()
-        isFull = False
-        while num_participated[j] == 1 or \
-        isPlayed(matches[j].starting_teams.all(), curr_round) or \
-        is_recent(matches[j].starting_teams.all(), round_num, most_recent_round):
-            checkFull.add(j)
-            if len(checkFull) == len(matches):
-                isFull = True
-                break
-            j = random.randint(0, len(matches)-1) 
-        if isFull:
-            arena_iterator = 0
-            nmpt_iterator = 0
-            starting_time += tournament.event.match_time 
-            round_num += 1
-            curr_round = set()
-            continue
-        else:
-            for team in matches[j].starting_teams.all():
-                most_recent_round[team] = round_num    
-            num_participated[j] = 1    
-            matches[j].time = starting_time
-            matches[j].arena = arenas[arena_iterator]
-            matches[j].round_num = round_num
-            matches[j].save()
-            for team in matches[j].starting_teams.all():
-                curr_round.add(team)
-            nmpt_iterator += 1
-            if nmpt_iterator == arenas[arena_iterator].capacity:
-                arena_iterator += 1
-                nmpt_iterator = 0
-                if arena_iterator >= len(arenas):
-                    arena_iterator = 0
-                    starting_time += tournament.event.match_time 
-                    round_num += 1
-                    curr_round = set()
+    num_participated = {team: 0 for team in teams}
+    for a in range(tournament.matches_per_team):
+        for b in range(num_sub_rounds):
+            num_part_round = [0 for team in teams_in_round[j]]
+            for c in range(len(num_part_round)):
+                if num_participated[teams_in_round[b][c]] < tournament.matches_per_team:
+                    num_part_round[c] = 1
+            while num_part_round != [1 for _ in teams_in_round[j]]:
+                match = Match.objects.create(tournament=tournament)
+                match_teams = []
+                match_teams_played = set()
+                for i in range(num_teams_per_match):
+                    teams_tested = set()
+                    if num_part_round == [1 for team in teams_in_round[b]]:
+                        break
+                    j = random.randint(0, len(teams_in_round[b])-1)
+                    teams_tested.add(j)
+                    match_teams = sorted(list(match.starting_teams.all()) + [teams_in_round[b][j]], key=lambda x: x.id)
+                    #randomly selects a team for the match
+                    #while isPlayed(teams_played[teams[j]], match_teams_played) or \
+                    while teams_in_round[b][j] in match.starting_teams.all() or \
+                    num_part_round[j] >= 1 or \
+                    match_teams in matches_played[teams_in_round[b][j]]:
+                        j = random.randint(0, len(teams_in_round[b])-1) 
+                        teams_tested.add(j)
+                        match_teams = sorted(list(match.starting_teams.all()) + [teams_in_round[b][j]], key=lambda x: x.id)
+                        #if all teams are for a match tested, then the only thing we should check for is participation
+                        if len(teams_tested) == len(teams):
+                            while num_part_round[j] >= 1 or \
+                            teams_in_round[b][j] in match.starting_teams.all():
+                                j = random.randint(0, len(teams_in_round[b])-1)
+                                match_teams = sorted(list(match.starting_teams.all()) + [teams_in_round[b][j]], key=lambda x: x.id)
+                            break
+                    match.starting_teams.add(teams_in_round[b][j])
+                    num_participated[teams_in_round[b][j]] += 1
+                    num_part_round[j] += 1
+                    for team in match.starting_teams.all():
+                        for team2 in match.starting_teams.all():
+                            if team != team2:
+                                teams_played[team].add(team2)
+                        for tem in teams_played[team]:
+                            match_teams_played.add(tem)
+                    if len(match_teams_played) == len(teams):
+                        for team in match_teams_played:
+                            for tem in teams_played[team]:
+                                if team in teams_played[tem]:
+                                    teams_played[tem].remove(team)
+                            teams_played[team] = set()
+                        match_teams_played = {team for team in match.starting_teams.all()}
+                    for team in match.starting_teams.all():
+                        if len(teams_played[team]) == len(teams) - 1:
+                            for tem in teams_played[team]:
+                                teams_played[tem].remove(team)
+                            teams_played[team] = set()
+                for team in match.starting_teams.all():
+                    matches_played[team].append(match_teams)
+                match.save()
+
+
+    # while num_participated != [tournament.matches_per_team for team in teams]:
+    #     if sum(num_participated) >= (len(teams) * tournament.matches_per_team) - (2 * num_teams_per_match) and \
+    #     sum(num_participated) < (len(teams) * tournament.matches_per_team) - num_teams_per_match and path == False:
+    #         num_teams_per_match = int((len(teams) * tournament.matches_per_team - sum(num_participated) + 1)/2)
+    #         path = True
+    #     # elif sum(num_participated) >= (len(teams) * tournament.matches_per_team) - num_teams_per_match and path == False:
+    #     #     num_teams_per_match = len(teams) * tournament.matches_per_team - sum(num_participated)
+    #     #     path = True
+    #     match = Match.objects.create(tournament=tournament)
+    #     match_teams = []
+    #     match_teams_played = set()
+    #     for i in range(num_teams_per_match):
+    #         teams_tested = set()
+    #         if num_participated == [tournament.matches_per_team for team in teams]:
+    #             break
+    #         j = random.randint(0, len(teams)-1)
+    #         teams_tested.add(j)
+    #         match_teams = sorted(list(match.starting_teams.all()) + [teams[j]], key=lambda x: x.id)
+    #         #randomly selects a team for the match
+    #         #while isPlayed(teams_played[teams[j]], match_teams_played) or \
+    #         while teams[j] in match.starting_teams.all() or \
+    #         num_participated[j] >= tournament.matches_per_team or \
+    #         num_participated[j] > min(num_participated) or \
+    #         match_teams in matches_played[teams[j]]:
+    #             j = random.randint(0, len(teams)-1) 
+    #             teams_tested.add(j)
+    #             match_teams = sorted(list(match.starting_teams.all()) + [teams[j]], key=lambda x: x.id)
+    #             #if all teams are for a match tested, then the only thing we should check for is participation
+    #             if len(teams_tested) == len(teams):
+    #                 while num_participated[j] >= tournament.matches_per_team or \
+    #                 num_participated[j] > min(num_participated) or \
+    #                 teams[j] in match.starting_teams.all():
+    #                     j = random.randint(0, len(teams)-1)
+    #                     match_teams = sorted(list(match.starting_teams.all()) + [teams[j]], key=lambda x: x.id)
+    #                 break
+    #         match.starting_teams.add(teams[j])
+    #         num_participated[j] += 1
+    #         for team in match.starting_teams.all():
+    #             for team2 in match.starting_teams.all():
+    #                 if team != team2:
+    #                     teams_played[team].add(team2)
+    #             for tem in teams_played[team]:
+    #                 match_teams_played.add(tem)
+    #         if len(match_teams_played) == len(teams):
+    #             for team in match_teams_played:
+    #                 for tem in teams_played[team]:
+    #                     if team in teams_played[tem]:
+    #                         teams_played[tem].remove(team)
+    #                 teams_played[team] = set()
+    #             match_teams_played = {team for team in match.starting_teams.all()}
+    #         for team in match.starting_teams.all():
+    #             if len(teams_played[team]) == len(teams) - 1:
+    #                 for tem in teams_played[team]:
+    #                     teams_played[tem].remove(team)
+    #                 teams_played[team] = set()
+    #     for team in match.starting_teams.all():
+    #         matches_played[team].append(match_teams)
+    #     match.save()
+    # matches = [match for match in tournament.match_set.all()]
+    # round_num = 1
+    # curr_round = set()
+    # num_participated = [0 for _ in range(len(matches))]
+    # most_recent_round = {team: -1 for team in teams}
+    # while num_participated != [1 for _ in range(len(matches))]:  
+    #     j = random.randint(0, len(matches)-1)
+    #     checkFull = set()
+    #     isFull = False
+    #     while num_participated[j] == 1 or \
+    #     isPlayed(matches[j].starting_teams.all(), curr_round) or \
+    #     is_recent(matches[j].starting_teams.all(), round_num, most_recent_round):
+    #         checkFull.add(j)
+    #         if len(checkFull) == len(matches):
+    #             isFull = True
+    #             break
+    #         j = random.randint(0, len(matches)-1) 
+    #     if isFull:
+    #         arena_iterator = 0
+    #         nmpt_iterator = 0
+    #         starting_time += tournament.event.match_time 
+    #         round_num += 1
+    #         curr_round = set()
+    #         continue
+    #     else:
+    #         for team in matches[j].starting_teams.all():
+    #             most_recent_round[team] = round_num    
+    #         num_participated[j] = 1    
+    #         matches[j].time = starting_time
+    #         matches[j].arena = arenas[arena_iterator]
+    #         matches[j].round_num = round_num
+    #         matches[j].save()
+    #         for team in matches[j].starting_teams.all():
+    #             curr_round.add(team)
+    #         nmpt_iterator += 1
+    #         if nmpt_iterator == arenas[arena_iterator].capacity:
+    #             arena_iterator += 1
+    #             nmpt_iterator = 0
+    #             if arena_iterator >= len(arenas):
+    #                 arena_iterator = 0
+    #                 starting_time += tournament.event.match_time 
+    #                 round_num += 1
+    #                 curr_round = set()
     return HttpResponseRedirect(reverse("competitions:round_robin_tournament", args=(tournament_id,)))
     #still have a little bit of confusion with the ordering of matches.
 
