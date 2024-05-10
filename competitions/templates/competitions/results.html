@@ -30,6 +30,8 @@
     {{ tournament_names|json_script:"tournament_names" }}
     {{ team_names|json_script:"team_names" }}
     {{ tournament_scorings|json_script:"tournament_scorings" }}
+    {{ background_colors|json_script:"background_colors" }}
+    {{ border_colors|json_script:"border_colors" }}
     <div>
         <canvas id="stackedChartID" width="600" height="400"></canvas>
     </div>
@@ -38,8 +40,8 @@
         const team_names = JSON.parse(document.getElementById("team_names").textContent)
         const tournament_names = JSON.parse(document.getElementById("tournament_names").textContent)
         const tournament_scorings = JSON.parse(document.getElementById("tournament_scorings").textContent)
-        const background_tuples = JSON.parse(document.getElementById("background_tuples").textContent)
-        const border_tuples = JSON.parse(document.getElementById("border_tuples").textContent)
+        const background_colors = JSON.parse(document.getElementById("background_colors").textContent)
+        const border_colors = JSON.parse(document.getElementById("border_colors").textContent)
         function randomcolor() {
             return Math.floor(Math.random() * 255);
         }
@@ -55,8 +57,8 @@
                             data: {{ scores|safe }},
                         },
                     {% endfor %}
-                    backgroundColor: background_tuples,
-                    borderColor: border_tuples,
+                    backgroundColor: background_colors,
+                    borderColor: border_colors,
                 ],
             },
             options: {

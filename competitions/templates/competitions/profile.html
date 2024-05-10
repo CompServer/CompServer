@@ -3,32 +3,61 @@
 {% block title %}{% translate "Profile" %}{% endblock %} 
 {% block content %}
     <body>
-        <h1>{% translate "Your Profile" %}</h1>
-        <button><a href="#">{% translate "Edit Status" %}</a></button>
-        <div class="user-info-section">
-            {% if user.profile.profile_pic.exists %}
+        <div class="row d-flex">
+            <div class="column">
+                <h1>{% translate "Your Profile" %}</h1>
+            </div>
+            <div class="column">
+                <button><a href="#">{% translate "Edit Status" %}</a></button>
+            </div>
+        </div>
+        {% if user.profile.profile_pic.exists %}
+            <div class="row d-flex">
                 <img src="{{ user.profile.profile_pic }}">
-            {% else %}
+            </div>
+        {% else %}
+            <div class="row d-flex">
                 <button><a href="#">{% translate "Add Photo" %}</a></button>
-            {% endif %}
+            </div>
+        {% endif %}
+        <div class="row d-flex">
             {% if user.first_name.exists %}
                 {% if user.last_name.exists %}
                     <p>{% translate "Name: " %}{{ first_name }}{{ last_name }}</p>
-            <p>{% translate "Username: @"}{{ user.username }}</p>
-            {% if user.profile.bio.exists %}
-                <h2>{% translate "Biography" %}</h2>
-                <p>{{ user.profile.bio }}</p>
+                {% endif %}
             {% endif %}
-            <button><a href="#">{% translate "Edit Info" %}</a></button>
         </div>
+        <div class="row d-flex">
+            <p>{% translate "Username: @" %}{{ user.username }}</p>
+        </div>
+        <h2>{% translate "Biography" %}</h2>
+        {% if user.profile.bio.exists %}
+            <div class="row d-flex">
+                <div class="column">
+                    <p>{{ user.profile.bio }}</p>
+                </div>
+                <div class="column">
+                    <button><a href="#">{% translate "Edit Bio" %}</a></button>
+                </div>
+            </div>
+        {% else %}
+            <div class="row d-flex">
+                <div class="column">
+                    <p><i>{% translate "Waiting for a bio..." %}</i></p>
+                </div>
+                <div class="column">
+                    <button><a href="#">{% translate "Add Bio" %}</a></button>
+                </div>
+            </div>
+        {% endif %}     
         {% if is_coach %}
-            <div section="coach-information">
-                <h2>{% translate "Teams Coached By You" %}</h2>
-                <li>
+            <h2>{% translate "Teams Coached By You" %}</h2>
+            <div class="container">
+                <ul>
                     {% for team in coached_teams %}
-                        <li><a href="{% url 'competition:team' team.id %}">{{ team.name }} {% translate "From " %} {{ team.organization.name }}</a></li>
+                        <li><a href="{% url 'competitions:team' team.id %}">{{ team.name }} {% translate "From " %} {{ team.organization.name }}</a></li>
                     {% endfor %}
-                </li>
+                </ul>
             </div>
             <!-- <div section="team-records">
                 <h2>{% translate "Team Records" %}</h2>
@@ -92,42 +121,48 @@
                         });
                     </script>
             </div> -->
-            <div section="upcoming-competitions">
-                <h2>{% translate "Team Rankings" %}</h2>
-                <!-- <ul>
+            <h2>{% translate "Team Rankings" %}</h2>
+            <div class="container">
+                <ul>
                     {% for ranking in team_rankings %}
                         <li>
                             <div class="container">
                                 <h3>{{ ranking.item }} </h3>
                                 {% for rank in ranking.value %}
                                     {% if rank.1.is_single_elimination %}
-                                        <p>{{ rank.0 }}, <a href="#">{% translate "See" %}</a></p>
+                                        <p>{{ rank.0 }}, <a href="{% url 'comeptitions:single_elimination_tournament' rank.1.id%}">{% translate "See" %}</a></p>
                                     {% else %}
-                                        <p>{{ rank.0 }}, <a href="#">{% translate "See" %}</a></p>
+                                        <p>{{ rank.0 }}, <a href="{% url 'competitions:round_robin_tournament' rank.1.id %}">{% translate "See" %}</a></p>
                                     {% endif %}
                                 {% endfor %}
                             </div>
                         </li>
                     {% endfor %}
-                </ul> -->
+                </ul>
             </div>
         {% endif%}
         {% if is_judge%}
-            <h3>{% translate "Tournaments That You've Judged" %}</h3>
-            <ul>
-                {% for tournament in judged_tournaments %}
-                    <li>
-                        <p><a href="#">{% translate "Go" %}</a> {% translate "To" %} {{ tournament.event.name }}</p>
-                    </li>
-                {% endfor %}
-            </ul>
-            <h3>{% translate "Upcoming Judging Gigs" %}</h3>
+            {% if judged_tournaments %}
+                <div class="container">
+                    <h3>{% translate "Tournaments That You've Judged" %}</h3>
+                    <ul>
+                        {% for tournament in judged_tournaments %}
+                            <li>
+                                <p><a href="#">{% translate "Go" %}</a> {% translate "To" %} {{ tournament.event.name }}</p>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
             {% if upcoming_gigs.exists %}
-                <ul>
-                    {% for gig in upcoming_gigs %}
-                        <li><p>{{ match }} {% translate "For" %} {{ gig.tournament }}, {{ gig.tournament.competition.name }}</p></li>
-                    {% endfor %}
-                </ul>
+                <div class="container">
+                    <h3>{% translate "Upcoming Judging Gigs" %}</h3>
+                    <ul>
+                        {% for gig in upcoming_gigs %}
+                            <li><p>{{ match }} {% translate "For" %} {{ gig.tournament }}, {{ gig.tournament.competition.name }}</p></li>
+                        {% endfor %}
+                    </ul>
+                </div>
             {% endif %}
             {% if current_gigs.exists %}
                 <h3>{% trans "Current Judging Gigs" %}</h3>
@@ -149,7 +184,7 @@
                 <ul>
                     {% for competition in watch_competitions %}
                         <li>
-                            <p><a href="{% url 'competition:competition' competition.id %}">{{ competition.name }} {% translate "Started At" %} {{ competition.start_date }}</a></p>
+                            <p><a href="{% url 'competitions:competition' competition.id %}">{{ competition.name }} {% translate "Started At" %} {{ competition.start_date }}</a></p>
                         </li>
                     {% endfor %}
                     {% for tournament in watch_tournaments %}
@@ -164,7 +199,7 @@
                 <ul>
                     {% for competition in newly_ended_competitions %}
                         <li>
-                            <p><a href="{% url 'competition:competition' competition.id %}">{{ competition.name }}</a></p>
+                            <p><a href="{% url 'competitions:competition' competition.id %}">{{ competition.name }}</a></p>
                         </li>
                     {% endfor %}
                     </ul>

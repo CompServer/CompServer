@@ -9,7 +9,6 @@ from heapq import nsmallest
 from django.db.models import Max
 from typing import Set, Union
 import zoneinfo
-
 from crispy_forms.utils import render_crispy_form
 from django.contrib import messages
 from django.contrib.auth import PermissionDenied
@@ -1064,7 +1063,7 @@ def profile(request, profile_id):
         'team_losses': team_losses,
         'team_names': team_names,
         'user': user,#extension: add pie charts
-        #class:add bootstrap
+        #extension:add bootstrap
         #find urls for se and rr
     }
     return render(request, 'competitions/profile.html', context)
@@ -1095,35 +1094,43 @@ def organization(request, organization_id):
 
 def results(request, competition_id):
     #extension: add a redirect with a message when there are no results
+    #extension: when you select a color for a tournament, it shouldn't be available for any other tournaments
     tournament_scorings = dict()
     competition = Competition.objects.get(id = competition_id)
     totals = competition.get_results()
     tournaments = [tournament for tournament in SingleEliminationTournament.objects.filter(competition__id=competition_id, status = Status.COMPLETE).order_by("points", "start_time", "competition")]
     tournament_names = [tournament.event.name for tournament in tournaments]
-    for robin_tournament in RoundRobinTournament.objects.filter(competition__id=competition_id, status = Status.COMPLETE).order_by("points", "-start_time", "-competition"):
-        tournaments.append(robin_tournament)
-        tournament_names.append("Preliminary for " + robin_tournament.event.name)
+    robin_tournaments = RoundRobinTournament.objects.filter(competition__id=competition_id, status = Status.COMPLETE).order_by("points", "-start_time", "-competition")
+    if robin_tournaments:
+        for robin_tournament in robin_tournaments:
+            tournaments.append(robin_tournament)
+            tournament_names.append("Preliminary for " + robin_tournament.event.name)
     team_names = [team.name for team in competition.teams.order_by("name")]
     tournament_colors = [tournament.event.color for tournament in tournaments]
-    background_tuples = []
-    border_tuples = []
+    background_colors = list()
+    border_colors = list()
     if tournaments:
+        unique_colors = list()
         for color in tournament_colors:
-            background = "rgba"
-            tup = tuple(int(color.lstrip("#")[i:i+2], 16) for i in (0, 2, 4))
-            if background in background_tuples:
-                rgbl=[255,0,0]
-                random.shuffle(rgbl)
-                tup = tuple(rgbl)
-                background = background + str(tup).replace(str(tup)[-1], ", 0.2)")
-                background_tuples.append(background)
-            else:
-                background = background + str(tup).replace(str(tup)[-1], ", 0.2)")
-                background_tuples.append(background)
-            #create an efficient way to never get the same color
-            #change the border_tuple
-            border_tuple = "rgb" + str(tup)
-            border_tuples.append(border_tuple)
+            if color not in unique_colors:
+                unique_colors.append(color)
+        i = 0
+        if len(unique_colors) < len(tournament_colors):
+            while i < (len(tournament_colors) + 1):
+                if i != 0:
+                    r = lambda: random.randint(0,255)
+                    full_colors = "rgb(" + str(r) + "," + str(r) + "," + str(r) + ")"
+                    background_colors.append(full_colors)
+                    border_colors.append(full_colors)
+                else:
+                    background_colors.append(tournament_colors[i])
+                    border_colors.append(tournament_colors[i])
+                i = i + 1;
+        if len(unique_colors) == len(tournament_colors):
+            while i < (len(tournament_colors) + 1):
+                background_colors.append(tournament_colors[-1])
+                border_colors.append(tournament_colors[-1])
+                i = i + 1;
         for tournament in tournaments:
             scores_per_tournament = list()
             robin_scores = dict()
@@ -1169,8 +1176,9 @@ def results(request, competition_id):
         'tournaments': tournaments,
         'judge_names': judge_names,
         'tournament_colors': tournament_colors,
-        'background_tuples': background_tuples,
-        'border_tuples': border_tuples,#fix these colors
+        'background_colors': background_colors,
+        'border_colors': border_colors,
+        #check why the results page isn't loading the chart
     }
     return render(request, "competitions/results.html", context)
 
