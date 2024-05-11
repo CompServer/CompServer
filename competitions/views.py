@@ -1118,10 +1118,10 @@ def results(request, competition_id):
         if len(unique_colors) < len(tournament_colors):
             while i < (len(tournament_colors) + 1):
                 if i != 0:
-                    r = lambda: random.randint(0,255)
-                    full_colors = "rgb(" + str(r) + "," + str(r) + "," + str(r) + ")"
-                    background_colors.append(full_colors)
-                    border_colors.append(full_colors)
+                    chars = '0123456789ABCDEF'
+                    color = ['#'+''.join(random.sample(chars,6)) for i in range(6)]
+                    background_colors.append(color)
+                    border_colors.append(color)
                 else:
                     background_colors.append(tournament_colors[i])
                     border_colors.append(tournament_colors[i])
@@ -1178,8 +1178,7 @@ def results(request, competition_id):
         'tournament_colors': tournament_colors,
         'background_colors': background_colors,
         'border_colors': border_colors,
-        #check why the results page isn't loading the chart
-    }
+=    }
     return render(request, "competitions/results.html", context)
 
 def team(request: HttpRequest, team_id: int):

@@ -315,6 +315,46 @@ class SETournamentForm(forms.ModelForm):
         model = SingleEliminationTournament
         fields = ['competition', 'status', 'teams', 'judges', 'event', 'points', 'prev_tournament']
 
+# class EditBio(forms.ModelForm):
+#     def __init__(self, *args, profile: Optional[Profile]=None, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         self.helper = FormHelper(self)
+#         self.helper.form_id = 'edit_profile_bio'
+#         self.fields['profile'].disabled = True
+#         if not kwargs.get('instance',None):
+#             assert profile is not None
+#             self.fields['profile'].initial = profile
+#         else:
+#             self.fields['profile'].initial = kwargs['instance'].profile
+#             profile = kwargs['instance'].profile
+#         self.fields['bio'].label = "Profile Bio"
+#         self.fields['bio'].intial = profile.bio
+#         if not self.instance:
+#             self.helper.add_input(Submit('submit', 'Update Bio'))
+#     class Meta:
+#         model = Profile
+#         fields = ['user', 'profile_pic', 'bio']
+
+
+# class UploadProfilePhoto(forms.ModelForm):
+#     def __init__(self, *args, profile: Optional[Profile]=None, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         self.helper = FormHelper(self)
+#         self.helper.form_id = 'upload_profile_photo'
+#         self.fields['profile'].disabled = True
+#         if not kwargs.get('instance',None):
+#             assert profile is not None
+#             self.fields['profile'].initial = profile
+#         else:
+#             self.fields['profile'].initial = kwargs['instance'].profile
+#             profile = kwargs['instance'].profile
+#         self.fields['photo'].label = "Profile Photo"
+#         if not self.instance:
+#             self.helper.add_input(Submit('submit', 'Upload Photo'))
+#     class Meta:
+#         model = Profile
+#         fields = ['user', 'profile_pic', 'bio']
+
 class RRTournamentForm(forms.ModelForm):
     #generate_matches = forms.BooleanField(label='Generate Matches')
     #competition_field = forms.ModelChoiceField(queryset=None,label='Competition')

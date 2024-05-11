@@ -7,9 +7,6 @@
             <div class="column">
                 <h1>{% translate "Your Profile" %}</h1>
             </div>
-            <div class="column">
-                <button><a href="#">{% translate "Edit Status" %}</a></button>
-            </div>
         </div>
         {% if user.profile.profile_pic.exists %}
             <div class="row d-flex">
@@ -165,35 +162,45 @@
                 </div>
             {% endif %}
             {% if current_gigs.exists %}
-                <h3>{% trans "Current Judging Gigs" %}</h3>
-                <ul>
-                    {% for gig in current_gigs %}
-                        <li>
-                            <p>{{ match }}</p>
-                            <a href="#">
-                                <button>{% translate "Submit Scores" %}</button>
-                            </a>
-                        </li>
-                    {% endfor %}
-                </ul>
+                <div class="container">
+                    <h3>{% trans "Current Judging Gigs" %}</h3>
+                    <ul>
+                        {% for gig in current_gigs %}
+                            <li>
+                                <p>{{ match }}</p>
+                                <a href="#">
+                                    <button>{% translate "Submit Scores" %}</button>
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
             {% endif %}
         {% endif%}
-        <div class="container">
+        {% if watch_competitions %}
             <div class="container">
-                <h2>{% translate "Watch Now" %}</h2>
+                <h2>{% translate "Watch Now: Competitions" %}</h2>
                 <ul>
                     {% for competition in watch_competitions %}
                         <li>
                             <p><a href="{% url 'competitions:competition' competition.id %}">{{ competition.name }} {% translate "Started At" %} {{ competition.start_date }}</a></p>
                         </li>
                     {% endfor %}
-                    {% for tournament in watch_tournaments %}
-                        <li>
-                            <p><a href="#">{{ tournament.event.name }} {% translate "Started At" %} {{ tournament.start_time }}</a></p>
-                        </li>
-                    {% endfor %}
-                    </ul>
             </div>
+        {% endif %}
+        {% if watch_tournaments %}
+            <div class="container">
+                <h2>{% translate "Watch Now: Tournaments" %}</h2>
+                <ul>
+                {% for tournament in watch_tournaments %}
+                    <li>
+                        <p><a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{{ tournament.event.name }} {% translate "Started At" %} {{ tournament.start_time }}</a></p>
+                    </li>
+                {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+        {% if newly_ended_competitions %}
             <div class="container">
                 <h2>{% translate "Recent Results" %}</h2>
                 <ul>
@@ -202,8 +209,8 @@
                             <p><a href="{% url 'competitions:competition' competition.id %}">{{ competition.name }}</a></p>
                         </li>
                     {% endfor %}
-                    </ul>
+                </ul>
             </div>
-        </div>
+        {% endif %}
     </body>
 {% endblock %}
