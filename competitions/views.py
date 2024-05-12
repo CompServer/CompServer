@@ -1178,7 +1178,7 @@ def results(request, competition_id):
         'tournament_colors': tournament_colors,
         'background_colors': background_colors,
         'border_colors': border_colors,
-=    }
+    }
     return render(request, "competitions/results.html", context)
 
 def team(request: HttpRequest, team_id: int):
