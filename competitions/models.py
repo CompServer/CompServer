@@ -240,7 +240,8 @@ class StatusField(models.CharField):
 class Sport(models.Model):
     name = models.CharField(max_length=255, unique=True)
 
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sports', default=User.objects.get(username='admin').pk)
+    #owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sports', default=User.objects.get(username='admin').pk)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sports')
     """The user that created this object. This is used only if DEMO mode is on."""
 
     def __str__(self) -> str:
@@ -258,7 +259,8 @@ class Organization(models.Model): # probably mostly schools but could also be co
     # address_line2 = models.CharField(max_length=255) # Pozuelo de Alarcón 28224
     # address_line3 = models.CharField(max_length=255) # Madrid, Spain
     # related: teams
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='organizations', default=User.objects.get(username='admin').pk)
+    #owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='organizations', default=User.objects.get(username='admin').pk)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='organizations')
     """The user that created this object. This is used only if DEMO mode is on."""
 
     class Meta:
@@ -277,7 +279,8 @@ class Team(models.Model):
     # logo = models.ImageField()
     # related: competition_set, tournament_set, round1_matches, won_matches
 
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='teams', default=User.objects.get(username='admin').pk)
+    #owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='teams', default=User.objects.get(username='admin').pk)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='teams')
     """The user that created this object. This is used only if DEMO mode is on."""
 
     def __str__(self) -> str:
@@ -294,7 +297,8 @@ class Arena(models.Model):
     is_available = models.BooleanField(default=True)
     color = ColorField(default="#CBCBCB")
     
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='arenas', default=User.objects.get(username='admin').pk)
+    #owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='arenas', default=User.objects.get(username='admin').pk)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='arenas')
     """The user that created this object. This is used only if DEMO mode is on."""
 
     @property
@@ -327,7 +331,8 @@ class Competition(models.Model):
     # For scheduling purposes, we need to be able to specify for this competition how many different (Event-specific) arenas are available and their capacity
     arenas = models.ManyToManyField(Arena, blank=False)
 
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='competitions', default=User.objects.get(username='admin').pk)
+    #owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='competitions', default=User.objects.get(username='admin').pk)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='competitions')
     """The user that created this object. This is used only if DEMO mode is on."""
     
     def get_results(self):
@@ -500,7 +505,8 @@ class Event(models.Model):
     use_higher_score = models.BooleanField(default=True)
     """whether the winner should win if their score is higher or lower. True=higher score wins, False=lower score wins."""
 
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='events', default=User.objects.get(username='admin').pk)
+    #owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='events', default=User.objects.get(username='admin').pk)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='events')
     """The user that created this object. This is used only if DEMO mode is on."""
 
     class Meta:

@@ -308,6 +308,8 @@ if DEBUG:
     STATICFILES_DIRS = [
         os.path.join(BASE_DIR, 'static'),
     ]
+    # comment out the above and uncomment the below when collecting static
+    #STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 else:
     # this is what whitenoise uses (for prod)
     STATIC_ROOT = os.path.join(BASE_DIR, 'static')
