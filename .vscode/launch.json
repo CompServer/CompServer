@@ -25,6 +25,8 @@
             ],
             "env": {
                 "DEBUG": "true",
+                "DEMO": "false",
+                "PROD": "false",
             },
             "django": true,
             "justMyCode": false
@@ -39,7 +41,9 @@
                 "0.0.0.0:80"
             ],
             "env": {
-                "DEBUG": "false"
+                "DEBUG": "false",
+                "DEMO": "false",
+                "PROD": "false",
             },
             "django": true,
             "justMyCode": false

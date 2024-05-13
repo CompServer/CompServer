@@ -7,7 +7,10 @@ from urllib.parse import urlparse
 from django.contrib.messages import constants as messages
 from django.utils.log import DEFAULT_LOGGING
 from environ import Env
-import yaml
+import environ
+import google.auth
+from google.cloud import secretmanager
+import io
 
 # custom logging filter to suppress certain errors (such as Forbidden and Not Found)
 
@@ -35,49 +38,103 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-2y0@hfzu761goc9!m&!#if&(vhcg=!uzre027l48r&oh_c^xcx'
-
-if os.path.exists('secrets.yml'):
-    with open('secrets.yml') as f:
-        config = dict(yaml.safe_load(f))
-        SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = config['GOOGLE_CLIENT_ID']
-        SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = config['GOOGLE_CLIENT_SECRET']
-# recommended by https://cloud.google.com/python/django/appengine
-env = Env(
-    DEBUG=(bool, False),
-    PROD=(bool, False),
-    DEMO=(bool, True),
-)
-
+# [START cloudrun_django_secret_config]
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env('DEBUG')
+# Change this to "False" when you are ready for production
+env = environ.Env(DEBUG=(bool, True))
+env_file = os.path.join(BASE_DIR, ".env")
 
-PROD = env('PROD')
+# Attempt to load the Project ID into the environment, safely failing on error.
+try:
+    _, os.environ["GOOGLE_CLOUD_PROJECT"] = google.auth.default() # type: ignore
+except google.auth.exceptions.DefaultCredentialsError:
+    pass
+
+if os.path.isfile(env_file):
+    # Use a local secret file, if provided
+
+    env.read_env(env_file)
+# [START_EXCLUDE]
+elif os.getenv("TRAMPOLINE_CI", None):
+    # Create local settings if running with CI, for unit testing
+
+    placeholder = (
+        f"SECRET_KEY=a\n"
+        "GS_BUCKET_NAME=None\n"
+        f"DATABASE_URL=sqlite://{os.path.join(BASE_DIR, 'db.sqlite3')}"
+    )
+    env.read_env(io.StringIO(placeholder))
+# [END_EXCLUDE]
+elif os.environ.get("GOOGLE_CLOUD_PROJECT", None):
+    # Pull secrets from Secret Manager
+    project_id = os.environ.get("GOOGLE_CLOUD_PROJECT")
+
+    client = secretmanager.SecretManagerServiceClient()
+    settings_name = os.environ.get("SETTINGS_NAME", "django_settings")
+    name = f"projects/{project_id}/secrets/{settings_name}/versions/latest"
+    payload = client.access_secret_version(name=name).payload.data.decode("UTF-8")
+
+    env.read_env(io.StringIO(payload))
+else:
+    raise Exception("No local .env or GOOGLE_CLOUD_PROJECT detected. No secrets found.")
+# [END cloudrun_django_secret_config]
+SECRET_KEY = env("SECRET_KEY")
+
+DEBUG = env("DEBUG")
 
 DEMO = env('DEMO')
+
+# SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = env('GOOGLE_CLIENT_ID')
+# SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = env('GOOGLE_CLIENT_SECRET')
+
+
+# if os.path.exists('secrets.yml'):
+#     with open('secrets.yml') as f:
+#         config = dict(yaml.safe_load(f))
+#         SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = config['GOOGLE_CLIENT_ID']
+#         SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = config['GOOGLE_CLIENT_SECRET']
+# recommended by https://cloud.google.com/python/django/appengine
+# env = Env(
+#     DEBUG=(bool, False),
+#     PROD=(bool, False),
+#     DEMO=(bool, False),
+# )
+
 
 # https://cloud.google.com/python/django/appengine
 # for deployment
 
-if PROD:
-    APPENGINE_URL = env("APPENGINE_URL", default=None)
-    if APPENGINE_URL:
-        # Ensure a scheme is present in the URL before it's processed.
-        if not urlparse(APPENGINE_URL).scheme:
-            APPENGINE_URL = f"https://{APPENGINE_URL}"
+# if PROD:
+#     APPENGINE_URL = env("APPENGINE_URL", default=None)
+#     if APPENGINE_URL:
+#         # Ensure a scheme is present in the URL before it's processed.
+#         if not urlparse(APPENGINE_URL).scheme:
+#             APPENGINE_URL = f"https://{APPENGINE_URL}"
 
-        ALLOWED_HOSTS = [urlparse(APPENGINE_URL).netloc]
-        CSRF_TRUSTED_ORIGINS = [APPENGINE_URL]
-        SECURE_SSL_REDIRECT = True
-    else:
-        ALLOWED_HOSTS = ["*"]
+#         ALLOWED_HOSTS = [urlparse(APPENGINE_URL).netloc]
+#         CSRF_TRUSTED_ORIGINS = [APPENGINE_URL]
+#         SECURE_SSL_REDIRECT = True
+#     else:
+#         ALLOWED_HOSTS = ["*"]
+# else:
+#     ALLOWED_HOSTS = ["*"]
+
+# INTERNAL_IPS = [
+#     "127.0.0.1",
+# ]
+
+# [START cloudrun_django_csrf]
+# SECURITY WARNING: It's recommended that you use this when
+# running in production. The URL will be known once you first deploy
+# to Cloud Run. This code takes the URL and converts it to both these settings formats.
+CLOUDRUN_SERVICE_URL = env("CLOUDRUN_SERVICE_URL", default=None)
+if CLOUDRUN_SERVICE_URL:
+    ALLOWED_HOSTS = [urlparse(CLOUDRUN_SERVICE_URL).netloc]
+    CSRF_TRUSTED_ORIGINS = [CLOUDRUN_SERVICE_URL]
+    SECURE_SSL_REDIRECT = True
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 else:
     ALLOWED_HOSTS = ["*"]
-
-INTERNAL_IPS = [
-    "127.0.0.1",
-]
 
 # Application definition
 
@@ -161,24 +218,30 @@ AUTHENTICATION_BACKENDS = [
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-if PROD:
-    DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': '<name>',
-        'USER': '<db_username>',
-        'PASSWORD': '<password>',
-        'HOST': '<db_hostname_or_ip>',
-        'PORT': '<db_port>',
-        }
-    }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+# if PROD:
+#     DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'NAME': '<name>',
+#         'USER': '<db_username>',
+#         'PASSWORD': '<password>',
+#         'HOST': '<db_hostname_or_ip>',
+#         'PORT': '<db_port>',
+#         }
+#     }
+# else:
+#     DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.sqlite3',
+#             'NAME': BASE_DIR / 'db.sqlite3',
+#         }
+#   }
+DATABASES = {"default": env.db()}
+
+if os.getenv("USE_CLOUD_SQL_AUTH_PROXY", None):
+    DATABASES["default"]["HOST"] = "127.0.0.1"
+    DATABASES["default"]["PORT"] = 5432
+
 
 STORAGES = {
     "default": {
@@ -246,6 +309,8 @@ if DEBUG:
     STATICFILES_DIRS = [
         os.path.join(BASE_DIR, 'static'),
     ]
+    # comment out the above and uncomment the below when collecting static
+    #STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 else:
     # this is what whitenoise uses (for prod)
     STATIC_ROOT = os.path.join(BASE_DIR, 'static')
@@ -253,6 +318,8 @@ else:
 MEDIA_URL = '/media/'
 
 MEDIA_ROOT = BASE_DIR / '/uploads/'
+
+GS_DEFAULT_ACL = "publicRead"
 
 # for message framework
 # the django red alert class is called "danger", django calls it "error"
