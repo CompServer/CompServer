@@ -26,7 +26,7 @@ from django.template.exceptions import TemplateDoesNotExist
 import random
 import zoneinfo
 from typing import Union
-from .forms import *
+
 from .models import *
 from .utils import *
 
@@ -837,14 +837,10 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
 
 def competitions(request: HttpRequest):
     competition_list = Competition.objects.all().order_by("-status", "start_date")
+    if not competition_list and not request.user.is_superuser:
+        messages.error(request, 'There are no competitions at this time.')
+        return redirect(reverse("competitions:home"))
     context = {"competition_list": competition_list, "form": CompetitionStatusForm()}
-    # if competition_list:
-    # else:
-    #     #trying to figure out how to redirect to login page if no competitions
-    #     url(r'^.*$', RedirectView.as_view(url='<url_to_home_view>', permanent=False), name='index')
-    #     redirect_to = request.GET.get('next', '') 
-    #     return HttpResponseRedirect(reverse(f"competitions:{redirect_to}",args=redirect_id))
-    #     return HttpResponseRedirect(reverse(f"competitions:{redirect_to}"))
     return render(request, "competitions/competitions.html", context)
 
 def competition(request: HttpRequest, competition_id: int):
@@ -990,7 +986,6 @@ def judge_match(request: HttpRequest, match_id: int):
     return render(request, 'competitions/match_judge.html', {'form': form, 'match': instance, "teams": winner_choices})
 
 def profile(request, profile_id):
-    #tonight: debug the profile page
     #extension: add pie charts
     watch_competitions = Competition.objects.filter(status=Status.OPEN).order_by("-end_date", "-start_date", "-name")
     watch_tournaments = AbstractTournament.objects.filter(status=Status.OPEN).order_by("-start_time")
@@ -1063,8 +1058,6 @@ def profile(request, profile_id):
         'team_losses': team_losses,
         'team_names': team_names,
         'user': user,#extension: add pie charts
-        #extension:add bootstrap
-        #find urls for se and rr
     }
     return render(request, 'competitions/profile.html', context)
 
@@ -1093,12 +1086,14 @@ def organization(request, organization_id):
     return render(request, 'competitions/organization.html', context)
 
 def results(request, competition_id):
-    #extension: add a redirect with a message when there are no results
     #extension: when you select a color for a tournament, it shouldn't be available for any other tournaments
     tournament_scorings = dict()
     competition = Competition.objects.get(id = competition_id)
     totals = competition.get_results()
     tournaments = [tournament for tournament in SingleEliminationTournament.objects.filter(competition__id=competition_id, status = Status.COMPLETE).order_by("points", "start_time", "competition")]
+    if not tournaments:
+        messages.error(request, 'There are no results available for this competition. Please wait until they are uploaded.')
+        return redirect(reverse("competitions:competition", kwargs={'competition_id':competition_id}))
     tournament_names = [tournament.event.name for tournament in tournaments]
     robin_tournaments = RoundRobinTournament.objects.filter(competition__id=competition_id, status = Status.COMPLETE).order_by("points", "-start_time", "-competition")
     if robin_tournaments:

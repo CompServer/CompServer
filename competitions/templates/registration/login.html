@@ -5,6 +5,7 @@
 {% block content %}
 
   {% if form.errors %}
+  <!-- add an email error -->
     <p>{% translate "Your username and password didn't match. Please try again." %}</p>
   {% endif %}
 
@@ -24,10 +25,10 @@
         <td>{{ form.username.label_tag }}</td>
         <td>{{ form.username }}</td>
       </tr>
-      <!-- <tr>
+      <tr>
         <td>{{ form.email.label_tag }}</td>
         <td>{{ form.email }}</td>
-      </tr> -->
+      </tr>
       <tr>
         <td>{{ form.password.label_tag }}</td>
         <td>{{ form.password }}</td>

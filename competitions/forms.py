@@ -317,11 +317,17 @@ class SETournamentForm(forms.ModelForm):
         model = SingleEliminationTournament
         fields = ['competition', 'status', 'teams', 'judges', 'event', 'points', 'prev_tournament']
 
+class EditProfile(forms.ModelForm):
+    #get the profile
+    class Meta:
+        model = Profile
+        fields = ['user', 'bio', 'profile_pic']
 
-# class UploadProfilePhoto(forms.ModelForm):
+#profile forms: delete a photo,  delete bio, update profile details, submit scores, delete inside of forms
+# class (forms.ModelForm):
 #     def __init__(self, *args, profile: Optional[Profile]=None, **kwargs):
 #         super().__init__(*args, **kwargs)
-#         self.helper = FormHelper(self)
+#         self.helper = FormHelpe`r(self)
 #         self.helper.form_id = 'upload_profile_photo'
 #         self.fields['profile'].disabled = True
 #         if not kwargs.get('instance',None):

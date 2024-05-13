@@ -14,16 +14,6 @@
                     {% endfor %}
                 </ul>
             {% endif %}
-        {% else %}
-            <h1>{% trans "Awaiting Results For " %} {{ competition.name }}: {{ competition.start_date }} - {{ competition.end_date }}</h1>
-            {% if judge_names %}
-                    <h2>{% trans "Judged by " %}</h2>
-                    <ul>
-                        {% for judge_name in judge_names %}
-                            <li> {{ judge_name }} </li>
-                        {% endfor %}
-                    </ul>
-            {% endif %}
         {% endif %}
     </header>
     {% if tournaments %}
