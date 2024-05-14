@@ -1114,7 +1114,7 @@ def results(request, competition_id):
             while i < (len(tournament_colors) + 1):
                 if i != 0:
                     chars = '0123456789ABCDEF'
-                    color = ['#'+''.join(random.sample(chars,6)) for i in range(6)]
+                    color = ['(#'+''.join(random.sample(chars,6)) for i in range(6) + ", 0.5)"]
                     background_colors.append(color)
                     border_colors.append(color)
                 else:

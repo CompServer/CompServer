@@ -317,31 +317,22 @@ class SETournamentForm(forms.ModelForm):
         model = SingleEliminationTournament
         fields = ['competition', 'status', 'teams', 'judges', 'event', 'points', 'prev_tournament']
 
-class EditProfile(forms.ModelForm):
-    #get the profile
-    class Meta:
-        model = Profile
-        fields = ['user', 'bio', 'profile_pic']
-
-#profile forms: delete a photo,  delete bio, update profile details, submit scores, delete inside of forms
-# class (forms.ModelForm):
-#     def __init__(self, *args, profile: Optional[Profile]=None, **kwargs):
+# class SetProfileForm(forms.ModelForm):
+#     def __init__(self, *args, user: User, **kwargs):
 #         super().__init__(*args, **kwargs)
-#         self.helper = FormHelpe`r(self)
-#         self.helper.form_id = 'upload_profile_photo'
-#         self.fields['profile'].disabled = True
-#         if not kwargs.get('instance',None):
-#             assert profile is not None
-#             self.fields['profile'].initial = profile
-#         else:
-#             self.fields['profile'].initial = kwargs['instance'].profile
-#             profile = kwargs['instance'].profile
-#         self.fields['photo'].label = "Profile Photo"
-#         if not self.instance:
-#             self.helper.add_input(Submit('submit', 'Upload Photo'))
+#         self.user = user
+#         self.fields['profile_pic'].label = "Profile Pic"
+#         self.fields['profile_pic'].widget = FileInput(attrs={"size": 15, "title":"gallery"})
+#         self.fields['bio'].label = "Bio"
+#         self.fields['bio'].widget = TextInput(attrs={"type": "description"})
+
+#     #def is_valid(self):#
+#     #    self.full_clean()
+#      #   if self.cleaned_data['profile_pic'] == '#fff5a8':
+#      #      return False
 #     class Meta:
 #         model = Profile
-#         fields = ['user', 'profile_pic', 'bio']
+#         fields = ["user", "profile_pic", "bio"]
 
 class RRTournamentForm(forms.ModelForm):
     #generate_matches = forms.BooleanField(label='Generate Matches')
