@@ -84,8 +84,8 @@ DEBUG = env("DEBUG")
 
 DEMO = env('DEMO')
 
-# SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = env('GOOGLE_CLIENT_ID')
-# SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = env('GOOGLE_CLIENT_SECRET')
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = env('GOOGLE_CLIENT_ID')
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = env('GOOGLE_CLIENT_SECRET')
 
 
 # if os.path.exists('secrets.yml'):
@@ -337,3 +337,21 @@ LOGIN_URL = '/accounts/login/'
 # SOCIAL_AUTH_GOOGLE_OAUTH_KEY = ''
 # SOCIAL_AUTH_GOOGLE_OAUTH_SECRET = ''
 SOCIAL_AUTH_URL_NAMESPACE = 'social'
+SOCIAL_AUTH_JSONFIELD_ENABLED = True
+
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+
+# insert urls here
+CSRF_TRUSTED_ORIGINS = [
+    '',
+    'https://compserver.ucls.uchicago.edu',
+]
+
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    # 'social_core.backends.gitlab.GitLabOAuth2',
+    'social_core.backends.google.GoogleOAuth2',
+    #'rest_framework_social_oauth2.backends.DjangoOAuth2',
+)
+
