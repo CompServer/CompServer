@@ -9,7 +9,7 @@ from .widgets import ColorPickerWidget, ColorWidget
 from .utils import *
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
-from .models import Team
+from .models import Team, Profile, User
 
 class JudgeForm(forms.ModelForm):
     possible_advancers = None
@@ -317,22 +317,20 @@ class SETournamentForm(forms.ModelForm):
         model = SingleEliminationTournament
         fields = ['competition', 'status', 'teams', 'judges', 'event', 'points', 'prev_tournament']
 
-# class SetProfileForm(forms.ModelForm):
-#     def __init__(self, *args, user: User, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         self.user = user
-#         self.fields['profile_pic'].label = "Profile Pic"
-#         self.fields['profile_pic'].widget = FileInput(attrs={"size": 15, "title":"gallery"})
-#         self.fields['bio'].label = "Bio"
-#         self.fields['bio'].widget = TextInput(attrs={"type": "description"})
-
-#     #def is_valid(self):#
-#     #    self.full_clean()
-#      #   if self.cleaned_data['profile_pic'] == '#fff5a8':
-#      #      return False
-#     class Meta:
-#         model = Profile
-#         fields = ["user", "profile_pic", "bio"]
+class SetProfileForm(forms.ModelForm):
+    def __init__(self, *args, profile: Profile, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+        self.fields['profile_pic'].label = "Profile Pic"
+        self.fields['profile_pic'].widget = FileInput(attrs={"size": 15, "title":"gallery"})
+        self.fields['bio'].label = "Bio"
+        self.fields['bio'].widget = TextInput(attrs={"type": "biography"})
+        #check for imsage
+        #check validation possibly
+        #send image to dropdown menu
+    class Meta:
+        model = Profile
+        fields = ["user", "profile_pic", "bio"]
 
 class RRTournamentForm(forms.ModelForm):
     #generate_matches = forms.BooleanField(label='Generate Matches')

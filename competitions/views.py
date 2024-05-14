@@ -26,7 +26,7 @@ from django.template.exceptions import TemplateDoesNotExist
 import random
 import zoneinfo
 from typing import Union
-
+from .forms import *
 from .models import *
 from .utils import *
 
@@ -472,6 +472,30 @@ def create_tournament_legacy(request: HttpRequest):
         form = FORM_CLASS(competition=competition)
     return render(request, "FORM_BASE.html", {'form_title': "Create Tournament", 'action': f"?tournament_type={tournament_type}&competition_id={competition.id}" , "form": form,  "form_submit_text": "Create"})
 
+@login_required
+def edit_profile(request:HttpRequest, profile_id: int):
+    #do something different now that profile_id is passed into the view
+    profile = Profile.objects.get(id=profile_id)
+    #the rest of this may be different, but it also must get the pre existing template vlaues
+    #create the template for profile
+    #be able to make discard and delete changes within the template
+    form = None
+    if request.method == 'POST':
+        form = FORM_CLASS(request.POST, profile=profile)
+        if form.is_valid():
+            form.full_clean()
+            instance = form.save(commit=False)
+            instance.profile = profile
+            instance.save()
+            form.save()
+            return HttpResponseRedirect(f"{reverse('competitions:profile', args=(form.instance.id,))}")
+        else:
+            for error_field, error_desc in form.errors.items():
+                form.add_error(error_field, error_desc)
+    form = SetProfileForm(profile_id=profile.id)
+    form_html = render_crispy_form(form, helper=form.helper)
+    return render(request, "competitions/new_tournament_form.html", RequestContext(request, {"form_html": form_html, "action": "", "form_submit_text": "Select", "form_title": "Create"}).flatten())
+    
 @login_required
 def create_tournament_htmx(request: HttpRequest):
     competition_id = request.GET.get('competition_id',None)
@@ -987,6 +1011,7 @@ def judge_match(request: HttpRequest, match_id: int):
 
 def profile(request, profile_id):
     #extension: add pie charts
+    profile = Profile.objects.get(id=profile_id)
     watch_competitions = Competition.objects.filter(status=Status.OPEN).order_by("-end_date", "-start_date", "-name")
     watch_tournaments = AbstractTournament.objects.filter(status=Status.OPEN).order_by("-start_time")
     newly_ended_competitions = Competition.objects.filter(status=Status.COMPLETE, end_date=datetime.date.today()).order_by("-end_date", "-start_date", "-name")
@@ -1043,6 +1068,7 @@ def profile(request, profile_id):
     else:
         is_coach = False
     context = {
+        'profile': profile,
         'coached_teams': coached_teams,
         'watch_tournaments': watch_tournaments,
         'watch_competitions': watch_competitions,

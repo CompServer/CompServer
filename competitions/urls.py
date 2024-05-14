@@ -13,6 +13,7 @@ urlpatterns = [
     path("organization/<int:organization_id>/", views.organization, name="organization"),
     path("team/<int:team_id>/", views.team, name="team"),
     path("tournament/create/legacy/", views.create_tournament_legacy, name="create_tournament_legacy"), # so it passes tests
+    path("profile/<int:profile_id>/edit/", views.edit_profile, name="edit_profile"),
     path("tournament/create/", views.create_tournament_htmx, name="create_tournament"),
     path("tournament/<int:tournament_id>/edit/", views.edit_tournament, name="edit_tournament"),
     path("tournament/<int:tournament_id>/", views.tournament, name="tournament"),

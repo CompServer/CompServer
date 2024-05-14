@@ -30,7 +30,7 @@
                         {% endif %}
                     </p>
                     <p>
-                        <a href="#" class="btn btn-secondary my-2">{% translate "Edit Profile" %}</a>
+                        <a href="{% url 'competitions:edit_profile' profile.id %}" class="btn btn-secondary my-2">{% translate "Edit Profile" %}</a>
                     </p>
                 </div>
             </div>
@@ -53,7 +53,7 @@
                                 <p class="fs-5">{{ ranking.item }} </p>
                                 {% for rank in ranking.value %}
                                     {% if rank.1.is_single_elimination %}
-                                        <p class="fs-5">{{ rank.0 }}, <a href="{% url 'comeptitions:single_elimination_tournament' rank.1.id%}">{% translate "See" %}</a></p>
+                                        <p class="fs-5">{{ rank.0 }}, <a href="{% url 'comeptitions:single_elimination_tournament' rank.1.id %}">{% translate "See" %}</a></p>
                                     {% else %}
                                         <p class="fs-5">{{ rank.0 }}, <a href="{% url 'competitions:round_robin_tournament' rank.1.id %}">{% translate "See" %}</a></p>
                                     {% endif %}
@@ -69,7 +69,11 @@
                         <div class="container">
                             <ul>
                                 {% for tournament in judged_tournaments %}
-                                    <li><p class="fs-5"><a href="#">{% translate "Go" %}</a> {% translate "To" %} {{ tournament.event.name }}</p></li>
+                                    {% if tournament.is_single_elimintion %}
+                                        <li><p class="fs-5"><a href="{% url 'competitions:single_elimination_tournament' tournament.id %}">{% translate "Go" %}</a> {% translate "To" %} {{ tournament.event.name }}</p></li>
+                                    {% else %}
+                                        <li><p class="fs-5"><a href="{% url 'competitions:round_robin_tournament' tournament.id %}">{% translate "Go" %}</a> {% translate "To" %} {{ tournament.event.name }}</p></li>
+                                    {% endif %}
                                 {% endfor %}
                             </ul>
                         </div>
@@ -95,7 +99,7 @@
                                 {% for gig in current_gigs %}
                                     <li><p class="fs-5">
                                         {{ match }}
-                                        <a href="#">{% translate "Submit Scores" %}</a>
+                                        <a href="{% url 'competitions:judge_match' %}?match={{ match.id }}">{% translate "Submit Scores" %}</a>
                                     </p></li>
                                 {% endfor %}
                             </ul>
