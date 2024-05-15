@@ -247,10 +247,8 @@ def generate_round_robin_matches(request, tournament_id):
     shuffle(teams)
     if len(teams)/tournament.teams_per_match >= 2 * max_capacity:
         num_sub_rounds = max_capacity
-    elif len(teams)/tournament.teams_per_match >= max_capacity:
-        num_sub_rounds = int(len(teams)/(2 * tournament.teams_per_match))
     else:
-        num_sub_rounds = int(len(teams)/tournament.teams_per_match)
+        num_sub_rounds = 2
     if num_sub_rounds == 0:
         return Exception("Not enough teams for a round robin tournament.")
     teams_in_round = [[] for i in range(num_sub_rounds)]
@@ -1184,6 +1182,9 @@ def organization(request, organization_id):
 
 def results(request, competition_id):
     competition = get_object_or_404(Competition, pk=competition_id)
+    if not request.user.is_superuser and not competition.is_complete:
+        return HttpResponseRedirect(reverse('competitions:competition', args=[competition_id]))
+
     if DEMO: competition = get_object_or_404(Competition, pk=competition_id, owner=request.user)
 
     tournaments = [tournament for tournament in competition.tournament_set.order_by("points", "start_time", "competition").filter(status = Status.COMPLETE)]
