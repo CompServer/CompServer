@@ -11,7 +11,7 @@ from competitions.models import AbstractTournament, Competition, SingleEliminati
 from .widgets import ColorPickerWidget, ColorWidget
 from .utils import *
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit
+from crispy_forms.layout import HTML, Button, Field, Layout, Submit
 from .models import Team
 
 class JudgeForm(forms.ModelForm):
@@ -103,6 +103,7 @@ class TeamSwapForm(forms.Form):
             return False
         return super().is_valid()
 
+
 class CreateCompetitionsForm(forms.ModelForm):
     def __init__(self, *args, owner: User, **kwargs):
         super().__init__(*args, **kwargs)
@@ -114,7 +115,24 @@ class CreateCompetitionsForm(forms.ModelForm):
             'hx-target': '#competitions',
             'hx-swap': 'outerHTML',
         }
-        self.helper.add_input(Submit('submit', 'Create Competition'))
+        self.helper.layout = Layout(
+            Field('sport'),
+            Field('name'),
+            Field('status'),
+            Field('teams'),
+            HTML("""
+                <div class="input-group mb-3">
+                    <span class="input-group-text">New Team</span>
+                    <input id="id_new_team" name="new_team" type="text" maxlength=255 class="textinput form-control"></input>
+                    <button id="id_new_team_button" type="button" class="btn btn-primary" hx-post="/api/v1/teams/new/" hx-target="#id_teams" hx-on:htmx:after-request="document.getElementById('id_new_team').value='';">Add <i class="bi bi-arrow-up-short"></i></button>
+                </div>
+            """),  # Very hard-coded but don't know if it can be avoided
+            Field('plenary_judges'),
+            Field('start_date'),
+            Field('end_date'),
+            Field('arenas'),
+            Submit('submit', 'Create Competition')
+        )
         self.fields['sport'].queryset = Sport.objects.all()
         self.fields['sport'].widget.attrs = {
             'hx-get': '/api/v1/teams/',
