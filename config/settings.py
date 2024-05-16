@@ -86,6 +86,8 @@ if PROD:
     SECRET_KEY = env("SECRET_KEY")
     SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = env('GOOGLE_CLIENT_ID')
     SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = env('GOOGLE_CLIENT_SECRET')
+    SOCIAL_AUTH_GITHUB_KEY = env('GITHUB_CLIENT_ID')
+    SOCIAL_AUTH_GITHUB_SECRET = env('GITHUB_CLIENT_SECRET')
 else:
     if os.path.exists('secrets.yml'):
         with open('secrets.yml') as f:
@@ -93,6 +95,8 @@ else:
             SECRET_KEY = config["SECRET_KEY"]
             SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = config['GOOGLE_CLIENT_ID']
             SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = config['GOOGLE_CLIENT_SECRET']
+            SOCIAL_AUTH_GITHUB_KEY = config['GITHUB_CLIENT_ID']
+            SOCIAL_AUTH_GITHUB_SECRET = config['GITHUB_CLIENT_SECRET']
     else:
         raise Exception("No local .env or secrets.yml detected. No secrets found.")
 
