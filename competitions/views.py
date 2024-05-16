@@ -471,13 +471,10 @@ def create_tournament_legacy(request: HttpRequest):
     if not form:
         form = FORM_CLASS(competition=competition)
     return render(request, "FORM_BASE.html", {'form_title': "Create Tournament", 'action': f"?tournament_type={tournament_type}&competition_id={competition.id}" , "form": form,  "form_submit_text": "Create"})
-
+3
 @login_required
 def edit_profile(request:HttpRequest, profile_id: int):
-    #do something different now that profile_id is passed into the view
     profile = Profile.objects.get(id=profile_id)
-    #the rest of this may be different, but it also must get the pre existing template vlaues
-    #create the template for profile
     #be able to make discard and delete changes within the template
     form = None
     if request.method == 'POST':
@@ -492,9 +489,9 @@ def edit_profile(request:HttpRequest, profile_id: int):
         else:
             for error_field, error_desc in form.errors.items():
                 form.add_error(error_field, error_desc)
-    form = SetProfileForm(profile_id=profile.id)
+    form = SetProfileForm(profile=profile)
     form_html = render_crispy_form(form, helper=form.helper)
-    return render(request, "competitions/new_tournament_form.html", RequestContext(request, {"form_html": form_html, "action": "", "form_submit_text": "Select", "form_title": "Create"}).flatten())
+    return render(request, "competitions/edit_profile_form.html", RequestContext(request, {"form_html": form_html, "action": "", "form_submit_text": "Submit", "form_title": "Edit Profile"}).flatten())
     
 @login_required
 def create_tournament_htmx(request: HttpRequest):
@@ -1140,7 +1137,12 @@ def results(request, competition_id):
             while i < (len(tournament_colors) + 1):
                 if i != 0:
                     chars = '0123456789ABCDEF'
-                    color = ['(#'+''.join(random.sample(chars,6)) for i in range(6) + ", 0.5)"]
+                    color = ['(#'+''.join(random.sample(chars,6)) for i in range(6)]
+                    for c in color:
+                        original = c
+                        new = original + ", 0.5)"
+                        color.remove(original)
+                        color.append(new)
                     background_colors.append(color)
                     border_colors.append(color)
                 else:

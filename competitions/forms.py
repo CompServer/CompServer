@@ -100,149 +100,8 @@ class TeamSwapForm(forms.Form):
             return False
         return super().is_valid()
 
-# class CreateArenasForm(forms.ModelForm):
-
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         self.helper = FormHelper()
-#         self.helper.form_id = 'create_arena_form'
-#         self.helper.attrs = {
-#             'hx-post': reverse_lazy('competitions:create_arena'),
-#             'hx-target': '#arenas',
-#             'hx-swap': 'outerHTML',
-#         }
-#         self.helper.add_input(Submit('submit', 'Create Arena'))
-#         self.fields['name'].queryset = Arena.objects.all()
-#         #self.fields['capacity'].queryset = 
-#         #self.fields['is_available'].queryset =
-#         #self.fields['color'].queryset = #color wheel
-#         # self.fields[''].widget.attrs = {
-#         #     'hx-get': '/api/v1/teams/',
-#         #     'hx-trigger': 'change',
-#         #     'hx-target': '#id_teams',
-#         # }
-
-#     def is_valid(self):
-#         self.full_clean()
-#         #check the color, boolean statement, integer
-#         if self.cleaned_data['start_date'] > self.cleaned_data['end_date']:
-#             self.add_error('start_date', 'Start date must be before end date')
-#             self.add_error('end_date', 'End date must be after start date')
-#             return False
-#         for team in self.cleaned_data['teams']:
-#             if team.sport != self.cleaned_data['sport']:
-#                 self.add_error('teams', 'All teams must be for the same sport.')
-#                 return False
-#         # if self.cleaned_data['plenary_judges'].count() < 1:
-#         #     self.add_error('plenary_judges', 'You must select at least one plenary judge')
-#         #     return False
-#         return super().is_valid()
-
-#     class Meta:
-#         model = Arena
-#         fields = ['name', 'is_available', 'capacity', 'color']
-#         widgets = {
-#             #here is where you add widgets
-#             #and a counter for the capacity
-#             #select from a dropdown for true or false
-#             'start_date': forms.DateInput(attrs={'format': 'yyyy-mm-dd','type':'date'}),
-#             'end_date': forms.DateInput(attrs={'format': 'yyyy-mm-dd','type':'date'}),
-#         }
-
-# class CreateEventsForm(forms.ModelForm):
-#     #name, match time, sport
-
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         self.helper = FormHelper()
-#         self.helper.form_id = 'create_event_form'
-#         self.helper.attrs = {
-#             'hx-post': reverse_lazy('competitions:create_event'),
-#             'hx-target': '#events',
-#             'hx-swap': 'outerHTML',
-#         }
-#         self.helper.add_input(Submit('submit', 'Create Event'))
-#         self.fields['sport'].queryset = Sport.objects.all()
-#         self.fields['sport'].widget.attrs = {
-#             'hx-get': '/api/v1/teams/',#have to change these
-#             'hx-trigger': 'change',
-#             'hx-target': '#id_teams',
-#         }
-#         def is_valid(self):
-#             self.full_clean()
-#             if isinstance(self.cleaned_data['name'], str):
-#                 self.add_error('name', 'Event name must be a string')
-#                 return False
-#             for sport in self.cleaned_data['sport']:
-#                 if team.sport != self.cleaned_data['sport']:
-#                     self.add_error('sport', 'You must select a valid sport.')
-#                     return False
-#             #add a number widget
-#             #if self.cleaned_data['time']:
-#             #get the date time for today
-#             #check the date time of the competition to be later
-#             return super().is_valid()
-
-#         class Meta:
-#             model = Event
-#             fields = ['sport', 'name', 'match_time']
-#             widgets = {#change these for match_time
-#                 'start_date': forms.DateInput(attrs={'format': 'yyyy-mm-dd','type':'date'}),
-#                 'end_date': forms.DateInput(attrs={'format': 'yyyy-mm-dd','type':'date'}),
-#             }
-
-
-# class CreateOrganizationsForm(forms.ModelForm):
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         self.helper = FormHelper()
-#         self.helper.form_id = 'create_organization_form'
-#         self.helper.attrs = {
-#             'hx-post': reverse_lazy('competitions:create_organization'),
-#             'hx-target': '#organizations',
-#             'hx-swap': 'outerHTML',
-#         }
-#         self.helper.add_input(Submit('submit', 'Create Organization'))
-
-#         def is_valid(self):
-#             self.full_clean()
-#             if not isinstance(self.cleaned_data['name'], str):
-#                 self.add_error('name', 'Organization name must be a string.')
-#                 return False
-#             return super().is_valid()
-
-#         class Meta:
-#             model = Organization
-#             fields = ['name']
-
-# class CreateSportsForm(forms.ModelFOrm):
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         self.helper = FormHelper()
-#         self.helper.form_id = 'create_sport_form'
-#         self.helper.attrs = {
-#             'hx-post': reverse_lazy('competitions:create_sport'),
-#             'hx-target': '#sports',
-#             'hx-swap': 'outerHTML',
-#         }
-#         self.helper.add_input(Submit('submit', 'Create Sport'))
-#         def is_valid(self):
-#             self.full_clean()
-#             if isinstance(self.cleaned_data['name'], str):
-#                 self.add_error('name', 'Sport name must be a string')
-#                 return False
-#             return super().is_valid()
-
-#         class Meta:
-#             model = Sport
-#             fields = ['name']
-
-#class CreateTeamsForm(forms.ModelForm):
-
-#need to finish tournament and arena creation forms
 
 class CreateCompetitionsForm(forms.ModelForm):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
@@ -285,8 +144,6 @@ class CreateCompetitionsForm(forms.ModelForm):
             'end_date': forms.DateInput(attrs={'format': 'yyyy-mm-dd','type':'date'}),
         }
 
-#edit profile, delete bio, add photo/upload photo, delete photo
-
 class SETournamentForm(forms.ModelForm):
     def __init__(self, *args, competition: Optional[Competition]=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -320,9 +177,18 @@ class SETournamentForm(forms.ModelForm):
 class SetProfileForm(forms.ModelForm):
     def __init__(self, *args, profile: Profile, **kwargs):
         super().__init__(*args, **kwargs)
-        self.user = user
+        self.helper = FormHelper(self)
+        self.helper.form_id = 'edit_profile_form'
+        self.helper.attrs = {
+            'hx-post': reverse_lazy('competitions:edit_profile', kwargs={"profile_id": profile.id}),
+            'hx-target': '#profiles',
+            'hx-swap': 'outerHTML',
+        }
+        self.helper.add_input(Submit('submit', 'Edit Profile'))
+        #self.fields['user'] = profile.user
+        #clean for a change or non blank
         self.fields['profile_pic'].label = "Profile Pic"
-        self.fields['profile_pic'].widget = FileInput(attrs={"size": 15, "title":"gallery"})
+        #self.fields['profile_pic'].widget = FileInput(attrs={"size": 15, "title":"gallery"})
         self.fields['bio'].label = "Bio"
         self.fields['bio'].widget = TextInput(attrs={"type": "biography"})
         #check for imsage
@@ -331,6 +197,9 @@ class SetProfileForm(forms.ModelForm):
     class Meta:
         model = Profile
         fields = ["user", "profile_pic", "bio"]
+        #widgets = {
+            #'start_date': forms.TextInput(attrs={'format'}),
+        #}
 
 class RRTournamentForm(forms.ModelForm):
     #generate_matches = forms.BooleanField(label='Generate Matches')
