@@ -25,9 +25,11 @@
             ],
             "env": {
                 "DEBUG": "true",
+                "DEMO": "false",
+                "PROD": "false",
             },
             "django": true,
-            "justMyCode": false
+            "justMyCode": true,
         },
         {
             "name": "Run server externally",
@@ -35,14 +37,16 @@
             "request": "launch",
             "program": "${workspaceFolder}/manage.py",
             "args": [
-                "runserver", 
+                "runserver",
                 "0.0.0.0:80"
             ],
             "env": {
-                "DEBUG": "false"
+                "DEBUG": "false",
+                "DEMO": "false",
+                "PROD": "false",
             },
             "django": true,
-            "justMyCode": false
+            "justMyCode": true,
         }
     ]
-}
+} 

@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="{% static 'competitions/style.css' %}">
     {% block stylesheets %}{% endblock %}
     <title>
-        {% block title %}Robocomp{% endblock %}
+        {% block title %}CompServer{% endblock %}
     </title>
     {% block head %}{% endblock %}
     <script src="https://unpkg.com/htmx.org@1.6.1"></script>
@@ -75,9 +75,11 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'competitions:home' %}">{% translate "Home" %}</a>
                     </li>
+                    {% if settings_DEMO %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'competitions:competitions' %}">{% translate "Competitions" %}</a>
                     </li>
+                    {% endif %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'competitions:credits' %}">{% translate "Credits" %}</a>
                     </li>
@@ -104,7 +106,10 @@
                             {% translate " (Superuser)" %}
                         {% endif %}
                     </span>
-                    <a class="btn btn-secondary me-3" href="{% url "logout" %}" role="button">{% translate "Log Out" %}</a>
+                    <form action="{% url 'logout' %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-secondary me-3">{% translate "Log Out" %}</button>
+                    </form>
                 {% else %}
                     <a class="btn btn-secondary me-3" href="{% url "login" %}{% if request.path %}?next={{ request.path }}{% endif %}" role="button">{% translate "Log In" %}</a>
                 {% endif %}

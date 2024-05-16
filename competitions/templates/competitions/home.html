@@ -2,8 +2,75 @@
 {% load i18n %}
 {% load static %}
 
+{% block title %}
+    {% translate "Compserver "%}
+{% endblock %}
+
 {% block content %}
-    <h1>{% translate "Welcome to the Competition Server" %}</h1>
-    <img src="{% static 'logo.png' %}" id="logo" >
-    <p>{% translate "Use the navigation bar to browse through the webite." %} </p>
+    <div class="container col-xxl-8 px-4">
+
+        <div class="my-4 text-center">
+            <img class="d-block mx-auto mb-2" src="{% static 'logo.svg' %}" alt="" width="120">
+            <h1 class="display-4 fw-bold text-body-emphasis">{% translate "CompServer" %}</h1>
+            <div class="col-lg-12 mx-auto">
+                <p class="lead mb-4">{% translate "Set up and administer the running of competitions with ease." %}</p>
+            </div>
+        </div>
+
+        <div class="my-5 text-center">
+            <div class="container">
+                <img src="{% static 'SET.png' %}" class="img-fluid border rounded-3 shadow-lg mb-4" alt="Single elimination tournament" loading="lazy">
+            </div>
+            <h1 class="display-4 mt-4 fw-bold text-body-emphasis">{% translate "Let CompServer do the hard work." %}</h1>
+            <div class="col-lg-8 mx-auto">
+            <p class="lead mb-4">{% translate "It can organize your round-robin and single elimination tournaments and even schedule the times and locations of all your matches." %}</p>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12 col-lg-6 ms-0">
+                <img src="{% static 'ScoreChart.png' %}" class="d-block mx-lg-auto img-fluid my-3" alt="Score chart" width="700" height="500" loading="lazy">
+            </div>
+            <div class="col-lg-6">
+                <h1 class="display-5 fw-bold text-body-emphasis lh-1 mb-3">{% translate "The competition is underway." %}</h1>
+                <p class="lead">{% translate "CompServer allows your: "%}</p>
+                <ul class="text-start">
+                    <li>{% translate "teams to track their progress and plan for upcoming matches" %}</li>
+                    <li>{% translate "judges to easily enter scores and advance teams to the next round" %}</li>
+                    <li>{% translate "fans to instantly see updates and celebrate their successes" %}</li>
+                </ul>
+            </div>
+        </div>
+
+
+        <div class="col-xl-12 col-xxl-12 my-4">
+            <div class="row py-4">
+                <div class="col-lg-7 text-start">
+                    <h1 class="display-5 fw-bold lh-1 text-body-emphasis mb-3">{% translate "Create an account and try it out today!" %}</h1>
+                    <p class="col-lg-10 fs-4">{% translate "This demo server allows you to try out the set up process and see how easy it can be." %}</p>
+                    <p class="col-lg-10">{% translate "The competitions you create here will only be visible to you. To use CompServer for a real competition, you'll want to set up and run your own server. Details can be found" %}<a href="https://github.com/">{% translate "here" %}</a>{% translate "." %}</p>
+                </div>
+                <div class="col-md-10 mx-auto col-lg-5">
+                    <form class="p-4 p-md-4 border rounded-3 bg-body-tertiary">
+                        <div class="form-floating mb-3">
+                        <input type="email" class="form-control" id="floatingInput" placeholder="name@example.com">
+                        <label for="floatingInput">{% translate "Email address" %}</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                        <input type="password" class="form-control" id="floatingPassword" placeholder="Password">
+                        <label for="floatingPassword">{% translate "Password" %}</label>
+                        </div>
+                        <div class="checkbox mb-3">
+                        <label>
+                            <input type="checkbox" value="remember-me"> {% translate "Remember me" %}
+                        </label>
+                        </div>
+                        <button class="w-100 btn btn-lg btn-primary" type="submit">{% translate "Sign up" %}</button>
+                        <hr class="my-4">
+                        <small class="text-body-secondary">{% translate "By clicking Sign up, you agree to the terms of use." %}</small>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}

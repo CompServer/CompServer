@@ -6,17 +6,24 @@
         <h1>{% translate 'Organization - '%} {{ organization.name }}</h1>
     </header>
     <body>
-        <h2>{% translate 'Teams Associated With This Organization' %}</h2>
+        <h2>{% translate 'Associated Teams' %}</h2>
         <ul>
             {% for team in associated_teams %}
-                <li><a href="{% urls 'competitions:team' team.id %}">{{ team.__str__ }}</a> {% translate 'in the sport of' %} {{ team.sport.name }} {% translate 'coached by' %} {{ team.coach.name }}</li>
+                <li><a href="{% url 'competitions:team' team.id %}">{{ team }}</a> 
+                {% if team.sport.name %}
+                    {% translate 'in the sport of' %} {{ team.sport.name }} 
+                {% endif %}
+                {% if team.coach.name %}
+                    {% translate 'coached by' %} {{ team.coach.name }}</li>
+                {% endif %}
             {% endfor %}
         </ul>
-        <div class="container">
-            <h2>{% translate 'Overall Team Results' %}</h2>
-            {% for result in team_results %}
-                pie chart
-            {% endfor %}
-        </div>
+        <!-- {% if results %}
+            <div class="container">
+                <h2>{% translate 'Overall Team Results' %}</h2>
+                {% for result in results %}
+                {% endfor %}
+            </div>
+        {% endif %} -->
     </body>
 {% endblock %}

@@ -3,6 +3,7 @@
 from typing import Optional
 from django import forms
 from django.contrib import messages
+from django.contrib.auth.models import User
 from django.db.models import QuerySet
 from django.forms.widgets import TextInput
 from django.urls import reverse_lazy
@@ -55,12 +56,11 @@ class TournamentStatusForm(forms.ModelForm):
 #     team1 = forms.ModelChoiceField(queryset=None, label="Team 1")
 #     team2 = forms.ModelChoiceField(queryset=None, label="Team 2")
 
-    def __init__(self, *args, tournament: AbstractTournament, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.tournament = tournament
-        self.helper = FormHelper()
-        self.fields['team1'].queryset = tournament.teams.all()
-        self.fields['team2'].queryset = tournament.teams.all()
+#     def __init__(self, *args, tournament: AbstractTournament, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         self.tournament = tournament
+#         self.fields['team1'].queryset = tournament.teams.all()
+#         self.fields['team2'].queryset = tournament.teams.all()
 
 #     def is_valid(self):
 #         self.full_clean()
@@ -104,9 +104,9 @@ class TeamSwapForm(forms.Form):
         return super().is_valid()
 
 class CreateCompetitionsForm(forms.ModelForm):
-
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, owner: User, **kwargs):
         super().__init__(*args, **kwargs)
+        self.owner = owner
         self.helper = FormHelper()
         self.helper.form_id = 'create_competition_form'
         self.helper.attrs = {
@@ -137,6 +137,7 @@ class CreateCompetitionsForm(forms.ModelForm):
         # if self.cleaned_data['plenary_judges'].count() < 1:
         #     self.add_error('plenary_judges', 'You must select at least one plenary judge')
         #     return False
+        self.instance.owner = self.owner
         return super().is_valid()
 
     class Meta:
@@ -183,8 +184,7 @@ class SETournamentForm(forms.ModelForm):
         self.fields['prev_tournament'].queryset = RoundRobinTournament.objects.filter(competition=competition)
         self.fields['prev_tournament'].label = "Previous Tournament"
 
-        if not self.instance:
-            self.helper.add_input(Submit('submit', 'Create Tournament'))
+        self.helper.add_input(Submit('submit', 'Save Tournament'))
         #self.events = competition.events
         #self.fields['events'].queryset = Event.objects.filter(competition=competition)
 
@@ -217,8 +217,7 @@ class RRTournamentForm(forms.ModelForm):
         #self.fields['points'].help_text = "How many points should be awarded to the winner?"
         #self.events = competition.events
         #self.fields['events'].queryset = Event.objects.filter(competition=competition)
-        if not self.instance:
-            self.helper.add_input(Submit('submit', 'Create Tournament'))
+        self.helper.add_input(Submit('submit', 'Save Tournament'))
 
     def is_valid(self):
         self.full_clean()

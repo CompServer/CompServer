@@ -11,6 +11,11 @@ from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured
 from django.db import models
 from django.db.models import CharField, signals
 from django.db.models.fields.files import ImageField
+import math, operator, random, string, datetime
+from functools import lru_cache
+import math
+#from colorfield.fields import ColorField
+from .widgets import ColorPickerWidget, ColorWidget
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
@@ -240,7 +245,8 @@ class StatusField(models.CharField):
 class Sport(models.Model):
     name = models.CharField(max_length=255, unique=True)
 
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sports', default=User.objects.get(username='admin').pk)
+    #owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sports', default=User.objects.get(username='admin').pk)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sports')
     """The user that created this object. This is used only if DEMO mode is on."""
 
     def __str__(self) -> str:
@@ -258,7 +264,8 @@ class Organization(models.Model): # probably mostly schools but could also be co
     # address_line2 = models.CharField(max_length=255) # Pozuelo de Alarcón 28224
     # address_line3 = models.CharField(max_length=255) # Madrid, Spain
     # related: teams
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='organizations', default=User.objects.get(username='admin').pk)
+    #owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='organizations', default=User.objects.get(username='admin').pk)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='organizations')
     """The user that created this object. This is used only if DEMO mode is on."""
 
     class Meta:
@@ -277,7 +284,8 @@ class Team(models.Model):
     # logo = models.ImageField()
     # related: competition_set, tournament_set, round1_matches, won_matches
 
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='teams', default=User.objects.get(username='admin').pk)
+    #owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='teams', default=User.objects.get(username='admin').pk)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='teams')
     """The user that created this object. This is used only if DEMO mode is on."""
 
     def __str__(self) -> str:
@@ -294,7 +302,8 @@ class Arena(models.Model):
     is_available = models.BooleanField(default=True)
     color = ColorField(default="#CBCBCB")
     
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='arenas', default=User.objects.get(username='admin').pk)
+    #owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='arenas', default=User.objects.get(username='admin').pk)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='arenas')
     """The user that created this object. This is used only if DEMO mode is on."""
 
     @property
@@ -327,77 +336,82 @@ class Competition(models.Model):
     # For scheduling purposes, we need to be able to specify for this competition how many different (Event-specific) arenas are available and their capacity
     arenas = models.ManyToManyField(Arena, blank=False)
 
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='competitions', default=User.objects.get(username='admin').pk)
+    #owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='competitions', default=User.objects.get(username='admin').pk)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='competitions')
     """The user that created this object. This is used only if DEMO mode is on."""
     
     def get_results(self):
-        totals = {}
-        # what about round robin tournaments?
-        for tournament in SingleEliminationTournament.objects.filter(compeittion__id=self.id, status=Status.COMPLETE):
-            if tournament.get_winner().length() > 1:
-                for winner in tournament.get_winner():
-                    if winner in totals.keys():
-                        totals[winner] = totals.get(winner) + tournament.points  
+        totals = dict() #this will be each team’s total points
+        tournaments = SingleEliminationTournament.objects.filter(competition__id=self.id, status=Status.COMPLETE)
+        if tournaments:
+            for tournament in tournaments:
+                if len(tournament.get_winner()) > 1:#multiple winners
+                    for winner in tournament.get_winner():
+                        if winner.name in totals.keys():
+                            totals[winner.name] = totals.get(winner) + tournament.points  
+                        else:
+                            totals[winner.name] = tournament.points
+                if len(tournament.get_winner()) == 1:
+                    if tournament.get_winner()[0] in totals.keys():
+                        totals[tournament.get_winner()[0]] = totals.get(tournament.get_winner()[0]) + tournament.points  
                     else:
-                        totals[winner] = tournament.points
-            if tournament.get_winner().length() == 1:
-                if tournament.get_winner().first() in totals.keys():
-                    totals[tournament.get_winner().first()] = totals.get(tournament.get_winner().first()) + tournament.points  
-                else:
-                    totals[tournament.get_winner().first()] = tournament.points
-            if tournament.prev_tournament.exists():
-                round_robin_totals = dict()
-                for tournament in tournament.prev_tournament.all():
-                    if tournament.status == Status.COMPLETE:
-                        for match in tournament.match_set.all():
-                            for team in match.advancers.all():
+                        totals[tournament.get_winner()[0]] = tournament.points
+                robin = tournament.prev_tournament
+                if robin:
+                    if robin.status == Status.COMPLETE:
+                        ppl = robin.points_per_loss
+                        ppw = robin.points_per_win
+                        ppt = robin.points_per_tie
+                        for match in robin.match_set.all():
+                            for advancer in match.advancers.all():
+                                team = advancer.name
                                 if match.advancers.count() == 1:
-                                    if team in round_robin_totals.keys():
-                                        round_robin_totals[team] = round_robin_totals.get(team) + tournament.points_per_win
+                                    if team.name in totals.keys():
+                                        totals[team.name] = totals.get(team.name) + ppw
                                     else:
-                                        round_robin_totals[team] = tournament.points_per_win
+                                        totals[team.name] = ppw
                                 if match.advancers.count() > 1:
-                                    if team in round_robin_totals.keys():
-                                        round_robin_totals[team] = round_robin_totals.get(team) + tournament.points_per_tie
+                                    if team.name in totals.keys():
+                                        totals[team.name] = totals.get(team.name) + ppt
                                     else:
-                                        round_robin_totals[team] = tournament.points_per_tie
-                            losers = list()
-                            for team in match.starting_teams:
-                                    if team.id not in {team.id for team in match.advancers.all()}:
-                                        losers.append(team)
-                            if match.prev_matches.last():
-                                for advancer in match.prev_matches.last().advancers.all():
-                                    if team.id not in {team.id for team in match.advancers.all()}:
-                                        losers.append(team)
-                            for loser in losers:
-                                if loser in round_robin_totals.keys():
-                                    round_robin_totals[loser] = round_robin_totals.get(loser) + tournament.points_per_loss
-                                else:
-                                    round_robin_totals[loser] = tournament.points_per_loss
-                for item in round_robin_totals:
-                    if item in totals:
-                        totals[item] = round_robin_totals.get() + round_robin_totals[item].get()
-                    else:
-                        totals[item] = item.value()
-        sorted_totals = {k: v for k, v in sorted(totals.items(), key=lambda item: totals[1])}
-        return sorted_totals # a dictionary of every team and their total points
-        #have to make this work with results page somehow
-                
-    def get_winners(self):
-        if self.is_complete:
-            winners = []
-            totals = self.get_results()
-            greatest_score = totals[-1].value()
-            greatest_scorer = totals[-1].key()
-            totals.pop(totals[-1])#delete the last item
-            if greatest_score in totals.values():
-                for item in totals:
-                    if item.value() == greatest_score:
-                        winners.append(item.key())
-            winners.append(greatest_scorer)
-            return winners
+                                        totals[team.name] = ppt
+                            starters = match.starting_teams.all()
+                            previous_starters = match.prev_matches.last().advancers.all()
+                            winning_ids = [team.id for team in match.advancers.all()]
+                            if previous_starters:
+                                for team in previous_starters:
+                                    if team.id not in winning_ids:
+                                        if team.name in totals.keys():
+                                            totals[team.name] = totals.get(team.name) + ppl
+                                        else:
+                                            totals[team.name] = ppl
+                            for team in starters:
+                                if team.id not in winning_ids:
+                                    if team.name in totals.keys():
+                                        totals[team.name] = totals.get(team.name) + ppl
+                                    else:
+                                        totals[team.name] = ppl
+            sorted_totals = {k:v for k,v in sorted(totals.items(), key=lambda item:item[1])}
+            return sorted_totals
         else:
-            return None
+            return totals
+
+    def get_winner(self):
+        #if the competition is completed
+        totals = self.get_results()
+        winners = list()
+        if totals:
+            greatest_score = max(totals.items(), key=operator.itemgetter(1))[0]
+            greatest_scorer = totals.get(greatest_score)
+            totals.pop(greatest_score)
+            if greatest_score in totals.values():
+                for key in totals.keys():
+                    if totals.get(key) == greatest_score:
+                        winners.append(key)
+            sorted_winners = sorted(winners)
+            return sorted_winners
+        else:
+            return "Winners haven't been determined yet."
 
     def check_date(self):
         today = timezone.now().date()
@@ -500,7 +514,8 @@ class Event(models.Model):
     use_higher_score = models.BooleanField(default=True)
     """whether the winner should win if their score is higher or lower. True=higher score wins, False=lower score wins."""
 
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='events', default=User.objects.get(username='admin').pk)
+    #owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='events', default=User.objects.get(username='admin').pk)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='events')
     """The user that created this object. This is used only if DEMO mode is on."""
 
     class Meta:
@@ -539,8 +554,13 @@ class AbstractTournament(models.Model):
     def __str__(self) -> str:
         return self.event.name + _(" tournament @ ") + str(self.competition) # SumoBot tournament at RoboMed 2023
 
-    def get_winner(self):
-        return self.match_set.last().advancers() #returns the list of winners
+    def get_winner(self) -> list:
+        advancers_qs = self.match_set.last().advancers.all()
+        if advancers_qs.count() != 0:
+            advancers = [advancer.name for advancer in advancers_qs]
+            return advancers
+        else:
+            return ()
 
     def get_end_time(self):
         time_in_seconds = 0
@@ -764,9 +784,39 @@ class Match(models.Model):
         ordering = ['tournament']
         verbose_name_plural = _('Matches')
 
+class PointsEarned(models.Model):
+    points = models.IntegerField()
+    team = models.ForeignKey(Team, related_name="points_earned_set", on_delete=models.CASCADE)
+    #(Harry) don't have time to implement this right now but here's the plan
+    #using this system, you can filter by match and by team with something like
+    #team.points_earned_set.filter(match=match)
+    #since we can't do this into the html, we have to do it in the view functions
+    #in the team data of each match, we check if the match has points or has been played
+    #if both are true, we put the aforementioned function in the dictionary in some way
+    #if not, then we put none, and this way, we can access the points earned in the html
+    #and show it in the match bubbles.
+    match = models.ForeignKey(Match, related_name="points_earned_set", on_delete=models.CASCADE)
+
+    @staticmethod
+    def get_points_for(match: Match, team: Team) -> int:
+        """Gets the points for a given team and match. Returns -1 if no points are found.
+
+        Args:
+            match (Match): The match to get the points for.
+            team (Team): The team to get the points for.
+
+        Returns:
+            int: The points earned by the team in the match.
+        """
+        try:
+            points = __class__.objects.get(match=match, team=team).points
+            assert points is not None
+            return points
+        except:
+            return -1
 
 @receiver(post_save, sender=Match)
-def update_str_match(sender, instance, **kwargs):
+def update_str_match(sender, instance, **kwargs):#
     instance._generate_str_recursive(force=True) # because kwargs are different, cache will not be used and we force it to recalculate
 
 # https://github.com/h3/django-colorfield/blob/master/colorfield/fields.py 

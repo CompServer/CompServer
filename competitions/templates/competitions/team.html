@@ -20,12 +20,6 @@
             </p>
         {% endif %}
     </header>
-    <!-- Pointless right now. Put it back in if it makes sense later...
-    <div class="organization-information">
-        <h3>{% translate "Information About" %} {{team.organization.name}}</h3>
-        <h4>{% translate "Address" %}:<i>....</i></h4>
-    </div>
-    -->
     {% if upcoming_matches.exists %}
         <div class="match-schedule">
             <h3>{% translate "Upcoming Matches" %}{{ upcoming_matches.count }}{% translate ")"%}</h3>
@@ -46,8 +40,8 @@
             <h3>{% translate "Awaiting Matches To Begin (" %}{{ old_upcoming_matches|length }}{% translate ")"%}</h3>
             <ul>
                 {% for match in old_upcoming_matches %}
-                    <li>{% translate "Previously scheduled at" %} {{ match.time }} {% translate "between" %} {{ match }} 
-                        {% if match.arena %}
+                    <li>{% translate "Previously scheduled at" %} {{ match.time }} {% translate "between" %} {{ match.generate_str_recursive }} 
+                    {% if match.arena %}
                         {% translate "in" %} {{ match.arena.name }}</li>
                     {% else %}
                         {% translate " (Location TBD)" %}</li>
@@ -129,5 +123,10 @@
                 </ul>
             {% endif %}
         </div>
+    {% endif %}
+    {% if team.organization %}
+        <p>This team is from an organization titled "<a href="{% url 'competitions:organization' team.organization.id %}">{{ team.organization.name }}</a>"</p>
+    {% else %}
+        <p>This team isn't listed under any organizations. </p>
     {% endif %}
 {% endblock %}
