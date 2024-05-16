@@ -478,10 +478,10 @@ def edit_profile(request:HttpRequest, profile_id: int):
     #be able to make discard and delete changes within the template
     form = None
     if request.method == 'POST':
-        form = FORM_CLASS(request.POST, profile=profile)
+        form = SetProfileForm(request.POST, profile=profile)
         if form.is_valid():
-            form.full_clean()
-            instance = form.save(commit=False)
+            #form.full_clean()
+            #instance = form.save(commit=False)
             instance.profile = profile
             instance.save()
             form.save()
@@ -491,7 +491,7 @@ def edit_profile(request:HttpRequest, profile_id: int):
                 form.add_error(error_field, error_desc)
     form = SetProfileForm(profile=profile)
     form_html = render_crispy_form(form, helper=form.helper)
-    return render(request, "competitions/edit_profile_form.html", RequestContext(request, {"form_html": form_html, "action": "", "form_submit_text": "Submit", "form_title": "Edit Profile"}).flatten())
+    return render(request, "competitions/edit_profile_form.html", RequestContext(request, {"form": form, "form_html": form_html, "action": "", "form_title": "Edit Profile"}).flatten())
     
 @login_required
 def create_tournament_htmx(request: HttpRequest):

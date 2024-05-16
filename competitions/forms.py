@@ -10,6 +10,7 @@ from .utils import *
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from .models import Team, Profile, User
+from PIL import Image
 
 class JudgeForm(forms.ModelForm):
     possible_advancers = None
@@ -184,16 +185,32 @@ class SetProfileForm(forms.ModelForm):
             'hx-target': '#profiles',
             'hx-swap': 'outerHTML',
         }
-        self.helper.add_input(Submit('submit', 'Edit Profile'))
-        #self.fields['user'] = profile.user
+        self.helper.add_input(Submit('Submit', 'Update Profile'))
+        #delete create and submit buttons
         #clean for a change or non blank
-        self.fields['profile_pic'].label = "Profile Pic"
+        #add the first name and last name
+        self.fields['user'].label = "User"
+        self.fields['user'].initial = profile.user
+        self.fields['user'].disabled = True
+        self.fields['profile_pic'].label = "Profile Picture"
+        self.fields['profile_pic'].disabled = True #temporary
+            #figure out how to add and save profile pics later
+        #for right now we don't know where to save profile pictures
         #self.fields['profile_pic'].widget = FileInput(attrs={"size": 15, "title":"gallery"})
         self.fields['bio'].label = "Bio"
+        #restrict the length of a biography
         self.fields['bio'].widget = TextInput(attrs={"type": "biography"})
         #check for imsage
         #check validation possibly
         #send image to dropdown menu
+        #should change first name and last name
+    def is_valid(self):
+        #self.full_clean()
+        #if not Image.open(self.cleaned_data['profile_pic']).verify():
+        #    self.add_error('profile_pic', 'Your profile picture must be an image.')
+        #    return False
+        return True
+
     class Meta:
         model = Profile
         fields = ["user", "profile_pic", "bio"]
