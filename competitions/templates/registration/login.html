@@ -2,6 +2,30 @@
 {% load i18n %}
 {% load crispy_forms_tags %}
 
+{% block head %}
+<style>
+  .fab.fa-google {
+    color: #FF0000; /* Red color */
+  }
+  .btn-google {
+    color: white;
+    font-weight: bolder;
+    border-color: #8B4513;
+    background-color: #FF0000;
+  }
+  .btn-google:hover {
+    color: #fff;
+    background-color: #FF0000;
+    border-color: #FF0000;
+  }
+  /* New CSS to remove blue outline */
+  .btn-google:focus {
+    outline: none;
+    box-shadow: none;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 
   {% if form.errors %}
@@ -36,7 +60,14 @@
   </form>
   <br>
   {# Assumes you set up the password_reset view in your URLconf #}
-  <p><a class='btn btn-secondary' href="{% url 'password_reset' %}">{% translate "Lost password?" %}</a></p>
-  <br>
-  <a class='btn btn-secondary' href="{% url "social:begin" "google-oauth2" %}">{% translate "Login with Google" %}</a>
+  {% if not DEMO %} {% comment %} Don't show password reset in demo {% endcomment %}
+    <p><a class='btn btn-secondary' href="{% url 'password_reset' %}">{% translate "Lost password?" %}</a></p>
+    <br>
+  {% endif %}
+  {% comment %} <a class='btn btn-secondary' href="{% url "social:begin" "google-oauth2" %}">{% translate "Login with Google" %}</a> {% endcomment %}
+  <p class="text-center mb-0">{% translate "Sign in with" %}</p>
+    <div class="text-center">
+      <a href="{% url "social:begin" "google-oauth2" %}" class="btn btn-outline-primary btn-google mt-2"><i class="fab fa-google mr-2"></i>{% translate "Google" %}</a>
+    </div>
+  </p>
 {% endblock %}
