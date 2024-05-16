@@ -13,7 +13,7 @@ from typing import Union
 import zoneinfo
 import zoneinfo
 import zoneinfo
-
+import traceback
 from crispy_forms.utils import render_crispy_form
 from django.contrib import messages
 from django.contrib.auth import PermissionDenied
@@ -228,33 +228,134 @@ def generate_single_elimination_matches(request, tournament_id: int):
         num_matches = len(matches)
     return HttpResponseRedirect(reverse("competitions:single_elimination_tournament", args=(tournament_id,)))
 
+def is_recent(teams, round_num, most_recent_round):
+    for team in teams:
+        if round_num - most_recent_round[team] <= 1:
+            return True
+    return False
+
 def generate_round_robin_matches(request, tournament_id):
+    #I wanted to debug this code, but it gave me a 500 server error, which is not helpful at all
+    #nothing in the terminal was printed out, so I have no idea what's wrong.
+    #I tried debugging with VSC run debug server, but it didn't work either.
+    #I haven't edited anything in the code yet since I have no idea what to edit, but I have been trying to fix it
+    #for a while now.
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
     arena_iterator = 0
     nmpt_iterator = 0
     arenas = [i for i in tournament.competition.arenas.filter(is_available=True)]
+    max_capacity = sum([arena.capacity for arena in arenas])
+    num_sub_rounds = 0
     starting_time = tournament.start_time 
     teams = [team for team in tournament.teams.all()]
     shuffle(teams)
+    if len(teams)/tournament.teams_per_match >= 2 * max_capacity:
+        num_sub_rounds = max_capacity
+    else:
+        num_sub_rounds = 2
+    if num_sub_rounds == 0:
+        return Exception("Not enough teams for a round robin tournament.")
+    teams_in_round = [[] for i in range(num_sub_rounds)]
+    for i in range(len(teams)):
+        teams_in_round[i % num_sub_rounds].append(teams[i])
     teams_played = {team: set() for team in teams}
     matches_played = {team: list() for team in teams}
-    num_participated = [0 for team in teams]
     num_teams_per_match = tournament.teams_per_match
     path = False
-    while num_participated != [tournament.matches_per_team for team in teams]:
-        if sum(num_participated) >= (len(teams) * tournament.matches_per_team) - (2 * num_teams_per_match) and \
-        sum(num_participated) < (len(teams) * tournament.matches_per_team) - num_teams_per_match and path == False:
-            num_teams_per_match = int((len(teams) * tournament.matches_per_team - sum(num_participated) + 1)/2)
+    round_num = 1
+    num_participated = {team: 0 for team in teams}
+    for a in range(tournament.matches_per_team):
+        for b in range(num_sub_rounds):
+            num_part_round = [0 for team in teams_in_round[b]]
+            for c in range(len(num_part_round)):
+                if num_participated[teams_in_round[b][c]] >= tournament.matches_per_team:
+                    num_part_round[c] = 1
+            while num_part_round != [1 for _ in teams_in_round[b]]:
+                match = Match.objects.create(tournament=tournament)
+                match_teams = []
+                match_teams_played = set()
+                for i in range(num_teams_per_match):
+                    teams_tested = set()
+                    if num_part_round == [1 for team in teams_in_round[b]]:
+                        match.save()
+                        match.delete()
+                        break
+                    j = random.randint(0, len(teams_in_round[b])-1)
+                    teams_tested.add(j)
+                    match_teams = sorted(list(match.starting_teams.all()) + [teams_in_round[b][j]], key=lambda x: x.id)
+                    #randomly selects a team for the match
+                    #while isPlayed(teams_played[teams[j]], match_teams_played) or \
+                    while teams_in_round[b][j] in match.starting_teams.all() or \
+                    num_part_round[j] >= 1 or \
+                    match_teams in matches_played[teams_in_round[b][j]]:
+                        j = random.randint(0, len(teams_in_round[b])-1) 
+                        teams_tested.add(j)
+                        match_teams = sorted(list(match.starting_teams.all()) + [teams_in_round[b][j]], key=lambda x: x.id)
+                        #if all teams are for a match tested, then the only thing we should check for is participation
+                        if len(teams_tested) == len(teams):
+                            while num_part_round[j] >= 1 or \
+                            teams_in_round[b][j] in match.starting_teams.all():
+                                j = random.randint(0, len(teams_in_round[b])-1)
+                                match_teams = sorted(list(match.starting_teams.all()) + [teams_in_round[b][j]], key=lambda x: x.id)
+                            break
+                    match.starting_teams.add(teams_in_round[b][j])
+                    num_part_round[j] += 1
+                    match.save()
+                    for team in match.starting_teams.all():
+                        for team2 in match.starting_teams.all():
+                            if team != team2:
+                                teams_played[team].add(team2)
+                        for tem in teams_played[team]:
+                            match_teams_played.add(tem)
+                    if len(match_teams_played) == len(teams):
+                        for team in match_teams_played:
+                            for tem in teams_played[team]:
+                                if team in teams_played[tem]:
+                                    teams_played[tem].remove(team)
+                            teams_played[team] = set()
+                        match_teams_played = {team for team in match.starting_teams.all()}
+                    for team in match.starting_teams.all():
+                        if len(teams_played[team]) == len(teams) - 1:
+                            for tem in teams_played[team]:
+                                teams_played[tem].remove(team)
+                            teams_played[team] = set()
+                match.save()
+                if match.starting_teams.count() < num_teams_per_match:
+                    match.delete()
+                    continue
+                for team in match.starting_teams.all():
+                    matches_played[team].append(match_teams)
+                    num_participated[team] += 1
+                match.time = starting_time
+                match.arena = arenas[arena_iterator]
+                match.round_num = round_num
+                match.save()
+                nmpt_iterator += 1
+                if nmpt_iterator == arenas[arena_iterator].capacity:
+                    arena_iterator += 1
+                    nmpt_iterator = 0
+            if arena_iterator > 0 or nmpt_iterator > 0:
+                arena_iterator = 0
+                nmpt_iterator = 0
+                starting_time += tournament.event.match_time 
+                round_num += 1
+        
+    #straggler matches, should only have one match left max per team
+
+    while num_participated != {team: tournament.matches_per_team for team in teams}:
+        if sum(num_participated.values()) >= (len(teams) * tournament.matches_per_team) - (2 * num_teams_per_match) and \
+        sum(num_participated.values()) < (len(teams) * tournament.matches_per_team) - num_teams_per_match and path == False:
+            num_teams_per_match = int((len(teams) * tournament.matches_per_team - sum(num_participated.values()) + 1)/2)
             path = True
-        # elif sum(num_participated) >= (len(teams) * tournament.matches_per_team) - num_teams_per_match and path == False:
-        #     num_teams_per_match = len(teams) * tournament.matches_per_team - sum(num_participated)
+        # elif sum(num_participated.values()) >= (len(teams) * tournament.matches_per_team) - num_teams_per_match and path == False:
+        #     num_teams_per_match = len(teams) * tournament.matches_per_team - sum(num_participated.values())
         #     path = True
         match = Match.objects.create(tournament=tournament)
         match_teams = []
         match_teams_played = set()
         for i in range(num_teams_per_match):
             teams_tested = set()
-            if num_participated == [tournament.matches_per_team for team in teams]:
+            if num_participated == {team: tournament.matches_per_team for team in teams}:
                 break
             j = random.randint(0, len(teams)-1)
             teams_tested.add(j)
@@ -262,22 +363,22 @@ def generate_round_robin_matches(request, tournament_id):
             #randomly selects a team for the match
             #while isPlayed(teams_played[teams[j]], match_teams_played) or \
             while teams[j] in match.starting_teams.all() or \
-            num_participated[j] >= tournament.matches_per_team or \
-            num_participated[j] > min(num_participated) or \
+            num_participated[teams[j]] >= tournament.matches_per_team or \
+            num_participated[teams[j]] > min(num_participated.values()) or \
             match_teams in matches_played[teams[j]]:
                 j = random.randint(0, len(teams)-1) 
                 teams_tested.add(j)
                 match_teams = sorted(list(match.starting_teams.all()) + [teams[j]], key=lambda x: x.id)
                 #if all teams are for a match tested, then the only thing we should check for is participation
                 if len(teams_tested) == len(teams):
-                    while num_participated[j] >= tournament.matches_per_team or \
-                    num_participated[j] > min(num_participated) or \
+                    while num_participated[teams[j]] >= tournament.matches_per_team or \
+                    num_participated[teams[j]] > min(num_participated.values()) or \
                     teams[j] in match.starting_teams.all():
                         j = random.randint(0, len(teams)-1)
                         match_teams = sorted(list(match.starting_teams.all()) + [teams[j]], key=lambda x: x.id)
                     break
             match.starting_teams.add(teams[j])
-            num_participated[j] += 1
+            num_participated[teams[j]] += 1
             for team in match.starting_teams.all():
                 for team2 in match.starting_teams.all():
                     if team != team2:
@@ -298,35 +399,10 @@ def generate_round_robin_matches(request, tournament_id):
                     teams_played[team] = set()
         for team in match.starting_teams.all():
             matches_played[team].append(match_teams)
+        match.time = starting_time
+        match.arena = arenas[arena_iterator]
+        match.round_num = round_num
         match.save()
-    matches = [match for match in tournament.match_set.all()]
-    round_num = 1
-    curr_round = set()
-    num_participated = [0 for _ in range(len(matches))]
-    while num_participated != [1 for _ in range(len(matches))]:  
-        j = random.randint(0, len(matches)-1)
-        checkFull = set()
-        isFull = False
-        while num_participated[j] == 1 or \
-        isPlayed(curr_round, matches[j].starting_teams.all()):
-            checkFull.add(j)
-            if len(checkFull) == len(matches):
-                isFull = True
-                break
-            j = random.randint(0, len(matches)-1)
-        if isFull:
-            arena_iterator = 0
-            starting_time += tournament.event.match_time 
-            round_num += 1
-            curr_round = set()
-            continue
-        num_participated[j] = 1    
-        matches[j].time = starting_time
-        matches[j].arena = arenas[arena_iterator]
-        matches[j].round_num = round_num
-        matches[j].save()
-        for team in matches[j].starting_teams.all():
-            curr_round.add(team)
         nmpt_iterator += 1
         if nmpt_iterator == arenas[arena_iterator].capacity:
             arena_iterator += 1
@@ -335,9 +411,7 @@ def generate_round_robin_matches(request, tournament_id):
                 arena_iterator = 0
                 starting_time += tournament.event.match_time 
                 round_num += 1
-                curr_round = set()
     return HttpResponseRedirect(reverse("competitions:round_robin_tournament", args=(tournament_id,)))
-    #still have a little bit of confusion with the ordering of matches.
 
 def get_points(tournament_id: int):
     tournament = get_object_or_404(RoundRobinTournament, pk=tournament_id)
@@ -586,11 +660,12 @@ def generate_competitor_data(match):
             "team_id": team.id if team else None,
             "match": match,
             "color": match.arena.color,
-            "rank": Ranking.objects.filter(tournament=match.tournament, team=team).first().rank if team else None
+            "rank": Ranking.objects.filter(tournament=match.tournament, team=team).first().rank if team else None,
+            "points": team.points_earned_set.filter(match=match).first().points if team and team.points_earned_set.filter(match=match).exists() else None
         })
     return output
 
-def generate_connector_data(match, connectorWidth, teamHeight):
+def generate_connector_data(match, connectorWidth, teamHeight, arenaHeight):
     is_next = match.next_matches.exists()
     if not is_next:
         return {
@@ -639,7 +714,9 @@ def generate_connector_data(match, connectorWidth, teamHeight):
         connector = "connector-down"
         if not winner:
             index_diff += 0.5
-            vertical_margin -= (teamHeight/2)
+            vertical_margin = teamHeight*(from_index+0.5) - (teamHeight/2)
+        if match.arena:
+            vertical_margin += arenaHeight
     else:
         index_diff = from_index-to_index
         len_diff = (len(next_match_teams)-len(curr_match_teams))/2
@@ -647,7 +724,9 @@ def generate_connector_data(match, connectorWidth, teamHeight):
         connector = "connector-up"
         if not winner:
             index_diff += 0.5
-            vertical_margin += (teamHeight/2)
+            vertical_margin = teamHeight*(len(curr_match_teams)-from_index-0.5) + (teamHeight/2)
+        if match.arena:
+            vertical_margin -= arenaHeight
 
     team_index_offset_mult = index_diff+len_diff
     team_index_offset = team_index_offset_mult*teamHeight
@@ -687,6 +766,7 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
     matchWidth = 200
     connectorWidth = 50
     teamHeight = 25
+    arenaHeight = 25
     roundWidth = matchWidth + connectorWidth
     roundNames = ["Quarter Finals", "Semi Finals", "Finals"]
     # -------------------
@@ -696,7 +776,7 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
         if len(bracket_array) <= curr_round:
             bracket_array.append({})
 
-        bracket_array[curr_round][base_index] = [generate_competitor_data(curr_match), generate_connector_data(curr_match, connectorWidth, teamHeight)]
+        bracket_array[curr_round][base_index] = [generate_competitor_data(curr_match), generate_connector_data(curr_match, connectorWidth, teamHeight, arenaHeight)]
         
         prevs = curr_match.prev_matches.all()
         if prevs:
@@ -733,14 +813,16 @@ def single_elimination_tournament(request: HttpRequest, tournament_id: int):
             if num_teams > tournament.teams_per_match:
                 messages.error(request, "Invalid number of teams per match.")
             center_height = teamHeight * num_teams
-
+            team_data = generated_match_data[0] if generated_match_data else None
             final_match_data.append({
-                "team_data": generated_match_data[0] if generated_match_data else None,
+                "team_data": team_data,
                 "connector_data": generated_match_data[1] if generated_match_data else None,
                 "match_height": match_height,
                 "center_height": center_height,
                 "center_top_margin": (match_height - center_height) / 2,
-                
+                "arena": team_data[0].get('match').arena if team_data else None,
+                "id": team_data[0].get('match').id if team_data else None,
+                "time": team_data[0].get('match').time if team_data else None,
             })
 
         label = "Round " + str(round+1) if round < namedRoundCutoff else roundNames[round - namedRoundCutoff]
@@ -793,15 +875,18 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
             is_next = True
             prev = False
             connector = None
+            points = None
             k = 0
             for team in rounds[j].starting_teams.all():
                 if team in rounds[j].advancers.all():
                     won = True
-                team_data.append({'match_id': rounds[j].id, 'team_id': team.id, 'name': team.name, 'won': won, 'is_next': is_next, 'prev': prev, 'match': rounds[j], 'connector': connector})
+                # if rounds[j].advancers.exists() and team.points_earned_set.filter(match=rounds[j]).exists():
+                #     points = team.points_earned_set.filter(match=rounds[j])
+                team_data.append({'match_id': rounds[j].id, 'team_id': team.id, 'name': team.name, 'won': won, 'is_next': is_next, 'prev': prev, 'match': rounds[j], 'connector': connector, 'points': points})
                 won = False
                 k += 1
             for q in range(k, tournament.teams_per_match):
-                team_data.append({'match_id': rounds[j].id, 'team_id': None, 'name': 'No Team', 'won': won, 'is_next': is_next, 'prev': prev, 'match': rounds[j], 'connector': connector})
+                team_data.append({'match_id': rounds[j].id, 'team_id': None, 'name': 'No Team', 'won': won, 'is_next': is_next, 'prev': prev, 'match': rounds[j], 'connector': connector, 'points': points})
             bracket_array[i][j] = team_data
     
     num_matches = len(bracket_array)/numRounds
@@ -849,7 +934,9 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
         "match_width": matchWidth,
         "round_data": round_data,
         "team_height": teamHeight,
+        "num_rounds": len(round_data),
     }
+
     team_wins = get_points(tournament_id)
     winning_points = max(team_wins.values())
     winning_teams = [team for team in team_wins if team_wins[team] == winning_points]
@@ -1104,6 +1191,9 @@ def results(request, competition_id):
     #tournament_scorings = list()#also fake
     tournament_scorings = dict()
     competition = get_object_or_404(Competition, pk=competition_id)
+    if not request.user.is_superuser and not competition.is_complete:
+        return HttpResponseRedirect(reverse('competitions:competition', args=[competition_id]))
+
     if DEMO: competition = get_object_or_404(Competition, pk=competition_id, owner=request.user)
 
     tournaments = [tournament for tournament in competition.tournament_set.order_by("points", "start_time", "competition").filter(status = Status.COMPLETE)]
