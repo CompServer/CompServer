@@ -29,7 +29,7 @@
                 "PROD": "false",
             },
             "django": true,
-            "justMyCode": false
+            "justMyCode": true,
         },
         {
             "name": "Run server externally",
@@ -46,7 +46,7 @@
                 "PROD": "false",
             },
             "django": true,
-            "justMyCode": false
+            "justMyCode": true,
         }
     ]
 } 
