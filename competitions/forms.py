@@ -121,8 +121,8 @@ class CreateCompetitionsForm(forms.ModelForm):
             'hx-trigger': 'change',
             'hx-target': '#id_teams',
         }
-
-        self.fields['teams'].queryset = Team.objects.none()
+        # This causes all teams to be invalid
+        # self.fields['teams'].queryset = Team.objects.none()
 
     def is_valid(self):
         self.full_clean()
