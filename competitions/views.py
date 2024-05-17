@@ -471,27 +471,20 @@ def create_tournament_legacy(request: HttpRequest):
     if not form:
         form = FORM_CLASS(competition=competition)
     return render(request, "FORM_BASE.html", {'form_title': "Create Tournament", 'action': f"?tournament_type={tournament_type}&competition_id={competition.id}" , "form": form,  "form_submit_text": "Create"})
-3
-@login_required
-def edit_profile(request:HttpRequest, profile_id: int):
-    profile = Profile.objects.get(id=profile_id)
-    #be able to make discard and delete changes within the template
-    form = None
-    if request.method == 'POST':
-        form = SetProfileForm(request.POST, profile=profile)
-        if form.is_valid():
-            #form.full_clean()
-            #instance = form.save(commit=False)
-            instance.profile = profile
-            instance.save()
-            form.save()
-            return HttpResponseRedirect(f"{reverse('competitions:profile', args=(form.instance.id,))}")
-        else:
-            for error_field, error_desc in form.errors.items():
-                form.add_error(error_field, error_desc)
-    form = SetProfileForm(profile=profile)
-    form_html = render_crispy_form(form, helper=form.helper)
-    return render(request, "competitions/edit_profile_form.html", RequestContext(request, {"form": form, "form_html": form_html, "action": "", "form_title": "Edit Profile"}).flatten())
+
+# @login_required
+# def update_biography(request:HttpRequest, profile_id: int):
+#     profile = Profile.objects.get(id=profile_id)
+#     form = UpdateBiographyForm(request.POST or None)
+#     if request.method == 'POST':
+#         biography = document.get_element
+#         form.full_clean()
+#         instance = form.save(commit=False)
+#         instance.profile = profile
+#         instance.save()
+#         form.save()
+#         return HttpResponseRedirect(f"{reverse('competitions:profile', args=(profile.id))}")
+#     return render(request, "competitions/update_bio_form.html")
     
 @login_required
 def create_tournament_htmx(request: HttpRequest):

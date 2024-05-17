@@ -169,6 +169,10 @@ class SiteConfig(models.Model):
     def __str__(self) -> str:
         return f"SiteConfig(name={self.name})"
 
+#delete this after the profile is working
+class Biography(models.Model):
+    entry = models.TextField(blank=True)
+
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     bio = models.TextField(blank=True)
