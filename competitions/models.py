@@ -1,7 +1,6 @@
 import datetime
-from enum import unique
 import math
-import math
+import operator
 import random
 import string
 from typing import Any, ClassVar, List
@@ -11,11 +10,6 @@ from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured
 from django.db import models
 from django.db.models import CharField, signals
 from django.db.models.fields.files import ImageField
-import math, operator, random, string, datetime
-from functools import lru_cache
-import math
-#from colorfield.fields import ColorField
-from .widgets import ColorPickerWidget, ColorWidget
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone

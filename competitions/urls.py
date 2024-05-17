@@ -1,9 +1,11 @@
 from django.urls import path
-from . import views
-from django.views.generic.base import RedirectView
-from config.settings import DEMO
-from django.views.generic.base import RedirectView
 from django.urls import reverse_lazy
+from django.views.generic.base import RedirectView
+from django.views.generic.base import RedirectView
+
+from config.settings import DEMO
+
+from . import views
 
 app_name = "competitions"
 urlpatterns = [

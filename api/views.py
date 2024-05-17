@@ -1,13 +1,8 @@
-from http.client import HTTPResponse
-import re
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import HttpResponseRedirect, get_object_or_404, render
-from django.template import RequestContext
-from competitions.models import Competition, Sport, Team
-from competitions.forms import RRTournamentForm, SETournamentForm
-from crispy_forms.utils import render_crispy_form
+from django.shortcuts import get_object_or_404, render
 
-from competitions.views import competition
+from competitions.forms import RRTournamentForm, SETournamentForm
+from competitions.models import Competition, Sport, Team
 
 # Create your views here.
 

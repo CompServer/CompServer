@@ -1,5 +1,8 @@
 """Request utilities for the competitions module"""
 from enum import Enum
+from typing import Iterable
+
+from .models import Team
 
 http_codes = {
     100: "Continue",
@@ -148,7 +151,6 @@ class RequestType(Enum):
     def __str__(self):
         return self.value.upper()
 
-from typing import Iterable
-from .models import Team
+
 def isPlayed(teams_played: Iterable[Team], match_teams: Iterable[Team]):
     return any([team in teams_played for team in match_teams])

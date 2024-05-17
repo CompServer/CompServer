@@ -1,4 +1,5 @@
 import copy
+import io
 import logging
 import os
 from pathlib import Path
@@ -6,11 +7,9 @@ from urllib.parse import urlparse
 
 from django.contrib.messages import constants as messages
 from django.utils.log import DEFAULT_LOGGING
-from environ import Env
 import environ
 import google.auth
 from google.cloud import secretmanager
-import io
 import yaml
 
 # custom logging filter to suppress certain errors (such as Forbidden and Not Found)
@@ -86,6 +85,8 @@ if PROD:
     SECRET_KEY = env("SECRET_KEY")
     SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = env('GOOGLE_CLIENT_ID')
     SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = env('GOOGLE_CLIENT_SECRET')
+    SOCIAL_AUTH_GITHUB_KEY = env('GITHUB_CLIENT_ID')
+    SOCIAL_AUTH_GITHUB_SECRET = env('GITHUB_CLIENT_SECRET')
 else:
     if os.path.exists('secrets.yml'):
         with open('secrets.yml') as f:
@@ -93,6 +94,8 @@ else:
             SECRET_KEY = config["SECRET_KEY"]
             SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = config['GOOGLE_CLIENT_ID']
             SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = config['GOOGLE_CLIENT_SECRET']
+            SOCIAL_AUTH_GITHUB_KEY = config['GITHUB_CLIENT_ID']
+            SOCIAL_AUTH_GITHUB_SECRET = config['GITHUB_CLIENT_SECRET']
     else:
         raise Exception("No local .env or secrets.yml detected. No secrets found.")
 

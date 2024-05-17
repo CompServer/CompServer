@@ -69,6 +69,8 @@
               {% comment %} <a class='btn btn-secondary' href="{% url "social:begin" "google-oauth2" %}">{% translate "Login with Google" %}</a> {% endcomment %}
               {% comment %} <p class="tmb-0">{% translate "Sign in with" %}</p> {% endcomment %}
                 <a href="{% url "social:begin" "google-oauth2" %}" class="btn btn-outline-primary btn-google mt-2"><i class="fab fa-google mr-2"></i>{% translate "Login with Google" %}</a>
+                <br>
+                <button class="btn btn-primary mb-2"><a href="{% url 'social:begin' 'github' %}">{% translate "Login with Github" %}</a></button>
               </p>
             </div>
             <div class="col-4"></div>
