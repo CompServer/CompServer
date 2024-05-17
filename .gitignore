@@ -25,3 +25,4 @@ staticfiles/
 *.yml
 
 !cloudmigrate.yaml
+!.gitlab-ci.yml
