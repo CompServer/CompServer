@@ -4,18 +4,20 @@ https://github.com/fabiocaccamo/django-colorfield/blob/main/colorfield/serialize
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 
-try:
-    from rest_framework.serializers import CharField
-    from rest_framework.serializers import ValidationError as DRFValidationError
-except ImportError:
-    ModuleNotFoundError("Django REST Framework is not installed.")
-
 from .validators import (
     color_hex_validator,
     color_hexa_validator,
     color_rgb_validator,
     color_rgba_validator,
 )
+
+try:
+    from rest_framework.serializers import CharField
+    from rest_framework.serializers import ValidationError as DRFValidationError
+except ImportError:
+    ModuleNotFoundError("Django REST Framework is not installed.")
+
+
 
 
 class ColorField(CharField):

@@ -1,13 +1,13 @@
 from datetime import date, timedelta
+
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.test import Client, TestCase
 from django.urls import reverse
-from django.utils import timezone
-from . import models
+
 from .models import *
-from .views import *
 from .urls import *
+from .views import *
 
 # any 2xx or 3xx response code is considered a success
 OK_OR_REDIRECT_RESPONSE = range(200,399+1)

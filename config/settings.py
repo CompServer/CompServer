@@ -1,4 +1,5 @@
 import copy
+import io
 import logging
 import os
 from pathlib import Path
@@ -6,11 +7,9 @@ from urllib.parse import urlparse
 
 from django.contrib.messages import constants as messages
 from django.utils.log import DEFAULT_LOGGING
-from environ import Env
 import environ
 import google.auth
 from google.cloud import secretmanager
-import io
 import yaml
 
 # custom logging filter to suppress certain errors (such as Forbidden and Not Found)

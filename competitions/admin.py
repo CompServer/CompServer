@@ -1,5 +1,7 @@
 from django.contrib import admin
+
 from .models import *
+
 class EventAdmin(admin.ModelAdmin):
     list_filter = ["sport"]
 
