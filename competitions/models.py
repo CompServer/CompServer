@@ -54,7 +54,6 @@ DEFAULT_PER_FORMAT = {
     "rgba": "rgba(255, 255, 255, 1)",
 }
 
-
 class ColorField(CharField):
     default_validators = []
 
@@ -168,10 +167,6 @@ class SiteConfig(models.Model):
 
     def __str__(self) -> str:
         return f"SiteConfig(name={self.name})"
-
-#delete this after the profile is working
-class Biography(models.Model):
-    entry = models.TextField(blank=True)
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -604,6 +599,61 @@ class RoundRobinTournament(AbstractTournament):
     @property
     def is_round_robin(self) -> bool:
         return True
+
+    #edit how the points are calculated for competition, to be easier
+    #point calculation for each team in preliminary tournament
+    #try to develop methods to shorten code, for example adding points
+    #generate a dictionary for each team and each tournament with everyone at zero, then add points
+    def get_points_for_each_team(self):
+        team_colon_points = dict()
+        for match in Match.objects.filter(tournament=self):
+            if match.Status == Status.COMPLETE:
+                if match.advancers.count() == 1 and self.points_per_win > 0:
+                    team = match.advancers.first()
+                    if team not in team_colon_points:
+                        team_colon_points[team] = self.points_per_win
+                    else:
+                        original_score = team_colon_points[team]
+                        team_colon_points[team] =  original_score + self.points_per_win
+                if match.advancers.count() > 1 and self.points_per_tie > 0:
+                    teams = match.advancers.all()
+                    if team in teams:
+                        team_colon_points[team] = self.points_per_tie
+                    else:
+                        original_score = team_colon_points[team]
+                        team_colon_points[team] =  original_score + self.points_per_tie
+                if self.points_per_loss > 0:
+                    advancers = match.advancers.all()
+                    for team in match.starting_teams.all():
+                        if team not in advancers:
+                            if team in teams:
+                                team_colon_points[team] = self.points_per_loss
+                            else:
+                                original_score = team_colon_points[team]
+                                team_colon_points[team] =  original_score + self.self.points_per_loss
+        for team in self.competition.teams.all():
+            if team not in team_colon_points:
+                team_colon_points[team] = 0
+        return team_colon_points
+        #sort greatest to least
+
+    def points_for_a_team(self, team):
+        all_points = self.get_points_for_each_team()
+        points = all_points[team]
+        return points
+
+    def points_against_a_team(self, team):
+        total_points = 0
+        for match in Match.objects.filter(tournament=self, starting_teams=team):
+            if team not in advancers:
+                #if you lost, then that is a point scored against you
+                total_points = total_points + self.points_per_loss
+        return total_points
+
+    #def points_scored_in_the_whole_tournament(self):
+    #complete this one
+    #points left to distribute
+    #points distributed
 
     class Meta():
         verbose_name = "Preliminary Tournament (Round Robin)"
