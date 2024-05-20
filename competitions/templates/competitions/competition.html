@@ -14,6 +14,18 @@
             <i class="bi bi-device-ssd" title="{{ competition.status }}"></i>
             {% endif %}
             {{ competition }}
+            {% if user.is_staff %}
+            <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="." method="POST" id="status">
+                {% csrf_token %}
+                <div class="input-group d-inline">
+                    <select name="status" onchange="this.form.submit();">
+                        {% for value, translated_value in form.status.field.choices %}
+                            <option value="{{ value }}" {% if competition.status == value %}selected{% endif %}>{{ translated_value }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </form>
+            {% endif %} 
         </h1>
     </header>
     <div class="row d-flex">
@@ -135,6 +147,12 @@
             </div>
         {% endfor %}
     {% endif %}
+    {% if user.is_superuser %}
+    <div class="mb-3">
+        <a href="{% url "competitions:create_tournament" %}?competition_id={{ competition.id }}" class="btn btn-secondary">{% translate "Create Tournament" %}</a>
+    </div>
+    {% endif %}
+
     {% if organizations %}
         <div class="row d-flex">
             <h3>{% translate "Associated Organizations" %}</h3>
@@ -182,8 +200,8 @@
         {% endfor %}
     {% endif %} -->
     {% if user.is_superuser %}
-        <hr>
-        <a href="{% url "competitions:create_tournament" %}?competition_id={{ competition.id }}" class="btn btn-secondary">{% translate "Create Tournament" %}</a>
+    <div class="my-3">
         <a href="{% url "competitions:arena_color" competition.id %}" class="btn btn-secondary">{% translate "Change Arena Colors" %}</a>
+    </div>
     {% endif %}
 {% endblock %}
