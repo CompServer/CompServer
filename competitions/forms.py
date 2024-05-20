@@ -3,7 +3,9 @@
 from typing import Optional
 
 from crispy_forms.helper import FormHelper
+from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
+from crispy_forms.layout import Field, HTML, Layout, Submit
 from django import forms
 from django.contrib.auth.models import User
 from django.forms.widgets import TextInput
@@ -18,12 +20,16 @@ from competitions.models import (
     Sport,
     Team,
 )
+from competitions.models import (
+    AbstractTournament,
+    Competition,
+    Match,
+    RoundRobinTournament,
+    SingleEliminationTournament,
+    Sport,
+    Team,
+)
 
-from competitions.models import AbstractTournament, Competition, SingleEliminationTournament, Sport, Team, Match, RoundRobinTournament, Arena, ColorField
-from .widgets import ColorPickerWidget, ColorWidget
-from .utils import *
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import HTML, Button, Field, Layout, Submit
 from .models import Team
 from .utils import *
 
