@@ -1,12 +1,13 @@
---> Have the homework for results page (will probably take 2-3 days to finish)
----> Can also work on simplifying code and finding repetiion (create methods)
-I will work on:
 1) Adding the email to the User account
---> Researching the static profile image
-3) The formula for round robin points
-4) Auto-complete tournament --> as soon as the user logs in, and the last match is judged, complete it
----> Profile forms if I finished the above
 6) Automatically Advance multiple teams
-7) Automatically advance (low values)
 8) Score sorting --> began working on
-(do a formula to subtract point differences between round_robin_points)
+
+Competition scoring:
+1. team_names
+2. most_points
+3. least_points
+4. arenas
+5. teams_per_match
+6. tournament_name
+7. status
+8. judges, start_time

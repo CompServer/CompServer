@@ -382,6 +382,20 @@ class Competition(models.Model):
         else:
             return ()
 
+    #check this auto completion method, should be if match is judged
+    # def AUTO_COMPLETE_STATUS(self):
+    #     tournaments = AbstractTournament.objects.filter(competition=self)
+    #     if tournaments:
+    #         for tournament in tournaments:
+    #             matches = Match.objects.filter(tournament=tournament)
+    #             last_match_status = matches.last().status
+    #             if last_match_status == Status.COMPLETE:
+    #                 tournament.status = Status.COMPLETE
+    #                 tournament.save()
+    #     if tournaments.filter(status=Status.COMPLETE) == tournaments:
+    #         self.status = Status.COMPLETE
+    #         self.save()
+
     def check_date(self):
         today = timezone.now().date()
         return self.end_date < today
@@ -570,6 +584,19 @@ class AbstractTournament(models.Model):
             return False
         elif RoundRobinTournament.objects.filter(abstracttournament_ptr_id=self.id).exists():
             return True
+
+    #create a dictionary with blank values for a tournament
+    def create_tournament_tally(self):
+        #full_dict_of_all_teams
+        team_score_dict = dict()
+        teams = self.teams
+        for team in teams:
+            team_score_dict[team] = 0
+        #standard array
+        #should update with the changes to the score
+        return team_score_dict
+        #not finished yet but will finish once I update the other methods
+    
     class Meta:
         ordering = ['competition', 'event']
 
@@ -600,10 +627,6 @@ class RoundRobinTournament(AbstractTournament):
     def is_round_robin(self) -> bool:
         return True
 
-    #edit how the points are calculated for competition, to be easier
-    #point calculation for each team in preliminary tournament
-    #try to develop methods to shorten code, for example adding points
-    #generate a dictionary for each team and each tournament with everyone at zero, then add points
     def get_points_for_each_team(self):
         team_colon_points = dict()
         for match in Match.objects.filter(tournament=self):
@@ -634,8 +657,8 @@ class RoundRobinTournament(AbstractTournament):
         for team in self.competition.teams.all():
             if team not in team_colon_points:
                 team_colon_points[team] = 0
-        return team_colon_points
-        #sort greatest to least
+        sorted_team_colon_points = dict(sorted(x.items(), key=lambda item: item[1]))
+        return sorted_team_colon_points
 
     def points_for_a_team(self, team):
         all_points = self.get_points_for_each_team()
@@ -650,10 +673,37 @@ class RoundRobinTournament(AbstractTournament):
                 total_points = total_points + self.points_per_loss
         return total_points
 
-    #def points_scored_in_the_whole_tournament(self):
-    #complete this one
-    #points left to distribute
-    #points distributed
+    def points_scored_in_the_whole_tournament(self):
+        completed_matches = Match.objects.filter(tournament=self, status=Status.COMPLETE)
+        grand_total = 0
+        for match in completed_matches:
+            winning_teams = match.advancers.all()
+            losing_teams = list()
+            for team in match.starting_teams.all():
+                if team not in winning_teams:
+                    losing_teams.append(team)
+            for team in match.prev_matches.last().advancers.all():
+                if team not in winning_teams:
+                    losing_teams.append(team)
+            match_total = 0
+            if winning_teams > 1:
+                if self.points_per_tie:
+                    match_total = match_total + float(self.points_per_tie*(winning_teams.count()))
+            if winning_teams == 1:
+                if self.points_per_win:
+                    match_total = match_total + float(self.points_per_win)
+            if self.points_per_loss:
+                match_total = float(losing_teams.count()*points_per_loss)
+            grand_total = grand_total + match_total
+        return grand_total
+
+    def win_loss_point_difference(self, team):
+        #get the points awarded
+        #get points against them
+        #sub both
+        awarded = self.points_for_a_team(self, team)
+        lost = self.points_against_a_team(self, team)
+        return "The point difference between the points awarded and the points lost by " + team.name + float(awarded-lost)
 
     class Meta():
         verbose_name = "Preliminary Tournament (Round Robin)"
