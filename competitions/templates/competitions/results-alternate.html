@@ -1,81 +1,84 @@
-horizontal bar chart
-x - axis: CURRENT SCORE
-y - axis: TEAMS
-Title: Competition Scoring
-<script>
-    const config = {
-        type: 'bar',
-        data: //DATA HERE,
-        options: {
-            indexAxis: 'y',
-            plugins: {
-            title: //TITLE HERE {
-            display: true,
-            text: //TITLE TEXT 'Chart.js Bar Chart - Stacked'
-        },
-    },
-    responsive: true,
-    interaction: {
-        intersect: false,//WHAT DOES THIS DO
-    },
-    scales: {
-      x: {
-        stacked: true,
-      },
-      y: {
-        stacked: true
-      }
-    }
-  }
-};
-
-
-    const config = {
-  type: 'bar',
-  data: data,
-  options: {
-    indexAxis: 'y',
-    // Elements options apply to all of the options unless overridden in a dataset
-    // In this case, we are setting the border of each horizontal bar to be 2px wide
-    elements: {
-      bar: {
-        borderWidth: 2,
-      }
-    },
-    responsive: true,
-    plugins: {
-      legend: {
-        position: 'right',
-      },
-      title: {
-        display: true,
-        text: 'Chart.js Horizontal Bar Chart'
-      }
-    }
-  },
-};
-
-
-
-const DATA_COUNT = 7;
-const NUMBER_CFG = {count: DATA_COUNT, min: -100, max: 100};
-
-const labels = Utils.months({count: 7});
-const data = {
-  labels: labels,
-  datasets: [
-    {
-      label: 'Dataset 1',
-      data: Utils.numbers(NUMBER_CFG),
-      borderColor: Utils.CHART_COLORS.red,
-      backgroundColor: Utils.transparentize(Utils.CHART_COLORS.red, 0.5),
-    },
-    {
-      label: 'Dataset 2',
-      data: Utils.numbers(NUMBER_CFG),
-      borderColor: Utils.CHART_COLORS.blue,
-      backgroundColor: Utils.transparentize(Utils.CHART_COLORS.blue, 0.5),
-    }
-  ]
-};
-</script>
+{% extends 'skeleton.html' %}
+{% load i18n %}
+{% block title %}{% trans "Results" %}{% endblock %} 
+{% block content %}
+<body>
+    <header>
+        {% if tournaments %}
+            <h1>{% trans "Results For " %} {{ competition.name }}: {{ competition.start_date }} - {{ competition.end_date }}</h1>
+            {% if judge_names %}
+                <h2>{% trans "Judged by " %}</h2>
+                <ul>
+                    {% for judge_name in judge_names %}
+                        <li> {{ judge_name }} </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endif %}
+    </header>
+    {% if tournaments %}
+    {{ tournament_names|json_script:"tournament_names" }}
+    {{ team_names|json_script:"team_names" }}
+    {{ tournament_scorings|json_script:"tournament_scorings" }}
+    {{ background_colors|json_script:"background_colors" }}
+    {{ border_colors|json_script:"border_colors" }}
+    <div>
+        <canvas id="stackedChartID" width="600" height="400"></canvas>
+    </div>
+    <script src="https:///cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const team_names = JSON.parse(document.getElementById("team_names").textContent)
+        const tournament_names = JSON.parse(document.getElementById("tournament_names").textContent)
+        const tournament_scorings = JSON.parse(document.getElementById("tournament_scorings").textContent)
+        const background_colors = JSON.parse(document.getElementById("background_colors").textContent)
+        const border_colors = JSON.parse(document.getElementById("border_colors").textContent)
+        function randomcolor() {
+            return Math.floor(Math.random() * 255);
+        }
+        var context = document.getElementById("stackedChartID").getContext("2d");
+        var chart = new Chart(context, {
+            type: 'bar',
+            data: {  
+                
+                labels: {{ team_names|safe }},
+                datasets: [
+                    {% for tournament, scores in tournament_scorings.items %}
+                        {
+                            label: '{{ tournament|safe }}',
+                            data: {{ scores|safe }},
+                        },
+                    {% endfor %}
+                    //backgroundColor: background_colors,
+                    //borderColor: border_colors,
+                ],
+            },
+            options: {
+                indexAxis: 'y',
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'COMPETITION SCORING',
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                            title: {
+                              display: true,
+                              text: "CURRENT SCORE",
+                            }
+                        },
+                        y: {
+                            stacked: true,
+                            title: {
+                              display: true,
+                              text: "TEAMS",
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+    {% endif %}
+</body>
+{% endblock %}

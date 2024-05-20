@@ -1103,6 +1103,7 @@ def organization(request, organization_id):
 
 def results(request, competition_id):
     #extension: when you select a color for a tournament, it shouldn't be available for any other tournaments
+    #extension: fix the color listing of bar colors
     tournament_scorings = dict()
     competition = Competition.objects.get(id = competition_id)
     totals = competition.get_results()
@@ -1195,7 +1196,8 @@ def results(request, competition_id):
         'background_colors': background_colors,
         'border_colors': border_colors,
     }
-    return render(request, "competitions/results.html", context)
+    #changed to alternate html
+    return render(request, "competitions/results-alternate.html", context)
 
 def team(request: HttpRequest, team_id: int):
     team = Team.objects.filter(id=team_id).get()
