@@ -105,15 +105,11 @@
                         {% elif tournament.is_complete %} 
                             <i class="bi-check2-circle" title="{{ tournament.status }}"></i>
                         {% elif tournament.is_closed %} 
-<<<<<<< HEAD
-                            <i class="bi-x-circle" title="{{ tournament.status }}"></i>
-=======
                             <i class="bi-x-circle" title="{{ tournament.status }}"></i> <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.event.name }}</a>
                         {% elif tournament.is_in_setup %}
                             <i class="bi-gear" title="{{ tournament.status }}"></i> {% if user.is_staff %} <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.event.name }}</a>{% else %}{{ tournament.event.name }}{% endif %}
                         {% elif competition.is_archived %}
                             <i class="bi-archive" title="{{ tournament.status }}"></i> {{ tournament }} <small>You can see this archived item because you are signed in as a superuser.</small>
->>>>>>> dev-feng
                         {% endif %}
                         <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.event.name }}</a>
                         {% if tournament.points %}
