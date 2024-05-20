@@ -16,6 +16,21 @@
         height: {{bracket_dict.team_height}}px;
         width: {{ bracket_dict.match_width }}px;
     }
+    
+    .match {
+        width: {{ bracket_dict.match_width }}px;
+    }
+    
+    .team {
+        height: {{bracket_dict.team_height}}px; 
+        width: {{ bracket_dict.match_width }}px;
+    }
+    
+    @media only screen and (max-width: 480px) and (orientation: portrait) {
+        .bracket {
+            width:{{bracket_dict.roundWidth}}px;
+        }
+    }
 </style>
 {% block content %}
     <h1>{% if tournament.is_judgable %} 
@@ -44,9 +59,15 @@
     </h1>
     <hr>
     {% if tournament.match_set.all %}
+    <div class="center-content-container">
         <div class="bracket row justify-content-center" style="padding-right: 2%; padding-top: 30px; padding-bottom: 30px; margin-right: 1%;">
             {% for round_data in bracket_dict.round_data %}
-            <div class="round col-6 col-md-4 col-lg-3 col-xxl-2 justify-content-center">
+            <div class="round {% if bracket_dict.num_rounds == 1 or bracket_dict.num_rounds == 0 %} col-12
+            {% elif bracket_dict.num_rounds == 2 %} col-6
+            {% elif bracket_dict.num_rounds == 3 %} col-6 col-md-4
+            {% elif bracket_dict.num_rounds == 4 or bracket_dict.num_rounds == 5 %} col-6 col-md-4 col-lg-3 
+            {% else %} col-6 col-md-4 col-lg-3 col-xxl-2 {% endif %}
+            justify-content-center">
                 <div class="round-header" style="height: {{bracket_dict.team_height}}px;
                 width: {{ bracket_dict.match_width }}px;">
                     <p>{% translate "Round" %} {{ forloop.counter }}</p>
@@ -66,13 +87,14 @@
                                     {% if forloop.last %} border-bottom-right-radius: 8px; border-bottom-left-radius: 8px; {% endif %}"
                                     onclick="location.href='{% url 'competitions:judge_match' team_data.match_id %}';"
                                     onmouseover="highlight({{team_data.team_id}}, {{ team_data.match_id }})" onmouseout="dehighlight({{ team_data.team_id }}, {{ team_data.match_id }}, '{{ match_data.arena.color }}')">
-                                    <p style="color: {% if match_data.arena.is_dark and not team_data.won %} white; {% endif %} ">{{ team_data.name }}</p>
+                                    <p style="color: {% if match_data.arena.is_dark and not team_data.won %} white; {% endif %}"><b>{{ team_data.name }}</b>{% if team_data.points %}: <small><small><small>{{ team_data.points }}</small></small></small>{% endif %}</p>
+                                    {% comment %} {% if team_data.points %} {{ team_data.points }} {% endif %} {% endcomment %}
                                 </div>
                             {% endfor %}
                         {% endif %}
                     </div> 
                 </div>
-                {% if LANGUAGE_CODE = "es" %}
+                {% if LANGUAGE_CODE == "es" %}
                     {% if forloop.last %}
                         <br><br><br>
                     {% else %}
@@ -85,6 +107,16 @@
             </div>
             {% endfor %}
         </div>
+    </div>
+    <div class="center-content-container">
+    <label class="round-select" style="margin-left: 10px; margin-right: 5px; float: left;" for="rounds">Shown round: </label>
+    
+    <select class="round-select" id="rounds" onchange="changeShownRound(this)">
+        {% for round_data in bracket_dict.round_data %}
+            <option value="{{forloop.counter}}">{{round_data.label}}</option>
+        {% endfor %}
+    </select>
+    </div>
         <div class="row d-flex justify-content-center">
             <span><b>{% translate "Team Rankings" %}</b> ({% translate "Points Per Win: "%} {{ tournament.points_per_win|floatformat }}, {% translate "Points Per Tie: "%} {{ tournament.points_per_tie|floatformat }}, {% translate "Points Per Loss: "%} {{ tournament.points_per_loss|floatformat }})</span>
             {% for team, points in team_wins.items %}
