@@ -25,7 +25,10 @@
         {% block title %}Robocomp{% endblock %}
     </title>
     {% block head %}{% endblock %}
-    <script src="https://unpkg.com/htmx.org@1.6.1"></script>
+    {% comment %}
+    <script src="https://unpkg.com/htmx.org@1.9.12" integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2" crossorigin="anonymous"></script>
+    {% endcomment %}
+    <script src="https://unpkg.com/htmx.org@1.9.12/dist/htmx.js" integrity="sha384-qbtR4rS9RrUMECUWDWM2+YGgN3U4V4ZncZ0BvUcg9FGct0jqXz3PUdVpU1p0yrXS" crossorigin="anonymous"></script>
 
     {% comment %} ^ a block for inserting custom stylesheets/other stuff into the head if nessesary {% endcomment %}
     

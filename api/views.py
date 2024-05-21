@@ -3,7 +3,7 @@ import re
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import HttpResponseRedirect, get_object_or_404, render
 from django.template import RequestContext
-from competitions.models import Competition, Sport, Team
+from competitions.models import *
 from competitions.forms import RRTournamentForm, SETournamentForm
 from crispy_forms.utils import render_crispy_form
 import html
@@ -24,19 +24,51 @@ def teams(request: HttpRequest):
 
 def new_team(request: HttpRequest):
     sport_id = request.POST.get('sport')
+    if sport_id:
+        sport = Sport.objects.get(id=sport_id)
+    else:
+        sport = None
+    competition_id = request.POST.get('competition')
+    if competition_id:
+        competition = Competition.objects.get(id=competition_id)
+    else:
+        competition = None
+
     name = html.escape(request.POST.get('new_team'))
     name = name.strip()
 
-    sport = Sport.objects.get(id=sport_id)
     response = ''
     if sport:
         if name != "":
             team = Team(name=name, sport=sport)
             team.save()
+            if competition:
+                competition.teams.add(team)
+                return render(request, "competitions/competition.html#competition-teams", {"competition": competition})
         for team in Team.objects.filter(sport=sport):
             response += f'<option value="{team.id}">{team.name}</option>\n'
     
     return HttpResponse(content=response)
+
+
+def new_arena(request: HttpRequest):
+    competition_id = request.POST.get('competition')
+    if competition_id:
+        competition = Competition.objects.get(id=competition_id)
+    else:
+        competition = None
+
+    name = html.escape(request.POST.get('new_arena'))
+    name = name.strip()
+
+    response = ''
+    if competition:
+        if name != "":
+            arena = Arena(name=name)
+            arena.save()
+            competition.arenas.add(arena)
+    return render(request, "competitions/competition.html#competition-arenas", {"competition": competition})
+
 
 def tournament_form(request: HttpRequest, competition_id: int):
     if request.method == 'GET':

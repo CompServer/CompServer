@@ -295,7 +295,7 @@ class Team(models.Model):
 
 class Arena(models.Model):
     name = models.CharField(max_length=100, blank=True)
-    capacity = models.PositiveSmallIntegerField()
+    capacity = models.PositiveSmallIntegerField(default=1)
     is_available = models.BooleanField(default=True)
     color = ColorField(default="#CBCBCB")
     
@@ -331,6 +331,7 @@ class Competition(models.Model):
     access_key = models.CharField(max_length=ACCESS_KEY_LENGTH, default=get_random_access_key, blank=True, null=True)
     # For scheduling purposes, we need to be able to specify for this competition how many different (Event-specific) arenas are available and their capacity
     arenas = models.ManyToManyField(Arena, blank=False)
+    host = models.ForeignKey(Organization, blank=True, null=True, on_delete=models.SET_NULL)
 
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='competitions', default=User.objects.get(username='admin').pk)
     """The user that created this object. This is used only if DEMO mode is on."""

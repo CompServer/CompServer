@@ -944,6 +944,9 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
     context = {"tournament": tournament, "bracket_dict": bracket_dict, "team_wins": team_wins, "winning_teams": winning_teams, "form": TournamentStatusForm()}
     return render(request, "competitions/round_robin_tournament.html", context)
 
+def arena(request: HttpRequest, arena_id: int):
+    pass
+
 def competitions(request: HttpRequest):
     competition_list = Competition.objects.all().order_by("-status", "start_date")
     context = {"competition_list": competition_list, "form": CompetitionStatusForm()}
@@ -1016,6 +1019,9 @@ def create_competition(request: HttpRequest):
 
 def credits(request: HttpRequest):
     return render(request, "competitions/credits.html")
+
+def new_judge(request: HttpRequest, competition_id: int):
+    pass
 
 @login_required
 def judge_match(request: HttpRequest, match_id: int):

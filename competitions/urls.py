@@ -7,6 +7,8 @@ from django.urls import reverse_lazy
 
 app_name = "competitions"
 urlpatterns = [
+    path("arena/<int:arena_id>/", views.arena, name="arena"),
+    path("competition/<int:competition_id>/new_judge/", views.new_judge, name="new_judge"),
     path("competition/", views.competitions, name="competitions"),
     path("competition/<int:competition_id>/", views.competition, name="competition"),
     path("competition/create/", views.create_competition, name="create_competition"),

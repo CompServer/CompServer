@@ -5,6 +5,7 @@ django-environ
 django-hijack
 django-mathfilters
 django-simple-history
+django-template-partials
 Django==4.2.7
 pillow
 PyYAML

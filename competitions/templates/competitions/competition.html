@@ -1,5 +1,7 @@
 {% extends 'skeleton.html' %}
 {% load i18n %}
+{% load partials %}
+
 {% block title %}{% translate "Competition Page" %}{% endblock %}
 {% block content %}
     <header>
@@ -165,29 +167,26 @@
     {% endif %}
     {% if competition.teams.exists %}
         <h3>{% translate "Competing Teams" %}</h3>
-        {% for team in competition.teams.all %}
-            <div class="row d-flex">
-                <div class = "col-12">
-                    <a href="{% url 'competitions:team' team.id %}">{{ team }}</a>
-                </div>
+        {% partialdef competition-teams inline=True %}
+            <div id="competition-teams" class="row d-flex">
+                {% for team in competition.teams.all %}
+                    <div class="col-12">
+                        <a href="{% url 'competitions:team' team.id %}">{{ team }}</a>
+                    </div>
+                {% endfor %}
             </div>
-        {% endfor %}
-    {% endif %}
-    {% if user.is_staff %}
-        {% comment %} <hr>
-        <h3>Change Status</h3>
-        <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="" method="POST">
-            {% csrf_token %}
-            <div class="input-group d-inline">
-                <select class="form-select" name="status" onchange="this.form.submit();">
-                    <option value="SETUP" {% if competition.is_in_setup %}selected{% endif %}>{% translate "SETUP" %}</option>
-                    <option value="OPEN" {% if competition.is_judgable %}selected{% endif %}>{% translate "OPEN" %}</option>
-                    <option value="COMPLETE" {% if competition.is_complete %}selected{% endif %}>{% translate "COMPLETE" %}</option>
-                    <option value="CLOSED" {% if competition.is_closed %}selected{% endif %}>{% translate "CLOSED" %}</option>
-                    <option value="ARCHIVED" {% if competition.is_archived %}selected{% endif %}>{% translate "ARCHIVED" %}</option>
-                </select>
+        {% endpartialdef %}
+        {% if user.is_staff %}
+        <form hx-post="{% url 'api:new_team'  %}" hx-target="#competition-teams" hx-on:htmx:after-request="document.getElementById('id_new_team').value='';">
+            <div class="input-group my-3">
+                <span class="input-group-text">New Team</span>
+                <input id="id_new_team" name="new_team" type="text" maxlength=20 class="textinput form-control col-auto"></input>
+                <input id="id_sport" name="sport" type="hidden" value="{{ competition.sport.id }}" />
+                <input id="id_competition" name="competition" type="hidden" value="{{ competition.id }}" />
+                <button id="id_new_team_button" type="button" class="btn btn-secondary" hx-post="{% url 'api:new_team' %}" hx-target="#competition-teams" hx-on:htmx:after-request="document.getElementById('id_new_team').value='';">Add <i class="bi bi-arrow-up-short"></i></button>
             </div>
-        </form> {% endcomment %}
+        </form>
+        {% endif %}
     {% endif %}
     <!-- {% if competition.get_winners %}
         <h3>{% translate "Winners:" %}</h3>
@@ -199,9 +198,46 @@
         </div>
         {% endfor %}
     {% endif %} -->
+    {% if competition.arenas.exists %}
+        <h3>{% translate "Arenas" %}</h3>
+        {% partialdef competition-arenas inline=True %}
+            <div id="competition-arenas" class="row d-flex">
+                {% for arena in competition.arenas.all %}
+                    <div class="col-12">
+                        <a href="{% url 'competitions:arena' arena.id %}">{{ arena }}</a>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endpartialdef %}
+        {% if user.is_staff %}
+        <form hx-post="{% url 'api:new_arena' %}" hx-target="#competition-arenas" hx-on:htmx:after-request="document.getElementById('id_new_arena').value='';">
+            <div class="input-group my-3">
+                <span class="input-group-text">New Arena</span>
+                <input id="id_new_arena" name="new_arena" type="text" maxlength=20 class="textinput form-control col-auto"></input>
+                <input id="id_sport" name="sport" type="hidden" value="{{ competition.sport.id }}" />
+                <input id="id_competition" name="competition" type="hidden" value="{{ competition.id }}" />
+                <button id="id_new_arena_button" type="button" class="btn btn-secondary" hx-post="{% url 'api:new_arena' %}" hx-target="#competition-arenas" hx-on:htmx:after-request="document.getElementById('id_new_arena').value='';">Add <i class="bi bi-arrow-up-short"></i></button>
+            </div>
+        </form>
+        {% endif %}
+    {% endif %}
     {% if user.is_superuser %}
-    <div class="my-3">
-        <a href="{% url "competitions:arena_color" competition.id %}" class="btn btn-secondary">{% translate "Change Arena Colors" %}</a>
-    </div>
+        {% if competition.plenary_judges.exists %}
+            <h3>{% translate "Plenary Judges" %}</h3>
+            {% partialdef competition-plenary_judges inline=True %}
+                <div id="competition-plenary_judges" class="row d-flex">
+                    {% for judge in competition.plenary_judges.all %}
+                        <div class="col-12">
+                            {{ judge }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endpartialdef %}
+        {% else %}
+            <h3>{% translate "No Plenary Judges" %}</h3>
+        {% endif %}
+        <div class="my-3">
+            <a href="{% url "competitions:new_judge" competition.id %}" class="btn btn-secondary">{% translate "New Judge" %}</a>
+        </div>
     {% endif %}
 {% endblock %}
