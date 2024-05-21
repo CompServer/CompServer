@@ -14,6 +14,6 @@ deploy:
     #- gcloud builds submit --tag gcr.io/wheadon-project/$CI_PROJECT_NAME:$CI_COMMIT_SHA
     - gcloud builds submit --config cloudmigrate.yaml --substitutions _INSTANCE_NAME=jmulligan-postgres1,_REGION=us-central1
     #- gcloud run deploy --image=gcr.io/wheadon-project/$CI_PROJECT_NAME:$CI_COMMIT_SHA --platform=managed --region=us-central1 --allow-unauthenticated --update-env-vars=VAR1=value1,VAR2=value2 --quiet
-    - gcloud run deploy compserver-service --platform managed --region us-central1--image gcr.io/wheadon-project/polls-service
+    - gcloud run deploy compserver-service --platform managed --region us-central1--image gcr.io/wheadon-project/compserver-service
   only:
     - master
