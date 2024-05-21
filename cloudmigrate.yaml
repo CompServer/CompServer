@@ -66,3 +66,6 @@ substitutions:
 images:
   - "gcr.io/${PROJECT_ID}/${_SERVICE_NAME}"
 # [END cloudrun_django_cloudmigrate]
+
+options:
+  logging: CLOUD_LOGGING_ONLY
