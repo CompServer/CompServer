@@ -94,3 +94,12 @@ def tournament_form(request: HttpRequest, competition_id: int):
 
     return render(request, 'CSRF_FORM.html', {'form': form, 'action': f"?competition_id={competition_id}&tournament_type={tournament_type}"})
 
+
+def remove_judge(request: HttpRequest, competition_id, judge_id):
+    competition = Competition.objects.get(id=competition_id)
+    judge = User.objects.get(id=judge_id)
+    if competition and judge:
+        competition.plenary_judges.remove(judge)
+    return render(request, "competitions/competition.html#competition-plenary_judges", {"competition": competition})
+
+

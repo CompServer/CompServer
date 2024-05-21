@@ -296,3 +296,21 @@ class ArenaColorForm(forms.Form):
         if self.cleaned_data['color'] == '#fff5a8':
             return False
         return super().is_valid()
+
+class ArenaForm(forms.ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['color'].widget = TextInput(attrs={"type": "color"})
+
+    # def is_valid(self):
+    #     self.full_clean()
+    #     if self.cleaned_data['color'] == '#fff5a8':
+    #         return False
+    #     return super().is_valid()
+
+    class Meta:
+        model = Arena
+        fields = ['capacity', 'color']
+        template_name = 'competitions/arena.html'
+        # success_url = "/"

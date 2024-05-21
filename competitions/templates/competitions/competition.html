@@ -228,7 +228,7 @@
                 <div id="competition-plenary_judges" class="row d-flex">
                     {% for judge in competition.plenary_judges.all %}
                         <div class="col-12">
-                            {{ judge }}
+                            <a hx-trigger="click" hx-post="{% url 'api:remove_judge' competition.id judge.id %}" hx-target="#competition-plenary_judges"><i class="bi bi-x-circle-fill" style="color:red;"></i></a> {{ judge }}
                         </div>
                     {% endfor %}
                 </div>
@@ -237,7 +237,7 @@
             <h3>{% translate "No Plenary Judges" %}</h3>
         {% endif %}
         <div class="my-3">
-            <a href="{% url "competitions:new_judge" competition.id %}" class="btn btn-secondary">{% translate "New Judge" %}</a>
+            <a href="{% url "competitions:new_judge" competition.id %}" class="btn btn-secondary">{% translate "Add Judge" %}</a>
         </div>
     {% endif %}
 {% endblock %}

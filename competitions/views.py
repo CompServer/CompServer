@@ -945,7 +945,20 @@ def round_robin_tournament(request: HttpRequest, tournament_id: int):
     return render(request, "competitions/round_robin_tournament.html", context)
 
 def arena(request: HttpRequest, arena_id: int):
-    pass
+    arena = Arena.objects.filter(id=arena_id)
+    if DEMO: arena = arena.filter(owner=request.user)
+    arena = arena.first()
+    if request.method == 'POST':
+        form = ArenaForm(request.POST, instance=arena)
+        if form.is_valid():
+            form.save()
+    else:
+        form = ArenaForm(instance=arena)
+    context = {
+        'arena': arena,
+        'form': form,
+    }
+    return render(request, "competitions/arena.html", context)
 
 def competitions(request: HttpRequest):
     competition_list = Competition.objects.all().order_by("-status", "start_date")
