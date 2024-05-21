@@ -2,12 +2,12 @@
 6) Automatically Advance multiple teams
 8) Score sorting --> began working on
 
-Competition scoring:
-1. team_names
-2. most_points
-3. least_points
-4. arenas
-5. teams_per_match
-6. tournament_name
-7. status
-8. judges, start_time
+
+Fix the axes and colors for results page
+Add dead space to the bototm of the page (if it isn't already there)
+Work to fix bracket view, bracket naming, and chart view
+setup rankings for preliminary tournaments (seeds as well)
+add email field to login and registration
+sport and organization form
+score sorting
+automatically advance winners, automatically advance multiple winners

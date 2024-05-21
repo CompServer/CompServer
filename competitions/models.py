@@ -299,6 +299,45 @@ class Competition(models.Model):
     arenas = models.ManyToManyField(Arena, blank=False)
     # related: tournament_set
     
+    #all sorting are for sorting team scorings on competition results page
+    def sort_most_points(self):
+        return self.get_results()
+
+    def sort_least_points(self):
+        most_to_least = self.get_results()
+        least_to_most = {k:v for k,v in sorted(most_to_least.items(), key=lambda item:item[1], reverse=False)}
+        return least_to_most 
+
+    def sort_by_events_won(self):
+        name_events_poins = dict()
+        #extension: incorporate this into the get results, such as all tournaments with results
+        if self.get_results:
+            for team in teams:
+                won_tournaments = list()
+                overall_score = 0
+                for tournament in Tournament.objects.filter(teams=team, status=Status.COMPLETE):
+                    last_match = Match.objects.filter(tournament=tournament).last()
+                    if last_match.status == Status.COMPLETE and team in last_match.advancers:
+                        won_tournaments.append(tournament.event.name)
+                    if tournament.is_single_elimination:
+                        overall_score = overall_score + tournament.points
+                    else:
+                        if last_match.advancers.count() == 1:
+                            overall_score = overall_score + tournament.points_per_win
+                        else:
+                            overall_score = overall_score + tournaments.points_per_tie
+                #sort the won_tournaments alphabetically
+                name_events_points[team] = (won_tournaments, overall_score)
+            #now do something with all of the dictionary values to sort
+            #sort by tournaments, then sort by overall score and tournaments if there is a tie
+
+        return sort_events
+
+    def sort_by_team_names(self):
+        dictionary = self.get_results
+        sort_names = {k:v for k,v in sorted(most_to_least.items(), key=lambda item:item[0])}
+        return sort_names
+
     def get_results(self):
         totals = dict() #this will be each team’s total points
         tournaments = SingleEliminationTournament.objects.filter(competition__id=self.id, status=Status.COMPLETE).order_by("-name", "points")
@@ -509,7 +548,7 @@ class AbstractTournament(models.Model):
     points = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True) # for winner # dwheadon: is 10 digits / decimals enough / too much?
     # These Event-related things might depend on the competition: speed race with 1 v 1 at this competition but speed race with 4 v 4 at another (both are the same event)
     # max_teams_per_match = models.SmallIntegerField(default=2)
-    # max_teams_to_advance = models.SmallIntegerField(default=1)
+    max_teams_to_advance = models.SmallIntegerField(default=1)
     # teams_to_advance_rounds_up = models.BooleanField() # in a 4max/2adv situation if a match only has enough for say 3 competitors, do we advance two (round up) or 1 (round down)
     # tied_teams_all_advance = models.BooleanField()
     # dwheadon: what about tie_breakers? should we have a field for that?
@@ -802,6 +841,16 @@ class Match(models.Model):
             for prev_match in self.prev_matches.all() 
             for team in (prev_match.advancers.all() if prev_match.advancers.exists() else [None])
         ]
+
+    # def SET_match_advancers(self):#either advance multiple or one automatically
+    #     if self.tournament.competition.max_teams_to_advance > 1:
+    #         #this could be a match in single elim or prelim
+    #         if self.tournament.is_single_elimination:
+
+    #         else:
+
+    #     else:#should be set to never equal 0
+
 
     # @property
     # def next_match(self) -> Optional['Match']:
