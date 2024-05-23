@@ -27,9 +27,10 @@
     {% block head %}{% endblock %}
     <script src="https://unpkg.com/htmx.org@1.6.1"></script>
     
-    {% comment %} Sentry replay integration {% endcomment %}
-    <script src="https://js.sentry-cdn.com/ecc96da365761b9276d136bcf2323a60.min.js" crossorigin="anonymous"></script>
-
+    {% comment %} Sentry replay integration, not sure if it goes here or at the top of the body{% endcomment %}
+    {% if USE_SENTRY %}
+        <script src="https://js.sentry-cdn.com/ecc96da365761b9276d136bcf2323a60.min.js" crossorigin="anonymous"></script>
+    {% endif %}
     {% comment %} ^ a block for inserting custom stylesheets/other stuff into the head if nessesary {% endcomment %}
     
 </head>
@@ -52,6 +53,9 @@
     }
     {% endif %}
     {% endcomment %}
+    {% if USE_SENTRY %}
+        <script src="https://js.sentry-cdn.com/ecc96da365761b9276d136bcf2323a60.min.js" crossorigin="anonymous"></script>
+    {% endif %}
 
     {% comment %} make sure to install django hijack before using this {% endcomment %}
     {% if request.user|can_hijack:another_user %}
