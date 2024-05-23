@@ -1,0 +1,8 @@
+1) Adding the email to the User account
+6) Automatically Advance multiple teams
+Fix the axes and colors for results page
+1) Work to fix bracket view, bracket naming, and chart view
+setup rankings for preliminary tournaments (seeds as well)
+add email field to login and registration
+automatically advance winners, automatically advance multiple winners
+set up a static profile pho

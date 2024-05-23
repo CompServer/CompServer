@@ -35,7 +35,7 @@
 </head>
 
 {% comment %} We need this CSRF stuff here so that HTMX (anywhere on the page) can submit POST requests and still be able to include the CSRF stuff {% endcomment %}
-<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+<body style="padding-bottom: 50px;" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
     {% comment %} We need this so HTMX will work (when its implemented) with the debug toolbar {% endcomment %}
     {% comment %} https://django-debug-toolbar.readthedocs.io/en/latest/installation.html#htmx {% endcomment %}
     {% comment %}
@@ -81,11 +81,6 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'competitions:credits' %}">{% translate "Credits" %}</a>
                     </li>
-                    <!-- {% if user.is_logged_in %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'competitions:profile' %}">{% translate "Profile"%}</a>
-                        </li>
-                    {% endif %} -->
                     {% comment %} only implemented for home page {% endcomment %}
                     {% if user.is_staff %}
                         <li class="nav-item">
@@ -104,12 +99,24 @@
                             {% translate " (Superuser)" %}
                         {% endif %}
                     </span>
-                    <form action="{% url 'logout' %}" method="post">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-secondary me-3">{% translate "Log Out" %}</button>
-                    </form>
+                    <div class="dropdown text-end">
+                        <a href="#" class="d-block link-body-emphasis text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle" width="32"></i>
+                        </a>
+                        <ul class="dropdown-menu text-small">
+                            <li>
+                                <a class="dropdown-item" href="{% url 'competitions:profile' user.profile.id %}">{% translate "Profile" %}</a>
+                           </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'logout' %}">{% translate "Log out" %}</a>
+                            </li>
+                        </ul>
+                    </div>
                 {% else %}
-                    <a class="btn btn-secondary me-3" href="{% url "login" %}{% if request.path %}?next={{ request.path }}{% endif %}" role="button">{% translate "Log In" %}</a>
+                    <a class="btn btn-primary me-3" href="{% url 'login' %}{% if request.path %}?next={{ request.path }}{% endif %}" role="button">{% translate "Log In" %}</a>
                 {% endif %}
                     
                 {% get_available_languages as LANGUAGES %} 

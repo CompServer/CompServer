@@ -1,0 +1,6 @@
+<form action="{% url 'competitions:update_biography' profile.id %}" method="post"> {% csrf_token %}     
+    <div class="form-group">
+        <input type="text" class="form-control" name="biography" id="inputBiography" placeholder="{{ profile.bio }}">
+    </div>
+    <input type="submit" name="Update Biography" value="Update Biography" id="Update_biography" class="button_drop outline">
+</form>    

@@ -169,6 +169,7 @@ if PROD:
         'NAME': '<name>',
         'USER': '<db_username>',
         'PASSWORD': '<password>',
+        'EMAIL': '<db_email>',
         'HOST': '<db_hostname_or_ip>',
         'PORT': '<db_port>',
         }

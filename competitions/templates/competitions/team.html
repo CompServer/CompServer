@@ -76,7 +76,7 @@
     {% endif %}
     {% if won_tournaments %}
         <div class="tournament-set">
-            <h3>{% translate "Tournaments Won (" %}{{ won_tournaments|length }}{{% translate ")" %}</h3>
+            <h3>{% translate "Tournaments Won (" %}{{ won_tournaments|length }}{% translate ")" %}</h3>
             {% for tournament in won_tournaments %}
                 <div class="row d-flex">
                     <div class = "col-12 tournament">

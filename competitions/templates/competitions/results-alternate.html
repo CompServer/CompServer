@@ -3,6 +3,19 @@
 {% block title %}{% trans "Results" %}{% endblock %} 
 {% block content %}
 <body>
+    <header>
+        {% if tournaments %}
+            <h1>{% trans "Results For " %} {{ competition.name }}: {{ competition.start_date }} - {{ competition.end_date }}</h1>
+            {% if judge_names %}
+                <h2>{% trans "Judged by " %}</h2>
+                <ul>
+                    {% for judge_name in judge_names %}
+                        <li> {{ judge_name }} </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endif %}
+    </header>
     {% if tournaments %}
     {{ tournament_names|json_script:"tournament_names" }}
     {{ team_names|json_script:"team_names" }}
@@ -26,6 +39,7 @@
         var chart = new Chart(context, {
             type: 'bar',
             data: {  
+                
                 labels: {{ team_names|safe }},
                 datasets: [
                     {% for tournament, scores in tournament_scorings.items %}
@@ -34,21 +48,31 @@
                             data: {{ scores|safe }},
                         },
                     {% endfor %}
-                    // backgroundColor: background_colors,
-                    // borderColor: border_colors,
+                    //backgroundColor: background_colors,
+                    //borderColor: border_colors,
                 ],
             },
             options: {
+                indexAxis: 'y',
                 plugins: {
                     title: {
                         display: true,
+                        text: 'COMPETITION SCORING',
                     },
                     scales: {
                         x: {
                             stacked: true,
+                            title: {
+                              display: true,
+                              text: "CURRENT SCORE",
+                            }
                         },
                         y: {
                             stacked: true,
+                            title: {
+                              display: true,
+                              text: "TEAMS",
+                            }
                         }
                     }
                 }

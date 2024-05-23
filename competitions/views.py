@@ -11,8 +11,6 @@ from typing import Dict, Iterable, List, Set, Union
 from typing import Set, Union
 from typing import Union
 import zoneinfo
-import zoneinfo
-import zoneinfo
 import traceback
 from crispy_forms.utils import render_crispy_form
 from django.contrib import messages
@@ -463,6 +461,7 @@ def swap_matches(request: HttpRequest, tournament_id: int):
 def swap_teams(request: HttpRequest, match1_id: int, match2_id: int):
     match1 = get_object_or_404(Match, pk=match1_id)
     match2 = get_object_or_404(Match, pk=match2_id)
+    tournament_id = match1.tournament.id
     if match1 == match2:
         messages.error(request, "Both Matches are the same.")
         return HttpResponseRedirect(reverse("competitions:tournament", args=(tournament_id,)))
@@ -562,6 +561,20 @@ def create_tournament_legacy(request: HttpRequest):
         form = FORM_CLASS(competition=competition)
     return render(request, "FORM_BASE.html", {'form_title': "Create Tournament", 'action': f"?tournament_type={tournament_type}&competition_id={competition.id}" , "form": form,  "form_submit_text": "Create"})
 
+# @login_required
+# def update_biography(request:HttpRequest, profile_id: int):
+#     profile = Profile.objects.get(id=profile_id)
+#     form = UpdateBiographyForm(request.POST or None)
+#     if request.method == 'POST':
+#         biography = document.get_element
+#         form.full_clean()
+#         instance = form.save(commit=False)
+#         instance.profile = profile
+#         instance.save()
+#         form.save()
+#         return HttpResponseRedirect(f"{reverse('competitions:profile', args=(profile.id))}")
+#     return render(request, "competitions/update_bio_form.html")
+    
 @login_required
 def create_tournament_htmx(request: HttpRequest):
     competition_id = request.GET.get('competition_id',None)
@@ -963,6 +976,9 @@ def arena(request: HttpRequest, arena_id: int):
 
 def competitions(request: HttpRequest):
     competition_list = Competition.objects.all().order_by("-status", "start_date")
+    if not competition_list and not request.user.is_superuser:
+        messages.error(request, 'There are no competitions at this time.')
+        return redirect(reverse("competitions:home"))
     context = {"competition_list": competition_list, "form": CompetitionStatusForm()}
     return render(request, "competitions/competitions.html", context)
 
@@ -996,12 +1012,16 @@ def competition(request: HttpRequest, competition_id: int):
                 organizations[team.organization] = team.organization.name
     sorted_organizations = [k for k,v in sorted(organizations.items(), key=lambda item:item[1])]
     winners = competition.get_winner()
+    results = competition.get_results()
+    #get gsorting
     context = {
         "competition": competition, 
+        "results": results,
         "form": CompetitionStatusForm(),
         "robin_tournaments": robin_tournaments,
         "elimination_tournaments": elimination_tournaments,
         "organizations": sorted_organizations,
+        "winners": winners,
     }
     return render(request, "competitions/competition.html", context)
 
@@ -1112,30 +1132,42 @@ def judge_match(request: HttpRequest, match_id: int):
         form = JudgeForm(instance=instance, possible_advancers=winner_choices)
     return render(request, 'competitions/match_judge.html', {'form': form, 'match': instance, "teams": winner_choices})
 
-def profile(request, user_id):
-    #mpie charts
-    #fix results page chart as well
-    user = get_object_or_404(User, pk=user_id)
-    if DEMO and user != request.user:
-        raise PermissionDenied("You do not have permission to view this page.")
+def profile(request, profile_id):
+    #extension: add pie charts
+    profile = Profile.objects.get(id=profile_id)
     watch_competitions = Competition.objects.filter(status=Status.OPEN).order_by("-end_date", "-start_date", "-name")
     watch_tournaments = AbstractTournament.objects.filter(status=Status.OPEN).order_by("-start_time")
     newly_ended_competitions = Competition.objects.filter(status=Status.COMPLETE, end_date=datetime.date.today()).order_by("-end_date", "-start_date", "-name")
-    if user_id in [user.id for user in [tournament.planeary_judges for tournament in SingleEliminationTournament.objects.all()]]:
+    user = User.objects.filter(profile__id=profile_id).get()
+    user_id = user.id
+    #only competitinos have judges
+    #should first get the judge list ofr each competition, then a list of ids for each judge list
+    lists_of_judges = [competition.plenary_judges for competition in Competition.objects.all()]
+    ids = []
+    for list_of_judges in lists_of_judges:
+        for judge in list_of_judges.all():
+            ids.append(judge.id) #extension: simplify this
+    if user_id in ids:
         is_judge = True
-        current_gigs = Match.objects.filter(tournament__judges__id=user_id, status = Status.OPEN).order_by("-time")
-        upcoming_gigs = Match.objects.filter(tournament__judges__id=user_id, status = Status.SETUP).order_by("-status", "-time")
-        judged_tournaments = AbstractTournament.objects.filter(judges__id=user_id).filter(Q(status = Status.COMPLETE) | Q(status = Status.CLOSED)).order_by("-start_time", "-competition").filter()
+        current_gigs = Match.objects.filter(tournament__competition__plenary_judges__id=user_id, tournament__competition__status = Status.OPEN).order_by("-time")
+        upcoming_gigs = Match.objects.filter(tournament__competition__plenary_judges__id=user_id, tournament__competition__status = Status.SETUP).order_by("-time")
+        judged_tournaments = AbstractTournament.objects.filter(competition__plenary_judges__id=user_id).filter(Q(competition__status = Status.COMPLETE) | Q(competition__status = Status.CLOSED)).order_by("-start_time", "-competition").filter()
     else:
         is_judge = False
-    if user_id in [team.coach.id for team in Team.objects.all()]:
+    coaches = list()
+    if Team.objects.all():
+        for team in Team.objects.all():
+            if team.coach:
+                coaches.append(team.coach.id)
+    coached_teams = list()
+    team_records = dict()
+    team_names = list()
+    team_wins = list()
+    team_losses = list()
+    team_rankings = dict()
+    if coaches and user_id in coaches:
         is_coach = True
         coached_teams = Team.objects.filter(coach_id = user_id).order_by("-name")
-        team_records = {}
-        team_names = []
-        team_wins = []
-        team_losses = []
-        team_rankings = {}
         for team in coached_teams:
             wins = AbstractTournament.objects.filter(competition__teams=team, status=Status.COMPLETE, match_set__last__advancers=team).order_by("-start_time", "-competition")
             if DEMO: wins = wins.filter(competition__owner=request.user)
@@ -1161,6 +1193,7 @@ def profile(request, user_id):
     else:
         is_coach = False
     context = {
+        'profile': profile,
         'coached_teams': coached_teams,
         'watch_tournaments': watch_tournaments,
         'watch_competitions': watch_competitions,
@@ -1175,9 +1208,9 @@ def profile(request, user_id):
         'team_wins': team_wins,
         'team_losses': team_losses,
         'team_names': team_names,
-        'user': user,
+        'user': user,#extension: add pie charts
     }
-    return render(request, 'competitions/user_profile.html', context)
+    return render(request, 'competitions/profile.html', context)
 
 
 def organization(request, organization_id):
@@ -1199,63 +1232,94 @@ def organization(request, organization_id):
     context = {
         'organization': organization,
         'associated_teams': associated_teams,
-        'results': results,
+        'results': results,#results is an extension
     }
     return render(request, 'competitions/organization.html', context)
 
 def results(request, competition_id):
-    #check judge names
-    #use the get_results tool later but just check functionality
-    #maybe there should be an error message for when there aren't any results
-    #totals = list() #this is fake so that it cna run
-    #tournament_scorings = list()#also fake
+    #extension: when you select a color for a tournament, it shouldn't be available for any other tournaments
+    #extension: fix the color listing of bar colors
     tournament_scorings = dict()
-    competition = get_object_or_404(Competition, pk=competition_id)
-    if not request.user.is_superuser and not competition.is_complete:
-        return HttpResponseRedirect(reverse('competitions:competition', args=[competition_id]))
-
-    if DEMO: competition = get_object_or_404(Competition, pk=competition_id, owner=request.user)
-
-    tournaments = [tournament for tournament in competition.tournament_set.order_by("points", "start_time", "competition").filter(status = Status.COMPLETE)]
-    rr_tourneys = RoundRobinTournament.objects.filter(competition__id=competition_id, status = Status.COMPLETE).order_by("points", "-start_time", "-competition")
-    if DEMO: rr_tourneys = rr_tourneys.filter(competition__owner=request.user)
-    for robin_tournament in rr_tourneys:
-        tournaments.append(robin_tournament)
+    competition = Competition.objects.get(id = competition_id)
+    totals = competition.get_results()
+    tournaments = [tournament for tournament in SingleEliminationTournament.objects.filter(competition__id=competition_id, status = Status.COMPLETE).order_by("points", "start_time", "competition")]
+    if not tournaments:
+        messages.error(request, 'There are no results available for this competition. Please wait until they are uploaded.')
+        return redirect(reverse("competitions:competition", kwargs={'competition_id':competition_id}))
     tournament_names = [tournament.event.name for tournament in tournaments]
+    robin_tournaments = RoundRobinTournament.objects.filter(competition__id=competition_id, status = Status.COMPLETE).order_by("points", "-start_time", "-competition")
+    if robin_tournaments:
+        for robin_tournament in robin_tournaments:
+            tournaments.append(robin_tournament)
+            tournament_names.append("Preliminary for " + robin_tournament.event.name)
     team_names = [team.name for team in competition.teams.order_by("name")]
-    #tournament_colors = [tournament.color for tournament in tournaments]
-    for tournament_name in tournament_names:#this could just be a list of tournaments, fix later
-        tournament = AbstractTournament.objects.filter(event__name=tournament_name, competition__id=competition_id, status=Status.COMPLETE)
-        if DEMO: tournament = tournament.filter(competition__owner=request.user)
-        scores = dict()
-        scores_per_tournament = list()
-        robin_scores = dict()
-        for team_name in team_names:
-            team = Team.objects.filter(name=team_name).first()
-            if DEMO: team = team.filter(owner=request.user)
-            team = team.first()
-            if tournament.first().is_single_elimination == True:
-                last_match = Match.objects.filter(tournament__id = tournament.first().id, next_matches__isnull = True).first()
-                if team in last_match.advancers.all():
-                    scores_per_tournament.append(float(tournament.first().points))
+    tournament_colors = [tournament.event.color for tournament in tournaments]
+    background_colors = list()
+    border_colors = list()
+    if tournaments:
+        unique_colors = list()
+        for color in tournament_colors:
+            if color not in unique_colors:
+                unique_colors.append(color)
+        i = 0
+        if len(unique_colors) < len(tournament_colors):
+            while i < (len(tournament_colors) + 1):
+                if i != 0:
+                    chars = '0123456789ABCDEF'
+                    color = ['(#'+''.join(random.sample(chars,6)) for i in range(6)]
+                    for c in color:
+                        original = c
+                        new = original + ", 0.5)"
+                        color.remove(original)
+                        color.append(new)
+                    background_colors.append(color)
+                    border_colors.append(color)
                 else:
-                    scores_per_tournament.append(0)
-            else:
-                robin_scores = dict()
-                for match in tournament.first().match_set.all():
-                    if team in match.advancers.all():
-                        if match.advancers.count() == 1:
-                            robin_scores[team_name] = float(tournament.first().points_per_win)
-                        if match.advancers.count() > 1:
-                            robin_scores[team_name] = float(tournament.first().points_per_tie)
+                    background_colors.append(tournament_colors[i])
+                    border_colors.append(tournament_colors[i])
+                i = i + 1;
+        if len(unique_colors) == len(tournament_colors):
+            while i < (len(tournament_colors) + 1):
+                background_colors.append(tournament_colors[-1])
+                border_colors.append(tournament_colors[-1])
+                i = i + 1;
+        for tournament in tournaments:
+            scores_per_tournament = list()
+            robin_scores = dict()
+            for team_name in team_names:
+                team = Team.objects.filter(name=team_name).first()
+                if tournament.is_single_elimination == True:
+                    last_match = Match.objects.filter(tournament__id = tournament.id, next_matches__isnull = True).first()
+                    if team in last_match.advancers.all():
+                        scores_per_tournament.append(float(tournament.points))
                     else:
-                        robin_scores[team_name] = float(tournament.first().points_per_loss)
-                for k, v in robin_scores:
-                    scores_per_tournament.append(v)        
-        tournament_scorings[tournament_name] = scores_per_tournament
-    judge_names = ""
-    #add document edits from gitlab
-    #judge_names = [plenary_judge.first_name + " " + plenary_judge.last_name for plenary_judge in competition.plenary_judges.order_by("-username")]
+                        scores_per_tournament.append(0)
+                else:
+                    robin_scores = dict()
+                    for match in tournament.match_set.all():
+                        if team in match.advancers.all():
+                            if match.advancers.count() == 1:
+                                robin_scores[team_name] = float(tournament.points_per_win)
+                            if match.advancers.count() > 1:
+                                robin_scores[team_name] = float(tournament.points_per_tie)
+                        else:
+                            robin_scores[team_name] = float(tournament.points_per_loss)
+                    for k, v in robin_scores.items():
+                        scores_per_tournament.append(v)
+            if tournament.is_single_elimination == True:   
+                tournament_scorings[tournament.event.name] = scores_per_tournament
+            else:
+                tournament_scorings["Preliminary for " + tournament.event.name] = scores_per_tournament
+    judges = competition.plenary_judges.order_by("-username")
+    judge_names = []
+    if judges:
+        for judge in judges:
+            name = ""
+            if judge.first_name and judge.last_name:
+                name = "@" + judge.username + " " + judge.first_name + " " + judge.last_name
+            else:
+                name = "@" + judge.username
+            judge_names.append(name)
     context = {
         'tournament_scorings': tournament_scorings,
         'tournament_names': tournament_names,
@@ -1263,10 +1327,12 @@ def results(request, competition_id):
         'competition': competition,
         'tournaments': tournaments,
         'judge_names': judge_names,
-        #'team_and_total': totals,
-        #add the tournament colors later
+        'tournament_colors': tournament_colors,
+        'background_colors': background_colors,
+        'border_colors': border_colors,
     }
-    return render(request, "competitions/results.html", context)
+    #changed to alternate html
+    return render(request, "competitions/results-alternate.html", context)
 
 def team(request: HttpRequest, team_id: int):
     team = Team.objects.filter(id=team_id)
@@ -1295,23 +1361,32 @@ def team(request: HttpRequest, team_id: int):
     losses = list()
     wins = list()
     draws = list()
+    starting_teams_names = ""
+    prev_advancing_names = ""
+    advancers_names = ""
     if past_matches:
         for match in past_matches:
             first_half = " in "
             second_half = " tournament @" + match.tournament.competition.name
             if match.starting_teams.exists():
-                starting_teams_names = ",".join([team.name for team in match.starting_teams.exclude(id=team_id)])
+                teams = [team.name for team in match.starting_teams.exclude(id=team_id)]
+                if teams:
+                    starting_teams_names = ",".join(teams)
             if match.prev_matches.exists():
-                prev_advancing_names = ",".join([team.name for team in match.prev_matches.last().advancers.all().exclude(id=team_id)])
+                teams = [team.name for team in match.prev_matches.last().advancers.all().exclude(id=team_id)]
+                if teams:
+                    prev_advancing_names = ",".join(teams)
             if match.advancers.exists():
-                advancers_names = ",".join([team.name for team in match.advancers.all().exclude(id=team_id)])
+                teams = [team.name for team in match.advancers.all().exclude(id=team_id)]
+                if teams:
+                    advancers_names = ",".join(teams)
             if match.prev_matches.exists():
                 if team_id in [team.id for team in match.advancers.all()]:
                     if match.advancers.count() == match.starting_teams.count() + len([advancer for advancer in match.prev_matches.last().advancers.all()]): 
-                        draws.append((("Drew in match against " + ",".join(starting_teams_names) + ",".join(prev_advancing_names) + first_half), match.tournament, second_half, match))
+                        draws.append((("Drew in match against " + starting_teams_names + ", " + prev_advancing_names + first_half), match.tournament, second_half, match))
                     else:
                         if match.advancers.count() == 1:
-                            wins.append((("Won against " + ",".join(starting_teams_names) + ",".join(prev_advancing_names) + first_half), match.tournament, second_half, match))
+                            wins.append((("Won against " + starting_teams_names +  ", " + prev_advancing_names + first_half), match.tournament, second_half, match))
                         elif match.advancers.count() > 2: 
                             wins.append((("Won with " + advancers_names + first_half), match.tournament, second_half, match))
                 else:
@@ -1327,7 +1402,7 @@ def team(request: HttpRequest, team_id: int):
                         if match.advancers.count() == 1:
                             wins.append((("Won against " + starting_teams_names + first_half), match.tournament, second_half, match))
                         elif match.advancers.count() > 1:
-                            wins.append((("Won with " + "," + advancers_names + first_half), match.tournament, second_half, match))
+                            wins.append((("Won with " + advancers_names + first_half), match.tournament, second_half, match))
                 else:
                     if match.advancers.count() == 1: 
                         losses.append((("Lost against " + match.advancers.first().name + first_half), match.tournament, second_half, match))
@@ -1355,7 +1430,7 @@ def team(request: HttpRequest, team_id: int):
             if match.starting_teams.all().exists():
                 if match.prev_matches.last():
                     team = Team.objects.filter(id=team_id)
-                    if team in match.starting_teams.all() or team in match.prev_matches.last().starting_teams:
+                    if team in match.starting_teams.all() or team in match.prev_matches.last().advancers.all():
                         if match.advancers.count() == 1:
                             if match.starting_teams.count() == 1 and match.prev_matches.last().starting_teams.count() == 1:
                                 byes.append((("BYE" + first_half), match.tournament, second_half))
