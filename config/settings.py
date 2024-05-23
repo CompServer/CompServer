@@ -173,6 +173,7 @@ INSTALLED_APPS = [
     'whitenoise.runserver_nostatic',
     'simple_history',
     'social_django',
+    'template_partials',
     #'colorfield', # pip install django-colorfield
     #'easy_timezones', # pip install django-easy-timezones
 ]

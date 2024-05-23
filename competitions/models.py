@@ -59,7 +59,6 @@ DEFAULT_PER_FORMAT = {
     "rgba": "rgba(255, 255, 255, 1)",
 }
 
-
 class ColorField(CharField):
     default_validators = []
 
@@ -292,7 +291,7 @@ class Team(models.Model):
 
 class Arena(models.Model):
     name = models.CharField(max_length=100, blank=True)
-    capacity = models.PositiveSmallIntegerField()
+    capacity = models.PositiveSmallIntegerField(default=1)
     is_available = models.BooleanField(default=True)
     color = ColorField(default="#CBCBCB")
     
@@ -329,83 +328,148 @@ class Competition(models.Model):
     access_key = models.CharField(max_length=ACCESS_KEY_LENGTH, default=get_random_access_key, blank=True, null=True)
     # For scheduling purposes, we need to be able to specify for this competition how many different (Event-specific) arenas are available and their capacity
     arenas = models.ManyToManyField(Arena, blank=False)
+    host = models.ForeignKey(Organization, blank=True, null=True, on_delete=models.SET_NULL)
 
     #owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='competitions', default=User.objects.get(username='admin').pk)
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='competitions')
     """The user that created this object. This is used only if DEMO mode is on."""
     
+    #all sorting are for sorting team scorings on competition results page
+    
     def get_results(self):
         totals = dict() #this will be each team’s total points
-        tournaments = SingleEliminationTournament.objects.filter(competition__id=self.id, status=Status.COMPLETE)
+        tournaments = SingleEliminationTournament.objects.filter(competition__id=self.id, status=Status.COMPLETE).order_by("-name", "points")
+        robin = RoundRobinTournament.objects.filter(competition__id=self.id, status=Status.COMPLETE).order_by("-name")
         if tournaments:
             for tournament in tournaments:
                 if len(tournament.get_winner()) > 1:#multiple winners
                     for winner in tournament.get_winner():
                         if winner.name in totals.keys():
-                            totals[winner.name] = totals.get(winner) + tournament.points  
+                            totals[winner.name] = totals.get(winner) + float(tournament.points)
                         else:
-                            totals[winner.name] = tournament.points
+                            totals[winner.name] = float(tournament.points)
                 if len(tournament.get_winner()) == 1:
                     if tournament.get_winner()[0] in totals.keys():
-                        totals[tournament.get_winner()[0]] = totals.get(tournament.get_winner()[0]) + tournament.points  
+                        totals[tournament.get_winner()[0]] = totals.get(tournament.get_winner()[0]) + float(tournament.points)
                     else:
-                        totals[tournament.get_winner()[0]] = tournament.points
-                robin = tournament.prev_tournament
+                        totals[tournament.get_winner()[0]] = float(tournament.points)
                 if robin:
-                    if robin.status == Status.COMPLETE:
-                        ppl = robin.points_per_loss
-                        ppw = robin.points_per_win
-                        ppt = robin.points_per_tie
-                        for match in robin.match_set.all():
-                            for advancer in match.advancers.all():
-                                team = advancer.name
-                                if match.advancers.count() == 1:
-                                    if team.name in totals.keys():
-                                        totals[team.name] = totals.get(team.name) + ppw
-                                    else:
-                                        totals[team.name] = ppw
-                                if match.advancers.count() > 1:
-                                    if team.name in totals.keys():
-                                        totals[team.name] = totals.get(team.name) + ppt
-                                    else:
-                                        totals[team.name] = ppt
-                            starters = match.starting_teams.all()
-                            previous_starters = match.prev_matches.last().advancers.all()
-                            winning_ids = [team.id for team in match.advancers.all()]
-                            if previous_starters:
-                                for team in previous_starters:
+                    for tournament in robin:
+                        if tournament.status == Status.COMPLETE:
+                            ppl = float(tournament.points_per_loss)
+                            ppw = float(tournament.points_per_win)
+                            ppt = float(tournament.points_per_tie)
+                            for match in tournament.match_set.all():
+                                for advancer in match.advancers.all():
+                                    team = advancer
+                                    if match.advancers.count() == 1:
+                                        if team.name in totals.keys():
+                                            totals[team.name] = totals.get(team.name) + ppw
+                                        else:
+                                            totals[team.name] = ppw
+                                    if match.advancers.count() > 1:
+                                        if team.name in totals.keys():
+                                            totals[team.name] = totals.get(team.name) + ppt
+                                        else:
+                                            totals[team.name] = ppt
+                                starters = match.starting_teams.all()
+                                previous_starters = ()
+                                if match.prev_matches.last():
+                                    previous_starters = match.prev_matches.last().advancers.all()
+                                winning_ids = [team.id for team in match.advancers.all()]
+                                if previous_starters:
+                                    for team in previous_starters:
+                                        if team.id not in winning_ids:
+                                            if team.name in totals.keys():
+                                                totals[team.name] = totals.get(team.name) + ppl
+                                            else:
+                                                totals[team.name] = ppl
+                                for team in starters:
                                     if team.id not in winning_ids:
                                         if team.name in totals.keys():
                                             totals[team.name] = totals.get(team.name) + ppl
                                         else:
                                             totals[team.name] = ppl
-                            for team in starters:
-                                if team.id not in winning_ids:
-                                    if team.name in totals.keys():
-                                        totals[team.name] = totals.get(team.name) + ppl
-                                    else:
-                                        totals[team.name] = ppl
             sorted_totals = {k:v for k,v in sorted(totals.items(), key=lambda item:item[1])}
             return sorted_totals
         else:
             return totals
 
+    def sort_by_team_names(self):
+        dictionary = self.get_results
+        sort_names = {k:v for k,v in sorted(dictionary.items(), key=lambda item:item[0])}
+        return sort_names
+
+    def sort_most_points(self):
+        return self.get_results()
+
+    def sort_least_points(self):
+        most_to_least = self.get_results()
+        least_to_most = {k:v for k,v in sorted(most_to_least.items(), key=lambda item:item[1], reverse=False)}
+        return least_to_most 
+    
+    def sort_by_events_won(self):
+        name_events_points = dict()
+        sorted_events= dict()
+        #extension: incorporate this into the get results, such as all tournaments with results
+        if self.get_results:
+            for team in self.teams:
+                won_tournaments = list()
+                overall_score = 0
+                for tournament in AbstractTournament.objects.filter(teams=team, status=Status.COMPLETE):
+                    last_match = Match.objects.filter(tournament=tournament).last()
+                    if last_match.status == Status.COMPLETE and team in last_match.advancers:
+                        won_tournaments.append(tournament.event.name)
+                    if tournament.is_single_elimination:
+                        overall_score = overall_score + tournament.points
+                    else:
+                        if last_match.advancers.count() == 1:
+                            overall_score = overall_score + tournament.points_per_win
+                        else:
+                            overall_score = overall_score + tournament.points_per_tie
+                won_tournaments = sorted(won_tournaments)
+                name_events_points[team] = (won_tournaments, overall_score)
+        sort_events_0 = {k: v for k, v in sorted(name_events_points.items(), key=lambda item: item[1][0])}
+        sort_events = {k: v for k, v in sorted(sort_events_0.items(), key=lambda item: item[1][1])}
+        return sort_events
+
     def get_winner(self):
-        #if the competition is completed
-        totals = self.get_results()
-        winners = list()
-        if totals:
-            greatest_score = max(totals.items(), key=operator.itemgetter(1))[0]
-            greatest_scorer = totals.get(greatest_score)
-            totals.pop(greatest_score)
-            if greatest_score in totals.values():
-                for key in totals.keys():
-                    if totals.get(key) == greatest_score:
-                        winners.append(key)
-            sorted_winners = sorted(winners)
-            return sorted_winners
+        if self.status == Status.COMPLETE:
+            totals = self.get_results()
+            winners = list()
+            if totals:
+                greatest_scorer = max(totals.items(), key=operator.itemgetter(1))[0]
+                greatest_score = totals.get(greatest_scorer)
+                totals.pop(greatest_scorer)
+                if greatest_score in totals.values():
+                    for key in totals.keys():
+                        if totals.get(key) == greatest_score:
+                            team = Team.objects.filter(name=key).get()
+                            winners.append(key)
+                team = Team.objects.filter(name=greatest_scorer).get()
+                winners.append(team.name)
+                sorted_winners = sorted(winners)
+                sorted_winner_objects = []
+                for winner in sorted_winners:
+                    obj = Team.objects.get(name=winner)
+                    sorted_winner_objects.append(obj)
+                return sorted_winner_objects
         else:
-            return "Winners haven't been determined yet."
+            return ()
+
+    #check this auto completion method, should be if match is judged
+    # def AUTO_COMPLETE_STATUS(self):
+    #     tournaments = AbstractTournament.objects.filter(competition=self)
+    #     if tournaments:
+    #         for tournament in tournaments:
+    #             matches = Match.objects.filter(tournament=tournament)
+    #             last_match_status = matches.last().status
+    #             if last_match_status == Status.COMPLETE:
+    #                 tournament.status = Status.COMPLETE
+    #                 tournament.save()
+    #     if tournaments.filter(status=Status.COMPLETE) == tournaments:
+    #         self.status = Status.COMPLETE
+    #         self.save()
 
     def check_date(self):
         today = timezone.now().date()
@@ -499,6 +563,7 @@ class Event(models.Model):
     name = models.CharField(max_length=255, unique=True)  # sumo bots, speed race, etc.
     match_time = models.DurationField()
     sport = models.ForeignKey(Sport, blank=True, null=True, on_delete=models.SET_NULL)
+    color = ColorField(default="#CBCBCB")
     # score_units = ScoreUnitsField() # initially just assume scores are place values (1st, 2nd, 3rd, etc.)
     # high_score_advances = models.BooleanField(default=True) # with seconds, low scores will usually advance (unless it's a "how long can you last" situation)
     # related: tournament_set
@@ -527,7 +592,6 @@ class AbstractTournament(models.Model):
     status = StatusField()
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="tournament_set") # besides helpfing to identify this tournament this will change how teams advance (high or low score)
     competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name="tournament_set")
-    color = ColorField(default="#CBCBCB")
     # interpolate_points = models.BooleanField(default=False) # otherwise winner takes all: RoboMed doesn't need this but it could be generally useful
     teams = models.ManyToManyField(Team, related_name="tournament_set")
     judges = models.ManyToManyField(User, blank=True, related_name="tournament_set")  # people entrusted to judge this tournament alone (as opposed to plenary judges)
@@ -535,7 +599,7 @@ class AbstractTournament(models.Model):
     points = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True) # for winner # dwheadon: is 10 digits / decimals enough / too much?
     # These Event-related things might depend on the competition: speed race with 1 v 1 at this competition but speed race with 4 v 4 at another (both are the same event)
     # max_teams_per_match = models.SmallIntegerField(default=2)
-    # max_teams_to_advance = models.SmallIntegerField(default=1)
+    max_teams_to_advance = models.SmallIntegerField(default=1)
     # teams_to_advance_rounds_up = models.BooleanField() # in a 4max/2adv situation if a match only has enough for say 3 competitors, do we advance two (round up) or 1 (round down)
     # tied_teams_all_advance = models.BooleanField()
     # dwheadon: what about tie_breakers? should we have a field for that?
@@ -546,13 +610,14 @@ class AbstractTournament(models.Model):
         return self.competition.owner
 
     def __str__(self) -> str:
-        return self.event.name + _(" tournament @ ") + str(self.competition) # SumoBot tournament at RoboMed 2023
+        return self.event.name + " " + ("single-elimination" if hasattr(self, "singleeliminationtournament") else "round-robin") + _(" tournament @ ") + str(self.competition) # SumoBot tournament at RoboMed 2023
 
     def get_winner(self) -> list:
-        advancers_qs = self.match_set.last().advancers.all()
-        if advancers_qs.count() != 0:
-            advancers = [advancer.name for advancer in advancers_qs]
-            return advancers
+        if self.status == Status.COMPLETE:
+            advancers_qs = self.match_set.last().advancers.all()
+            if advancers_qs.count() != 0:
+                advancers = [advancer.name for advancer in advancers_qs]
+                return advancers
         else:
             return ()
 
@@ -609,6 +674,19 @@ class AbstractTournament(models.Model):
     def is_round_robin(self) -> bool:
         return RoundRobinTournament.objects.filter(abstracttournament_ptr_id=self.id).exists()
 
+
+    #create a dictionary with blank values for a tournament
+    def create_tournament_tally(self):
+        #full_dict_of_all_teams
+        team_score_dict = dict()
+        teams = self.teams
+        for team in teams:
+            team_score_dict[team] = 0
+        #standard array
+        #should update with the changes to the score
+        return team_score_dict
+        #not finished yet but will finish once I update the other methods
+    
     class Meta:
         ordering = ['competition', 'event']
 
@@ -620,6 +698,25 @@ class Ranking(models.Model):
 
     def __str__(self) -> str:
         return f"{self.rank}) {self.team.name} in {self.tournament})"
+
+
+    #to arrange a ranking system, consider history of teams
+    #at the beginning, each team should be assigned a random ranking
+    #then once the teams have finished a full tournament, rankings are sorted
+    #add to the tournament model
+    #def arrange_team_rankings(self):
+    #   sorted_teams = list()
+    #   num_of_teams = self.teams.count()
+    #   for team in self.teams:
+    #       #calculate all of their history of wins
+            #overall score = 0
+            #tournaments = Tournament.objects.filter(teams=team, status=Status.COMPLETE)
+            #for tournament in tournaments:
+            #   #collect their scores
+            #sorted_teams.append(team, overall_score)
+    #   sorted_teams.sort(key=lambda x: x[1])
+    #   now determine seedings, check if values are tied, break tie randomly
+    #verify seedings are proper
 
     class Meta:
         ordering = ['tournament', 'rank']
@@ -638,6 +735,84 @@ class RoundRobinTournament(AbstractTournament):
     @property
     def is_round_robin(self) -> bool:
         return True
+
+    def get_points_for_each_team(self):
+        team_colon_points = dict()
+        for match in Match.objects.filter(tournament=self):
+            if match.Status == Status.COMPLETE:
+                if match.advancers.count() == 1 and self.points_per_win > 0:
+                    team = match.advancers.first()
+                    if team not in team_colon_points:
+                        team_colon_points[team] = self.points_per_win
+                    else:
+                        original_score = team_colon_points[team]
+                        team_colon_points[team] =  original_score + self.points_per_win
+                if match.advancers.count() > 1 and self.points_per_tie > 0:
+                    teams = match.advancers.all()
+                    if team in teams:
+                        team_colon_points[team] = self.points_per_tie
+                    else:
+                        original_score = team_colon_points[team]
+                        team_colon_points[team] =  original_score + self.points_per_tie
+                if self.points_per_loss > 0:
+                    advancers = match.advancers.all()
+                    for team in match.starting_teams.all():
+                        if team not in advancers:
+                            if team in teams:
+                                team_colon_points[team] = self.points_per_loss
+                            else:
+                                original_score = team_colon_points[team]
+                                team_colon_points[team] =  original_score + self.self.points_per_loss
+        for team in self.competition.teams.all():
+            if team not in team_colon_points:
+                team_colon_points[team] = 0
+        sorted_team_colon_points = dict(sorted(team_colon_points.items(), key=lambda item: item[1]))
+        return sorted_team_colon_points
+
+    def points_for_a_team(self, team):
+        all_points = self.get_points_for_each_team()
+        points = all_points[team]
+        return points
+
+    def points_against_a_team(self, team):
+        total_points = 0
+        for match in Match.objects.filter(tournament=self, starting_teams=team):
+            if team not in match.advancers:
+                #if you lost, then that is a point scored against you
+                total_points = total_points + self.points_per_loss
+        return total_points
+
+    def points_scored_in_the_whole_tournament(self):
+        completed_matches = Match.objects.filter(tournament=self, status=Status.COMPLETE)
+        grand_total = 0
+        for match in completed_matches:
+            winning_teams = match.advancers.all()
+            losing_teams = list()
+            for team in match.starting_teams.all():
+                if team not in winning_teams:
+                    losing_teams.append(team)
+            for team in match.prev_matches.last().advancers.all():
+                if team not in winning_teams:
+                    losing_teams.append(team)
+            match_total = 0
+            if winning_teams > 1:
+                if self.points_per_tie:
+                    match_total = match_total + float(self.points_per_tie*(winning_teams.count()))
+            if winning_teams == 1:
+                if self.points_per_win:
+                    match_total = match_total + float(self.points_per_win)
+            if self.points_per_loss:
+                match_total = float(losing_teams.count()*self.points_per_loss)
+            grand_total = grand_total + match_total
+        return grand_total
+
+    def win_loss_point_difference(self, team):
+        #get the points awarded
+        #get points against them
+        #sub both
+        awarded = self.points_for_a_team(self, team)
+        lost = self.points_against_a_team(self, team)
+        return "The point difference between the points awarded and the points lost by " + team.name + float(awarded-lost)
 
     class Meta():
         verbose_name = "Preliminary Tournament (Round Robin)"
@@ -766,12 +941,11 @@ class Match(models.Model):
                 self._cached_str =  res + _(" in ") + str(self.tournament) # Battlebots vs Byters in SumoBot tournament @ RoboMed 2023
             else: 
                 self._cached_str =  res # if part of another match we don't want to repeat the tournament
+            self.__class__.objects.filter(pk=self.pk).update(_cached_str=self._cached_str) # hack to save without sending the save signal which would get into an infinite recursive loop
         return str(self._cached_str)
     
     def __str__(self) -> str:
         self._generate_str_recursive()
-        #if self._cached_str is None:    
-        self.save()
         return f"""ID {self.id}, {self._cached_str}""" # type: ignore
 
     class Meta:
