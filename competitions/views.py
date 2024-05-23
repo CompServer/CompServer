@@ -333,6 +333,7 @@ def generate_round_robin_matches(request, tournament_id):
                 nmpt_iterator += 1
                 if nmpt_iterator == arenas[arena_iterator].capacity:
                     arena_iterator += 1
+                    arena_iterator = arena_iterator % len(arenas)
                     nmpt_iterator = 0
             if arena_iterator > 0 or nmpt_iterator > 0:
                 arena_iterator = 0
