@@ -109,8 +109,6 @@ assert SECRET_KEY is not None
 #         DEMO=(bool, False),
 #   )
 
-
-
 DEBUG = env("DEBUG", default=False)
 
 DEMO = env('DEMO', default=False)
