@@ -8,8 +8,6 @@ from urllib.parse import urlparse
 from django.contrib.messages import constants as messages
 from django.utils.log import DEFAULT_LOGGING
 import environ
-import google.auth
-from google.cloud import secretmanager
 import yaml
 
 # custom logging filter to suppress certain errors (such as Forbidden and Not Found)
@@ -48,6 +46,11 @@ env_file = os.path.join(BASE_DIR, ".env")
 PROD = env("PROD", default=False)
 
 if PROD:
+    # don't need these imports unless prod is true
+    # can skip some reqs if prod isn't on
+    # because it's only needed for secret manager, seperate requirements file
+    import google.auth
+    from google.cloud import secretmanager
     # Attempt to load the Project ID into the environment, safely failing on error.
     try:
         _, os.environ["GOOGLE_CLOUD_PROJECT"] = google.auth.default() # type: ignore
