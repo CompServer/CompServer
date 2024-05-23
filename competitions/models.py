@@ -300,44 +300,7 @@ class Competition(models.Model):
     # related: tournament_set
     
     #all sorting are for sorting team scorings on competition results page
-    def sort_most_points(self):
-        return self.get_results()
-
-    def sort_least_points(self):
-        most_to_least = self.get_results()
-        least_to_most = {k:v for k,v in sorted(most_to_least.items(), key=lambda item:item[1], reverse=False)}
-        return least_to_most 
-
-    def sort_by_events_won(self):
-        name_events_poins = dict()
-        #extension: incorporate this into the get results, such as all tournaments with results
-        if self.get_results:
-            for team in teams:
-                won_tournaments = list()
-                overall_score = 0
-                for tournament in Tournament.objects.filter(teams=team, status=Status.COMPLETE):
-                    last_match = Match.objects.filter(tournament=tournament).last()
-                    if last_match.status == Status.COMPLETE and team in last_match.advancers:
-                        won_tournaments.append(tournament.event.name)
-                    if tournament.is_single_elimination:
-                        overall_score = overall_score + tournament.points
-                    else:
-                        if last_match.advancers.count() == 1:
-                            overall_score = overall_score + tournament.points_per_win
-                        else:
-                            overall_score = overall_score + tournaments.points_per_tie
-                #sort the won_tournaments alphabetically
-                name_events_points[team] = (won_tournaments, overall_score)
-            #now do something with all of the dictionary values to sort
-            #sort by tournaments, then sort by overall score and tournaments if there is a tie
-
-        return sort_events
-
-    def sort_by_team_names(self):
-        dictionary = self.get_results
-        sort_names = {k:v for k,v in sorted(most_to_least.items(), key=lambda item:item[0])}
-        return sort_names
-
+    
     def get_results(self):
         totals = dict() #this will be each team’s total points
         tournaments = SingleEliminationTournament.objects.filter(competition__id=self.id, status=Status.COMPLETE).order_by("-name", "points")
@@ -396,6 +359,44 @@ class Competition(models.Model):
             return sorted_totals
         else:
             return totals
+
+    def sort_by_team_names(self):
+        dictionary = self.get_results
+        sort_names = {k:v for k,v in sorted(most_to_least.items(), key=lambda item:item[0])}
+        return sort_names
+
+    def sort_most_points(self):
+        return self.get_results()
+
+    def sort_least_points(self):
+        most_to_least = self.get_results()
+        least_to_most = {k:v for k,v in sorted(most_to_least.items(), key=lambda item:item[1], reverse=False)}
+        return least_to_most 
+    
+    def sort_by_events_won(self):
+        name_events_points = dict()
+        sorted_events= dict()
+        #extension: incorporate this into the get results, such as all tournaments with results
+        if self.get_results:
+            for team in teams:
+                won_tournaments = list()
+                overall_score = 0
+                for tournament in Tournament.objects.filter(teams=team, status=Status.COMPLETE):
+                    last_match = Match.objects.filter(tournament=tournament).last()
+                    if last_match.status == Status.COMPLETE and team in last_match.advancers:
+                        won_tournaments.append(tournament.event.name)
+                    if tournament.is_single_elimination:
+                        overall_score = overall_score + tournament.points
+                    else:
+                        if last_match.advancers.count() == 1:
+                            overall_score = overall_score + tournament.points_per_win
+                        else:
+                            overall_score = overall_score + tournaments.points_per_tie
+                won_tournaments = sorted(won_tournaments)
+                name_events_points[team] = (won_tournaments, overall_score)
+        sort_events_0 = {k: v for k, v in sorted(name_events_points.items(), key=lambda item: item[1][0])}
+        sort_events = {k: v for k, v in sorted(sort_events_0.items(), key=lambda item: item[1][1])}
+        return sort_events
 
     def get_winner(self):
         if self.status == Status.COMPLETE:
@@ -647,6 +648,25 @@ class Ranking(models.Model):
 
     def __str__(self) -> str:
         return f"{self.rank}) {self.team.name} in {self.tournament})"
+
+
+    #to arrange a ranking system, consider history of teams
+    #at the beginning, each team should be assigned a random ranking
+    #then once the teams have finished a full tournament, rankings are sorted
+    #add to the tournament model
+    #def arrange_team_rankings(self):
+    #   sorted_teams = list()
+    #   num_of_teams = self.teams.count()
+    #   for team in self.teams:
+    #       #calculate all of their history of wins
+            #overall score = 0
+            #tournaments = Tournament.objects.filter(teams=team, status=Status.COMPLETE)
+            #for tournament in tournaments:
+            #   #collect their scores
+            #sorted_teams.append(team, overall_score)
+    #   sorted_teams.sort(key=lambda x: x[1])
+    #   now determine seedings, check if values are tied, break tie randomly
+    #verify seedings are proper
 
     class Meta:
         ordering = ['tournament', 'rank']

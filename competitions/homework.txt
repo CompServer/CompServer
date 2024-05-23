@@ -1,13 +1,8 @@
 1) Adding the email to the User account
 6) Automatically Advance multiple teams
-8) Score sorting --> began working on
-
-
 Fix the axes and colors for results page
-Add dead space to the bototm of the page (if it isn't already there)
-Work to fix bracket view, bracket naming, and chart view
+1) Work to fix bracket view, bracket naming, and chart view
 setup rankings for preliminary tournaments (seeds as well)
 add email field to login and registration
-sport and organization form
-score sorting
 automatically advance winners, automatically advance multiple winners
+set up a static profile pho

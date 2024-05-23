@@ -887,8 +887,11 @@ def competition(request: HttpRequest, competition_id: int):
                 organizations[team.organization] = team.organization.name
     sorted_organizations = [k for k,v in sorted(organizations.items(), key=lambda item:item[1])]
     winners = competition.get_winner()
+    results = competition.get_results()
+    #get gsorting
     context = {
         "competition": competition, 
+        "results": results,
         "form": CompetitionStatusForm(),
         "robin_tournaments": robin_tournaments,
         "elimination_tournaments": elimination_tournaments,
