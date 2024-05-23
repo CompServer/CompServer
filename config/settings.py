@@ -382,3 +382,30 @@ AUTHENTICATION_BACKENDS = (
     #'rest_framework_social_oauth2.backends.DjangoOAuth2',
 )
 
+
+USE_SENTRY = True
+
+if USE_SENTRY:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+
+    sentry_sdk.init(
+        dsn="https://ecc96da365761b9276d136bcf2323a60@o4507297296023552.ingest.us.sentry.io/4507297296809984",
+
+        integrations=[
+            DjangoIntegration()
+        ],
+
+        send_default_pii=True,
+
+        environment='production' if PROD else 'development',
+
+        # Set traces_sample_rate to 1.0 to capture 100%
+        # of transactions for performance monitoring.
+        traces_sample_rate=1.0,
+        # Set profiles_sample_rate to 1.0 to profile 100%
+        # of sampled transactions.
+        # We recommend adjusting this value in production.
+        profiles_sample_rate=1.0,
+    )
+
