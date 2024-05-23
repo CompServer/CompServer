@@ -390,7 +390,7 @@ if USE_SENTRY:
     from sentry_sdk.integrations.django import DjangoIntegration
 
     sentry_sdk.init(
-        dsn="https://ecc96da365761b9276d136bcf2323a60@o4507297296023552.ingest.us.sentry.io/4507297296809984",
+        dsn="https://ecc96da365761b9276d136bcf2323a60@o4507297296023552.ingest.us.sentry.io/4507297296809984", # maybe we put this url in a secret?
 
         integrations=[
             DjangoIntegration()
