@@ -547,7 +547,7 @@ class AbstractTournament(models.Model):
         return self.competition.owner
 
     def __str__(self) -> str:
-        return self.event.name + _(" tournament @ ") + str(self.competition) # SumoBot tournament at RoboMed 2023
+        return self.event.name + " " + ("single-elimination" if hasattr(self, "singleeliminationtournament") else "round-robin") + _(" tournament @ ") + str(self.competition) # SumoBot tournament at RoboMed 2023
 
     def get_winner(self) -> list:
         advancers_qs = self.match_set.last().advancers.all()
@@ -767,12 +767,11 @@ class Match(models.Model):
                 self._cached_str =  res + _(" in ") + str(self.tournament) # Battlebots vs Byters in SumoBot tournament @ RoboMed 2023
             else: 
                 self._cached_str =  res # if part of another match we don't want to repeat the tournament
+            self.__class__.objects.filter(pk=self.pk).update(_cached_str=self._cached_str) # hack to save without sending the save signal which would get into an infinite recursive loop
         return str(self._cached_str)
     
     def __str__(self) -> str:
         self._generate_str_recursive()
-        #if self._cached_str is None:    
-        self.save()
         return f"""ID {self.id}, {self._cached_str}""" # type: ignore
 
     class Meta:
