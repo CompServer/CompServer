@@ -61,7 +61,7 @@ steps:
       ]
 
 substitutions:
-  _INSTANCE_NAME: django-instance
+  _INSTANCE_NAME: jmulligan-postgres1
   _REGION: us-central1
   _SERVICE_NAME: compserver-service
   _SECRET_SETTINGS_NAME: django_settings
