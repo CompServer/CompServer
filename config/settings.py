@@ -336,11 +336,14 @@ if DEBUG:
     STATICFILES_DIRS = [
         os.path.join(BASE_DIR, 'static'),
     ]
+    COMPRESS_ROOT = STATICFILES_DIRS[0]
+    SASS_PROCESSOR_ROOT = STATICFILES_DIRS[0]
     # comment out the above and uncomment the below when collecting static
     #STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 else:
     # this is what whitenoise uses (for prod)
     STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+    SASS_PROCESSOR_ROOT = STATIC_ROOT
 
 MEDIA_URL = '/media/'
 
