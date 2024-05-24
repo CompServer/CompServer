@@ -14,6 +14,11 @@
 
 # Use an official lightweight Python image.
 # https://hub.docker.com/_/python
+
+# FROM ubuntu:22.04
+# RUN apt-get
+
+
 FROM python:3.11-slim
 
 ENV APP_HOME /app
@@ -28,8 +33,8 @@ COPY requirements-prod.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install --no-cache-dir -r requirements-prod.txt
 
-#RUN sudo apt install ruby-sass
-RUN npm install -g sass
+RUN apt-get update && apt-get install ruby-sass
+#RUN npm install -g sass
 
 # Copy local code to the container image.
 COPY . .
