@@ -371,6 +371,9 @@ if USE_SASS:
     COMPRESS_PRECOMPILERS = ( 
         ('text/x-scss', 'sass {infile} {outfile}'), 
     )
+    COMPRESS_ENABLED = True
+else:
+    COMPRESS_ENABLED = False
     # COMPRESS_PRECOMPILERS = [
     #         ('text/x-scss', 'django_libsass.SassCompiler'),
     # ]
