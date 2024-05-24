@@ -24,8 +24,8 @@ steps:
 
   - id: "install sasss"
     # apt-get install sass
-    name: "gcr.io/cloud-builders/apt"
-    args: ["install", "ruby-sass"]
+    name: "ubuntu"
+    args: ["apt", "install", "ruby-sass"]
   
   - id: "build image"
     name: "gcr.io/cloud-builders/docker"
