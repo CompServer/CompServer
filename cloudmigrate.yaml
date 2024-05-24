@@ -23,9 +23,10 @@ steps:
   #   args: ["-c", "apt-get update"]
 
   - id: "install sasss"
-    # apt-get install sass
-    name: "ubuntu"
-    args: ["sudo", "apt", "install", "sass"]
+    # install sass w npm
+    name: "gcr.io/cloud-builders/npm"
+    entrypoint: 'npm'
+    args: ['install', 'sass']
   
   - id: "build image"
     name: "gcr.io/cloud-builders/docker"
