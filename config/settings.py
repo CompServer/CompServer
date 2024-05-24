@@ -113,6 +113,9 @@ DEBUG = env("DEBUG", default=False)
 
 DEMO = env('DEMO', default=False)
 
+USE_SASS = True
+
+USE_SENTRY = True
 
 # https://cloud.google.com/python/django/appengine
 # for deployment
@@ -170,7 +173,7 @@ INSTALLED_APPS = [
     'mathfilters', # pip install django-mathfilters
     'whitenoise.runserver_nostatic',
     'compressor',
-    'sass_processor',
+    #'sass_processor',
     'simple_history',
     'social_django',
     'template_partials',
@@ -178,6 +181,8 @@ INSTALLED_APPS = [
     #'easy_timezones', # pip install django-easy-timezones
 ]
 
+if USE_SASS:
+    INSTALLED_APPS.append('sass_processor')
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -336,14 +341,16 @@ if DEBUG:
     STATICFILES_DIRS = [
         os.path.join(BASE_DIR, 'static'),
     ]
-    COMPRESS_ROOT = STATICFILES_DIRS[0]
-    SASS_PROCESSOR_ROOT = STATICFILES_DIRS[0]
+    if USE_SASS:
+        COMPRESS_ROOT = STATICFILES_DIRS[0]
+        SASS_PROCESSOR_ROOT = STATICFILES_DIRS[0]
     # comment out the above and uncomment the below when collecting static
     #STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 else:
     # this is what whitenoise uses (for prod)
     STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-    SASS_PROCESSOR_ROOT = STATIC_ROOT
+    if USE_SASS:
+        SASS_PROCESSOR_ROOT = STATIC_ROOT
 
 MEDIA_URL = '/media/'
 
@@ -353,16 +360,20 @@ STATICFILES_FINDERS = [
     'compressor.finders.CompressorFinder',
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-    'sass_processor.finders.CssFinder',
 ]
 
-# COMPRESS_PRECOMPILERS = [
-#         ('text/x-scss', 'django_libsass.SassCompiler'),
-# ]
 
-COMPRESS_PRECOMPILERS = ( 
-    ('text/x-scss', 'sass {infile} {outfile}'), 
-)
+if USE_SASS:
+    STATICFILES_FINDERS.append('sass_processor.finders.CssFinder')
+
+
+if USE_SASS:
+    COMPRESS_PRECOMPILERS = ( 
+        ('text/x-scss', 'sass {infile} {outfile}'), 
+    )
+    # COMPRESS_PRECOMPILERS = [
+    #         ('text/x-scss', 'django_libsass.SassCompiler'),
+    # ]
 
 
 GS_DEFAULT_ACL = "publicRead"
@@ -397,13 +408,11 @@ CSRF_TRUSTED_ORIGINS = [
 
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
-    # 'social_core.backends.gitlab.GitLabOAuth2',
+    'social_core.backends.gitlab.GitLabOAuth2',
     'social_core.backends.google.GoogleOAuth2',
     #'rest_framework_social_oauth2.backends.DjangoOAuth2',
 )
-
-
-USE_SENTRY = True
+    
 
 if USE_SENTRY:
     import sentry_sdk
