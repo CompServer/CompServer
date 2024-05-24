@@ -16,7 +16,11 @@
 steps:
   # - id: "update web certs"
   #   name: "gcr.io/cloud-builders/gcloud"
-
+  - id: "install sasss"
+    # apt-get install sass
+    name: "debian"
+    args: ["apt-get", "install", "sass"]
+  
   - id: "build image"
     name: "gcr.io/cloud-builders/docker"
     args: ["build", "-t", "gcr.io/${PROJECT_ID}/${_SERVICE_NAME}", "."]
