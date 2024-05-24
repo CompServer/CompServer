@@ -113,7 +113,7 @@ DEBUG = env("DEBUG", default=False)
 
 DEMO = env('DEMO', default=False)
 
-USE_SASS = False
+USE_SASS = True
 
 USE_SENTRY = True
 
