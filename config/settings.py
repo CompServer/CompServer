@@ -409,3 +409,24 @@ if USE_SENTRY:
         enable_tracing=True,
     )
 
+    # # add metrics to sentry
+    # sentry_sdk.metrics.gauge(
+    #     key="page_load",
+    #     value=15.0,
+    #     unit="millisecond",
+    #     tags={
+    #         "page": "/"
+    #     }
+    # )
+
+    # # Add '15.0' to a distribution
+    # # used for tracking the loading times of a component.
+    # sentry_sdk.metrics.distribution(
+    #     key="page_load",
+    #     value=15.0,
+    #     unit="millisecond",
+    #     tags={
+    #         "page": "/"
+    #     }
+    # )
+
