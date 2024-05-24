@@ -169,6 +169,8 @@ INSTALLED_APPS = [
     'crispy_bootstrap5',
     'mathfilters', # pip install django-mathfilters
     'whitenoise.runserver_nostatic',
+    'compressor',
+    'sass_processor',
     'simple_history',
     'social_django',
     'template_partials',
@@ -343,6 +345,22 @@ else:
 MEDIA_URL = '/media/'
 
 MEDIA_ROOT = BASE_DIR / '/uploads/'
+
+STATICFILES_FINDERS = [
+    'compressor.finders.CompressorFinder',
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+    'sass_processor.finders.CssFinder',
+]
+
+# COMPRESS_PRECOMPILERS = [
+#         ('text/x-scss', 'django_libsass.SassCompiler'),
+# ]
+
+COMPRESS_PRECOMPILERS = ( 
+    ('text/x-scss', 'sass {infile} {outfile}'), 
+)
+
 
 GS_DEFAULT_ACL = "publicRead"
 
