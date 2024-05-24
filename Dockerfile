@@ -34,7 +34,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install --no-cache-dir -r requirements-prod.txt
 
 # -y = yes i want to install don't ask me
-RUN apt-get update && apt-get install -y ruby-sass
+RUN apt-get update && apt-get install -y sass
 
 # Copy local code to the container image.
 COPY . .
