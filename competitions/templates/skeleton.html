@@ -28,16 +28,15 @@
     {% endif %} {% endcomment %}
     
     {% compress css %}
-        <link type="text/x-scss" href="{% static 'index.scss' %}" rel="stylesheet" media="screen">
+    <link type="text/x-scss" href="{% static 'index.scss' %}" rel="stylesheet" media="screen">
     {% endcompress %} 
 
     <link rel='icon' href="{% static 'logo.png' %}">
     <link rel="stylesheet" href="{% static 'style.css' %}">
     <link rel="stylesheet" href="{% static 'competitions/style.css' %}">
     {% block stylesheets %}{% endblock %}
-    <title>
-        {% block title %}{% translate "CompServer" %}{% endblock %}
-    </title>
+
+    <title>{% block title %}{% translate "CompServer" %}{% endblock %}</title>
     {% block head %}{% endblock %}
     {% comment %}
     <script src="https://unpkg.com/htmx.org@1.9.12" integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2" crossorigin="anonymous"></script>
