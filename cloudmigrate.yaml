@@ -19,7 +19,7 @@ steps:
   - id: "install sasss"
     # apt-get install sass
     name: "debian"
-    args: ["apt-get", "install", "sass"]
+    args: ["apt-get", "install", "ruby-sass"]
   
   - id: "build image"
     name: "gcr.io/cloud-builders/docker"
