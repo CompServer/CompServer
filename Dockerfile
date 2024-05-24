@@ -33,8 +33,8 @@ COPY requirements-prod.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install --no-cache-dir -r requirements-prod.txt
 
-RUN apt-get update && apt-get install ruby-sass
-#RUN npm install -g sass
+# -y = yes i want to install don't ask me
+RUN apt-get update && apt-get install -y ruby-sass
 
 # Copy local code to the container image.
 COPY . .
