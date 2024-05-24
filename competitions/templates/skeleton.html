@@ -4,6 +4,7 @@
 {% load tz %}
 {% get_current_language as LANGUAGE_CODE %}
 {% get_language_info for LANGUAGE_CODE as lang %}
+{% load compress %}
 
 <!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE }}">
@@ -22,7 +23,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     
     {% if USE_SASS %}
-        {% load compress %}
         {% compress css %}
             <link type="text/x-scss" href="{% static 'index.scss' %}" rel="stylesheet" media="screen">
         {% endcompress %} 
