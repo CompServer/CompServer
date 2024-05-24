@@ -32,4 +32,5 @@ def settings_values(request):
         "PROD": config.settings.PROD,
         #"DEBUG": config.settings.DEBUG, # django provided
         "USE_SENTRY": config.settings.USE_SENTRY,
+        "USE_SASS": config.settings.USE_SASS,
     }
