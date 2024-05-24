@@ -46,8 +46,9 @@
     
     {% comment %} Sentry replay integration, not sure if it goes here or at the top of the body{% endcomment %}
     {% if USE_SENTRY %}
-        <script src="https://js.sentry-cdn.com/ecc96da365761b9276d136bcf2323a60.min.js" crossorigin="anonymous"></script> {% comment %} Put this URL in a secret? {% endcommnet %}
+        <script src="https://js.sentry-cdn.com/ecc96da365761b9276d136bcf2323a60.min.js" crossorigin="anonymous"></script> {% comment %} Put this URL in a secret? {% endcomment %}
     {% endif %}
+
     {% comment %} ^ a block for inserting custom stylesheets/other stuff into the head if nessesary {% endcomment %}
     
 </head>
