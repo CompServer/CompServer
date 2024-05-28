@@ -172,8 +172,8 @@ INSTALLED_APPS = [
     'crispy_bootstrap5',
     'mathfilters', # pip install django-mathfilters
     'whitenoise.runserver_nostatic',
-    'compressor',
-    'sass_processor',
+    #'compressor',
+    #'sass_processor',
     'simple_history',
     'social_django',
     'template_partials',
@@ -181,8 +181,9 @@ INSTALLED_APPS = [
     #'easy_timezones', # pip install django-easy-timezones
 ]
 
-#if USE_SASS:
-#   INSTALLED_APPS.append('sass_processor')
+if USE_SASS:
+    INSTALLED_APPS.append('compressor')
+    INSTALLED_APPS.append('sass_processor')
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
