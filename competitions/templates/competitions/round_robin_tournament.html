@@ -126,7 +126,7 @@
                     {% else %}
                         <b>{{ team.name }}</b>:
                     {% endif %}
-                    {{ points|floatformat:"0" }} {% if points == 1 %} {% translate "point" %} {% else %} {% translate "points" %} {% endif %}
+                    {{ points|floatformat }} {% if points == 1 %} {% translate "point" %} {% else %} {% translate "points" %} {% endif %}
                 </li>
             {% endfor %}
         </div>
