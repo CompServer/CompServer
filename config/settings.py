@@ -358,13 +358,13 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / '/uploads/'
 
 STATICFILES_FINDERS = [
-    'compressor.finders.CompressorFinder',
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 ]
 
 
 if USE_SASS:
+    STATICFILES_FINDERS.append('compressor.finders.CompressorFinder')
     STATICFILES_FINDERS.append('sass_processor.finders.CssFinder')
 
 
