@@ -4,7 +4,7 @@
 {% load tz %}
 {% get_current_language as LANGUAGE_CODE %}
 {% get_language_info for LANGUAGE_CODE as lang %}
-{% load compress %}
+{% comment %} {% load compress %} {% endcomment %}
 
 <!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE }}">
