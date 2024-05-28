@@ -1,11 +1,11 @@
 crispy-bootstrap5
-django-compressor
+#django-compressor
 django-crispy-forms
 django-debug-toolbar
 django-environ
 django-hijack
 django-mathfilters
-django-sass-processor
+#django-sass-processor
 django-simple-history
 django-template-partials
 Django==4.2.7
