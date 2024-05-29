@@ -122,7 +122,7 @@
                         {% endif %}
                         {% with twinner=tournament.winner %}
                             {% if twinner %}
-                                ({% translate "Winner" %}: {{ twinner }})
+                                ({% translate "Winner" %}: {{ twinner.0 }})
                             {% endif %}
                         {% endwith %}
                     {% endif %}
