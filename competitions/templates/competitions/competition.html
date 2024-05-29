@@ -64,20 +64,20 @@
                         {% endif %}
                         <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.event.name }}</a>
                         {% with twinners=tournament.winner %}  
-                            {% with twplural=twinners|pluralize %}
-                                {% if tournament.points_per_win %}
-                                    ({% translate "Points Per Win: " %}{{ tournament.points_per_win|floatformat }}) 
-                                {% endif %}
-                                {% if tournament.points_per_loss %}
-                                    ({% translate "Points Per Loss: " %}{{ tournament.points_per_loss|floatformat }}) 
-                                {% endif %}
-                                {% if tournament.points_per_tie %}
-                                    ({% translate "Points Per Tie: " %}{{ tournament.points_per_tie|floatformat }}) 
-                                {% endif %}
-                                {% if twinners %}
+                            {% if tournament.points_per_win %}
+                                ({% translate "Points Per Win: " %}{{ tournament.points_per_win|floatformat }}) 
+                            {% endif %}
+                            {% if tournament.points_per_loss %}
+                                ({% translate "Points Per Loss: " %}{{ tournament.points_per_loss|floatformat }}) 
+                            {% endif %}
+                            {% if tournament.points_per_tie %}
+                                ({% translate "Points Per Tie: " %}{{ tournament.points_per_tie|floatformat }}) 
+                            {% endif %}
+                            {% if twinners %}
+                                {% with twplural=twinners|pluralize %}{% comment %}For some reason pluralize isn't working directly but if you assign it to a variable it works{% endcomment %}
                                     ({% blocktranslate %}Winner{{ twplural }}{% endblocktranslate %}: {{ twinners|join:", " }})
-                                {% endif %}
-                            {% endwith %}
+                                {% endwith %}
+                            {% endif %}
                         {% endwith %}
                     {% endif %}
                     {% if user.is_staff %}
@@ -120,11 +120,9 @@
                         {% if tournament.points %}
                             ({{ tournament.points|floatformat }} {% translate "points" %}) 
                         {% endif %}
-                        {% with twinners=tournament.winner %}
-                            {% if twinners %}
-                                {% with twplural=twinners|pluralize %}
-                                    ({% blocktranslate %}Winner{{ twplural }}{% endblocktranslate %}: {{ twinners|join:", " }})
-                                {% endwith %}
+                        {% with twinner=tournament.winner %}
+                            {% if twinner %}
+                                ({% translate "Winner" %}: {{ twinner }})
                             {% endif %}
                         {% endwith %}
                     {% endif %}
