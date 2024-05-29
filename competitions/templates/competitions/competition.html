@@ -31,7 +31,15 @@
         </h1>
     </header>
     <div class="row d-flex">
-        <a href="{% url 'competitions:results' competition.id %}">See Results</a>
+        <p>
+            {% if winners %}
+                {% blocktranslate %}Winner{{ winners|pluralize }}{% endblocktranslate %}:
+                {% for team in winners %}
+                    <a href="{% url 'competitions:team' team.id %}">{{ team.name }}</a>
+                {% endfor %}
+            {% endif %}
+            <a href="{% url 'competitions:results' competition.id %}">(see full results)</a>
+        </p>
     </div>
     <hr>
     {% if robin_tournaments %}
@@ -41,19 +49,10 @@
                 <div class = "col-12 tournament">
                     {% if competition.is_archived and user.is_staff %}
                         <i class="bi-archive" title="{{ tournament.status }}"></i>
-                        {% if tournament.is_single_elimination %}
-                            {% translate "Single Elimination Tournament:" %}
-                        {% elif tournament.is_round_robin %}
-                            {% translate "Preliminary Tournament:" %}
-                        {% endif %}
                         <small>{% translate "You can see this archived item because you are signed in as a superuser." %}</small>
                     {% elif tournament.is_in_setup %}
                         <i class="bi bi-device-ssd" title="{{ tournament.status }}"></i> 
-                        {% if tournament.is_single_elimination %}
-                            {% translate "Single Elimination Tournament:" %}
-                        {% elif tournament.is_round_robin %}
-                            {% translate "Preliminary Tournament:" %}
-                        {% endif %}
+                        {% translate "Preliminary Tournament:" %}
                         {% if user.is_staff %} <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.event.name }}</a>{% else %}{{ tournament.event.name }}{% endif %}
                     {% elif tournament.is_judgable or tournament.is_complete or tournament.is_closed %}
                         {% if tournament.is_judgable %} 
@@ -63,30 +62,23 @@
                         {% elif tournament.is_closed %} 
                             <i class="bi-x-circle" title="{{ tournament.status }}"></i>
                         {% endif %}
-                        <a href="{% url 'competitions:tournament' tournament.id %}">{% translate "Preliminary for" %} {{ tournament.event.name }}</a>
-                        {% if tournament.points_per_win %}
-                            ({% translate "Points Per Win: " %}{{ tournament.points_per_win|floatformat:"0" }} ) 
-                        {% endif %}
                         <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.event.name }}</a>
-                        {% if tournament.is_single_elimination %}
-                            {% if tournament.points %}
-                                ({{ tournament.points|floatformat:"0" }} {% translate "points" %}) 
-                                ({% translate "Winner(s): " %} {{ tournament.get_winners }})
-                            {% endif %}
-                        {% elif tournament.is_round_robin %}
-                            {% if tournament.points_per_win %}
-                                ({% translate "Points Per Win: " %}{{ tournament.points_per_win|floatformat:"0" }} ) 
-                            {% endif %}
-                            {% if tournament.points_per_loss %}
-                                ({% translate "Points Per Loss: " %}{{ tournament.points_per_loss|floatformat:"0" }} ) 
-                            {% endif %}
-                            {% if tournament.points_per_tie %}
-                                ({% translate "Points Per Tie: " %}{{ tournament.points_per_tie|floatformat:"0" }} ) 
-                            {% endif %}
-                            {% if tournament.get_winner %}
-                                ({% translate "Winner(s): " %} {{ tournament.get_winner|join:", " }})
-                            {% endif %}
-                        {% endif %}
+                        {% with twinners=tournament.winner %}  
+                            {% with twplural=twinners|pluralize %}
+                                {% if tournament.points_per_win %}
+                                    ({% translate "Points Per Win: " %}{{ tournament.points_per_win|floatformat }}) 
+                                {% endif %}
+                                {% if tournament.points_per_loss %}
+                                    ({% translate "Points Per Loss: " %}{{ tournament.points_per_loss|floatformat }}) 
+                                {% endif %}
+                                {% if tournament.points_per_tie %}
+                                    ({% translate "Points Per Tie: " %}{{ tournament.points_per_tie|floatformat }}) 
+                                {% endif %}
+                                {% if twinners %}
+                                    ({% blocktranslate %}Winner{{ twplural }}{% endblocktranslate %}: {{ twinners|join:", " }})
+                                {% endif %}
+                            {% endwith %}
+                        {% endwith %}
                     {% endif %}
                     {% if user.is_staff %}
                         <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/tournament/{{ tournament.id }}/?next=competition&id={{ tournament.competition.id }}" method="POST" id="status">
@@ -126,11 +118,15 @@
                         {% endif %}
                         <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.event.name }}</a>
                         {% if tournament.points %}
-                            ({{ tournament.points|floatformat:"0" }} {% translate "points" %}) 
+                            ({{ tournament.points|floatformat }} {% translate "points" %}) 
                         {% endif %}
-                        {% if tournament.get_winner %}
-                            ({% translate "Winner(s): " %} {{ tournament.get_winner|join:", " }})
-                        {% endif %}
+                        {% with twinners=tournament.winner %}
+                            {% if twinners %}
+                                {% with twplural=twinners|pluralize %}
+                                    ({% blocktranslate %}Winner{{ twplural }}{% endblocktranslate %}: {{ twinners|join:", " }})
+                                {% endwith %}
+                            {% endif %}
+                        {% endwith %}
                     {% endif %}
                     {% if user.is_staff %}
                         <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/tournament/{{ tournament.id }}/?next=competition&id={{ tournament.competition.id }}" method="POST" id="status">
@@ -186,16 +182,6 @@
             </div>
         </form>
         {% endif %}
-    {% endif %}
-    {% if winners %}
-        <h3>{% translate "Winner(s):" %}</h3>
-        {% for team in winners %}
-            <div class="row d-flex">
-                <div class = "col-12">
-                    <a href="{% url 'competitions:team' team.id %}">{{ team.name }}</a>
-                </div>
-            </div>
-        {% endfor %}
     {% endif %}
     {% comment %}
     {% if results %}

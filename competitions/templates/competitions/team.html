@@ -81,7 +81,7 @@
                 <div class="row d-flex">
                     <div class = "col-12 tournament">
                             <i class="bi-check2-circle" title="{{ competition.status }}"></i> <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament }}</a>
-                            ({{ tournament.points|floatformat:"0" }} {% translate "points" %}) 
+                            ({{ tournament.points|floatformat }} {% translate "points" %}) 
                     </div>
                 </div>
             {% endfor %}

@@ -1012,11 +1012,8 @@ def competition(request: HttpRequest, competition_id: int):
                 organizations[team.organization] = team.organization.name
     sorted_organizations = [k for k,v in sorted(organizations.items(), key=lambda item:item[1])]
     winners = competition.get_winner()
-    results = competition.get_results()
-    #get gsorting
     context = {
         "competition": competition, 
-        "results": results,
         "form": CompetitionStatusForm(),
         "robin_tournaments": robin_tournaments,
         "elimination_tournaments": elimination_tournaments,
@@ -1348,7 +1345,7 @@ def team(request: HttpRequest, team_id: int):
     past_matches_dict = dict()
     for match in past_matches:
         past_matches_dict[match] = match.time
-    sorted_past_matches = [k for k,v in sorted(past_matches_dict.items(), key=lambda item:item[1])]
+    sorted_past_matches = [k for k,v in sorted(past_matches_dict.items(), key=lambda item:item[1] if item[1] else timezone.now())]
     past_competitions = Competition.objects.filter(teams__id = team_id, status = Status.COMPLETE).order_by("end_date", "start_date", "name")
     if DEMO: past_competitions = past_competitions.filter(owner=request.user)
     past_tournaments_won = list()
@@ -1411,11 +1408,11 @@ def team(request: HttpRequest, team_id: int):
     loss_dict = dict()
     for loss in losses:
         loss_dict[loss] = loss[-1].time
-    sorted_losses = {k for k, v in sorted(loss_dict.items(), key=lambda item:item[1])}
+    sorted_losses = {k for k, v in sorted(loss_dict.items(), key=lambda item:item[1] if item[1] else timezone.now())}
     wins_dict = dict()
     for win in wins:
         wins_dict[win] = win[-1].time
-    sorted_wins = {k for k, v in sorted(wins_dict.items(), key=lambda item:item[1])}
+    sorted_wins = {k for k, v in sorted(wins_dict.items(), key=lambda item:item[1] if item[1] else timezone.now())}
     draws_dict = dict()
     for draw in draws:
         draws_dict[draw] = draw[-1].time

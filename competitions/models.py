@@ -343,7 +343,7 @@ class Competition(models.Model):
         robin = RoundRobinTournament.objects.filter(competition__id=self.id, status=Status.COMPLETE).order_by("-name")
         if tournaments:
             for tournament in tournaments:
-                winners = tournament.get_winner()
+                winners = tournament.winner
                 if len(winners) > 1:#multiple winners
                     for winner in winners:
                         if winner.name in totals.keys():
@@ -429,22 +429,15 @@ class Competition(models.Model):
             totals = self.get_results()
             winners = list()
             if totals:
-                greatest_scorer = max(totals.items(), key=operator.itemgetter(1))[0]
-                greatest_score = totals.get(greatest_scorer)
-                totals.pop(greatest_scorer)
-                if greatest_score in totals.values():
-                    for key in totals.keys():
-                        if totals.get(key) == greatest_score:
-                            team = Team.objects.filter(name=key).get()
-                            winners.append(key)
-                team = Team.objects.filter(name=greatest_scorer).get()
-                winners.append(team.name)
-                sorted_winners = sorted(winners)
-                sorted_winner_objects = []
-                for winner in sorted_winners:
-                    obj = Team.objects.get(name=winner)
-                    sorted_winner_objects.append(obj)
-                return sorted_winner_objects
+                greatest_score = max(totals.values())
+                for key in totals:
+                    if totals[key] == greatest_score:
+                        team = Team.objects.filter(name=key).get()
+                        winners.append(team)
+                sorted_winners = sorted(winners, key=lambda t: t.name)
+                return sorted_winners
+            else:
+                return ()
         else:
             return ()
 
@@ -602,15 +595,6 @@ class AbstractTournament(models.Model):
     def __str__(self) -> str:
         return self.event.name + " " + ("single-elimination" if hasattr(self, "singleeliminationtournament") else "round-robin") + _(" tournament @ ") + str(self.competition) # SumoBot tournament at RoboMed 2023
 
-    def get_winner(self) -> list:
-        if self.status == Status.COMPLETE:
-            advancers_qs = self.match_set.last().advancers.all()
-            if advancers_qs.count() != 0:
-                advancers = [advancer.name for advancer in advancers_qs]
-                return advancers
-        else:
-            return ()
-
     def get_end_time(self):
         time_in_seconds = 0
         if self.match_set and self.is_complete:
@@ -726,6 +710,35 @@ class RoundRobinTournament(AbstractTournament):
     def is_round_robin(self) -> bool:
         return True
 
+    @property
+    def winner(self) -> list:
+        if self.status == Status.COMPLETE:
+            totals = dict()
+            ppl = float(self.points_per_loss)
+            ppw = float(self.points_per_win)
+            ppt = float(self.points_per_tie)
+            for match in self.match_set.all():
+                num_winners = match.advancers.count()
+                for team in match.advancers.all():
+                    if num_winners == 1:
+                        totals[team] = totals.get(team, 0) + ppw
+                    if num_winners > 1:
+                        totals[team] = totals.get(team, 0) + ppt
+                starters = match.starting_teams.all()
+                winners = match.advancers.all()
+                for team in starters:
+                    if team not in winners:
+                        totals[team] = totals.get(team, 0) + ppl
+            highest_score = max(totals.values())
+            highest_scorers = []
+            for team in totals:
+                if totals[team] == highest_score:
+                    highest_scorers.append(team)
+            return highest_scorers
+
+        else:
+            return ()
+
     def get_points_for_each_team(self):
         team_colon_points = dict()
         for match in Match.objects.filter(tournament=self):
@@ -821,6 +834,7 @@ class SingleEliminationTournament(AbstractTournament):
         Winner take all situation (1st place is really the only position that's established)
     '''
     prev_tournament = models.ForeignKey(RoundRobinTournament, on_delete=models.DO_NOTHING, blank=True, null=True)
+    # interpolated: winner (of the top-level match)
 
     @property
     def is_single_elimination(self) -> bool:   
@@ -828,9 +842,16 @@ class SingleEliminationTournament(AbstractTournament):
     @property
     def is_round_robin(self) -> bool:
         return False
-
-    # interpolated: winner (of the top-level match)
-
+    @property
+    def winner(self) -> list:
+        if self.status == Status.COMPLETE:
+            advancers_qs = self.match_set.last().advancers.all()
+            if advancers_qs.count() != 0:
+                advancers = [advancer.name for advancer in advancers_qs]
+                return advancers
+        else:
+            return ()
+        
 # class DoubleEliminationTournament(AbstractTournament):
 #     ''' Has a "looser's" bracket
 #         Everybody plays at least 2 matches
