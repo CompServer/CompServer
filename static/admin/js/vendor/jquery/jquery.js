@@ -10081,6 +10081,7 @@ jQuery.ajaxTransport( function( options ) {
 					options.url,
 					options.async,
 					options.username,
+					options.email,
 					options.password
 				);
 

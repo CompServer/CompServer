@@ -109,12 +109,13 @@ assert SECRET_KEY is not None
 #         DEMO=(bool, False),
 #   )
 
-
-
 DEBUG = env("DEBUG", default=False)
 
 DEMO = env('DEMO', default=False)
 
+USE_SASS = False
+
+USE_SENTRY = True
 
 # https://cloud.google.com/python/django/appengine
 # for deployment
@@ -171,12 +172,18 @@ INSTALLED_APPS = [
     'crispy_bootstrap5',
     'mathfilters', # pip install django-mathfilters
     'whitenoise.runserver_nostatic',
+    #'compressor',
+    #'sass_processor',
     'simple_history',
     'social_django',
+    'template_partials',
     #'colorfield', # pip install django-colorfield
     #'easy_timezones', # pip install django-easy-timezones
 ]
 
+if USE_SASS:
+    INSTALLED_APPS.append('compressor')
+    INSTALLED_APPS.append('sass_processor')
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -335,15 +342,43 @@ if DEBUG:
     STATICFILES_DIRS = [
         os.path.join(BASE_DIR, 'static'),
     ]
+    if USE_SASS:
+        COMPRESS_ROOT = STATICFILES_DIRS[0]
+        SASS_PROCESSOR_ROOT = STATICFILES_DIRS[0]
     # comment out the above and uncomment the below when collecting static
     #STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 else:
     # this is what whitenoise uses (for prod)
     STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+    if USE_SASS:
+        SASS_PROCESSOR_ROOT = STATIC_ROOT
 
 MEDIA_URL = '/media/'
 
 MEDIA_ROOT = BASE_DIR / '/uploads/'
+
+STATICFILES_FINDERS = [
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+]
+
+
+if USE_SASS:
+    STATICFILES_FINDERS.append('compressor.finders.CompressorFinder')
+    STATICFILES_FINDERS.append('sass_processor.finders.CssFinder')
+
+
+if USE_SASS:
+    COMPRESS_PRECOMPILERS = ( 
+        ('text/x-scss', 'sass {infile} {outfile}'), 
+    )
+    COMPRESS_ENABLED = True
+else:
+    COMPRESS_ENABLED = False
+    # COMPRESS_PRECOMPILERS = [
+    #         ('text/x-scss', 'django_libsass.SassCompiler'),
+    # ]
+
 
 GS_DEFAULT_ACL = "publicRead"
 
@@ -377,20 +412,18 @@ CSRF_TRUSTED_ORIGINS = [
 
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
-    # 'social_core.backends.gitlab.GitLabOAuth2',
+    'social_core.backends.gitlab.GitLabOAuth2',
     'social_core.backends.google.GoogleOAuth2',
     #'rest_framework_social_oauth2.backends.DjangoOAuth2',
 )
-
-
-USE_SENTRY = True
+    
 
 if USE_SENTRY:
     import sentry_sdk
     from sentry_sdk.integrations.django import DjangoIntegration
 
     sentry_sdk.init(
-        dsn="https://ecc96da365761b9276d136bcf2323a60@o4507297296023552.ingest.us.sentry.io/4507297296809984",
+        dsn="https://ecc96da365761b9276d136bcf2323a60@o4507297296023552.ingest.us.sentry.io/4507297296809984", # maybe we put this url in a secret?
 
         integrations=[
             DjangoIntegration()
@@ -409,4 +442,25 @@ if USE_SENTRY:
         profiles_sample_rate=1.0,
         enable_tracing=True,
     )
+
+    # # add metrics to sentry
+    # sentry_sdk.metrics.gauge(
+    #     key="page_load",
+    #     value=15.0,
+    #     unit="millisecond",
+    #     tags={
+    #         "page": "/"
+    #     }
+    # )
+
+    # # Add '15.0' to a distribution
+    # # used for tracking the loading times of a component.
+    # sentry_sdk.metrics.distribution(
+    #     key="page_load",
+    #     value=15.0,
+    #     unit="millisecond",
+    #     tags={
+    #         "page": "/"
+    #     }
+    # )
 

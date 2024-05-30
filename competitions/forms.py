@@ -1,10 +1,7 @@
-
-
 from typing import Optional
 
+from PIL import Image
 from crispy_forms.helper import FormHelper
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit
 from crispy_forms.layout import Field, HTML, Layout, Submit
 from django import forms
 from django.contrib.auth.models import User
@@ -13,25 +10,17 @@ from django.urls import reverse_lazy
 
 from competitions.models import (
     AbstractTournament,
+    Arena,
     Competition,
     Match,
     RoundRobinTournament,
     SingleEliminationTournament,
     Sport,
     Team,
-)
-from competitions.models import (
-    AbstractTournament,
-    Competition,
-    Match,
-    RoundRobinTournament,
-    SingleEliminationTournament,
-    Sport,
-    Team,
+    User
 )
 
-from .models import Team
-from .utils import *
+from competitions.utils import *
 
 class JudgeForm(forms.ModelForm):
     possible_advancers = None
@@ -185,26 +174,11 @@ class CreateCompetitionsForm(forms.ModelForm):
             'end_date': forms.DateInput(attrs={'format': 'yyyy-mm-dd','type':'date'}),
         }
 
-# class TournamentForm(forms.Form):
-#     tournament_type = forms.ChoiceField(choices=[('rr', 'Round Robin'), ('se', 'Single Elimination')], label="Tournament Type")
-
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         self.helper = FormHelper()
-#         self.helper.form_id = 'create_tournament_form'
-#         self.helper.attrs = {
-#             'hx-post': reverse_lazy('competitions:create_tournament'),
-#             'hx-target': '#competitions',
-#             'hx-swap': 'outerHTML',
-#         }
-#         self.helper.add_input(Submit('submit', 'Create Tournament'))
-
 class SETournamentForm(forms.ModelForm):
     def __init__(self, *args, competition: Optional[Competition]=None, **kwargs):
         super().__init__(*args, **kwargs)
         #self.fields['competition_field'].queryset = Competition.objects.filter(id=competition.id)
         self.helper = FormHelper(self)
-
         self.helper.form_id = 'create_setournament_form'
         self.fields['competition'].disabled = True
         if not kwargs.get('instance',None):
@@ -213,17 +187,13 @@ class SETournamentForm(forms.ModelForm):
         else:
             self.fields['competition'].initial = kwargs['instance'].competition
             competition = kwargs['instance'].competition
-
         self.fields['event'].queryset = competition.events
         self.fields['teams'].queryset = competition.teams.all()
         self.fields['teams'].initial = competition.teams.all()
         self.fields['points'].help_text = "How many points should be awarded to the winner?"
         self.fields['prev_tournament'].queryset = RoundRobinTournament.objects.filter(competition=competition)
         self.fields['prev_tournament'].label = "Previous Tournament"
-
         self.helper.add_input(Submit('submit', 'Save Tournament'))
-        #self.events = competition.events
-        #self.fields['events'].queryset = Event.objects.filter(competition=competition)
 
     class Meta:
         model = SingleEliminationTournament
@@ -315,3 +285,21 @@ class ArenaColorForm(forms.Form):
         if self.cleaned_data['color'] == '#fff5a8':
             return False
         return super().is_valid()
+
+class ArenaForm(forms.ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['color'].widget = TextInput(attrs={"type": "color"})
+
+    # def is_valid(self):
+    #     self.full_clean()
+    #     if self.cleaned_data['color'] == '#fff5a8':
+    #         return False
+    #     return super().is_valid()
+
+    class Meta:
+        model = Arena
+        fields = ['capacity', 'color']
+        template_name = 'competitions/arena.html'
+        # success_url = "/"

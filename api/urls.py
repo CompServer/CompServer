@@ -2,8 +2,11 @@ from django.urls import path
 
 from .views import *
 
+app_name = "api"
 urlpatterns = [
-    path('teams/', teams, name="api_teams"),
-    path('teams/new/', new_team, name="api_new_team"),
-    path('tournament_form/<int:competition_id>/', tournament_form, name='api_tournamentform')
+    path('arenas/new/', new_arena, name="new_arena"),
+    path('competition/<int:competition_id>/judge/<int:judge_id>/remove/', remove_judge, name="remove_judge"),
+    path('teams/', teams, name="teams"),
+    path('teams/new/', new_team, name="new_team"),
+    path('tournament_form/<int:competition_id>/', tournament_form, name='tournamentform')
 ]

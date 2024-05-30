@@ -1,0 +1,27 @@
+{% extends 'skeleton.html' %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% translate "Arena:" %} {{ arena.name }}{% endblock %} 
+{% block content %}
+    <header>
+        <h1>{% translate "Arena:" %} {{ arena.name }}</h1>
+    </header>
+    {% if user.is_staff %}
+        <form method="post" action=".">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <button type="submit" class="btn btn-secondary mb-3">{% translate "Submit" %}</button>
+        </form>
+    {% endif %}
+    {% if arena.match_set.exists %}
+        <div class="match-schedule">
+            <h3>{% translate "Matches Scheduled Here" %}</h3>
+            <ul>
+                {% for match in arena.match_set.all %}
+                    <li>{{ match.time }} {% translate "between" %} {{ match }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+{% endblock %}
