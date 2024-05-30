@@ -26,3 +26,4 @@ staticfiles/
 
 !cloudmigrate.yaml
 !.gitlab-ci.yml
+!secrets-default.yml
