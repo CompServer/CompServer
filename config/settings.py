@@ -115,7 +115,7 @@ DEMO = env('DEMO', default=False)
 
 USE_SASS = False
 
-USE_SENTRY = True
+USE_SENTRY = False
 
 # https://cloud.google.com/python/django/appengine
 # for deployment
