@@ -32,7 +32,6 @@ class SuppressErrors(logging.Filter):
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
@@ -85,19 +84,23 @@ if PROD:
     else:
         raise Exception("No local .env or GOOGLE_CLOUD_PROJECT detected. No secrets found.")
     SECRET_KEY = env("SECRET_KEY")
-    SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = env('GOOGLE_CLIENT_ID')
-    SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = env('GOOGLE_CLIENT_SECRET')
-    SOCIAL_AUTH_GITHUB_KEY = env('GITHUB_CLIENT_ID')
-    SOCIAL_AUTH_GITHUB_SECRET = env('GITHUB_CLIENT_SECRET')
+    SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = env('GOOGLE_CLIENT_ID', default=None)
+    SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = env('GOOGLE_CLIENT_SECRET', default=None)
+    SOCIAL_AUTH_GITHUB_KEY = env('GITHUB_CLIENT_ID', default=None)
+    SOCIAL_AUTH_GITHUB_SECRET = env('GITHUB_CLIENT_SECRET', default=None)
+    SENTRY_URL = env('SENTRY_URL', default=None)
+    SENTRY_REPLAY_URL = env('SENTRY_REPLAY_URL', default=None)
 else:
     if os.path.exists('secrets.yml'):
         with open('secrets.yml') as f:
             config = dict(yaml.safe_load(f))
             SECRET_KEY = config["SECRET_KEY"]
-            SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = config['GOOGLE_CLIENT_ID']
-            SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = config['GOOGLE_CLIENT_SECRET']
-            SOCIAL_AUTH_GITHUB_KEY = config['GITHUB_CLIENT_ID']
-            SOCIAL_AUTH_GITHUB_SECRET = config['GITHUB_CLIENT_SECRET']
+            SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = config.get('GOOGLE_CLIENT_ID',None)
+            SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = config.get('GOOGLE_CLIENT_SECRET',None)
+            SOCIAL_AUTH_GITHUB_KEY = config.get('GITHUB_CLIENT_ID',None)
+            SOCIAL_AUTH_GITHUB_SECRET = config.get('GITHUB_CLIENT_SECRET',None)
+            SENTRY_URL = config.get('SENTRY_URL',None)
+            SENTRY_REPLAY_URL = config.get("SENTRY_REPLAY_URL", None)
     else:
         raise Exception("No local .env or secrets.yml detected. No secrets found.")
 
@@ -335,7 +338,7 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
-STATIC_URL = f"/static/"
+STATIC_URL = "/static/"
 
 if DEBUG:
     # this only applies if debug=true
@@ -389,7 +392,7 @@ MESSAGE_TAGS = {
     messages.ERROR: 'danger',
 }
 
-SHOW_TOOLBAR_CALLBACK = lambda request: DEBUG
+SHOW_TOOLBAR_CALLBACK = lambda request: request.user.is_superuser
 
 LOGIN_REDIRECT_URL = '/'
 
@@ -422,8 +425,9 @@ if USE_SENTRY:
     import sentry_sdk
     from sentry_sdk.integrations.django import DjangoIntegration
 
+    assert SENTRY_URL is not None, "Sentry URL must be set if USE_SENTRY = True"
     sentry_sdk.init(
-        dsn="https://ecc96da365761b9276d136bcf2323a60@o4507297296023552.ingest.us.sentry.io/4507297296809984", # maybe we put this url in a secret?
+        dsn=SENTRY_URL, # maybe we put this url in a secret?
 
         integrations=[
             DjangoIntegration()
