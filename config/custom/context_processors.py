@@ -33,4 +33,5 @@ def settings_values(request):
         #"DEBUG": config.settings.DEBUG, # django provided
         "USE_SENTRY": config.settings.USE_SENTRY,
         "USE_SASS": config.settings.USE_SASS,
+        "SENTRY_REPLAY_URL": config.settings.SENTRY_REPLAY_URL,
     }
