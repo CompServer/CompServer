@@ -2,10 +2,9 @@
 
 from django import forms
 from django.conf import settings
-from django.utils.safestring import mark_safe
-from django.conf import settings
 from django.forms import TextInput
 from django.template.loader import render_to_string
+from django.utils.safestring import mark_safe
 
 COLORFIELD_HTML_WIDGET = u"""
 <script type="text/javascript">(function($){

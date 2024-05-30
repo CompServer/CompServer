@@ -1,17 +1,18 @@
 from django.urls import path
-from . import views
-from django.views.generic.base import RedirectView
-from config.settings import DEMO
-from django.views.generic.base import RedirectView
 from django.urls import reverse_lazy
+from django.views.generic.base import RedirectView
+
+from config.settings import DEMO
+
+from . import views
 
 app_name = "competitions"
 urlpatterns = [
     path("arena/<int:arena_id>/", views.arena, name="arena"),
     path("competition/<int:competition_id>/new_judge/", views.new_judge, name="new_judge"),
     path("competition/", views.competitions, name="competitions"),
-    path("competition/<int:competition_id>/", views.competition, name="competition"),
     path("competition/create/", views.create_competition, name="create_competition"),
+    path("competition/<int:competition_id>/", views.competition, name="competition"),
     path("competition/<int:competition_id>/", RedirectView.as_view(url='competition'), name="competition_score"), # legacy so they can be hyperlinked to
     path("competition/<int:competition_id>/results", views.results, name="results"), # legacy so they can be hyperlinked to
     path("organization/<int:organization_id>/", views.organization, name="organization"),

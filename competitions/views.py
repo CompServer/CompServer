@@ -3,35 +3,25 @@ from heapq import nsmallest
 import math
 from operator import attrgetter
 import operator
-import random
 from random import shuffle
 import random
-from typing import Union
-from typing import Dict, Iterable, List, Set, Union
-from typing import Set, Union
-from typing import Union
-import zoneinfo
 import traceback
+from typing import Dict, Iterable, List, Set, Union
+import zoneinfo
+
 from crispy_forms.utils import render_crispy_form
 from django.contrib import messages
 from django.contrib.auth import PermissionDenied
 from django.contrib.auth.views import login_required
 from django.core.exceptions import SuspiciousOperation
-from django.core.exceptions import SuspiciousOperation
-from django.db.models import Max
-from django.db.models import Q, QuerySet
+from django.db.models import Q
 from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template import RequestContext
 from django.template.exceptions import TemplateDoesNotExist
-from django.template.exceptions import TemplateDoesNotExist
 from django.urls import reverse
 from django.utils import timezone
-from django.core.exceptions import SuspiciousOperation
-from django.template.exceptions import TemplateDoesNotExist
-import random
-import zoneinfo
-from typing import Union
+
 from .forms import *
 from .models import *
 from .utils import *

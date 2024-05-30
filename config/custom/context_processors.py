@@ -28,5 +28,9 @@ def current_time(request):
 def settings_values(request):
     import config.settings
     return {
-        "settings_DEMO": config.settings.DEMO, 
+        "DEMO": config.settings.DEMO, 
+        "PROD": config.settings.PROD,
+        #"DEBUG": config.settings.DEBUG, # django provided
+        "USE_SENTRY": config.settings.USE_SENTRY,
+        "USE_SASS": config.settings.USE_SASS,
     }

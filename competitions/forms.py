@@ -1,19 +1,26 @@
 from typing import Optional
+
+from PIL import Image
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Field, HTML, Layout, Submit
 from django import forms
-from django.contrib import messages
 from django.contrib.auth.models import User
-from django.db.models import QuerySet
 from django.forms.widgets import TextInput
 from django.urls import reverse_lazy
-from competitions.models import AbstractTournament, Competition, SingleEliminationTournament, Sport, Team, Match, RoundRobinTournament, Arena, ColorField
-from .widgets import ColorPickerWidget, ColorWidget
-from .utils import *
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import HTML, Button, Field, Layout, Submit
-from .models import Team
-from crispy_forms.layout import Submit
-from .models import Team, Profile, User
-from PIL import Image
+
+from competitions.models import (
+    AbstractTournament,
+    Arena,
+    Competition,
+    Match,
+    RoundRobinTournament,
+    SingleEliminationTournament,
+    Sport,
+    Team,
+    User
+)
+
+from competitions.utils import *
 
 class JudgeForm(forms.ModelForm):
     possible_advancers = None

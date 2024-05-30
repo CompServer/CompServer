@@ -1,0 +1,4 @@
+django-storages[google]
+google-cloud-secret-manager
+gunicorn
+sentry-sdk[django]

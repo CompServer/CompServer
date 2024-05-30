@@ -4,6 +4,7 @@
 {% load tz %}
 {% get_current_language as LANGUAGE_CODE %}
 {% get_language_info for LANGUAGE_CODE as lang %}
+{% comment %} {% load compress %} {% endcomment %}
 
 <!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE }}">
@@ -11,24 +12,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta property="og:site_name" content={% translate "CompServer" %}>
+    <meta property="og:title" content={% translate "CompServer" %}>
+    <meta property="og:description" content={% translate "CompServer is a Django web app designed to aid in the setup, running, scoring and reporting of tournament-style competitions." %}>
+    <meta property="og:url" content="https://{{ request.get_host }}">
+    <meta property="og:image" content="https://{{ request.get_host }}{% static 'logo.png' %}">
+    <meta name="theme-color" content="#800080">
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    {% if debug %}
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.css" rel="stylesheet" integrity="sha384-8dbpXuP2nso7zrhApj0aSxeb0ZitbTeO0hTKxRcXavYE0vv4nhBEqvv+o+0X94A8" crossorigin="anonymous">
-    {% else %}
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-    {% endif %}
+    
+    {% comment %} {% if USE_SASS %}
+        {% compress css %}
+            <link type="text/x-scss" href="{% static 'index.scss' %}" rel="stylesheet" media="screen">
+        {% endcompress %} 
+    {% else %} {% endcomment %}
+        {% if debug %}
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.css" rel="stylesheet" integrity="sha384-8dbpXuP2nso7zrhApj0aSxeb0ZitbTeO0hTKxRcXavYE0vv4nhBEqvv+o+0X94A8" crossorigin="anonymous">
+        {% else %}
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+        {% endif %} 
+    {% comment %} {% endif %} {% endcomment %}
+
     <link rel='icon' href="{% static 'logo.png' %}">
     <link rel="stylesheet" href="{% static 'style.css' %}">
     <link rel="stylesheet" href="{% static 'competitions/style.css' %}">
     {% block stylesheets %}{% endblock %}
-    <title>
-        {% block title %}Robocomp{% endblock %}
-    </title>
+    
+    <title>{% block title %}{% translate "CompServer" %}{% endblock %}</title>
     {% block head %}{% endblock %}
     {% comment %}
     <script src="https://unpkg.com/htmx.org@1.9.12" integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2" crossorigin="anonymous"></script>
     {% endcomment %}
     <script src="https://unpkg.com/htmx.org@1.9.12/dist/htmx.js" integrity="sha384-qbtR4rS9RrUMECUWDWM2+YGgN3U4V4ZncZ0BvUcg9FGct0jqXz3PUdVpU1p0yrXS" crossorigin="anonymous"></script>
+    
+    {% comment %} Sentry replay integration, not sure if it goes here or at the top of the body{% endcomment %}
+    {% if USE_SENTRY %}
+        <script src="https://js.sentry-cdn.com/ecc96da365761b9276d136bcf2323a60.min.js" crossorigin="anonymous"></script> {% comment %} Put this URL in a secret? {% endcomment %}
+    {% endif %}
 
     {% comment %} ^ a block for inserting custom stylesheets/other stuff into the head if nessesary {% endcomment %}
     
@@ -52,6 +73,9 @@
     }
     {% endif %}
     {% endcomment %}
+    {% if USE_SENTRY %}
+        <script src="https://js.sentry-cdn.com/ecc96da365761b9276d136bcf2323a60.min.js" crossorigin="anonymous"></script>
+    {% endif %}
 
     {% comment %} make sure to install django hijack before using this {% endcomment %}
     {% if request.user|can_hijack:another_user %}
@@ -62,7 +86,7 @@
             <input type="hidden" name="next" value="{{ request.path }}">
         </form>
     {% endif %}
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark d-flex" aria-label="navbar" id="Navbar">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-secondary d-flex" aria-label="navbar" id="Navbar">
         <div class="container-fluid">
             <a class="navbar-brand p-0 ps-2" href="{% url 'competitions:home' %}"><img src="{% static 'logo.png' %}" style="height: 40px;"></a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarcontent" aria-controls="navbarcontent" aria-expanded="false" aria-label="Toggle navigation">
@@ -73,7 +97,7 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'competitions:home' %}">{% translate "Home" %}</a>
                     </li>
-                    {% if settings_DEMO %}
+                    {% if DEMO %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'competitions:competitions' %}">{% translate "Competitions" %}</a>
                     </li>
