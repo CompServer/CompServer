@@ -10,7 +10,6 @@ app_name = "competitions"
 urlpatterns = [
     path("arena/<int:arena_id>/", views.arena, name="arena"),
     path("competition/<int:competition_id>/new_judge/", views.new_judge, name="new_judge"),
-    path("competition/", views.competitions, name="competitions"),
     path("competition/create/", views.create_competition, name="create_competition"),
     path("competition/<int:competition_id>/", views.competition, name="competition"),
     path("competition/<int:competition_id>/", RedirectView.as_view(url='competition'), name="competition_score"), # legacy so they can be hyperlinked to
@@ -36,7 +35,7 @@ urlpatterns = [
 
 if DEMO:
     # show information about this webapp
-    urlpatterns += [path('', views.home, name="home")]
+    urlpatterns += [path('', views.home, name="home"), path("competition/", views.competitions, name="competitions"),]
 else:
     # go directly to the competitions page
-    urlpatterns += [path('', RedirectView.as_view(url=reverse_lazy("competitions:competitions")), name="home")]
+    urlpatterns += [path('', views.competitions, name="home"), path('', RedirectView.as_view(url=reverse_lazy("home")), name="competitions")]

@@ -966,9 +966,9 @@ def arena(request: HttpRequest, arena_id: int):
 
 def competitions(request: HttpRequest):
     competition_list = Competition.objects.all().order_by("-status", "start_date")
-    if not competition_list and not request.user.is_superuser:
-        messages.error(request, 'There are no competitions at this time.')
-        return redirect(reverse("competitions:home"))
+    # if not competition_list and not request.user.is_superuser:
+    #     messages.error(request, 'There are no competitions at this time.')
+    #     return redirect(reverse("competitions:home"))
     context = {"competition_list": competition_list, "form": CompetitionStatusForm()}
     return render(request, "competitions/competitions.html", context)
 

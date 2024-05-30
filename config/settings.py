@@ -416,6 +416,7 @@ CSRF_TRUSTED_ORIGINS = [
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
     'social_core.backends.gitlab.GitLabOAuth2',
+    'social_core.backends.github.GithubOAuth2',
     'social_core.backends.google.GoogleOAuth2',
     #'rest_framework_social_oauth2.backends.DjangoOAuth2',
 )
