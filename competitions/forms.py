@@ -1,6 +1,5 @@
 from typing import Optional
 
-from PIL import Image
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Field, HTML, Layout, Submit
 from django import forms
@@ -17,9 +16,7 @@ from competitions.models import (
     SingleEliminationTournament,
     Sport,
     Team,
-    User
 )
-
 from competitions.utils import *
 
 class JudgeForm(forms.ModelForm):

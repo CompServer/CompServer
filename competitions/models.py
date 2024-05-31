@@ -1,6 +1,5 @@
 import datetime
 import math
-import operator
 import random
 import string
 from typing import Any, ClassVar, List
