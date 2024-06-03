@@ -580,7 +580,7 @@ class AbstractTournament(models.Model):
     start_time = models.DateTimeField(default=timezone.now)
     points = models.DecimalField(max_digits=20, decimal_places=10, blank=True, null=True) # for winner # dwheadon: is 10 digits / decimals enough / too much?
     # These Event-related things might depend on the competition: speed race with 1 v 1 at this competition but speed race with 4 v 4 at another (both are the same event)
-    # max_teams_per_match = models.SmallIntegerField(default=2)
+    max_teams_per_match = models.SmallIntegerField(default=2)
     max_teams_to_advance = models.SmallIntegerField(default=1)
     # teams_to_advance_rounds_up = models.BooleanField() # in a 4max/2adv situation if a match only has enough for say 3 competitors, do we advance two (round up) or 1 (round down)
     # tied_teams_all_advance = models.BooleanField()

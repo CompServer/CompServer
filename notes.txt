@@ -207,8 +207,10 @@ pip install django-tz-detect
 
 
 ERRORS
-(harry) There are apparently errors with SET bracket pathfinding, but I found no errors occuring
-while debugging, so until someone shows me it's failing, I can't do anything about it.
+(harry) WHEN EVERYTHING IS MERGED INTO THE FINAL BRANCH, WE WILL PROBABLY HAVE TO DELETE AND 
+REMAKE THE DATABASE. I ran into so many "column not found" errors that were quite literally
+unfixable, and the solution to those problems was to just delete the database and remake it
+from scratch.
 
 'CreateSETournamentForm' object has no attribute 'generate_matches'
 'NoneType' object has no attribute 'next_matches' (Called single_elimination_tournament)

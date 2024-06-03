@@ -47,7 +47,7 @@
         {% for tournament in robin_tournaments %}
             <div class="row d-flex">
                 <div class = "col-12 tournament">
-                    {% if competition.is_archived and user.is_staff %}
+                    {% if tournament.is_archived and user.is_staff %}
                         <i class="bi-archive" title="{{ tournament.status }}"></i>
                         <small>{% translate "You can see this archived item because you are signed in as a superuser." %}</small>
                     {% elif tournament.is_in_setup %}
@@ -101,32 +101,9 @@
         {% for tournament in elimination_tournaments %}
             <div class="row d-flex">
                 <div class = "col-12 tournament">
-                    {% if competition.is_archived and user.is_staff %}
-                        <i class="bi-archive" title="{{ tournament.status }}"></i>
+                    {% if tournament.is_archived and user.is_staff %}
+                        <i class="bi-archive" title="{{ tournament.status }}"></i> {{ tournament.event.name }}
                         <small>You can see this archived item because you are signed in as a superuser.</small>
-                    {% elif tournament.is_viewable %}
-                        {% if tournament.is_judgable %} 
-                            <i class="bi-activity" title="{{ tournament.status }}"></i>
-                        {% elif tournament.is_complete %} 
-                            <i class="bi-check2-circle" title="{{ tournament.status }}"></i>
-                        {% elif tournament.is_closed %} 
-                            <i class="bi-x-circle" title="{{ tournament.status }}"></i> <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.event.name }}</a>
-                        {% elif tournament.is_in_setup %}
-                            <i class="bi-gear" title="{{ tournament.status }}"></i> {% if user.is_staff %} <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.event.name }}</a>{% else %}{{ tournament.event.name }}{% endif %}
-                        {% elif competition.is_archived %}
-                            <i class="bi-archive" title="{{ tournament.status }}"></i> {{ tournament }} <small>You can see this archived item because you are signed in as a superuser.</small>
-                        {% endif %}
-                        <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.event.name }}</a>
-                        {% if tournament.points %}
-                            ({{ tournament.points|floatformat }} {% translate "points" %}) 
-                        {% endif %}
-                        {% with twinner=tournament.winner %}
-                            {% if twinner %}
-                                ({% translate "Winner" %}: {{ twinner.0 }})
-                            {% endif %}
-                        {% endwith %}
-                    {% endif %}
-                    {% if user.is_staff %}
                         <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/tournament/{{ tournament.id }}/?next=competition&id={{ tournament.competition.id }}" method="POST" id="status">
                             {% csrf_token %}
                             <div class="input-group d-inline">
@@ -137,7 +114,37 @@
                                 </select>
                             </div>
                         </form>
-                    {% endif %} 
+                    {% elif not tournament.is_archived %}
+                        {% if tournament.is_judgable %} 
+                            <i class="bi-activity" title="{{ tournament.status }}"></i> <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.event.name }}</a>
+                        {% elif tournament.is_complete %} 
+                            <i class="bi-check2-circle" title="{{ tournament.status }}"></i> <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.event.name }}</a>
+                        {% elif tournament.is_closed %} 
+                            <i class="bi-x-circle" title="{{ tournament.status }}"></i> <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.event.name }}</a>
+                        {% elif tournament.is_in_setup %}
+                            <i class="bi bi-device-ssd" title="{{ tournament.status }}"></i> {% if user.is_staff %} <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.event.name }}</a>{% else %}{{ tournament.event.name }}{% endif %}
+                        {% endif %}
+                        {% if tournament.points %}
+                            ({{ tournament.points|floatformat }} {% translate "points" %}) 
+                        {% endif %}
+                        {% with twinner=tournament.winner %}
+                            {% if twinner %}
+                                ({% translate "Winner" %}: {{ twinner.0 }})
+                            {% endif %}
+                        {% endwith %}
+                        {% if user.is_staff %}
+                            <form class="form-inline my-2 my-md-0 justify-content-end d-inline ps-2" action="/tournament/{{ tournament.id }}/?next=competition&id={{ tournament.competition.id }}" method="POST" id="status">
+                                {% csrf_token %}
+                                <div class="input-group d-inline">
+                                    <select name="status" onchange="this.form.submit();">
+                                        {% for value, translated_value in form.status.field.choices %}
+                                            <option value="{{ value }}" {% if tournament.status == value %}selected{% endif %}>{{ translated_value }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </form>
+                        {% endif %} 
+                    {% endif %}
                 </div>
             </div>
         {% endfor %}
