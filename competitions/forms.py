@@ -194,7 +194,7 @@ class SETournamentForm(forms.ModelForm):
 
     class Meta:
         model = SingleEliminationTournament
-        fields = ['competition', 'status', 'teams', 'judges', 'event', 'points', 'prev_tournament']
+        fields = ['competition', 'status', 'teams', 'judges', 'event', 'points', 'prev_tournament', 'start_time']
 
 class RRTournamentForm(forms.ModelForm):
     #generate_matches = forms.BooleanField(label='Generate Matches')
@@ -241,7 +241,7 @@ class RRTournamentForm(forms.ModelForm):
 
     class Meta:
         model = RoundRobinTournament
-        fields = ['competition', 'status', 'teams', 'judges', 'event', 'matches_per_team', 'teams_per_match', 'points_per_win', 'points_per_tie', 'points_per_loss']
+        fields = ['competition', 'status', 'teams', 'judges', 'event', 'matches_per_team', 'teams_per_match', 'points_per_win', 'points_per_tie', 'points_per_loss', 'start_time']
 
 class TournamentTypeSelectForm(forms.Form):
     tournament_type  = forms.MultipleChoiceField(

@@ -211,6 +211,10 @@ ERRORS
 REMAKE THE DATABASE. I ran into so many "column not found" errors that were quite literally
 unfixable, and the solution to those problems was to just delete the database and remake it
 from scratch.
+Results are completely wrong (doesn't shhow all the points earned, shows the wrong winner),
+but it's probably because all our changes haven't been migrated in yet.
+There are a lot of things here (ex. warning label on create tournament form) that have not
+been migrated in yet.
 
 'CreateSETournamentForm' object has no attribute 'generate_matches'
 'NoneType' object has no attribute 'next_matches' (Called single_elimination_tournament)

@@ -52,8 +52,16 @@
                         <small>{% translate "You can see this archived item because you are signed in as a superuser." %}</small>
                     {% elif tournament.is_in_setup %}
                         <i class="bi bi-device-ssd" title="{{ tournament.status }}"></i> 
-                        {% translate "Preliminary Tournament:" %}
                         {% if user.is_staff %} <a href="{% url 'competitions:tournament' tournament.id %}">{{ tournament.event.name }}</a>{% else %}{{ tournament.event.name }}{% endif %}
+                        {% if tournament.points_per_win %}
+                            ({% translate "Points Per Win: " %}{{ tournament.points_per_win|floatformat }}) 
+                        {% endif %}
+                        {% if tournament.points_per_loss %}
+                            ({% translate "Points Per Loss: " %}{{ tournament.points_per_loss|floatformat }}) 
+                        {% endif %}
+                        {% if tournament.points_per_tie %}
+                            ({% translate "Points Per Tie: " %}{{ tournament.points_per_tie|floatformat }}) 
+                        {% endif %}
                     {% elif tournament.is_judgable or tournament.is_complete or tournament.is_closed %}
                         {% if tournament.is_judgable %} 
                             <i class="bi-activity" title="{{ tournament.status }}"></i>
@@ -75,7 +83,7 @@
                             {% endif %}
                             {% if twinners %}
                                 {% with twplural=twinners|pluralize %}{% comment %}For some reason pluralize isn't working directly but if you assign it to a variable it works{% endcomment %}
-                                    ({% blocktranslate %}Winner{{ twplural }}{% endblocktranslate %}: {{ twinners|join:", " }})
+                                    | {% blocktranslate %}Winner{{ twplural }}{% endblocktranslate %}: {{ twinners|join:", " }}
                                 {% endwith %}
                             {% endif %}
                         {% endwith %}
@@ -129,7 +137,7 @@
                         {% endif %}
                         {% with twinner=tournament.winner %}
                             {% if twinner %}
-                                ({% translate "Winner" %}: {{ twinner.0 }})
+                                | {% translate "Winner" %}: {{ twinner.0 }}
                             {% endif %}
                         {% endwith %}
                         {% if user.is_staff %}
@@ -236,6 +244,7 @@
                 <input id="id_competition" name="competition" type="hidden" value="{{ competition.id }}" />
                 <button id="id_new_arena_button" type="button" class="btn btn-secondary" hx-post="{% url 'api:new_arena' %}" hx-target="#competition-arenas" hx-on:htmx:after-request="document.getElementById('id_new_arena').value='';">Add <i class="bi bi-arrow-up-short"></i></button>
             </div>
+            <a href="{% url "competitions:arena_color" competition.id %}" class="btn btn-secondary">{% translate "Change Arena Colors" %}</a>
         </form>
         {% endif %}
     {% endif %}

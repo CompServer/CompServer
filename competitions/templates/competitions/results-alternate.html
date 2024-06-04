@@ -1,6 +1,11 @@
 {% extends 'skeleton.html' %}
 {% load i18n %}
 {% block title %}{% trans "Results" %}{% endblock %} 
+{% block links %}
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'competitions:competition' competition.id %}">{% translate "Go Back To Competition" %}</a>
+    </li>
+{% endblock %}
 {% block content %}
 <body>
     <header>
