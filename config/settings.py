@@ -409,7 +409,8 @@ X_FRAME_OPTIONS = 'SAMEORIGIN'
 # insert urls here
 CSRF_TRUSTED_ORIGINS = [
     'https://compserver.ucls.uchicago.edu',
-    'https://compserver-service-hoxlb46hdq-uc.a.run.app'
+    #'https://compserver-service-hoxlb46hdq-uc.a.run.app'
+    'https://compserver-service-84176890180.us-central1.run.app',
 ]
 
 
