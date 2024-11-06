@@ -232,3 +232,37 @@ we are using google cloud not heroku
 
 For easy deployment, we should ensure our requierments are up to date and ensure we use python3.11
 Cloud has it's own secret manager but we still need secrets.yml for some secrets used in settings.py
+
+Issues with the current version
+===============================
+Loading the competition page (calculating all the results) takes a long time (should have these calculated / cached ahead of time)
+Results page
+    Loading takes a long time 
+    Not all points are showing up
+    Points from RR should have same color
+    Values aren't stacked (as they are in the spreadsheet)
+    Thicker bars, 3D bars
+
+Takes a **long** time to create a new RR tournament
+    Notification that the click registered / disable button from clicking again
+
+SET bracket messed looks good for some but not others
+    Good: 16, 8, 12, 11, 10
+    Bad: 15, 14, 7
+    So-so: 13
+
+Silently failing: judge but can't be judge
+Simple way to make a tournament judgeable
+* open the competition
+* open the tournament
+* adjust the competition and tournament timeframes
+
+Way to create _ without needing to go through the Django admin
+* Events
+* Organizations
+* Sports
+Fix way to create _ without needing to go through the Django admin
+* Teams
+* Arenas
+
+Consistent colors and styles (buttons)
