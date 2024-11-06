@@ -709,6 +709,7 @@ class RoundRobinTournament(AbstractTournament):
     def is_round_robin(self) -> bool:
         return True
 
+    # todo: rename to resolved
     @property
     def winner(self) -> list:
         if self.status == Status.COMPLETE:
@@ -838,9 +839,11 @@ class SingleEliminationTournament(AbstractTournament):
     @property
     def is_single_elimination(self) -> bool:   
         return True
+
     @property
     def is_round_robin(self) -> bool:
         return False
+
     @property
     def winner(self) -> list:
         if self.status == Status.COMPLETE:
@@ -849,8 +852,8 @@ class SingleEliminationTournament(AbstractTournament):
                 advancers = [advancer.name for advancer in advancers_qs]
                 return advancers
         else:
-            return ()
-        
+            return []
+
 # class DoubleEliminationTournament(AbstractTournament):
 #     ''' Has a "looser's" bracket
 #         Everybody plays at least 2 matches

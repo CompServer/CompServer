@@ -9,7 +9,7 @@ from django.contrib.messages import constants as messages
 from django.utils.log import DEFAULT_LOGGING
 import environ
 import yaml
-
+import git
 # custom logging filter to suppress certain errors (such as Forbidden and Not Found)
 
 LOGGING = copy.deepcopy(DEFAULT_LOGGING)
@@ -120,6 +120,16 @@ USE_SASS = False
 
 USE_SENTRY = True
 
+# https://stackoverflow.com/questions/31956506/get-short-sha-of-commit-with-gitpython
+repo: git.Repo = git.Repo(search_parent_directories=True)
+GITHUB_LATEST_COMMIT = repo.git.rev_parse(repo.head.commit.hexsha, short=4)
+
+# link to the version of github/gitlab that hosts the running version
+GIT_URL = repo.remotes.origin.url
+branch = repo.active_branch 
+
+
+RELEASE_VERSION = GITHUB_LATEST_COMMIT
 
 
 # https://cloud.google.com/python/django/appengine
@@ -451,6 +461,7 @@ if USE_SENTRY:
         # We recommend adjusting this value in production.
         profiles_sample_rate=1.0,
         enable_tracing=True,
+        #release=GITHUB_LATEST_COMMIT,
     )
 
     # # add metrics to sentry

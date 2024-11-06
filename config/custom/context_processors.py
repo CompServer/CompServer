@@ -34,4 +34,5 @@ def settings_values(request):
         "USE_SENTRY": config.settings.USE_SENTRY,
         "USE_SASS": config.settings.USE_SASS,
         "SENTRY_REPLAY_URL": config.settings.SENTRY_REPLAY_URL,
+        "RELEASE_VERSION": config.settings.RELEASE_VERSION, # usually the git commit hash
     }
