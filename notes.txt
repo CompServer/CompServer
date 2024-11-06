@@ -243,6 +243,12 @@ Results page
     Values aren't stacked (as they are in the spreadsheet)
     Thicker bars, 3D bars
 
+Fix: 
+
+Create new model to store tournament, team, and # of points
+on a rejudge, recalcualte the points for a round robin
+change results page to use the model or change methods
+
 Takes a **long** time to create a new RR tournament
     Notification that the click registered / disable button from clicking again
 
@@ -257,6 +263,8 @@ Simple way to make a tournament judgeable
 * open the tournament
 * adjust the competition and tournament timeframes
 
+- Add button to link to competition page on error for judigng (for admins)
+
 Way to create _ without needing to go through the Django admin
 * Events
 * Organizations
@@ -266,3 +274,5 @@ Fix way to create _ without needing to go through the Django admin
 * Arenas
 
 Consistent colors and styles (buttons)
+
+- For later: Look into making sass work on production
