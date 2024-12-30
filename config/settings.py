@@ -132,15 +132,15 @@ USE_SASS = False
 USE_SENTRY = True
 
 # https://stackoverflow.com/questions/31956506/get-short-sha-of-commit-with-gitpython
-repo = git.Repo(search_parent_directories=True)
-GITHUB_LATEST_COMMIT = repo.git.rev_parse(repo.head.commit.hexsha, short=4)
+# repo = git.Repo(search_parent_directories=True)
+# GITHUB_LATEST_COMMIT = repo.git.rev_parse(repo.head.commit.hexsha, short=4)
 
 # link to the version of github/gitlab that hosts the running version
-GIT_URL = repo.remotes.origin.url
-branch = repo.active_branch 
+# GIT_URL = repo.remotes.origin.url
+# branch = repo.active_branch 
 
 
-RELEASE_VERSION = GITHUB_LATEST_COMMIT
+# RELEASE_VERSION = GITHUB_LATEST_COMMIT
 
 
 # https://cloud.google.com/python/django/appengine
