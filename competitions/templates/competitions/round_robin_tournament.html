@@ -32,6 +32,11 @@
         }
     }
 </style>
+{% block links %}
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'competitions:competition' tournament.competition.id %}">{% translate "Go Back To Competition" %}</a>
+    </li>
+{% endblock %}
 {% block content %}
     <h1>{% if tournament.is_judgable %} 
             <i class="bi-activity" title="{{ competition.status }}"></i> {{ tournament.competition.name }} {% translate "Preliminary Tournament" %}: {{ tournament.event.name }}
@@ -130,14 +135,13 @@
                 </li>
             {% endfor %}
         </div>
-        <hr>
         {% if user.is_superuser and tournament.is_in_setup %}
+            <hr>
             <a href="{% url 'competitions:swap_matches' tournament.id %}" class="btn btn-secondary">{% translate "Swap Match Teams" %}</a>
             <a href="{% url 'competitions:edit_tournament' tournament.id %}" class="btn btn-secondary">{% translate "Edit Tournament" %}</a>
             {% comment %} <br><r>
             <a href="{% url "competitions:arena_color" tournament.competition.id %}" class="btn btn-secondary">{% translate "Change Arena Colors" %}</a> {% endcomment %}
         {% endif %}
-        <a href="{% url 'competitions:competition' tournament.competition.id %}" class="btn btn-secondary">{% translate "Go Back To Competition" %}</a>
     {% else %}
         <form class="form-inline my-2 my-md-0 justify-content-end" action="/tournament/{{ tournament.id }}/generate/" method="POST" id="status">
             {% csrf_token %}
