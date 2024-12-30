@@ -129,7 +129,7 @@ DEMO = os.getenv('DEMO', default="False") == "True"
 
 USE_SASS = False
 
-USE_SENTRY = True
+USE_SENTRY = False
 
 # https://stackoverflow.com/questions/31956506/get-short-sha-of-commit-with-gitpython
 # repo = git.Repo(search_parent_directories=True)
