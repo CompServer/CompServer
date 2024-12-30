@@ -9,9 +9,11 @@ django-mathfilters
 django-simple-history
 django-template-partials
 Django==4.2.7
+gunicorn
 pillow
 psycopg2-binary==2.9.9
 PyYAML
+sentry-sdk
 social-auth-app-django
 typing_extensions
 whitenoise

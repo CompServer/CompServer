@@ -6,7 +6,9 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from django.contrib.messages import constants as messages
+from django.core.management.utils import get_random_secret_key
 from django.utils.log import DEFAULT_LOGGING
+import dj_database_url
 import environ
 import yaml
 
@@ -38,58 +40,59 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # [START cloudrun_django_secret_config]
 # SECURITY WARNING: don't run with debug turned on in production!
 # Change this to "False" when you are ready for production
-env = environ.Env(DEBUG=(bool, True))
-env_file = os.path.join(BASE_DIR, ".env")
+
+# env = environ.Env(DEBUG=(bool, True))
+# env_file = os.path.join(BASE_DIR, ".env")
 
 
-PROD = env("PROD", default=False)
+PROD = os.getenv("PROD", "False") == "True"
 
 if PROD:
-    # don't need these imports unless prod is true
-    # can skip some reqs if prod isn't on
-    # because it's only needed for secret manager, seperate requirements file
-    import google.auth
-    from google.cloud import secretmanager
-    # Attempt to load the Project ID into the environment, safely failing on error.
-    try:
-        _, os.environ["GOOGLE_CLOUD_PROJECT"] = google.auth.default() # type: ignore
-    except google.auth.exceptions.DefaultCredentialsError:
-        pass
+    # # don't need these imports unless prod is true
+    # # can skip some reqs if prod isn't on
+    # # because it's only needed for secret manager, seperate requirements file
+    # import google.auth
+    # from google.cloud import secretmanager
+    # # Attempt to load the Project ID into the environment, safely failing on error.
+    # try:
+    #     _, os.environ["GOOGLE_CLOUD_PROJECT"] = google.auth.default() # type: ignore
+    # except google.auth.exceptions.DefaultCredentialsError:
+    #     pass
 
-    if os.path.isfile(env_file):
-        # Use a local secret file, if provided
+    # if os.path.isfile(env_file):
+    #     # Use a local secret file, if provided
 
-        env.read_env(env_file)
-    # [START_EXCLUDE]
-    elif os.getenv("TRAMPOLINE_CI", None):
-        # Create local settings if running with CI, for unit testing
+    #     env.read_env(env_file)
+    # # [START_EXCLUDE]
+    # elif os.getenv("TRAMPOLINE_CI", None):
+    #     # Create local settings if running with CI, for unit testing
 
-        placeholder = (
-            f"SECRET_KEY=a\n"
-            "GS_BUCKET_NAME=None\n"
-            f"DATABASE_URL=sqlite://{os.path.join(BASE_DIR, 'db.sqlite3')}"
-        )
-        env.read_env(io.StringIO(placeholder))
-    # [END_EXCLUDE]
-    elif os.environ.get("GOOGLE_CLOUD_PROJECT", None):
-        # Pull secrets from Secret Manager
-        project_id = os.environ.get("GOOGLE_CLOUD_PROJECT")
+    #     placeholder = (
+    #         f"SECRET_KEY=a\n"
+    #         "GS_BUCKET_NAME=None\n"
+    #         f"DATABASE_URL=sqlite://{os.path.join(BASE_DIR, 'db.sqlite3')}"
+    #     )
+    #     env.read_env(io.StringIO(placeholder))
+    # # [END_EXCLUDE]
+    # elif os.environ.get("GOOGLE_CLOUD_PROJECT", None):
+    #     # Pull secrets from Secret Manager
+    #     project_id = os.environ.get("GOOGLE_CLOUD_PROJECT")
 
-        client = secretmanager.SecretManagerServiceClient()
-        settings_name = os.environ.get("SETTINGS_NAME", "django_settings")
-        name = f"projects/{project_id}/secrets/{settings_name}/versions/latest"
-        payload = client.access_secret_version(name=name).payload.data.decode("UTF-8")
+    #     client = secretmanager.SecretManagerServiceClient()
+    #     settings_name = os.environ.get("SETTINGS_NAME", "django_settings")
+    #     name = f"projects/{project_id}/secrets/{settings_name}/versions/latest"
+    #     payload = client.access_secret_version(name=name).payload.data.decode("UTF-8")
 
-        env.read_env(io.StringIO(payload))
-    else:
-        raise Exception("No local .env or GOOGLE_CLOUD_PROJECT detected. No secrets found.")
-    SECRET_KEY = env("SECRET_KEY")
-    SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = env('GOOGLE_CLIENT_ID', default=None)
-    SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = env('GOOGLE_CLIENT_SECRET', default=None)
-    SOCIAL_AUTH_GITHUB_KEY = env('GITHUB_CLIENT_ID', default=None)
-    SOCIAL_AUTH_GITHUB_SECRET = env('GITHUB_CLIENT_SECRET', default=None)
-    SENTRY_URL = env('SENTRY_URL', default=None)
-    SENTRY_REPLAY_URL = env('SENTRY_REPLAY_URL', default=None)
+    #     env.read_env(io.StringIO(payload))
+    # else:
+    #     raise Exception("No local .env or GOOGLE_CLOUD_PROJECT detected. No secrets found.")
+    SECRET_KEY = os.getenv("SECRET_KEY", get_random_secret_key())
+    SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.getenv('GOOGLE_CLIENT_ID', default=None)
+    SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv('GOOGLE_CLIENT_SECRET', default=None)
+    SOCIAL_AUTH_GITHUB_KEY = os.getenv('GITHUB_CLIENT_ID', default=None)
+    SOCIAL_AUTH_GITHUB_SECRET = os.getenv('GITHUB_CLIENT_SECRET', default=None)
+    SENTRY_URL = os.getenv('SENTRY_URL', default=None)
+    SENTRY_REPLAY_URL = os.getenv('SENTRY_REPLAY_URL', default=None)
 else:
     if os.path.exists('secrets.yml'):
         with open('secrets.yml') as f:
@@ -102,7 +105,15 @@ else:
             SENTRY_URL = config.get('SENTRY_URL',None)
             SENTRY_REPLAY_URL = config.get("SENTRY_REPLAY_URL", None)
     else:
-        raise Exception("No local .env or secrets.yml detected. No secrets found.")
+        # raise Exception("No local .env or secrets.yml detected. No secrets found.")
+        SECRET_KEY = os.getenv("SECRET_KEY", get_random_secret_key())
+        SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.getenv('GOOGLE_CLIENT_ID',None)
+        SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv('GOOGLE_CLIENT_SECRET',None)
+        SOCIAL_AUTH_GITHUB_KEY = os.getenv('GITHUB_CLIENT_ID',None)
+        SOCIAL_AUTH_GITHUB_SECRET = os.getenv('GITHUB_CLIENT_SECRET',None)
+        SENTRY_URL = os.getenv('SENTRY_URL',None)
+        SENTRY_REPLAY_URL = os.getenv("SENTRY_REPLAY_URL", None)
+
 
 assert SECRET_KEY is not None
     #recommended by https://cloud.google.com/python/django/appengine
@@ -112,9 +123,9 @@ assert SECRET_KEY is not None
 #         DEMO=(bool, False),
 #   )
 
-DEBUG = env("DEBUG", default=False)
+DEBUG = os.getenv("DEBUG", default="False") == "True"
 
-DEMO = env('DEMO', default=False)
+DEMO = os.getenv('DEMO', default="False") == "True"
 
 USE_SASS = False
 
@@ -126,7 +137,7 @@ USE_SENTRY = True
 # for deployment
 
 # if PROD:
-#     APPENGINE_URL = env("APPENGINE_URL", default=None)
+#     APPENGINE_URL = os.getenv("APPENGINE_URL", default=None)
 #     if APPENGINE_URL:
 #         # Ensure a scheme is present in the URL before it's processed.
 #         if not urlparse(APPENGINE_URL).scheme:
@@ -148,17 +159,19 @@ USE_SENTRY = True
 # SECURITY WARNING: It's recommended that you use this when
 # running in production. The URL will be known once you first deploy
 # to Cloud Run. This code takes the URL and converts it to both these settings formats.
-if PROD:
-    CLOUDRUN_SERVICE_URL = env("CLOUDRUN_SERVICE_URL", default=None)
-    if CLOUDRUN_SERVICE_URL:
-        ALLOWED_HOSTS = [urlparse(CLOUDRUN_SERVICE_URL).netloc]
-        CSRF_TRUSTED_ORIGINS = [CLOUDRUN_SERVICE_URL]
-        SECURE_SSL_REDIRECT = True
-        SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-    else:
-        ALLOWED_HOSTS = ["*"]
-else:
-    ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
+
+# if PROD:
+#     CLOUDRUN_SERVICE_URL = os.getenv("CLOUDRUN_SERVICE_URL", default=None)
+#     if CLOUDRUN_SERVICE_URL:
+#         ALLOWED_HOSTS = [urlparse(CLOUDRUN_SERVICE_URL).netloc]
+#         CSRF_TRUSTED_ORIGINS = [CLOUDRUN_SERVICE_URL]
+#         SECURE_SSL_REDIRECT = True
+#         SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+#     else:
+#         ALLOWED_HOSTS = ["*"]
+# else:
+#     ALLOWED_HOSTS = ["*"]
 
 # Application definition
 
@@ -268,7 +281,7 @@ AUTHENTICATION_BACKENDS = [
 #   }
 
 if PROD:
-    DATABASES = {"default": env.db()}
+    DATABASES = {"default": dj_database_url.parse(os.getenv("DATABASE_URL"))}
 
     if os.getenv("USE_CLOUD_SQL_AUTH_PROXY", None):
         DATABASES["default"]["HOST"] = "127.0.0.1"
@@ -351,10 +364,10 @@ if DEBUG:
         COMPRESS_ROOT = STATICFILES_DIRS[0]
         SASS_PROCESSOR_ROOT = STATICFILES_DIRS[0]
     # comment out the above and uncomment the below when collecting static
-    #STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+    #STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 else:
     # this is what whitenoise uses (for prod)
-    STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
     if USE_SASS:
         SASS_PROCESSOR_ROOT = STATIC_ROOT
 
