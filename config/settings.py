@@ -365,11 +365,12 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 STATIC_URL = "static/"
 
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
+
 if not PROD:
     # this only applies if debug=true
-    STATICFILES_DIRS = [
-        os.path.join(BASE_DIR, 'static'),
-    ]
     if USE_SASS:
         COMPRESS_ROOT = STATICFILES_DIRS[0]
         SASS_PROCESSOR_ROOT = STATICFILES_DIRS[0]
