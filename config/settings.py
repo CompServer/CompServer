@@ -9,9 +9,9 @@ from django.contrib.messages import constants as messages
 from django.core.management.utils import get_random_secret_key
 from django.utils.log import DEFAULT_LOGGING
 import dj_database_url
-import environ
+# import environ
 import yaml
-import git
+# import git
 # custom logging filter to suppress certain errors (such as Forbidden and Not Found)
 
 LOGGING = copy.deepcopy(DEFAULT_LOGGING)
