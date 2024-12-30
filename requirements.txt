@@ -1,6 +1,7 @@
 #django-compressor
 #django-sass-processor
 crispy-bootstrap5
+dj_database_url
 django-crispy-forms
 django-debug-toolbar
 django-environ
