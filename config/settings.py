@@ -293,9 +293,9 @@ AUTHENTICATION_BACKENDS = [
 if PROD:
     DATABASES = {"default": dj_database_url.parse(os.getenv("DATABASE_URL"))}
 
-    if os.getenv("USE_CLOUD_SQL_AUTH_PROXY", None):
-        DATABASES["default"]["HOST"] = "127.0.0.1"
-        DATABASES["default"]["PORT"] = 5432
+    # if os.getenv("USE_CLOUD_SQL_AUTH_PROXY", None):
+    #     DATABASES["default"]["HOST"] = "127.0.0.1"
+    #     DATABASES["default"]["PORT"] = 5432
 else:
     DATABASES = {
         "default": {
