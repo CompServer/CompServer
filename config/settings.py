@@ -1,9 +1,7 @@
 import copy
-import io
 import logging
 import os
 from pathlib import Path
-from urllib.parse import urlparse
 
 from django.contrib.messages import constants as messages
 from django.core.management.utils import get_random_secret_key
@@ -11,7 +9,7 @@ from django.utils.log import DEFAULT_LOGGING
 import dj_database_url
 # import environ
 import yaml
-# import git
+import git
 # custom logging filter to suppress certain errors (such as Forbidden and Not Found)
 
 LOGGING = copy.deepcopy(DEFAULT_LOGGING)
@@ -132,15 +130,16 @@ USE_SASS = False
 USE_SENTRY = False
 
 # https://stackoverflow.com/questions/31956506/get-short-sha-of-commit-with-gitpython
-# repo = git.Repo(search_parent_directories=True)
-# GITHUB_LATEST_COMMIT = repo.git.rev_parse(repo.head.commit.hexsha, short=4)
+repo = git.Repo(search_parent_directories=True)
+GITHUB_LATEST_COMMIT = repo.git.rev_parse(repo.head.commit.hexsha, short=4)
 
 # link to the version of github/gitlab that hosts the running version
-# GIT_URL = repo.remotes.origin.url
-# branch = repo.active_branch 
+GIT_URL = repo.remotes.origin.url
+branch = repo.active_branch 
 
-
-# RELEASE_VERSION = GITHUB_LATEST_COMMIT
+# sentry uses this RELEASE_VERSION variable to seperate errors, using the commit hash should help
+# when tracing down issues
+RELEASE_VERSION = GITHUB_LATEST_COMMIT
 
 
 # https://cloud.google.com/python/django/appengine
@@ -369,18 +368,18 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
 
-if not PROD:
+if PROD:
+    # this is what whitenoise uses (for prod)
+    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+    if USE_SASS:
+        SASS_PROCESSOR_ROOT = STATIC_ROOT
+else:
     # this only applies if debug=true
     if USE_SASS:
         COMPRESS_ROOT = STATICFILES_DIRS[0]
         SASS_PROCESSOR_ROOT = STATICFILES_DIRS[0]
     # comment out the above and uncomment the below when collecting static
-    # STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-else:
-    # this is what whitenoise uses (for prod)
     STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-    if USE_SASS:
-        SASS_PROCESSOR_ROOT = STATIC_ROOT
 
 MEDIA_URL = '/media/'
 
@@ -436,8 +435,9 @@ X_FRAME_OPTIONS = 'SAMEORIGIN'
 # EVERY TIME URL CHANGES, UPDATE THIS LIST W/ NEW URL!!!!!!
 CSRF_TRUSTED_ORIGINS = [
     'https://compserver.ucls.uchicago.edu',
-    'https://compserver-service-hoxlb46hdq-uc.a.run.app'
-    'https://compserver-service-84176890180.us-central1.run.app',
+    'https://compserver-7bc24fc483a9.herokuapp.com/',
+    #'https://compserver-service-hoxlb46hdq-uc.a.run.app'
+    #'https://compserver-service-84176890180.us-central1.run.app',
     #"https://compserver-service-hoxlb46hdq-uc.a.run.app",
 ]
 
@@ -475,7 +475,7 @@ if USE_SENTRY:
         # We recommend adjusting this value in production.
         profiles_sample_rate=1.0,
         enable_tracing=True,
-        #release=GITHUB_LATEST_COMMIT,
+        release=RELEASE_VERSION,
     )
 
     # # add metrics to sentry
