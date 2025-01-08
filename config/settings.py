@@ -125,9 +125,9 @@ DEBUG = os.getenv("DEBUG", default="False").lower() == "true"
 
 DEMO = os.getenv('DEMO', default="False").lower() == "true"
 
-USE_SASS = os.getenv('DEMO', default="False").lower() == "true"
+USE_SASS = os.getenv('USE_SASS', default="False").lower() == "true"
 
-USE_SENTRY = os.getenv('DEMO', default="False").lower() == "true"
+USE_SENTRY = os.getenv('USE_SENTRY', default="False").lower() == "true"
 
 # https://stackoverflow.com/questions/31956506/get-short-sha-of-commit-with-gitpython
 try:
