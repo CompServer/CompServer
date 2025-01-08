@@ -37,6 +37,9 @@ def settings_values(request):
         "RELEASE_VERSION": config.settings.RELEASE_VERSION, # usually the git commit hash
     }
 
+    # # sometimes this will run and there's no github url
+    # if getattr(config.settings, 'GIT_URL', None):
+    
     OPTIONAL_GIT_VAR_NAMES = [
         "SHOW_GH_DEPLOYMENT_TO_ALL",
         "GITHUB_LATEST_PUSHED_COMMIT_HASH", 

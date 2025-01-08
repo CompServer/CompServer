@@ -197,7 +197,7 @@
     <div class="container">
         <footer class="py-3 my-4 text-center">
             <p class="text-muted mb-1">{% translate "©" %} {{ NOW.year }} <a href="https://ucls.uchicago.edu/" >{% translate "University of Chicago Labratory Schools" %}</a></p>
-            {% if SHOW_GH_DEPLOYMENT_TO_ALL or user.is_staff %} {% comment %} SHOW_GH_DEPLOYMENT should be True to show, but staff can see it all the time {% endcomment %}
+            {% if (SHOW_GH_DEPLOYMENT_TO_ALL or user.is_staff) and GIT_URL %} {% comment %} SHOW_GH_DEPLOYMENT should be True to show, but staff can see it all the time {% endcomment %}
                 <p class="text-muted mb-0">
                     <!-- GitHub Icon with Link -->
                     <a href="{{ GIT_URL }}" target="_blank" class="text-decoration-none">
