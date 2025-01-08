@@ -121,21 +121,53 @@ assert SECRET_KEY is not None
 #         DEMO=(bool, False),
 #   )
 
-DEBUG = os.getenv("DEBUG", default="False") == "True"
+DEBUG = os.getenv("DEBUG", default="False").lower() == "true"
 
-DEMO = os.getenv('DEMO', default="False") == "True"
+DEMO = os.getenv('DEMO', default="False").lower() == "true"
 
-USE_SASS = False
+USE_SASS = os.getenv('DEMO', default="False").lower() == "true"
 
-USE_SENTRY = False
+USE_SENTRY = os.getenv('DEMO', default="False").lower() == "true"
 
 # https://stackoverflow.com/questions/31956506/get-short-sha-of-commit-with-gitpython
-repo = git.Repo(search_parent_directories=True)
-GITHUB_LATEST_COMMIT = repo.git.rev_parse(repo.head.commit.hexsha, short=4)
+repo: git.Repo = git.Repo(search_parent_directories=True)
+
+REMOTE_URL = repo.remote().url
+if "github.com" in REMOTE_URL:
+    # Convert SSH URL to HTTPS if necessary
+    if REMOTE_URL.startswith("git@"):
+        REMOTE_URL = REMOTE_URL.replace("git@", "https://").replace(":", "/")
+
+    # Remove .git suffix if present
+    if REMOTE_URL.endswith(".git"):
+        REMOTE_URL = REMOTE_URL[:-4]
+
+GITHUB_LATEST_COMMIT_SHORT = repo.git.rev_parse(repo.head.commit.hexsha, short=4)
+GITHUB_LATEST_COMMIT = repo.git.rev_parse(repo.head.commit.hexsha)
+
+tracking_branch = repo.head.reference.tracking_branch()
+# Get the latest pushed commit hash for the current branch
+if tracking_branch is not None:
+    GITHUB_LATEST_PUSHED_COMMIT_HASH = repo.git.rev_parse(f"{tracking_branch.name}")
+    GITHUB_LATEST_PUSHED_COMMIT_HASH_SHORT = GITHUB_LATEST_PUSHED_COMMIT_HASH[:5] # first 5 chars
+    GITHUB_LATEST_COMMIT_URL = f"{REMOTE_URL}/commit/{GITHUB_LATEST_PUSHED_COMMIT_HASH}"
+else:
+    GITHUB_LATEST_PUSHED_COMMIT_HASH = None
+    GITHUB_LATEST_COMMIT_URL = None
+
+if not tracking_branch:
+    tracking_branch = repo.active_branch
+
+# tracking_branch.name usually gives something like "origin/branch", we remove the remote name and the slash by doing this 
+GITHUB_CURRENT_BRANCH_NAME = tracking_branch.name.lstrip(f"{tracking_branch.remote_name}/")
+GITHUB_CURRENT_BRANCH_URL = f"{REMOTE_URL}/tree/{GITHUB_CURRENT_BRANCH_NAME}"
+
+# change this if you don't want people to see the github link/branch/commit
+SHOW_GH_DEPLOYMENT_TO_ALL = False
 
 # link to the version of github/gitlab that hosts the running version
 GIT_URL = repo.remotes.origin.url
-branch = repo.active_branch 
+BRANCH = repo.active_branch
 
 # sentry uses this RELEASE_VERSION variable to seperate errors, using the commit hash should help
 # when tracing down issues
