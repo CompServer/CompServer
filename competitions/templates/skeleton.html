@@ -194,11 +194,43 @@
         {% endblock %}
     </div>
 
-    <footer class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top">
+    <div class="container">
+        <footer class="py-3 my-4 text-center">
+            <p class="text-muted mb-1">{% translate "©" %} {{ NOW.year }} <a href="https://ucls.uchicago.edu/" >{% translate "University of Chicago Labratory Schools" %}</a></p>
+            {% if (SHOW_GH_DEPLOYMENT_TO_ALL or user.is_staff) and GIT_URL %} {% comment %} SHOW_GH_DEPLOYMENT should be True to show, but staff can see it all the time {% endcomment %}
+                <p class="text-muted mb-0">
+                    <!-- GitHub Icon with Link -->
+                    <a href="{{ GIT_URL }}" target="_blank" class="text-decoration-none">
+                        <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" 
+                            alt="GitHub" style="width: 24px; height: 24px;" class="me-2">
+                        {% translate "GitHub" %}
+                    </a>
+                    |
+                    <!-- Branch Icon and Link -->
+                    <i class="bi bi-git" style="font-size: 1.2rem; color: #6c757d;"></i>
+                    {% translate "Branch: " %}
+                    <a href="{{ GITHUB_CURRENT_BRANCH_URL }}" target="_blank" class="text-decoration-none">
+                        {{ GITHUB_CURRENT_BRANCH_NAME }}
+                    </a>
+                    |
+                    <!-- Commit Icon and Link -->
+                    <i class="bi bi-hash" style="font-size: 1.2rem; color: #6c757d;"></i>
+                    {% translate "Commit: " %}
+                    <a href="{{ GITHUB_LATEST_COMMIT_URL }}" target="_blank" class="text-decoration-none">
+                        {{ GITHUB_LATEST_PUSHED_COMMIT_HASH_SHORT  }}...
+                    </a>
+                </p>
+            {% endif %}
+        </footer>
+    </div>
+    
+
+    {% comment %} old footer  {% endcomment %}
+    {% comment %} <footer class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top">
         <div class="col-md-4 d-flex align-items-center">
-          {% comment %} <a href="/" class="mb-3 me-2 mb-md-0 text-body-secondary text-decoration-none lh-1">
+          <a href="/" class="mb-3 me-2 mb-md-0 text-body-secondary text-decoration-none lh-1">
             <svg class="bi" width="30" height="24"><use xlink:href="#bootstrap"></use></svg>
-          </a> {% endcomment %}
+          </a> 
           <span class="mb-3 mb-md-0 text-body-secondary">{% translate "2024 " %}<a href=""></span>
         </div>
     
@@ -207,7 +239,8 @@
           <li class="ms-3"><a class="text-body-secondary" href="#"><svg class="bi" width="24" height="24"><use xlink:href="#instagram"></use></svg></a></li>
           <li class="ms-3"><a class="text-body-secondary" href="#"><svg class="bi" width="24" height="24"><use xlink:href="#facebook"></use></svg></a></li>
         </ul>
-      </footer>
+      </footer> 
+    {% endcomment %}
 
     {% comment %} 
         This adds a JS cookie that keeps track of the user's timezome

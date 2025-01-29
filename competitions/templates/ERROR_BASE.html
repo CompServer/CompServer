@@ -20,7 +20,7 @@
                     <p>{{ message }}</p>
                 {% endif %}
             </div>
-            {% if debug %}
+            {% if debug %} <!-- Leave in production, hopefully it makes a developer using debug mode a little bit happier -->
                 <div class='img'>
                     <img class='error' src="https://http.cat/images/{{ error_code }}.jpg" style="max-width: 500px; max-height: 500px" >
                 </div>
