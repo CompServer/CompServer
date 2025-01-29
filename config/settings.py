@@ -139,21 +139,21 @@ repo = None
 if GIT_INSTALLED:
     import git
     # https://stackoverflow.com/questions/31956506/get-short-sha-of-commit-with-gitpython
-    try:
-        repo: git.Repo = git.Repo(search_parent_directories=True)
-    except git.InvalidGitRepositoryError:
-        # this usually happens when performing a non running the app action (collectstatic, etc)
+    # try:
+    #     repo: git.Repo = git.Repo(search_parent_directories=True)
+    # except git.InvalidGitRepositoryError:
+    #     # this usually happens when performing a non running the app action (collectstatic, etc)
 
-        # also couldn't find a logger to use here, we can just print i guess
-        print("Warning: Could not find a git directory in the project. GitHub variables will be unset.")
-        repo = None
+        # # also couldn't find a logger to use here, we can just print i guess
+        # print("Warning: Could not find a git directory in the project. GitHub variables will be unset.")
+        # repo = None
 
-    if repo:
-        REMOTE_URL = repo.remote().url
-        if "github.com" in REMOTE_URL:
-            # Convert SSH URL to HTTPS if necessary
-            if REMOTE_URL.startswith("git@"):
-                REMOTE_URL = REMOTE_URL.replace("git@", "https://").replace(":", "/")
+    # if repo:
+    #     REMOTE_URL = repo.remote().url
+    #     if "github.com" in REMOTE_URL:
+    #         # Convert SSH URL to HTTPS if necessary
+    #         if REMOTE_URL.startswith("git@"):
+    #             REMOTE_URL = REMOTE_URL.replace("git@", "https://").replace(":", "/")
 
             # Remove .git suffix if present
             if REMOTE_URL.endswith(".git"):
@@ -514,32 +514,32 @@ AUTHENTICATION_BACKENDS = (
 )
     
 
-if USE_SENTRY:
-    import sentry_sdk
-    from sentry_sdk.integrations.django import DjangoIntegration
+# if USE_SENTRY:
+#     import sentry_sdk
+#     from sentry_sdk.integrations.django import DjangoIntegration
 
-    assert SENTRY_URL is not None, "Sentry URL must be set if USE_SENTRY = True"
-    sentry_sdk.init(
-        dsn=SENTRY_URL, # maybe we put this url in a secret?
+#     assert SENTRY_URL is not None, "Sentry URL must be set if USE_SENTRY = True"
+#     sentry_sdk.init(
+#         dsn=SENTRY_URL, # maybe we put this url in a secret?
 
-        integrations=[
-            DjangoIntegration()
-        ],
+#         integrations=[
+#             DjangoIntegration()
+#         ],
 
-        send_default_pii=True,
+#         send_default_pii=True,
 
-        environment='production' if PROD else 'development',
+#         environment='production' if PROD else 'development',
 
-        # Set traces_sample_rate to 1.0 to capture 100%
-        # of transactions for performance monitoring.
-        traces_sample_rate=1.0,
-        # Set profiles_sample_rate to 1.0 to profile 100%
-        # of sampled transactions.
-        # We recommend adjusting this value in production.
-        profiles_sample_rate=1.0,
-        enable_tracing=True,
-        release=RELEASE_VERSION,
-    )
+#         # Set traces_sample_rate to 1.0 to capture 100%
+#         # of transactions for performance monitoring.
+#         traces_sample_rate=1.0,
+#         # Set profiles_sample_rate to 1.0 to profile 100%
+#         # of sampled transactions.
+#         # We recommend adjusting this value in production.
+#         profiles_sample_rate=1.0,
+#         enable_tracing=True,
+#         release=RELEASE_VERSION,
+#     )
 
     # # add metrics to sentry
     # sentry_sdk.metrics.gauge(
