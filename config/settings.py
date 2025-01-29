@@ -130,69 +130,69 @@ USE_SASS = os.getenv('USE_SASS', default="False").lower() == "true"
 USE_SENTRY = os.getenv('USE_SENTRY', default="False").lower() == "true"
 
 # https://stackoverflow.com/questions/31956506/get-short-sha-of-commit-with-gitpython
-try:
-    repo: git.Repo = git.Repo(search_parent_directories=True)
-except git.InvalidGitRepositoryError:
-    # this usually happens when performing a non running the app action (collectstatic, etc)
+# try:
+#     repo: git.Repo = git.Repo(search_parent_directories=True)
+# except git.InvalidGitRepositoryError:
+#     # this usually happens when performing a non running the app action (collectstatic, etc)
 
-    # also couldn't find a logger to use here, we can just print i guess
-    print("Warning: Could not find a git directory in the project. GitHub variables will be unset.")
-    repo = None
+    # # also couldn't find a logger to use here, we can just print i guess
+    # print("Warning: Could not find a git directory in the project. GitHub variables will be unset.")
+    # repo = None
 
-if repo:
-    REMOTE_URL = repo.remote().url
-    if "github.com" in REMOTE_URL:
-        # Convert SSH URL to HTTPS if necessary
-        if REMOTE_URL.startswith("git@"):
-            REMOTE_URL = REMOTE_URL.replace("git@", "https://").replace(":", "/")
+# if repo:
+#     REMOTE_URL = repo.remote().url
+#     if "github.com" in REMOTE_URL:
+#         # Convert SSH URL to HTTPS if necessary
+#         if REMOTE_URL.startswith("git@"):
+#             REMOTE_URL = REMOTE_URL.replace("git@", "https://").replace(":", "/")
 
-        # Remove .git suffix if present
-        if REMOTE_URL.endswith(".git"):
-            REMOTE_URL = REMOTE_URL[:-4]
+#         # Remove .git suffix if present
+#         if REMOTE_URL.endswith(".git"):
+#             REMOTE_URL = REMOTE_URL[:-4]
 
-    GITHUB_LATEST_COMMIT_SHORT = repo.git.rev_parse(repo.head.commit.hexsha, short=4)
-    GITHUB_LATEST_COMMIT = repo.git.rev_parse(repo.head.commit.hexsha)
+#     GITHUB_LATEST_COMMIT_SHORT = repo.git.rev_parse(repo.head.commit.hexsha, short=4)
+#     GITHUB_LATEST_COMMIT = repo.git.rev_parse(repo.head.commit.hexsha)
 
-    tracking_branch = repo.head.reference.tracking_branch()
-    # Get the latest pushed commit hash for the current branch
-    if tracking_branch is not None:
-        GITHUB_LATEST_PUSHED_COMMIT_HASH = repo.git.rev_parse(f"{tracking_branch.name}")
-        GITHUB_LATEST_PUSHED_COMMIT_HASH_SHORT = GITHUB_LATEST_PUSHED_COMMIT_HASH[:5] # first 5 chars
-        GITHUB_LATEST_COMMIT_URL = f"{REMOTE_URL}/commit/{GITHUB_LATEST_PUSHED_COMMIT_HASH}"
-    else:
-        GITHUB_LATEST_PUSHED_COMMIT_HASH = None
-        GITHUB_LATEST_COMMIT_URL = None
+#     tracking_branch = repo.head.reference.tracking_branch()
+#     # Get the latest pushed commit hash for the current branch
+#     if tracking_branch is not None:
+#         GITHUB_LATEST_PUSHED_COMMIT_HASH = repo.git.rev_parse(f"{tracking_branch.name}")
+#         GITHUB_LATEST_PUSHED_COMMIT_HASH_SHORT = GITHUB_LATEST_PUSHED_COMMIT_HASH[:5] # first 5 chars
+#         GITHUB_LATEST_COMMIT_URL = f"{REMOTE_URL}/commit/{GITHUB_LATEST_PUSHED_COMMIT_HASH}"
+#     else:
+#         GITHUB_LATEST_PUSHED_COMMIT_HASH = None
+#         GITHUB_LATEST_COMMIT_URL = None
 
-    if not tracking_branch:
-        tracking_branch = repo.active_branch
+#     if not tracking_branch:
+#         tracking_branch = repo.active_branch
 
-    # tracking_branch.name usually gives something like "origin/branch", we remove the remote name and the slash by doing this 
-    GITHUB_CURRENT_BRANCH_NAME = tracking_branch.name.lstrip(f"{tracking_branch.remote_name}/")
-    GITHUB_CURRENT_BRANCH_URL = f"{REMOTE_URL}/tree/{GITHUB_CURRENT_BRANCH_NAME}"
+#     # tracking_branch.name usually gives something like "origin/branch", we remove the remote name and the slash by doing this 
+#     GITHUB_CURRENT_BRANCH_NAME = tracking_branch.name.lstrip(f"{tracking_branch.remote_name}/")
+#     GITHUB_CURRENT_BRANCH_URL = f"{REMOTE_URL}/tree/{GITHUB_CURRENT_BRANCH_NAME}"
 
-    # change this if you don't want people to see the github link/branch/commit
-    SHOW_GH_DEPLOYMENT_TO_ALL = False
+#     # change this if you don't want people to see the github link/branch/commit
+#     SHOW_GH_DEPLOYMENT_TO_ALL = False
 
-    # link to the version of github/gitlab that hosts the running version
-    GIT_URL = repo.remotes.origin.url
-    BRANCH = repo.active_branch
+#     # link to the version of github/gitlab that hosts the running version
+#     GIT_URL = repo.remotes.origin.url
+#     BRANCH = repo.active_branch
 
-    # sentry uses this RELEASE_VERSION variable to seperate errors, using the commit hash should help
-    # when tracing down issues
-    RELEASE_VERSION = GITHUB_LATEST_COMMIT
-else:
-    REMOTE_URL = None
-    GITHUB_LATEST_COMMIT_SHORT = None
-    GITHUB_LATEST_COMMIT = None
-    GITHUB_LATEST_PUSHED_COMMIT_HASH = None
-    GITHUB_LATEST_PUSHED_COMMIT_HASH_SHORT = None
-    GITHUB_LATEST_COMMIT_URL = None
-    GITHUB_CURRENT_BRANCH_NAME = None
-    GITHUB_CURRENT_BRANCH_URL = None
-    SHOW_GH_DEPLOYMENT_TO_ALL = None
-    GIT_URL = None
-    BRANCH = None
-    RELEASE_VERSION = None
+#     # sentry uses this RELEASE_VERSION variable to seperate errors, using the commit hash should help
+#     # when tracing down issues
+#     RELEASE_VERSION = GITHUB_LATEST_COMMIT
+# else:
+REMOTE_URL = None
+GITHUB_LATEST_COMMIT_SHORT = None
+GITHUB_LATEST_COMMIT = None
+GITHUB_LATEST_PUSHED_COMMIT_HASH = None
+GITHUB_LATEST_PUSHED_COMMIT_HASH_SHORT = None
+GITHUB_LATEST_COMMIT_URL = None
+GITHUB_CURRENT_BRANCH_NAME = None
+GITHUB_CURRENT_BRANCH_URL = None
+SHOW_GH_DEPLOYMENT_TO_ALL = None
+GIT_URL = None
+BRANCH = None
+RELEASE_VERSION = None
 
 
 # https://cloud.google.com/python/django/appengine
@@ -504,32 +504,32 @@ AUTHENTICATION_BACKENDS = (
 )
     
 
-if USE_SENTRY:
-    import sentry_sdk
-    from sentry_sdk.integrations.django import DjangoIntegration
+# if USE_SENTRY:
+#     import sentry_sdk
+#     from sentry_sdk.integrations.django import DjangoIntegration
 
-    assert SENTRY_URL is not None, "Sentry URL must be set if USE_SENTRY = True"
-    sentry_sdk.init(
-        dsn=SENTRY_URL, # maybe we put this url in a secret?
+#     assert SENTRY_URL is not None, "Sentry URL must be set if USE_SENTRY = True"
+#     sentry_sdk.init(
+#         dsn=SENTRY_URL, # maybe we put this url in a secret?
 
-        integrations=[
-            DjangoIntegration()
-        ],
+#         integrations=[
+#             DjangoIntegration()
+#         ],
 
-        send_default_pii=True,
+#         send_default_pii=True,
 
-        environment='production' if PROD else 'development',
+#         environment='production' if PROD else 'development',
 
-        # Set traces_sample_rate to 1.0 to capture 100%
-        # of transactions for performance monitoring.
-        traces_sample_rate=1.0,
-        # Set profiles_sample_rate to 1.0 to profile 100%
-        # of sampled transactions.
-        # We recommend adjusting this value in production.
-        profiles_sample_rate=1.0,
-        enable_tracing=True,
-        release=RELEASE_VERSION,
-    )
+#         # Set traces_sample_rate to 1.0 to capture 100%
+#         # of transactions for performance monitoring.
+#         traces_sample_rate=1.0,
+#         # Set profiles_sample_rate to 1.0 to profile 100%
+#         # of sampled transactions.
+#         # We recommend adjusting this value in production.
+#         profiles_sample_rate=1.0,
+#         enable_tracing=True,
+#         release=RELEASE_VERSION,
+#     )
 
     # # add metrics to sentry
     # sentry_sdk.metrics.gauge(
