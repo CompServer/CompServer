@@ -136,28 +136,31 @@ USE_SASS = os.getenv('USE_SASS', default="False").lower() == "true"
 USE_SENTRY = os.getenv('USE_SENTRY', default="False").lower() == "true"
 
 repo = None
+REMOTE_URL = None
 if GIT_INSTALLED:
     import git
     # https://stackoverflow.com/questions/31956506/get-short-sha-of-commit-with-gitpython
-    # try:
-    #     repo: git.Repo = git.Repo(search_parent_directories=True)
-    # except git.InvalidGitRepositoryError:
-    #     # this usually happens when performing a non running the app action (collectstatic, etc)
+    try:
+        repo: git.Repo = git.Repo(search_parent_directories=True)
+    except git.InvalidGitRepositoryError:
+        # this usually happens when performing a non running the app action (collectstatic, etc)
 
-        # # also couldn't find a logger to use here, we can just print i guess
-        # print("Warning: Could not find a git directory in the project. GitHub variables will be unset.")
-        # repo = None
+        # also couldn't find a logger to use here, we can just print i guess
+        print("Warning: Could not find a git directory in the project. GitHub variables will be unset.")
+        repo = None
 
-    # if repo:
-    #     REMOTE_URL = repo.remote().url
-    #     if "github.com" in REMOTE_URL:
-    #         # Convert SSH URL to HTTPS if necessary
-    #         if REMOTE_URL.startswith("git@"):
-    #             REMOTE_URL = REMOTE_URL.replace("git@", "https://").replace(":", "/")
+    GITHUB_LATEST_COMMIT = None
+    
+    if repo:
+        REMOTE_URL = repo.remote().url
+        if REMOTE_URL and "github.com" in REMOTE_URL:
+            # Convert SSH URL to HTTPS if necessary
+            if REMOTE_URL.startswith("git@"):
+                REMOTE_URL = REMOTE_URL.replace("git@", "https://").replace(":", "/")
 
-            # Remove .git suffix if present
-            if REMOTE_URL.endswith(".git"):
-                REMOTE_URL = REMOTE_URL[:-4]
+    # Remove .git suffix if present
+    if REMOTE_URL and REMOTE_URL.endswith(".git"):
+        REMOTE_URL = REMOTE_URL[:-4]
 
         GITHUB_LATEST_COMMIT_SHORT = repo.git.rev_parse(repo.head.commit.hexsha, short=4)
         GITHUB_LATEST_COMMIT = repo.git.rev_parse(repo.head.commit.hexsha)
@@ -186,11 +189,10 @@ if GIT_INSTALLED:
         GIT_URL = repo.remotes.origin.url
         BRANCH = repo.active_branch
 
-        # sentry uses this RELEASE_VERSION variable to seperate errors, using the commit hash should help
-        # when tracing down issues
-        RELEASE_VERSION = GITHUB_LATEST_COMMIT
-
-if not GIT_INSTALLED or not repo:
+    # sentry uses this RELEASE_VERSION variable to seperate errors, using the commit hash should help
+    # when tracing down issues
+    RELEASE_VERSION = GITHUB_LATEST_COMMIT
+else:
     REMOTE_URL = None
     GITHUB_LATEST_COMMIT_SHORT = None
     GITHUB_LATEST_COMMIT = None
