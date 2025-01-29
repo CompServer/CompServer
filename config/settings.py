@@ -150,7 +150,7 @@ if GIT_INSTALLED:
         repo = None
 
     GITHUB_LATEST_COMMIT = None
-    
+
     if repo:
         REMOTE_URL = repo.remote().url
         if REMOTE_URL and "github.com" in REMOTE_URL:
@@ -205,6 +205,7 @@ else:
     GIT_URL = None
     BRANCH = None
     RELEASE_VERSION = None
+    SHOW_GH_DEPLOYMENT_TO_ALL = False
 
 
 # https://cloud.google.com/python/django/appengine
