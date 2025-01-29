@@ -27,3 +27,6 @@ staticfiles/
 !cloudmigrate.yaml
 !.gitlab-ci.yml
 !secrets-default.yml
+
+# remove test files
+!_testing.py
