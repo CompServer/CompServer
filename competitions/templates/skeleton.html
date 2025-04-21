@@ -188,6 +188,15 @@
         {% endfor %}
     {% endif %}
 
+    {% comment %} demo mode no longer filters out stuff that wasn't created by you, add site-wide warning {% endcomment %}
+    {% if DEMO %}
+        <div class="alert alert-warning" role="alert">
+            <strong>{% translate "Demo Mode" %}</strong> {% translate "This is a demo version of CompServer. You can create and edit competitions that you create, but please be mindful that others can see the competitions and other objects you create, and that the database with competitions is cleared out on a regular basis. To install your own version, details can be found " %}<a href="https://github.com/CompServer/CompServer">{% translate "here" %}</a>{% translate "." %}
+        </div>
+    {% endif %}
+
+    {% comment %} This is where the content goes {% endcomment %}
+
     <div id="content" style="margin-left: 10px; margin-top: 8px;">
         {% block content %}
             {% translate "No Content" %}

@@ -137,6 +137,7 @@ USE_SENTRY = os.getenv('USE_SENTRY', default="False").lower() == "true"
 
 repo = None
 REMOTE_URL = None
+
 if GIT_INSTALLED:
     import git
     # https://stackoverflow.com/questions/31956506/get-short-sha-of-commit-with-gitpython
