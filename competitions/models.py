@@ -463,15 +463,16 @@ class Competition(models.Model):
     @property
     def events(self):
         """Returns the events associated with this competition."""
-        if DEMO:
-            return Event.objects.filter(sport=self.sport, owner=self.owner)
+        # if DEMO:
+        #     return Event.objects.filter(sport=self.sport, owner=self.owner)
         return Event.objects.filter(sport=self.sport)
 
     def __str__(self) -> str:
         # dwheadon: check if the name is unique for this year, otherwise add the month/day as well
         s: str = self.name # type: ignore
         qs = Competition.objects.filter(name=self.name)
-        if DEMO: qs = qs.filter(owner=self.owner)
+        # if DEMO: 
+        #     qs = qs.filter(owner=self.owner)
 
         if qs.count() > 1: # saves the queryset to a variable to avoid running the same query twice
             if (qs2 := (qs.filter(start_date__year=self.start_date.year))).count() > 1:
