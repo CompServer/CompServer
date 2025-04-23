@@ -171,7 +171,7 @@ class SiteConfig(models.Model):
 
     use_demo_mode = models.BooleanField(default=False)
     """Whether to use the demo mode for this site. This will not show competitions to anyone besides the creator.
-    This field has been deprecated and is not longer honored.""
+    This field has been deprecated and is not longer honored."""
 
     def __str__(self) -> str:
         return f"SiteConfig(name={self.name})"
